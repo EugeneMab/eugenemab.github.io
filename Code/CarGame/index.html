@@ -133,6 +133,15 @@
 					window.location.reload();
 				}
 			}
+		};
+		m.OnButton = function(uDelta) {
+			m.uCar += uDelta;
+			if (m.uCar < 0) {
+				m.uCar = 0;
+			}
+			if (m.uCar >= m.cuMaxCol) {
+				m.uCar = m.cuMaxCol - 1;
+			}
 		}
 		return m;
 	}
@@ -147,11 +156,14 @@
 	function OnKey(evt) {
 		prog.OnKey(evt);
 	}
+	function OnButton(uDelta) {
+		prog.OnButton(uDelta);
+	}
 </script>
 </head>
 <body onload="javascript:OnLoad();">
 <div id="divTitle" class="title">Car Game</div>
-<div id="divUsage" class="usage">Usage: Press left key or right key to move the car to avoid crash as long as possible.</div>
+<div id="divUsage" class="usage">Usage: Press left key or right key or click buttons to move the car to avoid crash as long as possible.</div>
 <div id="divScore" class="score">Score:</div>
 <a href="javascript:window.location.reload();"><div id="divOver" class="over"></div></a>
 <!--
@@ -164,5 +176,13 @@
 	<span><span class="grass">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="border">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="road">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="car">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="border">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="grass">&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
 -->
 </div>
+<button onclick="javascript:OnButton(-8);">-8</button>
+<button onclick="javascript:OnButton(-4);">-4</button>
+<button onclick="javascript:OnButton(-2);">-2</button>
+<button onclick="javascript:OnButton(-1);">-1</button>
+<button onclick="javascript:OnButton(1);">+1</button>
+<button onclick="javascript:OnButton(2);">+2</button>
+<button onclick="javascript:OnButton(4);">+4</button>
+<button onclick="javascript:OnButton(8);">+8</button>
 </body>
 </html>
