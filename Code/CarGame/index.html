@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Car Game</title>
+<style type="text/css">
+	.grass,
+	.border,
+	.road,
+	.car{
+		width:8px;
+		height:8px;
+	}
+	.grass{
+		background-color:LightGreen;
+	}
+	.border{
+		background-color:Gray;
+	}
+	.road{
+		background-color:LightGray;
+	}
+	.car{
+		background-color:Red;
+	}
+	.board{
+		border:0px;
+		border-spacing:0px 0px;
+		border-collapse:collapse;
+	}
+	.title{
+		font-size:20px;
+		color:red;
+	}
+</style>
+<script type="text/javascript">
+	function Program(m) {
+		m = m ? m : {};
+		m.cuMaxRow = 25;
+		m.cuMaxCol = 80;
+		m.cuRoadWidth = 20;
+		m.cuShiftPerc = 80;
+		m.cuPaceMs = 100;
+		m.cuCarWidth = 10;
+		m.bGameOver = false;
+		m.Init = function() {
+			m.uCar = (m.cuMaxCol - m.cuCarWidth) / 2;
+			m.uRoad = (m.cuMaxCol - m.cuRoadWidth) / 2;
+			setTimeout(OnTimer, m.cuPaceMs);
+			window.onkeydown=OnKey;
+		};
+		m.OnTimer = function(){
+			setTimeout(OnTimer, m.cuPaceMs);
+			if(m.bGameOver)
+				return;
+			var tbodyBoard = document.getElementById("tbodyBoard");
+			var rgtrChildren = tbodyBoard.getElementsByTagName("tr");
+			for (var uDelete = 0; uDelete < rgtrChildren.length - m.cuMaxRow; uDelete++) {
+				tbodyBoard.removeChild(rgtrChildren[uDelete]);
+			}
+			var rgdivCars = tbodyBoard.getElementsByClassName("car");
+			for (var uCar = 0; uCar < rgdivCars.length; uCar++) {
+				rgdivCars[uCar].className = "road";
+			}
+			if (Math.random() * 100 > m.cuShiftPerc) {
+				m.uRoad += Math.random() < 0.5 ? -1 : 1;
+				if (m.uRoad < 0)
+					m.uRoad = 0;
+				if (m.uRoad + m.cuRoadWidth >= m.cuMaxCol) {
+					m.uRoad = m.cuMaxCol - 1 - m.cuRoadWidth;
+				}
+			}
+			tbodyBoard.innerHTML += m.CreateRow();
+			if (m.uCar <= m.uRoad || m.uCar + m.cuCarWidth - 1 >= m.uRoad + m.cuRoadWidth) {
+				m.bGameOver = true;
+				document.getElementById("divTitle").innerHTML += " !!! Game Over !!!";
+			}
+		};
+		m.CreateRow = function(){
+			var sRow = "<td>";
+			for (var uCol = 0; uCol < m.cuMaxCol; uCol++) {
+				var sClass =
+						uCol < m.uRoad ? "grass" :
+						uCol == m.uRoad ? "border" :
+						uCol < m.uCar ? "road" :
+						uCol < (m.uCar + m.cuCarWidth) ? "car" :
+						uCol < (m.uRoad + m.cuRoadWidth) ? "road" :
+						uCol == (m.uRoad + m.cuRoadWidth) ? "border" :
+						"grass";
+				sRow += "<td><div class='" + sClass + "'></div></td>";
+			}
+			sRow += "</td>";
+			return sRow;
+		};
+		m.cuKeyLeft = 37;
+		m.cuKeyRight = 39;
+		m.OnKey = function(evt) {
+			if (evt.keyCode == m.cuKeyLeft) {
+				m.uCar--;
+			} else if (evt.keyCode == m.cuKeyRight) {
+				m.uCar++;
+			}
+		}
+		return m;
+	}
+	var prog;
+	function OnLoad() {
+		prog = Program();
+		prog.Init();
+	}
+	function OnTimer() {
+		prog.OnTimer();
+	}
+	function OnKey(evt) {
+		prog.OnKey(evt);
+	}
+</script>
+</head>
+<body onload="javascript:OnLoad();">
+<div id="divTitle" class="title">Car Game</div>
+<table class="board" cellpadding="0"><tbody id="tbodyBoard">
+<!--
+	<tr><td><div class="grass"></div></td><td><div class="border"></div></td><td><div class="road"></div></td><td><div class="car"></div></td><td><div class="border"></div></td><td><div class="grass"></div></td></tr>
+-->
+</tbody></table>
+<!--
+<div>
+	<span><span class="grass">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="border">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="road">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="car">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="border">&nbsp;&nbsp;&nbsp;&nbsp;</span><span class="grass">&nbsp;&nbsp;&nbsp;&nbsp;</span></span>
+</div>
+-->
+</body>
+</html>
