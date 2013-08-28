@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Eight Quene</title>
+<script type="text/javascript">
+    // http://en.wikipedia.org/wiki/Eight_queens_puzzle
+    var Truth = [0, 1, 0, 0, 2, 10, 4, 40, 92, 352, 724, 2680, 14200, 73712, 365596];
+    function OnLoad(){
+        var doc = document;
+        var sync = "";
+        for (var size = 1; size <= 16; size++) {
+            sync += "<button onclick='javascript:Sync(" + size + ");'>Sync " + size + "</button>";
+        }
+        doc.getElementById("sync").innerHTML = sync;
+        var async = "";
+        for (var size = 1; size <= 16; size++) {
+            async += "<button onclick='javascript:Async(" + size + ");'>Async " + size + "</button>";
+        }
+        doc.getElementById("async").innerHTML = async;
+    }
+    var Size;
+    var State;
+    var ColumnlUsed;
+    var DiagonalUsed;
+    var AntiDiagonalUsed;
+    var Solution;
+    var Last;
+    var Call;
+    function Sync(size) {
+        Abort();
+        if (size <= 0) {
+            return;
+        }
+        Size = size;
+        State = new Array(size);
+        ColumnUsed = [];
+        DiagonalUsed = [];
+        AntiDiagonalUsed = [];
+        Solution = 0;
+        Call = 0;
+        Last = [];
+        var start = new Date().getTime();
+        Search(0);
+        var end = new Date().getTime();
+        var duration = (end - start) / 1000;
+        var verified = (size >= Truth.length) ? "Unknown" :
+            (Solution == Truth[size]) ? "Verified" : "Failed";
+        document.getElementById("output").innerHTML =
+            "Size of problem     : " + size + "\r\n" +
+            "Number of Solutions : " + Solution + "\r\n" +
+            "Duration in Seconds : " + duration + "\r\n" +
+            "Number of calling   : " + Call + "\r\n" +
+            "Verification        : " + verified + "\r\n" +
+            "Last Solution:\r\n" +
+            ShowSolution(Last);
+    }
+    function Search(row) {
+        Call++;
+        var size = Size;
+        var state = State;
+        if (row == size) {
+            Solution++;
+            Last = state.slice(0);
+            return;
+        }
+        var used = ColumnUsed;
+        var diag = DiagonalUsed;
+        var anti = AntiDiagonalUsed;
+        for (var col = 0; col < size; col++) {
+            if (used[col] == 1 || diag[col + row] == 1 || anti[col - row] == 1) {
+                continue;
+            }
+            state[row] = col;
+            used[col] = 1;
+            diag[col + row] = 1;
+            anti[col - row] = 1;
+            Search(row + 1);
+            used[col] = 0;
+            diag[col + row] = 0;
+            anti[col - row] = 0;
+        }
+    }
+    function ShowSolution(solution) {
+        var out = "";
+        var size = Size;
+        for (var row = 0; row < size; row++) {
+            var chosen = solution[row];
+            for (var col = 0; col < size; col++) {
+                out += col == chosen ? "#" : ".";
+            }
+            out += "\r\n";
+        }
+        return out;
+    }
+
+    var Stack;
+    var Top;
+    var Aborted;
+    var Segment;
+    var Interval;
+    var Iteration;
+    function Init() {
+        Stack = [{}];
+        Top = 0;
+        Aborted = false;
+        Segment = 0;
+        Interval = 1;
+        Iteration = 0;
+    }
+    function Invoke(next, step, stack) {
+        Stack[Top].func = next;
+        stack.func = step;
+        Top++;
+        Stack[Top] = stack;
+    }
+    function Abort() {
+    }
+    var Debug = false;
+    function Execute() {
+        var start = new Date().getTime();
+        var latency = 1000 * (Debug ? 3600 : 0.1);
+        var timeout = start + latency;
+        var stack = Stack;
+        var steps = 0;
+        var interval = Interval;
+        var quotient = 0;
+        Iteration++;
+        while (Top > 0 && !Aborted && (quotient != 0 || new Date().getTime() < timeout)) {
+            steps++;
+            quotient = quotient == 0 ? interval : quotient - 1;
+            stack[Top].func();
+        }
+        Segment += steps;
+        var duration = new Date().getTime() - start;
+        interval = Math.floor(steps * latency / (duration != 0 ? duration : 1) / 10);
+        interval = interval >= 1 ? interval : 1;
+        Interval = interval;
+        document.getElementById("monitor").innerHTML =
+            "Total segments                   : " + Segment + "\r\n" +
+            "Total interations                : " + Iteration + "\r\n" +
+            "Number of segments in iteration  : " + steps + "\r\n" +
+            "Duration of iteration in seconds : " + (duration / 1000) + "\r\n" +
+            "Monitor interval in millisecond  : " + interval + "\r\n";
+        if (Top > 0 && !Aborted) {
+            setTimeout(Execute, 10);
+        }
+    }
+    function Local() {
+        return Stack[Top];
+    }
+    function Jump(step) {
+        Stack[Top].func = step;
+    }
+    function Return() {
+        Top--;
+    }
+
+    function Async(pSize) {
+        Abort();
+        Init();
+        Invoke(null, Sync_Start, { size: pSize });
+        setTimeout(Execute, 10);
+    }
+
+    function Sync_Start() {
+        var local = Local();
+        var size = local.size;
+
+        if (size <= 0) {
+            return Return();
+        }
+        Size = size;
+        State = new Array(size);
+        ColumnUsed = [];
+        DiagonalUsed = [];
+        AntiDiagonalUsed = [];
+        Solution = 0;
+        Call = 0;
+        Last = [];
+        local.start = new Date().getTime();
+        Invoke(Sync_AfterSearch, Search_Start, { row: 0 });
+    }
+    function Sync_AfterSearch() {
+        var local = Local();
+        var start = local.start;
+        var size = local.size;
+
+        var end = new Date().getTime();
+        var duration = (end - start) / 1000;
+        var verified = (size >= Truth.length) ? "Unknown" :
+            (Solution == Truth[size]) ? "Verified" : "Failed";
+        document.getElementById("output").innerHTML =
+            "Size of problem     : " + size + "\r\n" +
+            "Number of Solutions : " + Solution + "\r\n" +
+            "Duration in Seconds : " + duration + "\r\n" +
+            "Number of calling   : " + Call + "\r\n" +
+            "Verification        : " + verified + "\r\n" +
+            "Last Solution:\r\n" +
+            ShowSolution(Last);
+        Return();
+    }
+    function Search_Start() {
+        var local = Local();
+        var row = local.row;
+        var state = State;
+
+        Call++;
+        var size = Size;
+        if (row == size) {
+            Solution++;
+            Last = state.slice(0);
+            return Return();
+        }
+        local.col = -1;
+        Jump(Search_Loop);
+    }
+    function Search_Loop() {
+        var local = Local();
+        var row = local.row;
+        var size = Size;
+
+        var col = ++local.col;
+        if (col >= size) {
+            return Return();
+        }
+
+        var used = ColumnUsed;
+        var diag = DiagonalUsed;
+        var anti = AntiDiagonalUsed;
+        if (used[col] == 1 || diag[col + row] == 1 || anti[col - row] == 1) {
+            return Jump(Search_Loop);
+        }
+
+        var state = State;
+
+        state[row] = col;
+        used[col] = 1;
+        diag[col + row] = 1;
+        anti[col - row] = 1;
+        Invoke(Search_AfterSearch, Search_Start, { row: row + 1 });
+    }
+    function Search_AfterSearch() {
+        var local = Local();
+        var row = local.row;
+        var col = local.col;
+        var used = ColumnUsed;
+        var diag = DiagonalUsed;
+        var anti = AntiDiagonalUsed;
+
+        used[col] = 0;
+        diag[col + row] = 0;
+        anti[col - row] = 0;
+        Jump(Search_Loop);
+    }
+</script>
+</head>
+<body onload="javascript:OnLoad();">
+<h1>Eight Queen</h1>
+<div id="sync"></div>
+<div id="async"></div>
+<textarea cols="80" rows="25" id="output" readonly></textarea>
+<br/>
+<textarea cols="80" rows="5" id="monitor"readonly></textarea>
+</body>
+</html>
