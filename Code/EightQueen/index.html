@@ -4,21 +4,73 @@
 <meta charset="UTF-8">
 <title>Eight Quene</title>
 <script type="text/javascript">
-    // http://en.wikipedia.org/wiki/Eight_queens_puzzle
-    var Truth = [0, 1, 0, 0, 2, 10, 4, 40, 92, 352, 724, 2680, 14200, 73712, 365596];
-    function OnLoad(){
-        var doc = document;
-        var sync = "";
-        for (var size = 1; size <= 16; size++) {
-            sync += "<button onclick='javascript:Sync(" + size + ");'>Sync " + size + "</button>";
-        }
-        doc.getElementById("sync").innerHTML = sync;
-        var async = "";
-        for (var size = 1; size <= 16; size++) {
-            async += "<button onclick='javascript:Async(" + size + ");'>Async " + size + "</button>";
-        }
-        doc.getElementById("async").innerHTML = async;
+    // Fiber management
+    var Stack;
+    var Top;
+    var Aborted;
+    var Segment;
+    var Interval;
+    var Iteration;
+    function Start(step, stack) {
+        Abort();
+        Stack = [{}];
+        Top = 0;
+        Aborted = false;
+        Segment = 0;
+        Interval = 1;
+        Iteration = 0;
+        Invoke(null, step, stack);
+        setTimeout(Execute, 10);
     }
+    function Invoke(next, step, stack) {
+        Stack[Top].func = next;
+        stack.func = step;
+        Top++;
+        Stack[Top] = stack;
+    }
+    function Abort() {
+    }
+    var Debug = false;
+    function Execute() {
+        var start = new Date().getTime();
+        var latency = 1000 * (Debug ? 3600 : 0.1);
+        var timeout = start + latency;
+        var stack = Stack;
+        var steps = 0;
+        var interval = Interval;
+        var quotient = 0;
+        Iteration++;
+        while (Top > 0 && !Aborted && (quotient != 0 || new Date().getTime() < timeout)) {
+            steps++;
+            quotient = quotient == 0 ? interval : quotient - 1;
+            stack[Top].func();
+        }
+        Segment += steps;
+        var duration = new Date().getTime() - start;
+        interval = Math.floor(steps * latency / (duration != 0 ? duration : 1) / 10);
+        interval = interval >= 1 ? interval : 1;
+        Interval = interval;
+        document.getElementById("monitor").innerHTML =
+            "Total segments                   : " + Segment + "\r\n" +
+            "Total iterations                 : " + Iteration + "\r\n" +
+            "Number of segments in iteration  : " + steps + "\r\n" +
+            "Duration of iteration in seconds : " + (duration / 1000) + "\r\n" +
+            "Monitor interval in millisecond  : " + interval + "\r\n";
+        if (Top > 0 && !Aborted) {
+            setTimeout(Execute, 10);
+        }
+    }
+    function Local() {
+        return Stack[Top];
+    }
+    function Jump(step) {
+        Stack[Top].func = step;
+    }
+    function Return() {
+        Top--;
+    }
+    // Sync code
+    var Truth = [0, 1, 0, 0, 2, 10, 4, 40, 92, 352, 724, 2680, 14200, 73712, 365596]; // http://en.wikipedia.org/wiki/Eight_queens_puzzle
     var Size;
     var State;
     var ColumnlUsed;
@@ -27,8 +79,8 @@
     var Solution;
     var Last;
     var Call;
-    function Sync(size) {
-        Abort();
+    var Duration;
+    function Solve(size) {
         if (size <= 0) {
             return;
         }
@@ -46,6 +98,7 @@
         var duration = (end - start) / 1000;
         var verified = (size >= Truth.length) ? "Unknown" :
             (Solution == Truth[size]) ? "Verified" : "Failed";
+        Duration = duration;
         document.getElementById("output").innerHTML =
             "Size of problem     : " + size + "\r\n" +
             "Number of Solutions : " + Solution + "\r\n" +
@@ -93,77 +146,8 @@
         }
         return out;
     }
-
-    var Stack;
-    var Top;
-    var Aborted;
-    var Segment;
-    var Interval;
-    var Iteration;
-    function Init() {
-        Stack = [{}];
-        Top = 0;
-        Aborted = false;
-        Segment = 0;
-        Interval = 1;
-        Iteration = 0;
-    }
-    function Invoke(next, step, stack) {
-        Stack[Top].func = next;
-        stack.func = step;
-        Top++;
-        Stack[Top] = stack;
-    }
-    function Abort() {
-    }
-    var Debug = false;
-    function Execute() {
-        var start = new Date().getTime();
-        var latency = 1000 * (Debug ? 3600 : 0.1);
-        var timeout = start + latency;
-        var stack = Stack;
-        var steps = 0;
-        var interval = Interval;
-        var quotient = 0;
-        Iteration++;
-        while (Top > 0 && !Aborted && (quotient != 0 || new Date().getTime() < timeout)) {
-            steps++;
-            quotient = quotient == 0 ? interval : quotient - 1;
-            stack[Top].func();
-        }
-        Segment += steps;
-        var duration = new Date().getTime() - start;
-        interval = Math.floor(steps * latency / (duration != 0 ? duration : 1) / 10);
-        interval = interval >= 1 ? interval : 1;
-        Interval = interval;
-        document.getElementById("monitor").innerHTML =
-            "Total segments                   : " + Segment + "\r\n" +
-            "Total interations                : " + Iteration + "\r\n" +
-            "Number of segments in iteration  : " + steps + "\r\n" +
-            "Duration of iteration in seconds : " + (duration / 1000) + "\r\n" +
-            "Monitor interval in millisecond  : " + interval + "\r\n";
-        if (Top > 0 && !Aborted) {
-            setTimeout(Execute, 10);
-        }
-    }
-    function Local() {
-        return Stack[Top];
-    }
-    function Jump(step) {
-        Stack[Top].func = step;
-    }
-    function Return() {
-        Top--;
-    }
-
-    function Async(pSize) {
-        Abort();
-        Init();
-        Invoke(null, Sync_Start, { size: pSize });
-        setTimeout(Execute, 10);
-    }
-
-    function Sync_Start() {
+    // Async code
+    function Solve_Start() {
         var local = Local();
         var size = local.size;
 
@@ -179,9 +163,9 @@
         Call = 0;
         Last = [];
         local.start = new Date().getTime();
-        Invoke(Sync_AfterSearch, Search_Start, { row: 0 });
+        Invoke(Solve_AfterSearch, Search_Start, { row: 0 });
     }
-    function Sync_AfterSearch() {
+    function Solve_AfterSearch() {
         var local = Local();
         var start = local.start;
         var size = local.size;
@@ -190,6 +174,7 @@
         var duration = (end - start) / 1000;
         var verified = (size >= Truth.length) ? "Unknown" :
             (Solution == Truth[size]) ? "Verified" : "Failed";
+        Duration = duration;
         document.getElementById("output").innerHTML =
             "Size of problem     : " + size + "\r\n" +
             "Number of Solutions : " + Solution + "\r\n" +
@@ -253,14 +238,93 @@
         anti[col - row] = 0;
         Jump(Search_Loop);
     }
+    // Multi code
+    function Multi_Start() {
+        document.getElementById("report").innerHTML = "<tr><th>Size</th><th>Call</th><th>S/C</th><th>Sync</th><th>A/S</th><th>Async</th><th>A/C</th></tr>";
+        var local = Local();
+        local.size = 0;
+        Jump(Multi_Loop);
+    }
+    function Multi_Loop() {
+        var local = Local();
+        var size = ++local.size;
+        if (size > local.max) {
+            return Return();
+        }
+        Solve(size);
+        local.syncCall = Call;
+        local.syncDuration = Duration;
+        Invoke(Multi_AfterSolve, Solve_Start, { size: size });
+    }
+    function Multi_AfterSolve() {
+        var local = Local();
+        var size = local.size;
+        var syncCall = local.syncCall;
+        var syncDuration = local.syncDuration;
+        var asyncCall = Call;
+        var asyncDuration = Duration;
+        if (syncCall != asyncCall) {
+            return Return();
+        }
+        var call = syncCall;
+        document.getElementById("report").innerHTML += "<tr>" +
+            "<td>" + size + "</td>" +
+            "<td>" + call + "</td>" +
+            "<td>" + (syncDuration / call).toPrecision(5) + "</td>" +
+            "<td>" + syncDuration.toPrecision(5) + "</td>" +
+            "<td>" + (asyncDuration / syncDuration).toPrecision(5) + "</td>" +
+            "<td>" + asyncDuration.toPrecision(5) + "</td>" +
+            "<td>" + (asyncDuration / call).toPrecision(5) + "</td>" +
+            "</tr>";
+        Jump(Multi_Loop);
+    }
+    // Event handlers
+    function OnLoad() {
+        var doc = document;
+        var sync = "";
+        for (var size = 1; size <= 16; size++) {
+            sync += "<td><button onclick='javascript:Sync(" + size + ");'>" + size + "</button></td>";
+        }
+        doc.getElementById("sync").innerHTML += sync;
+        var async = "";
+        for (var size = 1; size <= 16; size++) {
+            async += "<td><button onclick='javascript:Async(" + size + ");'>" + size + "</button></td>";
+        }
+        doc.getElementById("async").innerHTML += async;
+        var comp = "";
+        for (var size = 1; size <= 16; size++) {
+            comp += "<td><button onclick='javascript:Composite(" + size + ");'>" + size + "</button></td>";
+        }
+        doc.getElementById("composite").innerHTML += comp;
+    }
+    function Sync(size) {
+        Abort();
+        Solve(size);
+    }
+    function Async(size) {
+        Start(Solve_Start, { size: size });
+    }
+    function Composite(max) {
+        Start(Multi_Start, { max: max });
+    }
+    function Termiate() {
+        Abort();
+    }
 </script>
 </head>
 <body onload="javascript:OnLoad();">
 <h1>Eight Queen</h1>
-<div id="sync"></div>
-<div id="async"></div>
+<table><tbody>
+    <tr id="sync"><td>Sync</td></tr>
+    <tr id="async"><td>Async</td></tr>
+    <tr id="composite"><td>Composite</td></tr>
+    <tr><td>End</td><td colspan="16"><button onclick="javascript:Terminate()">Terminate</button></td></tr>
+</tbody></table>
 <textarea cols="80" rows="25" id="output" readonly></textarea>
 <br/>
 <textarea cols="80" rows="5" id="monitor"readonly></textarea>
+<br/>
+<table border="1"><tbody id="report">
+</tbody></table>
 </body>
 </html>
