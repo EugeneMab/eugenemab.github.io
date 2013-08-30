@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Twenty Four</title>
+<script type="text/javascript">
+    function CreateNumber(idx) {
+        return {
+            index: idx,
+            Try: function (o) {
+                if (used[o.index].cnt <= 0) {
+                    return false;
+                }
+                stac[top] = {
+                    val: used[o.index].val,
+                    oper: o
+                };
+                used[o.index].cnt--;
+                remain--;
+                top++;
+                return true;
+            },
+            Restore: function () {
+                var res = stac[top - 1];
+                used[res.oper.index].cnt++;
+                remain++;
+                top--;
+            },
+            Show: function (r) {
+                return used[r.oper.index].val;
+            }
+        };
+    }
+    var Add = {
+        Try: function (o) {
+            if (top < 2) {
+                return false;
+            }
+            var l = stac[top - 2];
+            var r = stac[top - 1];
+            stac[top - 2] = {
+                val: (l.val + r.val),
+                oper: o,
+                left: l,
+                right: r
+            };
+            top--;
+            return true;
+        },
+        Restore: function (o) {
+            var res = stac[top - 1];
+            stac[top - 1] = res.left;
+            stac[top] = res.right;
+            top++;
+        },
+        Show: function (r) {
+            return "(" + r.left.oper.Show(r.left) + "+" + r.right.oper.Show(r.right) + ")";
+        }
+    };
+    var Subtract = {
+        Try: function (o) {
+            if (top < 2) {
+                return false;
+            }
+            var l = stac[top - 2];
+            var r = stac[top - 1];
+            stac[top - 2] = {
+                val: (l.val - r.val),
+                oper: o,
+                left: l,
+                right: r
+            };
+            top--;
+            return true;
+        },
+        Restore: function () {
+            var res = stac[top - 1];
+            stac[top - 1] = res.left;
+            stac[top] = res.right;
+            top++;
+        },
+        Show: function (r) {
+            return "(" + r.left.oper.Show(r.left) + "-" + r.right.oper.Show(r.right) + ")";
+        }
+    };
+    var Multiply = {
+        Try: function (o) {
+            if (top < 2) {
+                return false;
+            }
+            var l = stac[top - 2];
+            var r = stac[top - 1];
+            stac[top - 2] = {
+                val: (l.val * r.val),
+                oper: o,
+                left: l,
+                right: r
+            };
+            top--;
+            return true;
+        },
+        Restore: function () {
+            var res = stac[top - 1];
+            stac[top - 1] = res.left;
+            stac[top] = res.right;
+            top++;
+        },
+        Show: function (r) {
+            return "(" + r.left.oper.Show(r.left) + "*" + r.right.oper.Show(r.right) + ")";
+        }
+    };
+    var Divide = {
+        Try: function (o) {
+            if (top < 2 || Math.abs(stac[top - 1].val) < 0.00001) {
+                return false;
+            }
+            var l = stac[top - 2];
+            var r = stac[top - 1];
+            stac[top - 2] = {
+                val: (l.val / r.val),
+                oper: o,
+                left: l,
+                right: r
+            };
+            top--;
+            return true;
+        },
+        Restore: function () {
+            var res = stac[top - 1];
+            stac[top - 1] = res.left;
+            stac[top] = res.right;
+            top++;
+        },
+        Show: function (r) {
+            return "(" + r.left.oper.Show(r.left) + "/" + r.right.oper.Show(r.right) + ")";
+        }
+    };
+    var Negate = {
+        Try: function (o) {
+            if (top < 1 || stac[top - 1].oper == o) {
+                return false;
+            }
+            var l = stac[top - 1];
+            stac[top - 1] = {
+                val: (-l.val),
+                oper: o,
+                left: l
+            };
+            return true;
+        },
+        Restore: function () {
+            var res = stac[top - 1];
+            stac[top - 1] = res.left;
+        },
+        Show: function (r) {
+            return "(-" + r.left.oper.Show(r.left) + ")";
+        }
+    };
+    var Basic = [Add, Subtract, Multiply, Divide];
+    var size; // int
+    var used; // [] Input{ val: int, cnt: int }
+    var remain; // int
+    var choice; // [] Operation
+    var stac; // [] Result{ val: float, oper: Operation, left: Result, right: Result }
+    var top; // int
+    var count; // int
+    function Solve(input) {
+        size = input.length;
+        remain = size;
+        var sorted = input.sort(function(x,y){return x-y;});
+        used = [];
+        for (var i = 0; i < size; i++) {
+            if (i == 0 || sorted[i] != sorted[i - 1]) {
+                used[used.length] = { val: sorted[i], cnt: 1 };
+                continue;
+            }
+            used[used.length - 1].cnt++;
+        }
+        choice = Basic.slice(0);
+        for (var i = 0; i < used.length; i++) {
+            choice.push(CreateNumber(i));
+        }
+        count = 0;
+        stac = [];
+        top = 0;
+        Search(0);
+    }
+    function Search() {
+        if (remain == 0 && top == 1 && Math.abs(stac[0].val - 24) < 0.00001) {
+            count++;
+            document.getElementById("output").innerHTML += count + ": " + stac[0].oper.Show(stac[0]) + "=24\r\n";
+            return;
+        }
+        for (var trial = 0; trial < choice.length; trial++) {
+            var chosen = choice[trial];
+            if (!chosen.Try(chosen)) {
+                continue;
+            }
+            Search();
+            chosen.Restore();
+        }
+    }
+    function Start() {
+        document.getElementById("output").innerHTML = "";
+        input = [];
+        for (var i = 0; i < arguments.length; i++) {
+            input[i] = arguments[i];
+        }
+        Solve(input);
+        document.getElementById("output").innerHTML += "Total: " + count;
+    }
+    function OnLoad() {
+        var s = "";
+        for (var row = 1; row <= 13; row++) {
+            s += "<tr><td></td>";
+            for (var col = 1; col <= 4; col++) {
+                s += "<td onclick='javascript:Pick(" + col + "," + row + ");'>" + row + "</td>";
+            }
+            s += "</tr>";
+        }
+        document.getElementById("pick").innerHTML += s;
+    }
+    function Pick(input, value) {
+        document.getElementById("input" + input).value = value;
+    }
+    function Run() {
+        Start(Get(1), Get(2), Get(3), Get(4));
+    }
+    function Get(i) {
+        return parseInt(document.getElementById("input" + i).value);
+    }
+</script>
+</head>
+<body onload="javascript:OnLoad();">
+<h1>Twenty-Four Game</h1>
+<table id="pick">
+    <tr>
+        <td>Input</td>
+        <td><input id="input1" value="1"/></td>
+        <td><input id="input2" value="2"/></td>
+        <td><input id="input3" value="3"/></td>
+        <td><input id="input4" value="4"/></td>
+    </tr>
+</table>
+<br/>
+<button onclick="javascript:Run()">Run</button>
+<br/>
+<textarea cols="80" rows="25" id="output" readonly></textarea>
+<br/>
+<button onclick="javascript:Start(1,2,3,4)">Test 1,2,3,4</button>
+<button onclick="javascript:Start(3,3,8,8)">Test 3,3,8,8</button>
+</body>
+</html>
