@@ -1,8 +1,82 @@
+<!DOCTYPE html>
 <html>
-<body>
-2013-08-25 <a href="2013/20130825_HelloWorld/index.html">Hello World</a><br/>
-2013-08-26 <a href="2013/20130826_CarGame/index.html">Car Game</a><br/>
-2013-08-27 <a href="2013/20130827_EightQueen/index.html">Eight Queen</a><br/>
-2013-08-29 <a href="2013/20130829_TwentyFour/index.html">Twenty Four Game</a><br/>
+<head>
+	<script type="text/javascript">
+		function sort_by_date(one, two) {
+			return one.date < two.date ? -1 : one.date > two.date ? 1 :
+				one.name < two.name ? -1 : one.name > two.name ? 1 : 0;
+		}
+		function sort_by_name(one, two) {
+			return one.name < two.name ? -1 : one.name > two.name ? 1 : 0;
+		}
+		function onload() {
+			var doc = document;
+			var basic = doc.getElementById("basic");
+			var children = basic.childNodes;
+			var children_len = children.length;
+			var programs = [];
+			var program;
+			for (var row = 0; row < children_len; row++) {
+				var child = children[row];
+				if (child.nodeName == "#text") {
+					var date = child.nodeValue.replace(/^\s+|\s+$/g, '');
+					program = { date: date, year: date.substring(0, 4) };
+					continue;
+				}
+				if (child.nodeName == "A") {
+					var name = child.innerHTML;
+					program.link = child.attributes[0].nodeValue;
+					program.name = name;
+					program.initial = name.substring(0, 1);
+					programs.push(program);
+					continue;
+				}
+			}
+			var prog_by_date = programs.slice(0).sort(sort_by_date);
+			var prog_by_name = programs.slice(0).sort(sort_by_name);
+			var go_top = "<a href='#date'>#</a> <a href='#name'>*</a>";
+			var date_list = "";
+			var date_menu = "<tr><td>" + go_top + "</td></td><td><a name='date'>Date</a></td></tr>"
+			var prog_by_date_len = prog_by_date.length;
+			for (var row = 0; row < prog_by_date_len; row++) {
+				var prog = prog_by_date[row];
+				if (row == 0 || prog.year != prog_by_date[row - 1].year) {
+					date_list += "<tr><td>" + go_top + "</td><td></td><td><a name='" + prog.year + "'>" + prog.year + "</a></td></tr>";
+					date_menu += "<tr><td></td><td></td><td><a href='#" + prog.year + "'>" + prog.year + "</a></td></tr>";
+				}
+				date_list += "<tr><td></td><td></td><td></td><td>" + prog.date + "</td><td><a href='" + prog.link + "'>" + prog.name + "</a></td></tr>";
+			}
+			var name_list = "";
+			var name_menu = "<tr><td>" + go_top + "</td><td><a name='name'>Name</a></td></tr>"
+			var prog_by_name_len = prog_by_name.length;
+			for (var row = 0; row < prog_by_name_len; row++) {
+				var prog = prog_by_name[row];
+				if (row == 0 || prog.initial != prog_by_name[row - 1].initial) {
+					name_list += "<tr><td>" + go_top + "</td><td></td><td><a name='" + prog.initial + "'>" + prog.initial + "</a></td></tr>";
+					name_menu += "<tr><td></td><td></td><td><a href='#" + prog.initial + "'>" + prog.initial + "</a></td></tr>";
+				}
+				name_list += "<tr><td></td><td></td><td></td><td><a href='" + prog.link + "'>" + prog.name + "</a></td><td>" + prog.date + "</td></tr>";
+			}
+			var head = "<table>";
+			var tail = "</table>";
+			for (var row = 0; row < 100; row++) {
+				tail += "<br/>";
+			}
+			out = head + date_menu + date_list + name_menu + name_list + tail;
+			basic.style.display = "none";
+			doc.getElementById("gen").innerHTML = out;
+		}
+	</script>
+</head>
+<body onload="javascript:onload();">
+<div id="basic">
+	2013-08-25 <a href="2013/20130825_HelloWorld/index.html">Hello World</a><br/>
+	2013-08-26 <a href="2013/20130826_CarGame/index.html">Car Game</a><br/>
+	2013-08-27 <a href="2013/20130827_EightQueen/index.html">Eight Queen</a><br/>
+	2013-08-29 <a href="2013/20130829_TwentyFour/index.html">Twenty Four Game</a><br/>
+	2013-09-08 <a href="2013/20130908_TicTacToe/index.html">Tic Tac Toe</a><br/>
+</div>
+<div id="gen">
+</div>
 </body>
 </html>
