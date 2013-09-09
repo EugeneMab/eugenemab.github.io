@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<style type="text/css">
+		td {
+			font-family: Lucida Console, Courier New, monospace
+		}
+	</style>
+	<script type="text/javascript">
+		// Solver
+		var iHeight;
+		var iWidth;
+		var iSize;
+		var aalLines;
+		function CreateLines() {
+			aalLines = [];
+			var aaiDir = [ [0, 1], [1, 0], [1, 1], [1, -1] ];
+			var iLong = Math.max(iHeight, iWidth);
+			for (var iRow = 0; iRow < iHeight; iRow++) {
+				for (var iCol = 0; iCol < iWidth; iCol++) {
+					var alLines = [];
+					for (var iDir = 0; iDir < 4; iDir++) {
+						var lLine = { aiPos: [], aiNeg: [] };
+						for (var iPace = 1; iPace < iLong; iPace++) {
+							var iY = iRow + aaiDir[iDir][0] * iPace;
+							var iX = iCol + aaiDir[iDir][1] * iPace;
+							if (iY < 0 || iY >= iHeight || iX < 0 || iX >= iWidth) {
+								break;
+							}
+							lLine.aiPos.push(iY * iWidth + iX);
+						}
+						for (var iPace = 1; iPace < iLong; iPace++) {
+							var iY = iRow - aaiDir[iDir][0] * iPace;
+							var iX = iCol - aaiDir[iDir][1] * iPace;
+							if (iY < 0 || iY >= iHeight || iX < 0 || iX >= iWidth) {
+								break;
+							}
+							lLine.aiNeg.push(iY * iWidth + iX);
+						}
+						alLines.push(lLine);
+					}
+					aalLines.push(alLines);
+				}
+			}
+		}
+		var aiState;
+		var iRemain;
+		function UpdateRemain() {
+			iRemain = 0;
+			for (var i = 0; i < iSize; i++) {
+				if (aiState[i] == null) {
+					iRemain++;
+				}
+			}
+		}
+		function Same(iOne, iTwo, iThree) {
+			var iFirst = aiState[iOne];
+			return iFirst != null && iFirst == aiState[iTwo] && iFirst == aiState[iThree] ? iFirst : null;
+		}
+		function IsEnd(iLast) {
+			var iValue = aiState[iLast];
+			var alLines = aalLines[iLast];
+			for (var iDir = 0; iDir < 4; iDir++) {
+				var lLine = alLines[iDir];
+				var iSame = 1;
+				for (var iPos = 0; iPos < lLine.aiPos.length; iPos++) {
+					if (aiState[lLine.aiPos[iPos]] != iValue) {
+						break;
+					}
+					iSame++;
+				}
+				for (var iNeg = 0; iNeg < lLine.aiNeg.length; iNeg++) {
+					if (aiState[lLine.aiNeg[iNeg]] != iValue) {
+						break;
+					}
+					iSame++;
+				}
+				if (iSame >= 3) {
+					return iValue;
+				}
+			}
+			return iRemain == 0 ? 0 : null;
+		}
+		function SearchMax(iLast) {
+			var iEnd = IsEnd(iLast);
+			if (iEnd != null) {
+				return iEnd;
+			}
+			var iMax = -2;
+			for (var iMy = 0; iMy < iSize; iMy++) {
+				if (aiState[iMy] != null) {
+					continue;
+				}
+				aiState[iMy] = 1;
+				iRemain--;
+				var iOut = SearchMin(iMy);
+				iMax = Math.max(iMax, iOut);
+				aiState[iMy] = null;
+				iRemain++;
+			}
+			return iMax;
+		}
+		function SearchMin(iLast) {
+			var iEnd = IsEnd(iLast);
+			if (iEnd != null) {
+				return iEnd;
+			}
+			var iMin = 2;
+			for (var iTheir = 0; iTheir < iSize; iTheir++) {
+				if (aiState[iTheir] != null) {
+					continue;
+				}
+				aiState[iTheir] = -1;
+				iRemain--;
+				var iOut = SearchMax(iTheir);
+				iMin = Math.min(iMin, iOut);
+				aiState[iTheir] = null;
+				iRemain++;
+			}
+			return iMin;
+		}
+		function Solve(aiInput) {
+			aiState = aiInput.slice(0);
+			UpdateRemain();
+			var aiSuggest = [];
+			for (var iMy = 0; iMy < iSize; iMy++) {
+				if (aiState[iMy] != null) {
+					aiSuggest.push(null);
+					continue;
+				}
+				aiState[iMy] = 1;
+				iRemain--;
+				var iMin = SearchMin(iMy);
+				aiSuggest.push(iMin);
+				aiState[iMy] = null;
+				iRemain++;
+			}
+			return aiSuggest;
+		}
+		// Event
+		var eBoard;
+		var eRes;
+		var eLog;
+		var eCompFirst;
+		function OnLoad() {
+			var doc = document;
+			eBoard = doc.getElementById("board");
+			eRes = doc.getElementById("res");
+			eLog = doc.getElementById("log");
+			eCompFirst = doc.getElementById("compfirst");
+			Resize(3,3);
+		}
+		var sState;// "InitHuman"; "Human"; "End"
+		var aiBoard;
+		function Resize(iNewHeight, iNewWidth) {
+			iHeight = iNewHeight;
+			iWidth = iNewWidth;
+			iSize = iHeight * iWidth;
+			CreateLines();
+			sState = "InitHuman";
+			eRes.innerHTML = "Result:";
+			eCompFirst.disabled = false;
+			aiBoard = [];
+			for (var i = 0; i < iSize; i++) {
+				aiBoard.push(null);
+			}
+			AddBlocks();
+			var aiSuggest = Solve(InputByHuman());
+			var sOut = "<table border='1'><tr>";
+			for (var i = 0; i < iSize; i++) {
+				sOut += "<td id='cell" + i + "' onclick='javascript:OnMove(" + i + ");'><font size='+5'>" + (aiBoard[i] == "Block" ? "#" : "_") + "</font></td>";
+				if ((i + 1) % iWidth == 0) {
+					sOut += "</tr><tr>";
+				}
+			}
+			sOut += "</tr></table>";
+			eBoard.innerHTML = sOut;
+			Log("OnLoad: suggest for human:" + Format(aiSuggest));
+			aeCells = null;
+			Colorize(aiSuggest);
+		}
+		function OnReset() {
+			sState = "InitHuman";
+			eRes.innerHTML = "Result:";
+			eCompFirst.disabled = false;
+			aiBoard = [];
+			for (var i = 0; i < iSize; i++) {
+				aiBoard.push(null);
+			}
+			AddBlocks();
+			var aiSuggest = Solve(InputByHuman());
+			for (var i = 0; i < iSize; i++) {
+				GetCell(i).innerHTML = "<font size='+5'>" + (aiBoard[i] == "Block" ? "#" : "_") + "</font>";
+				GetCell(i).style.backgroundColor = "#FFFFFF";
+			}
+			Log("OnReset: suggest for human:" + Format(aiSuggest));
+			Colorize(aiSuggest);
+		}
+		function AddBlocks() {
+			var aiChoices = [];
+			for (var i = 0; i < iSize; i++) {
+				aiChoices.push(i);
+			}
+			for (var iLength = iSize; iLength > 9; iLength--) {
+				var iChoice = Math.floor(Math.random() * iLength);
+				var iBlock = aiChoices[iChoice];
+				aiChoices[iChoice] = aiChoices[iLength - 1];
+				aiBoard[iBlock] = "Block";
+			}
+		}
+		function OnCompFirst() {
+			if (sState != "InitHuman") {
+				return;
+			}
+			sState = "Human";
+			eCompFirst.disabled = true;
+			var aiSuggest = Solve(InputByComputer());
+			Log("OnCompFirst: suggest for computer:" + Format(aiSuggest));
+			var iComputerMove = RandomMax(aiSuggest);
+			GetCell(iComputerMove).innerHTML = "<font size='+5'>X</font>";
+			aiBoard[iComputerMove] = "Computer";
+			Log("OnCompFirst: computer move to " + iComputerMove);
+			if (CheckEndGame(iComputerMove)) {
+				return;
+			}
+			aiSuggest = Solve(InputByHuman());
+			Log("OnCompFirst: suggest for human:" + Format(aiSuggest));
+			Colorize(aiSuggest);
+		}
+		function OnMove(iHumanMove) {
+			if (sState != "InitHuman" && sState != "Human") {
+				return;
+			}
+			if (aiBoard[iHumanMove] != null) {
+				return;
+			}
+			sState = "Human";
+			eCompFirst.disabled = true;
+			GetCell(iHumanMove).innerHTML = "<font size='+5'>O</font>";
+			aiBoard[iHumanMove] = "Human";
+			Log("OnMove: human move to " + iHumanMove);
+			if (CheckEndGame(iHumanMove)) {
+				return;
+			}
+			var aiSuggest = Solve(InputByComputer());
+			Log("OnMove: suggest for computer:" + Format(aiSuggest));
+			var iComputerMove = RandomMax(aiSuggest);
+			GetCell(iComputerMove).innerHTML = "<font size='+5'>X</font>";
+			aiBoard[iComputerMove] = "Computer";
+			Log("OnMove: computer move to " + iComputerMove);
+			if (CheckEndGame(iComputerMove)) {
+				return;
+			}
+			aiSuggest = Solve(InputByHuman());
+			Log("OnLoad: suggest for human:" + Format(aiSuggest));
+			Colorize(aiSuggest);
+		}
+		function ClearLog() {
+			eLog.innerHTML = "";
+		}
+		// Utils
+		function InputByHuman() {
+			var aiInput = [];
+			for (var i = 0; i < iSize; i++) {
+				aiInput.push(aiBoard[i] == null ? null : aiBoard[i] == "Block" ? 0 : aiBoard[i] == "Human" ? 1 : -1);
+			}
+			return aiInput;
+		}
+		function InputByComputer() {
+			var aiInput = [];
+			for (var i = 0; i < iSize; i++) {
+				aiInput.push(aiBoard[i] == null ? null : aiBoard[i] == "Block" ? 0 : aiBoard[i] == "Computer" ? 1 : -1);
+			}
+			return aiInput;
+		}
+		function Log(sLog) {
+			eLog.innerHTML = sLog + "\r\n" + eLog.innerHTML;
+		}
+		function Format(aiSuggest) {
+			var sOut = "";
+			for (var i = 0; i < iSize; i++) {
+				var iValue = aiSuggest[i];
+				sOut += (i % iWidth == 0 ? "\r\n\t" : " ") +
+					(iValue == null ? " ." :
+					iValue < 0 ? ("" + iValue) :
+					(" " + iValue));
+			}
+			return sOut;
+		}
+		var aeCells;
+		function GetCell(iIndex) {
+			if (aeCells) {
+				return aeCells[iIndex];
+			}
+			aeCells = [];
+			var doc = document;
+			for (var i = 0; i < iSize; i++) {
+				aeCells.push(doc.getElementById("cell" + i));
+			}
+			return aeCells[iIndex];
+		}
+		function RandomMax(aiSuggest) {
+			var iMax = -2;
+			var aiCandidates = [];
+			for (var i = 0; i < iSize; i++) {
+				var iSuggest = aiSuggest[i];
+				if (iSuggest == null) {
+					continue;
+				}
+				if (iSuggest > iMax) {
+					iMax = iSuggest;
+					aiCandidates = [i];
+					continue;
+				}
+				if (iSuggest == iMax) {
+					aiCandidates.push(i);
+				}
+			}
+			return aiCandidates[Math.floor(Math.random() * aiCandidates.length)];
+		}
+		function CheckEndGame(iLast) {
+			aiState = InputByComputer();
+			UpdateRemain();
+			var iEnd = IsEnd(iLast);
+			if (iEnd == null) {
+				return false;
+			}
+			eRes.innerHTML = iEnd == 1 ? "Result: You Lose!" :
+				iEnd == -1 ? "Result: You Win!" : "Result: Draw!";
+			sState = "End";
+			for (var i = 0; i < iSize; i++) {
+				GetCell(i).style.backgroundColor = "#FFFFC0";
+			}
+			return true;
+		}
+		function Colorize(aiSuggest) {
+			for (var i = 0; i < iSize; i++) {
+				var iSuggest = aiSuggest[i];
+				GetCell(i).style.backgroundColor = iSuggest == null ? "#FFFFC0" :
+					iSuggest == -1 ? "#FF8080" :
+					iSuggest == 0 ? "#8080FF" :
+					"#80FF80"; // 1
+			}
+		}
+	</script>
+</head>
+<body onload="javascript:OnLoad();">
+<h1>Tic Tac Toe</h1>
+<button onclick="javascript:Resize(3,3);">3x3</button>
+<button onclick="javascript:Resize(3,4);">3x4</button>
+<button onclick="javascript:Resize(3,5);">3x5</button>
+<button onclick="javascript:Resize(4,4);">4x4</button>
+<button onclick="javascript:Resize(4,5);">4x5</button>
+<button onclick="javascript:Resize(5,5);">5x5</button>
+<div id="board">
+</div>
+<button onclick="javascript:OnReset();">Restart</button>
+<button onclick="javascript:OnCompFirst();" id="compfirst">Computer First</button>
+<button onclick="javascript:ClearLog();">Clear Log</button>
+<h1 id="res">Result:</h1>
+Log<br/>
+<textarea cols="80" rows="25" id="log" readonly></textarea>
+</body>
