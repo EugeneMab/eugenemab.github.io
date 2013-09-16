@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script type="text/javascript">
+		function Program() {
+		}
+		Program.prototype.Run = function () {
+			Program.Log("In instance function, this = " + this);
+			for (var i = 0; i < 3; i++) {
+				this.current = i;
+				this.ShowCurrent();
+			}
+			var person = new Person("Alex");
+			var student = new Student("Bob", 123);
+			Program.Log("person.name = " + person.name);
+			Program.Log("student.name = " + student.name);
+			Program.Log("student.id = " + student.id);
+			var circle = new Circle().Circle(10, 20, 30);
+			Program.Log("circle.area = " + circle.area);
+			Program.Log("circle.LeftMost() = " + circle.LeftMost());
+			var box = new Box().Box(40, 50, 60, 70);
+			Program.Log("box.area = " + box.area);
+			Program.Log("box.LeftMost() = " + box.LeftMost());
+
+			VerifyE();
+		}
+		Program.prototype.ShowCurrent = function () {
+			Program.Log(this.current);
+		}
+		Program.Log = function(logLine) {
+			if (!Program.logText) {
+				Program.logText = "";
+			}
+			Program.logText += logLine + "\r\n";
+			if (!Program.logArea) { // "this" will refer to Program class
+				Program.logArea = document.getElementById("log");
+			}
+			if (Program.logArea) {
+				Program.logArea.innerHTML = Program.logText;
+			}
+		}
+		Program.OnLoad = function() {
+			Program.Log("In static function, this = " + this);
+			var program = new Program();
+			program.Run();
+		}
+
+		function Person(name) {
+			Program.Log("Person ctor " + name);
+			this.name = name;
+		}
+
+		function Student(name, id) {
+			Program.Log("Student ctor " + name + " " + id);
+			this.id = id;
+		}
+		Student.prototype = new Person("Inherit");
+
+		function Shape() {
+			Program.Log("Shape ctor");
+		}
+		Shape.prototype.Shape = function(area) {
+			this.area = area;
+			return this;
+		}
+		Shape.prototype.LeftMost = function() {
+			return undefined;
+		}
+
+		function Circle() {
+			Program.Log("Circle ctor");
+		}
+		Circle.prototype = new Shape();
+		Circle.prototype.Circle = function(y, x, r) {
+			this.y = y;
+			this.x = x;
+			this.r = r;
+			this.Shape(3.14159 * this.r * this.r);
+			return this;
+		}
+		Circle.prototype.LeftMost = function() {
+			return this.x - this.r;
+		}
+
+		function Box() {
+			Program.Log("Box ctor");
+		}
+		Box.prototype = new Shape();
+		Box.prototype.Box = function(top, left, bottom, right) {
+			this.t = top;
+			this.l = left;
+			this.b = bottom;
+			this.r = right;
+			this.Shape((this.r - this.l) * (this.b - this.t));
+			return this;
+		}
+		Box.prototype.LeftMost = function() {
+			return this.l;
+		}
+
+		var inherit = {};
+		function C() {
+			if (arguments[0] === inherit) return;
+		}
+		function D() {
+			if (arguments[0] === inherit) return;
+		}
+		D.prototype = new C(inherit);
+		D.prototype.constructor = D;
+		function E() {
+			if (arguments[0] === inherit) return;
+		}
+		E.prototype = new D(inherit);
+		E.prototype.constructor = E;
+		function VerifyE() {
+			var e = new E();
+			Program.Log("e.constructor=" + e.constructor);
+			Program.Log("e.__proto__.constructor=" + e.__proto__.constructor);
+			Program.Log("e.__proto__.__proto__.constructor=" + e.__proto__.__proto__.constructor);
+			Program.Log("e.__proto__.__proto__.__proto__.constructor=" + e.__proto__.__proto__.__proto__.constructor);
+			Program.Log("e.__proto__.__proto__.__proto__.__proto__.constructor=" + e.__proto__.__proto__.__proto__.__proto__.constructor);
+		}
+	</script>
+</head>
+<body onload="javascript:Program.OnLoad();">
+<textarea cols="80" rows="25" id="log" readonly></textarea>
+</body>
