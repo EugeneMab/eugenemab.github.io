@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<script type="text/javascript">
+	// Vec
+		function Vec(y, x) {
+			this.Y = y;
+			this.X = x;
+		}
+		Vec.prototype.Add = function(vecPeer) {
+			return new Vec(this.Y + vecPeer.Y, this.X + vecPeer.X);
+		}
+		Vec.prototype.Subtract = function(vecPeer) {
+			return new Vec(this.Y - vecPeer.Y, this.X - vecPeer.X);
+		}
+		Vec.prototype.Subtract = function(vecPeer) {
+			return new Vec(this.Y - vecPeer.Y, this.X - vecPeer.X);
+		}
+		Vec.prototype.TurnClock = function() {
+			return new Vec(this.X, -this.Y);
+		}
+		Vec.prototype.TurnCounterClock = function() {
+			return new Vec(-this.X, this.Y);
+		}
+		Vec.Compare = function(vecOne, vecTwo) {
+			return vecOne.Y < vecTwo.Y ? -1 : vecOne.Y > vecTwo.Y ? 1 :
+				vecOne.X < vecTwo.X ? -1 : vecOne.X > vecTwo.X ? 1 : 0;
+		}
+	// Layout
+		function Layout(vecList) {
+			this.VecList = vecList.slice(0).sort(Vec.Compare);
+			var minVec = this.VecList[0];
+			for (var v = 0; v < vecList.length; v++) {
+				this.VecList[v] = this.VecList[v].Subtract(minVec);
+			}
+		}
+		Layout.prototype.GetSerializedString = function() {
+			if (this.serializedStringCache) {
+				return this.serializedStringCache;
+			}
+			var valueList = [];
+			for (var v = 0; v < this.VecList.length; v++) {
+				valueList.push(this.VecList[v].Y);
+				valueList.push(this.VecList[v].X);
+			}
+			this.serializedStringCache = valueList.join(" ");
+			return this.serializedStringCache;
+		}
+		Layout.prototype.TurnClock = function () {
+			var vecList = [];
+			for (var v = 0; v < this.VecList.length; v++) {
+				vecList.push(this.VecList[v].TurnClock());
+			}
+			return new Layout(vecList);
+		}
+		Layout.prototype.TurnCouterClock = function () {
+			var vecList = [];
+			for (var v = 0; v < this.VecList.length; v++) {
+				vecList.push(this.VecList[v].TurnCouterClock());
+			}
+			return new Layout(vecList);
+		}
+		Layout.prototype.Contains = function(vec) {
+			var lo = 0;
+			var hi = this.VecList.length;
+			while (lo < hi) {
+				var mid = Math.floor((lo + hi) / 2);
+				var diff = Vec.Compare(vec, this.VecList[mid]);
+				if (diff < 0) {
+					hi = mid;
+					continue;
+				}
+				if (diff > 0) {
+					lo = mid + 1;
+					continue;
+				}
+				return true;
+			}
+			return false;
+		}
+		Layout.prototype.ToLog = function() {
+			var top = this.Top();
+			var bottom = this.Bottom();
+			var left = this.Left();
+			var right = this.Right();
+			var curr = 0;
+			var parts = [];
+			for (var y = top; y <= bottom; y++) {
+				for (var x = left; x <= right; x++) {
+					if (curr < this.VecList.length && y == this.VecList[curr].Y && x == this.VecList[curr].X) {
+						parts.push("#");
+						curr++;
+						continue;
+					}
+					parts.push(".");
+				}
+				parts.push("\r\n");
+			}
+			return parts.join("");
+		}
+		Layout.prototype.Top = function() {
+			var top = this.VecList[0].Y;
+			for (var v = 1; v < this.VecList.length; v++) {
+				if (this.VecList[v].Y >= top) {
+					continue;
+				}
+				top = this.VecList[v].Y;
+			}
+			return top;
+		}
+		Layout.prototype.Bottom = function() {
+			var bottom = this.VecList[0].Y;
+			for (var v = 1; v < this.VecList.length; v++) {
+				if (this.VecList[v].Y <= bottom) {
+					continue;
+				}
+				bottom = this.VecList[v].Y;
+			}
+			return bottom;
+		}
+		Layout.prototype.Left = function() {
+			var left = this.VecList[0].X;
+			for (var v = 1; v < this.VecList.length; v++) {
+				if (this.VecList[v].X >= left) {
+					continue;
+				}
+				left = this.VecList[v].X;
+			}
+			return left;
+		}
+		Layout.prototype.Right = function() {
+			var right = this.VecList[0].X;
+			for (var v = 1; v < this.VecList.length; v++) {
+				if (this.VecList[v].X <= right) {
+					continue;
+				}
+				right = this.VecList[v].X;
+			}
+			return right;
+		}
+		Layout.Compare = function(layoutOne, layoutTwo) {
+			var minLen = Math.min(layoutOne.VecList.length, layoutTwo.VecList.length);
+			for (var v = 0; v < minLen; v++) {
+				var diff = Vec.Compare(layoutOne.VecList[v], layoutTwo.VecList[v]);
+				if (diff != 0) {
+					return diff < 0 ? -1 : 1;
+				}
+			}
+			return layoutOne.length < layoutTwo.length ? -1 : layoutOne.length > layoutTwo.length ? 1 : 0;
+		}
+	// Shape
+		function Shape(vecList) {
+			var inputLayout = new Layout(vecList);
+			var layoutList = [ inputLayout ];
+			var layoutsSeen = {};
+			layoutsSeen[inputLayout.GetSerializedString()] = inputLayout;
+			var currLayout = inputLayout;
+			for (;;) {
+				var nextLayout = currLayout.TurnClock();
+				if (layoutsSeen[nextLayout.GetSerializedString()]) {
+					break;
+				}
+				layoutsSeen[nextLayout.GetSerializedString()] = nextLayout;
+				layoutList.push(nextLayout);
+				currLayout = nextLayout;
+			}
+			var minLayout = layoutList[0];
+			var minLayoutIndex = 0;
+			for (var l = 0; l < layoutList.length; l++) {
+				if (Layout.Compare(layoutList[l], minLayout) >= 0) {
+					continue;
+				}
+				minLayout = layoutList[l];
+				minLayoutIndex = l;
+			}
+			this.LayoutList = layoutList.slice(minLayoutIndex, layoutList.length).concat(layoutList.slice(0, minLayoutIndex));
+			this.RepLayout = this.LayoutList[0];
+		}
+		Shape.prototype.GetSerializedString = function() {
+			return this.RepLayout.GetSerializedString();
+		}
+	// Program
+		function Program() {
+			Program.Singleton = this;
+		}
+		Program.OnLoad = function() {
+			new Program().Run();
+		}
+		Program.prototype.Run = function() {
+			this.FindShapes();
+		}
+		Program.MaxVec = 4;
+		Program.prototype.FindShapes = function() {
+			var baseShape = new Shape([new Vec(0, 0)]);
+			var shapesSeen = {};
+			shapesSeen[baseShape.GetSerializedString()] = baseShape;
+			this.Shapes = [];
+			this.SolveShape(baseShape, 1, shapesSeen);
+			for (var s = 0; s < this.Shapes.length; s++) {
+				var shape = this.Shapes[s];
+				Program.Log("Shape " + s);
+				for (var l = 0; l < shape.LayoutList.length; l++) {
+					var layout = shape.LayoutList[l];
+					Program.Log("Shape " + s + " Layout " + l);
+					Program.Log(layout.ToLog());
+				}
+			}
+		}
+		Program.Directions = [new Vec(0, 1), new Vec(0, -1), new Vec(1, 0), new Vec(-1, 0)];
+		Program.prototype.SolveShape = function(inputShape, depth, shapesSeen) {
+			if (depth == Program.MaxVec) {
+				this.Shapes.push(inputShape);
+				return;
+			}
+			var repLayout = inputShape.RepLayout;
+			for (var v = 0; v < repLayout.VecList.length; v++) {
+				var vecExist = repLayout.VecList[v];
+				for (var d = 0; d < Program.Directions.length; d++) {
+					var vecAdded = vecExist.Add(Program.Directions[d]);
+					if (repLayout.Contains(vecAdded)) {
+						continue;
+					}
+					var vecListNew = repLayout.VecList.slice(0);
+					vecListNew.push(vecAdded);
+					var shapeNew = new Shape(vecListNew);
+					if (shapesSeen[shapeNew.GetSerializedString()]) {
+						continue;
+					}
+					shapesSeen[shapeNew.GetSerializedString()] = shapeNew;
+					this.SolveShape(shapeNew, depth + 1, shapesSeen);
+				}
+			}
+		}
+		Program.Log = function(line) {
+			if (!Program.LogElem) {
+				Program.LogElem = document.getElementById("log");
+				Program.LogString = "";
+			}
+			Program.LogString += line + "\r\n";
+			if (!Program.LogElem) {
+				return;
+			}
+			Program.LogElem.innerHTML = Program.LogString;
+		}
+	</script>
+</head>
+<body onload="javascript:Program.OnLoad();">
+<h1>Tetris</h1>
+<br/>Log<br/>
+<textarea cols="80" rows="25" id="log" readonly></textarea>
+</body>
