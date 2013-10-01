@@ -38,6 +38,13 @@
 			font-size: 32px;
 			color: #ff0000;
 		}
+		.score {
+			font-size: 24px;
+			color: #0000ff;
+		}
+		.midPane {
+			vertical-align: text-top;
+		}
 	</style>
 	<script type="text/javascript">
 	// Vec
@@ -246,7 +253,7 @@
 				Program.Log("Shape " + s);
 				for (var l = 0; l < shape.LayoutList.length; l++) {
 					var layout = shape.LayoutList[l];
-					Program.Log("Shape " + s + " Layout " + l);
+					Program.Log("Shape " + s + " Layout " + l + " : " + layout.GetSerializedString());
 					Program.Log(layout.ToLog());
 				}
 			}
@@ -272,7 +279,7 @@
 					var vecListNew = repLayout.VecList.slice(0);
 					vecListNew.push(vecAdded);
 					var layoutNew = new Layout(vecListNew);
-					if (layoutsSeen[layoutNew]) {
+					if (layoutsSeen[layoutNew.GetSerializedString()]) {
 						continue;
 					}
 					this.SolveShape(new Shape(layoutNew), depth + 1, layoutsSeen);
@@ -314,6 +321,8 @@
 				}
 				this.Board.push(line);
 			}
+			this.Score = 0;
+			this.ScoreElement = document.getElementById("score");
 		}
 		Program.prototype.OnCellClick = function(row, col) {
 			Program.Log("Click " + row + " " + col);
@@ -323,6 +332,22 @@
 		Program.prototype.Init = function() {
 			this.FindShapes();
 			this.CreateBoard();
+			this.GameOver = false;
+			setTimeout(Program.OnTimeout, Program.IntervalMs);
+		}
+		Program.prototype.Reset = function() {
+			for (var r = 0; r < Program.BoardHeight; r++) {
+				for (var c = 0; c < Program.BoardWidth; c++) {
+					this.Board[r][c].SetState("None");
+				}
+			}
+			document.getElementById("gameover").innerHTML = "";
+			document.getElementById("score").innerHTML = "";
+			this.Cursor = null;
+			this.Score = 0;
+			if (!this.GameOver) {
+				return;
+			}
 			this.GameOver = false;
 			setTimeout(Program.OnTimeout, Program.IntervalMs);
 		}
@@ -351,12 +376,14 @@
 			var newPos = cursor.Pos.Add(new Vec(1, 0));
 			if (!this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], newPos)) {
 				this.FreezeLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+				this.AddScore(Program.ScoreFreeze);
 				this.Erase();
 				this.Cursor = null;
 				return;
 			}
 			cursor.Pos = newPos;
 			this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+			this.AddScore(Program.ScoreDown);
 		}
 		Program.prototype.PutLayout = function(layout, baseVec) {
 			for (var v = 0; v < layout.VecList.length; v++) {
@@ -470,6 +497,10 @@
 				if (!this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], newPos)) {
 					cursor.Pos = goodPos;
 					this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+					if (step == 1) {
+						return;
+					}
+					this.AddScore(Program.ScoreFall);
 					return;
 				}
 				this.TakeLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], newPos)
@@ -502,7 +533,16 @@
 					this.Board[0][col].SetState("None");
 				}
 				row++;
+				this.AddScore(Program.ScoreErase);
 			}
+		}
+		Program.ScoreDown = 1;
+		Program.ScoreFall = Program.BoardHeight;
+		Program.ScoreFreeze = 100;
+		Program.ScoreErase = 1000;
+		Program.prototype.AddScore = function(delta) {
+			this.Score += delta;
+			this.ScoreElement.innerHTML = "Score: " + this.Score;
 		}
 	// Controller
 		function Controller() {
@@ -526,6 +566,25 @@
 		}
 		Controller.OnClick = function(row, col) {
 			Program.Singleton.OnCellClick(row, col);
+			var y = row / Program.BoardHeight;
+			var x = col / Program.BoardWidth;
+			if (y + x < 1) { // left-top
+				if (y - x <= 0) { // top
+					if (x <= 0.5) { // top (left part)
+						Program.Singleton.OnTurnCounterClock();
+					} else { // top (right part)
+						Program.Singleton.OnTurnClock();
+					}
+				} else { // left
+					Program.Singleton.OnMoveLeft();
+				}
+			} else { // right-bottom
+				if (y - x <= 0) { // right
+					Program.Singleton.OnMoveRight();
+				} else { // bottom
+					Program.Singleton.OnFall();
+				}
+			}
 		}
 		Controller.KeyUp = 38;
 		Controller.KeyDown = 40;
@@ -533,7 +592,7 @@
 		Controller.KeyRight = 39;
 		Controller.KeyEnter = 13;
 		Controller.OnKey = function(evt) {
-			Program.Log("OnKey " + evt.keyCode);
+			// Program.Log("OnKey " + evt.keyCode);
 			switch (evt.keyCode) {
 			case Controller.KeyUp:
 				Program.Singleton.OnTurnCounterClock();
@@ -552,6 +611,18 @@
 				break;
 			}
 		}
+		Controller.ShowHideLog = function() {
+			if (Controller.ShowLog) {
+				document.getElementById("logDiv").style.display = "none";
+				Controller.ShowLog = false;
+			} else {
+				document.getElementById("logDiv").style.display = "";
+				Controller.ShowLog = true;
+			}
+		}
+		Controller.Restart = function() {
+			Program.Singleton.Reset();
+		}
 	</script>
 </head>
 <body onload="javascript:Controller.OnLoad();">
@@ -559,7 +630,11 @@
 <table border='0'>
 	<tr>
 		<td><div id="board"></div></td>
-		<td>
+		<td class="midPane">
+			<div>
+				<button onclick="javascript:Controller.Restart();">Restart</button>
+				<button onclick="javascript:Controller.ShowHideLog();">Log</button>
+			</div>
 			<div>
 				Usage:<br/>
 				Up: Turn counter-clockwise<br/>
@@ -568,9 +643,25 @@
 				Right: Move right<br/>
 				Down: Fall<br/>
 			</div>
+			<div id="score" class="score"></div>
+			<div>
+				<table>
+				<tr>
+					<td><button onclick="javascript:Program.Singleton.OnTurnCounterClock();">Left Turn</button></td>
+					<td><button onclick="javascript:Program.Singleton.OnTurnClock();">Right Turn</button></td>
+				</tr>
+				<tr>
+					<td><button onclick="javascript:Program.Singleton.OnMoveLeft();">Move Left</button></td>
+					<td><button onclick="javascript:Program.Singleton.OnMoveRight();">Move Right</button></td>
+				</tr>
+				<tr>
+					<td colspan="2"><center><button onclick="javascript:Program.Singleton.OnFall();">Fall Down</button></center></td>
+				</tr>
+				</table>
+			</div>
 			<div id="gameover" class="gameOver"></div>
 		</td>
-		<td>Log<br/><textarea cols="80" rows="25" id="log" readonly></textarea></div></td>
+		<td><div id="logDiv" style="display:none">Log<br/><textarea cols="80" rows="25" id="log" readonly></textarea></div></div></td>
 	</tr>
 </table>
 </body>
