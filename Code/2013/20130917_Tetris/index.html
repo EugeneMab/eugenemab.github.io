@@ -1,6 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
+	<style type="text/css">
+		.pureTable {
+		}
+		.cellNone0{
+			width: 24px;
+			height: 24px;
+			background-color: #e0ffe0;
+		}
+		.cellNone1 {
+			width: 24px;
+			height: 24px;
+			background-color: #e0f0ef;
+		}
+		.cellCursor0 {
+			width: 24px;
+			height: 24px;
+			background-color: #00ff00;
+		}
+		.cellCursor1 {
+			width: 24px;
+			height: 24px;
+			background-color: #00f00f;
+		}
+		.cellFreeze0 {
+			width: 24px;
+			height: 24px;
+			background-color: #808f80;
+		}
+		.cellFreeze1 {
+			width: 24px;
+			height: 24px;
+			background-color: #80808f;
+		}
+		.gameOver {
+			font-size: 32px;
+			color: #ff0000;
+		}
+	</style>
 	<script type="text/javascript">
 	// Vec
 		function Vec(y, x) {
@@ -138,6 +176,12 @@
 			}
 			return right;
 		}
+		Layout.prototype.Width = function() {
+			return this.Right() + 1 - this.Left();
+		}
+		Layout.prototype.Height = function() {
+			return this.Bottom() + 1 - this.Top();
+		}
 		Layout.Compare = function(layoutOne, layoutTwo) {
 			var minLen = Math.min(layoutOne.VecList.length, layoutTwo.VecList.length);
 			for (var v = 0; v < minLen; v++) {
@@ -149,8 +193,7 @@
 			return layoutOne.length < layoutTwo.length ? -1 : layoutOne.length > layoutTwo.length ? 1 : 0;
 		}
 	// Shape
-		function Shape(vecList) {
-			var inputLayout = new Layout(vecList);
+		function Shape(inputLayout) {
 			var layoutList = [ inputLayout ];
 			var layoutsSeen = {};
 			layoutsSeen[inputLayout.GetSerializedString()] = inputLayout;
@@ -176,26 +219,28 @@
 			this.LayoutList = layoutList.slice(minLayoutIndex, layoutList.length).concat(layoutList.slice(0, minLayoutIndex));
 			this.RepLayout = this.LayoutList[0];
 		}
-		Shape.prototype.GetSerializedString = function() {
-			return this.RepLayout.GetSerializedString();
+	// Cell
+		function Cell(row, col, element) {
+			this.Row = row;
+			this.Col = col;
+			this.Element = element;
+			this.Odd = "" + (this.Row + this.Col) % 2;
+			this.State = "None";
+		}
+		Cell.prototype.SetState = function(newState) {
+			this.State = newState;
+			this.Element.className = "cell" + this.State + this.Odd;
 		}
 	// Program
 		function Program() {
 			Program.Singleton = this;
 		}
-		Program.OnLoad = function() {
-			new Program().Run();
-		}
-		Program.prototype.Run = function() {
-			this.FindShapes();
-		}
 		Program.MaxVec = 4;
 		Program.prototype.FindShapes = function() {
-			var baseShape = new Shape([new Vec(0, 0)]);
-			var shapesSeen = {};
-			shapesSeen[baseShape.GetSerializedString()] = baseShape;
+			var baseShape = new Shape(new Layout([new Vec(0, 0)]));
+			var layoutsSeen = {};
 			this.Shapes = [];
-			this.SolveShape(baseShape, 1, shapesSeen);
+			this.SolveShape(baseShape, 1, layoutsSeen);
 			for (var s = 0; s < this.Shapes.length; s++) {
 				var shape = this.Shapes[s];
 				Program.Log("Shape " + s);
@@ -207,7 +252,11 @@
 			}
 		}
 		Program.Directions = [new Vec(0, 1), new Vec(0, -1), new Vec(1, 0), new Vec(-1, 0)];
-		Program.prototype.SolveShape = function(inputShape, depth, shapesSeen) {
+		Program.prototype.SolveShape = function(inputShape, depth, layoutsSeen) {
+			for (var l = 0; l < inputShape.LayoutList.length; l++) {
+				var layout = inputShape.LayoutList[l];
+				layoutsSeen[layout.GetSerializedString()] = layout;
+			}
 			if (depth == Program.MaxVec) {
 				this.Shapes.push(inputShape);
 				return;
@@ -222,12 +271,11 @@
 					}
 					var vecListNew = repLayout.VecList.slice(0);
 					vecListNew.push(vecAdded);
-					var shapeNew = new Shape(vecListNew);
-					if (shapesSeen[shapeNew.GetSerializedString()]) {
+					var layoutNew = new Layout(vecListNew);
+					if (layoutsSeen[layoutNew]) {
 						continue;
 					}
-					shapesSeen[shapeNew.GetSerializedString()] = shapeNew;
-					this.SolveShape(shapeNew, depth + 1, shapesSeen);
+					this.SolveShape(new Shape(layoutNew), depth + 1, layoutsSeen);
 				}
 			}
 		}
@@ -242,10 +290,287 @@
 			}
 			Program.LogElem.innerHTML = Program.LogString;
 		}
+		Program.BoardWidth = 10;
+		Program.BoardHeight = 20;
+		Program.prototype.CreateBoard = function() {
+			var board = document.getElementById("board");
+			var html = [];
+			html.push("<table class='pureTable' border='0' cellpadding='0' cellspacing='0'>");
+			for (var row = 0; row < Program.BoardHeight; row++) {
+				html.push("<tr>");
+				for (var col = 0; col < Program.BoardWidth; col++) {
+					html.push("<td><div id='cell_" + row + "_" + col + "' class='cellNone" + (row + col) % 2 + "' onclick='Controller.OnClick(" + row + "," + col + ")'></div></td>");
+				}
+				html.push("</tr>");
+			}
+			html.push("</table>");
+			board.innerHTML = html.join("");
+			var doc = document;
+			this.Board = [];
+			for (var row = 0; row < Program.BoardHeight; row++) {
+				var line = [];
+				for (var col = 0; col < Program.BoardWidth; col++) {
+					line.push(new Cell(row, col, doc.getElementById("cell_" + row + "_" + col)));
+				}
+				this.Board.push(line);
+			}
+		}
+		Program.prototype.OnCellClick = function(row, col) {
+			Program.Log("Click " + row + " " + col);
+			//this.Board[row][col].style.backgroundColor = "#00ff00";
+		}
+		Program.IntervalMs = 500;
+		Program.prototype.Init = function() {
+			this.FindShapes();
+			this.CreateBoard();
+			this.GameOver = false;
+			setTimeout(Program.OnTimeout, Program.IntervalMs);
+		}
+		Program.OnTimeout = function() {
+			Program.Singleton.OnTimer();
+		}
+		Program.prototype.OnTimer = function() {
+			if (this.GameOver) {
+				return;
+			}
+			setTimeout(Program.OnTimeout, Program.IntervalMs);
+			if (!this.Cursor) {
+				var shapeIndex = Math.floor(Math.random() * this.Shapes.length);
+				var shape = this.Shapes[shapeIndex];
+				var x = Math.floor((Program.BoardWidth - shape.LayoutList[0].Width()) / 2);
+				if (!this.PutLayout(shape.LayoutList[0], new Vec(0, x))) {
+					this.GameOver = true;
+					this.ShowGameOver();
+					return;
+				}
+				this.Cursor = { Shape: shape, LayoutIndex: 0, Pos: new Vec(0, x) };
+				return;
+			}
+			var cursor = this.Cursor;
+			this.TakeLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+			var newPos = cursor.Pos.Add(new Vec(1, 0));
+			if (!this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], newPos)) {
+				this.FreezeLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+				this.Erase();
+				this.Cursor = null;
+				return;
+			}
+			cursor.Pos = newPos;
+			this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+		}
+		Program.prototype.PutLayout = function(layout, baseVec) {
+			for (var v = 0; v < layout.VecList.length; v++) {
+				var tryVec = baseVec.Add(layout.VecList[v]);
+				if (!this.IsVecReady(tryVec)) {
+					return false;
+				}
+			}
+			for (var v = 0; v < layout.VecList.length; v++) {
+				var vec = baseVec.Add(layout.VecList[v]);
+				this.PutVec(vec);
+			}
+			return true;
+		}
+		Program.prototype.TakeLayout = function(layout, baseVec) {
+			for (var v = 0; v < layout.VecList.length; v++) {
+				var vec = baseVec.Add(layout.VecList[v]);
+				this.TakeVec(vec);
+			}
+		}
+		Program.prototype.FreezeLayout = function(layout, baseVec) {
+			for (var v = 0; v < layout.VecList.length; v++) {
+				var vec = baseVec.Add(layout.VecList[v]);
+				this.FreezeVec(vec);
+			}
+		}
+		Program.prototype.IsVecReady = function(vec) {
+			if (vec.Y < 0 || vec.Y >= Program.BoardHeight || vec.X < 0 || vec.X >= Program.BoardWidth) {
+				return false;
+			}
+			return this.Board[vec.Y][vec.X].State == "None";
+		}
+		Program.prototype.PutVec = function(vec) {
+			this.Board[vec.Y][vec.X].SetState("Cursor");
+		}
+		Program.prototype.TakeVec = function(vec) {
+			this.Board[vec.Y][vec.X].SetState("None");
+		}
+		Program.prototype.FreezeVec = function(vec) {
+			this.Board[vec.Y][vec.X].SetState("Freeze");
+		}
+		Program.prototype.ShowGameOver = function() {
+			Program.Log("Game Over!");
+			document.getElementById("gameover").innerHTML = "Game Over!";
+		}
+		Program.prototype.OnTurnCounterClock = function() {
+			if (this.GameOver || !this.Cursor) {
+				return;
+			}
+			var cursor = this.Cursor;
+			this.TakeLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+			var newIndex = cursor.LayoutIndex == 0 ? cursor.Shape.LayoutList.length - 1 : cursor.LayoutIndex - 1;
+			if (!this.PutLayout(cursor.Shape.LayoutList[newIndex], cursor.Pos)) {
+				this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+				return;
+			}
+			cursor.LayoutIndex = newIndex;
+			this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+		}
+		Program.prototype.OnTurnClock = function() {
+			if (this.GameOver || !this.Cursor) {
+				return;
+			}
+			var cursor = this.Cursor;
+			this.TakeLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+			var newIndex = cursor.LayoutIndex == cursor.Shape.LayoutList.length - 1 ? 0 : cursor.LayoutIndex + 1;
+			if (!this.PutLayout(cursor.Shape.LayoutList[newIndex], cursor.Pos)) {
+				this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+				return;
+			}
+			cursor.LayoutIndex = newIndex;
+			this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+		}
+		Program.prototype.OnMoveLeft = function() {
+			if (this.GameOver || !this.Cursor) {
+				return;
+			}
+			var cursor = this.Cursor;
+			this.TakeLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+			var newPos = cursor.Pos.Add(new Vec(0, -1));
+			if (!this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], newPos)) {
+				this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+				return;
+			}
+			cursor.Pos = newPos;
+			this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+		}
+		Program.prototype.OnMoveRight = function() {
+			if (this.GameOver || !this.Cursor) {
+				return;
+			}
+			var cursor = this.Cursor;
+			this.TakeLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+			var newPos = cursor.Pos.Add(new Vec(0, 1));
+			if (!this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], newPos)) {
+				this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+				return;
+			}
+			cursor.Pos = newPos;
+			this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+		}
+		Program.prototype.OnFall = function() {
+			if (this.GameOver || !this.Cursor) {
+				return;
+			}
+			var cursor = this.Cursor;
+			this.TakeLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+			var goodPos = cursor.Pos;
+			for (var step = 1; ; step++) {
+				var newPos = cursor.Pos.Add(new Vec(step, 0));
+				if (!this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], newPos)) {
+					cursor.Pos = goodPos;
+					this.PutLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], cursor.Pos);
+					return;
+				}
+				this.TakeLayout(cursor.Shape.LayoutList[cursor.LayoutIndex], newPos)
+				goodPos = newPos;
+			}
+		}
+		Program.prototype.Erase = function() {
+			var layout = this.Cursor.Shape.LayoutList[this.Cursor.LayoutIndex];
+			var pos = this.Cursor.Pos;
+			for (var row = pos.Y + layout.Bottom(); row >= pos.Y + layout.Top(); row--) {
+				if (row < 0 || row >= Program.BoardHeight) {
+					continue;
+				}
+				var toErase = true;
+				for (var col = 0; col < Program.BoardWidth; col++) {
+					if (this.Board[row][col].State != "Freeze") {
+						toErase = false;
+						break;
+					}
+				}
+				if (!toErase) {
+					continue;
+				}
+				for (var r = row; r > 0; r--) {
+					for (var col = 0; col < Program.BoardWidth; col++) {
+						this.Board[r][col].SetState(this.Board[r - 1][col].State);
+					}
+				}
+				for (var col = 0; col < Program.BoardWidth; col++) {
+					this.Board[0][col].SetState("None");
+				}
+				row++;
+			}
+		}
+	// Controller
+		function Controller() {
+		}
+		// Controller.TestMode = true;
+		Controller.OnLoad = function() {
+			new Program().Init();
+			window.onkeydown = Controller.OnKey;
+			if (Controller.TestMode) {
+				for (var r = 17; r < 20; r++) {
+					for (var c = 0; c < 9; c++) {
+						Program.Singleton.Board[r][c].SetState("Freeze");
+					}
+				}
+				Program.Singleton.Cursor = {
+					Shape: Program.Singleton.Shapes[0],
+					LayoutIndex: 1,
+					Pos: new Vec(0, 3)
+				};
+			}
+		}
+		Controller.OnClick = function(row, col) {
+			Program.Singleton.OnCellClick(row, col);
+		}
+		Controller.KeyUp = 38;
+		Controller.KeyDown = 40;
+		Controller.KeyLeft = 37;
+		Controller.KeyRight = 39;
+		Controller.KeyEnter = 13;
+		Controller.OnKey = function(evt) {
+			Program.Log("OnKey " + evt.keyCode);
+			switch (evt.keyCode) {
+			case Controller.KeyUp:
+				Program.Singleton.OnTurnCounterClock();
+				break;
+			case Controller.KeyEnter:
+				Program.Singleton.OnTurnClock();
+				break;
+			case Controller.KeyLeft:
+				Program.Singleton.OnMoveLeft();
+				break;
+			case Controller.KeyRight:
+				Program.Singleton.OnMoveRight();
+				break;
+			case Controller.KeyDown:
+				Program.Singleton.OnFall();
+				break;
+			}
+		}
 	</script>
 </head>
-<body onload="javascript:Program.OnLoad();">
+<body onload="javascript:Controller.OnLoad();">
 <h1>Tetris</h1>
-<br/>Log<br/>
-<textarea cols="80" rows="25" id="log" readonly></textarea>
+<table border='0'>
+	<tr>
+		<td><div id="board"></div></td>
+		<td>
+			<div>
+				Usage:<br/>
+				Up: Turn counter-clockwise<br/>
+				Enter: Turn clockwise<br/>
+				Left: Move left<br/>
+				Right: Move right<br/>
+				Down: Fall<br/>
+			</div>
+			<div id="gameover" class="gameOver"></div>
+		</td>
+		<td>Log<br/><textarea cols="80" rows="25" id="log" readonly></textarea></div></td>
+	</tr>
+</table>
 </body>
