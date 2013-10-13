@@ -5,3 +5,14 @@
 span {
     font-style: italic
 }
+
+.cellNone0 {
+    width: 16px;
+    height: 16px;
+    background-color: #e0ffe0;
+}
+.cellNone1 {
+    width: 16px;
+    height: 16px;
+    background-color: #e0f0ef;
+}
