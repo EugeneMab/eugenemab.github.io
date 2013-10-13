@@ -47,6 +47,7 @@ module Snake {
     class Model {
         context: IModelContext;
         gameOver: boolean;
+        full: boolean;
         score: number;
         dim: Vector;
         board: CellModel[][];
@@ -56,6 +57,7 @@ module Snake {
         reset(context: IModelContext, dim: Vector) {
             this.context = context;
             this.gameOver = false;
+            this.full = false;
             this.score = 0;
             this.dim = dim;
             this.board = new Array<CellModel[]>(this.dim.y);
@@ -76,16 +78,27 @@ module Snake {
             return this.board[vector.y][vector.x];
         }
         private createBonus() {
-            for (; ;) {
-                var vec: Vector = new Vector(Math.floor(Math.random() * this.dim.y), Math.floor(Math.random() * this.dim.x));
-                var cell: CellModel = this.getCell(vec);
-                if (cell.state != CellState.none) {
-                    continue;
+            var vecs: Vector[] = [];
+            for (var y: number = 0; y < this.dim.y; y++) {
+                for (var x: number = 0; x < this.dim.x; x++) {
+                    if (this.board[y][x].state != CellState.none) {
+                        continue;
+                    }
+                    vecs.push(new Vector(y, x));
                 }
-                cell.state = CellState.bonus;
-                this.context.updateCell(vec);
+            }
+            if (vecs.length == 0) {
+                this.gameOver = true;
+                this.full = true;
+                this.context.updateGameover();
                 return;
             }
+            var vec: Vector = vecs[Math.floor(Math.random() * vecs.length)];
+            var cell: CellModel = this.getCell(vec);
+
+            cell.state = CellState.bonus;
+            this.context.updateCell(vec);
+            return;
         }
         move() {
             this.score += config.scoreForMove;
@@ -222,7 +235,7 @@ module Snake {
         }
         updateGameover() {
             if (this.model.gameOver) {
-                this.gameoverDiv.innerHTML = "Game Over!"
+                this.gameoverDiv.innerHTML = this.model.full ? "Full!" : "Game Over!"
             }
         }
     }

@@ -59,6 +59,7 @@ var Snake;
         Model.prototype.reset = function (context, dim) {
             this.context = context;
             this.gameOver = false;
+            this.full = false;
             this.score = 0;
             this.dim = dim;
             this.board = new Array(this.dim.y);
@@ -79,16 +80,27 @@ var Snake;
             return this.board[vector.y][vector.x];
         };
         Model.prototype.createBonus = function () {
-            for (; ;) {
-                var vec = new Vector(Math.floor(Math.random() * this.dim.y), Math.floor(Math.random() * this.dim.x));
-                var cell = this.getCell(vec);
-                if (cell.state != CellState.none) {
-                    continue;
+            var vecs = [];
+            for (var y = 0; y < this.dim.y; y++) {
+                for (var x = 0; x < this.dim.x; x++) {
+                    if (this.board[y][x].state != CellState.none) {
+                        continue;
+                    }
+                    vecs.push(new Vector(y, x));
                 }
-                cell.state = CellState.bonus;
-                this.context.updateCell(vec);
+            }
+            if (vecs.length == 0) {
+                this.gameOver = true;
+                this.full = true;
+                this.context.updateGameover();
                 return;
             }
+            var vec = vecs[Math.floor(Math.random() * vecs.length)];
+            var cell = this.getCell(vec);
+
+            cell.state = CellState.bonus;
+            this.context.updateCell(vec);
+            return;
         };
         Model.prototype.move = function () {
             this.score += config.scoreForMove;
@@ -224,7 +236,7 @@ var Snake;
         };
         View.prototype.updateGameover = function () {
             if (this.model.gameOver) {
-                this.gameoverDiv.innerHTML = "Game Over!";
+                this.gameoverDiv.innerHTML = this.model.full ? "Full!" : "Game Over!";
             }
         };
         return View;
