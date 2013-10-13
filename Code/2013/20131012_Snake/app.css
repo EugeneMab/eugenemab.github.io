@@ -6,13 +6,54 @@ span {
     font-style: italic
 }
 
-.cellNone0 {
+.cell_common {
     width: 16px;
     height: 16px;
+}
+
+.cell_none_0 {
     background-color: #e0ffe0;
 }
-.cellNone1 {
-    width: 16px;
-    height: 16px;
+.cell_none_1 {
     background-color: #e0f0ef;
+}
+
+.cell_cursor_0 {
+    background-color: #4cff00;
+}
+.cell_cursor_1 {
+    background-color: #00ff21;
+}
+
+.cell_head_0 {
+    background-color: #0000ff;
+}
+.cell_head_1 {
+    background-color: #4646e6;
+}
+
+.cell_bonus_0 {
+    background-color: #eb10f5;
+}
+.cell_bonus_1 {
+    background-color: #f60ba9;
+}
+
+.cell_dead_0 {
+    background-color: #ff0000;
+}
+.cell_dead_1 {
+    background-color: #ff0000;
+}
+
+.score {
+    font-size: 24px;
+    color: #0000ff;
+}
+.gameover {
+    font-size: 32px;
+    color: #ff0000;
+}
+.pane {
+    vertical-align: text-top;
 }

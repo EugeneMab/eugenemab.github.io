@@ -1,5 +1,4 @@
 ﻿<!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -9,6 +8,19 @@
 </head>
 <body>
     <h1>Snake</h1>
-    <div id="content"></div>
+    <table>
+        <tr>
+            <td>
+                <div id="content"></div>
+            </td>
+            <td class="pane">
+                <button onclick="Snake.ctrl.onClickRestart();">Restart</button>
+                <br/>
+                <div id="score" class="score"></div>
+                <br/>
+                <div id="gameover" class="gameover"></div>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>
