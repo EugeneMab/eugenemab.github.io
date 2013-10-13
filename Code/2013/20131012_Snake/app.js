@@ -4,7 +4,8 @@ var Snake;
         function Config() {
             this.height = 30;
             this.width = 40;
-            this.timerMillisec = 100;
+            this.timerBaseMillisec = 100;
+            this.timerMaxMillisec = 2000;
             this.scoreForMove = 1;
             this.scoreForBonus = 1000;
             this.growthForBonus = 2;
@@ -194,12 +195,24 @@ var Snake;
     var View = (function () {
         function View() {
         }
-        View.prototype.reset = function (model) {
+        View.prototype.reset = function (model, timeoutMillisec) {
             this.model = model;
             this.docElem = document;
             this.contentDiv = this.docElem.getElementById("content");
-            this.scoreDiv = this.docElem.getElementById("score");
+            this.buttonDiv = this.docElem.getElementById("button");
+            this.intervalSpan = this.docElem.getElementById("interval");
+            this.scoreSpan = this.docElem.getElementById("score");
             this.gameoverDiv = this.docElem.getElementById("gameover");
+
+            var buttonHtml = "";
+            for (var timeout = config.timerBaseMillisec; timeout < config.timerMaxMillisec; timeout *= 2) {
+                buttonHtml += "<button onclick='Snake.ctrl.onClickRestart(" + timeout + ");'>Restart with " + timeout + " milliseconds</button><br/>";
+            }
+            this.buttonDiv.innerHTML = buttonHtml;
+
+            this.currentTimeoutMillisec = timeoutMillisec;
+            this.intervalSpan.innerHTML = timeoutMillisec.toString();
+
             var contentHtml = "";
             contentHtml += "<table border='0' cellpadding='0' cellspacing='0'>";
             for (var y = 0; y < this.model.dim.y; y++) {
@@ -219,7 +232,9 @@ var Snake;
                     this.board[y][x] = new CellView(this.model.board[y][x], td);
                 }
             }
-            this.scoreDiv.innerHTML = "Score: " + this.model.score;
+
+            this.scoreSpan.innerHTML = this.model.score.toString();
+
             this.gameoverDiv.innerHTML = "";
         };
         View.prototype.updateCell = function (vector) {
@@ -232,7 +247,7 @@ var Snake;
             return this.board[vector.y][vector.x];
         };
         View.prototype.updateScore = function () {
-            this.scoreDiv.innerHTML = "Score: " + this.model.score;
+            this.scoreSpan.innerHTML = this.model.score.toString();
         };
         View.prototype.updateGameover = function () {
             if (this.model.gameOver) {
@@ -263,13 +278,13 @@ var Snake;
             window.onkeydown = function (ev) {
                 that.onKeyDown(ev);
             };
-            this.onClickRestart();
+            this.onClickRestart(config.timerBaseMillisec);
         };
-        Ctrl.prototype.onClickRestart = function () {
+        Ctrl.prototype.onClickRestart = function (timeoutMillisec) {
             this.model = new Model();
             this.view = new View();
             this.model.reset(this.view, new Vector(config.height, config.width));
-            this.view.reset(this.model);
+            this.view.reset(this.model, timeoutMillisec);
             this.startTimer();
         };
         Ctrl.prototype.startTimer = function () {
@@ -277,7 +292,7 @@ var Snake;
             var that = this;
             this.timeoutHandle = setTimeout(function () {
                 that.onTimeout();
-            }, config.timerMillisec);
+            }, this.view.currentTimeoutMillisec);
         };
         Ctrl.prototype.stopTimer = function () {
             if (this.timeoutHandle == null) {
@@ -329,7 +344,7 @@ var Snake;
                     break;
                 }
                 case KeyCode.enter: {
-                    this.onClickRestart();
+                    this.onClickRestart(this.view.currentTimeoutMillisec);
                     break;
                 }
             }

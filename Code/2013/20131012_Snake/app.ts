@@ -2,7 +2,8 @@ module Snake {
     class Config {
         height: number = 30;
         width: number = 40;
-        timerMillisec: number = 100;
+        timerBaseMillisec: number = 100;
+        timerMaxMillisec: number = 2000;
         scoreForMove: number = 1;
         scoreForBonus: number = 1000;
         growthForBonus: number = 2;
@@ -191,14 +192,29 @@ module Snake {
         private docElem: HTMLDocument;
         private contentDiv: HTMLDivElement;
         private board: CellView[][];
-        private scoreDiv: HTMLDivElement;
+        private buttonDiv: HTMLDivElement;
+        private intervalSpan: HTMLSpanElement;
+        private scoreSpan: HTMLSpanElement;
         private gameoverDiv: HTMLDivElement;
-        reset(model: Model) {
+        currentTimeoutMillisec: number;
+        reset(model: Model, timeoutMillisec: number) {
             this.model = model;
             this.docElem = document;
             this.contentDiv = <HTMLDivElement>this.docElem.getElementById("content");
-            this.scoreDiv = <HTMLDivElement>this.docElem.getElementById("score");
+            this.buttonDiv = <HTMLDivElement>this.docElem.getElementById("button");
+            this.intervalSpan = <HTMLSpanElement>this.docElem.getElementById("interval");
+            this.scoreSpan = <HTMLSpanElement>this.docElem.getElementById("score");
             this.gameoverDiv = <HTMLDivElement>this.docElem.getElementById("gameover");
+
+            var buttonHtml: string = "";
+            for (var timeout: number = config.timerBaseMillisec; timeout < config.timerMaxMillisec; timeout *= 2) {
+                buttonHtml += "<button onclick='Snake.ctrl.onClickRestart(" + timeout + ");'>Restart with " + timeout + " milliseconds</button><br/>";
+            }
+            this.buttonDiv.innerHTML = buttonHtml;
+
+            this.currentTimeoutMillisec = timeoutMillisec;
+            this.intervalSpan.innerHTML = timeoutMillisec.toString();
+
             var contentHtml: string = "";
             contentHtml += "<table border='0' cellpadding='0' cellspacing='0'>";
             for (var y: number = 0; y < this.model.dim.y; y++) {
@@ -218,7 +234,9 @@ module Snake {
                     this.board[y][x] = new CellView(this.model.board[y][x], td);
                 }
             }
-            this.scoreDiv.innerHTML = "Score: " + this.model.score;
+
+            this.scoreSpan.innerHTML = this.model.score.toString();
+
             this.gameoverDiv.innerHTML = "";
         }
         updateCell(vector: Vector) {
@@ -231,7 +249,7 @@ module Snake {
             return this.board[vector.y][vector.x];
         }
         updateScore() {
-            this.scoreDiv.innerHTML = "Score: " + this.model.score;
+            this.scoreSpan.innerHTML = this.model.score.toString();
         }
         updateGameover() {
             if (this.model.gameOver) {
@@ -258,19 +276,19 @@ module Snake {
         onLoad() {
             var that = this;
             window.onkeydown = (ev: KeyboardEvent) => { that.onKeyDown(ev); };
-            this.onClickRestart();
+            this.onClickRestart(config.timerBaseMillisec);
         }
-        onClickRestart() {
+        onClickRestart(timeoutMillisec: number) {
             this.model = new Model();
             this.view = new View();
             this.model.reset(this.view, new Vector(config.height, config.width));
-            this.view.reset(this.model);
+            this.view.reset(this.model, timeoutMillisec);
             this.startTimer();
         }
         private startTimer() {
             this.stopTimer();
             var that = this;
-            this.timeoutHandle = setTimeout(() => { that.onTimeout(); }, config.timerMillisec);
+            this.timeoutHandle = setTimeout(() => { that.onTimeout(); }, this.view.currentTimeoutMillisec);
         }
         private stopTimer() {
             if (this.timeoutHandle == null) {
@@ -322,7 +340,7 @@ module Snake {
                     break;
                 }
                 case KeyCode.enter: {
-                    this.onClickRestart();
+                    this.onClickRestart(this.view.currentTimeoutMillisec);
                     break;
                 }
             }

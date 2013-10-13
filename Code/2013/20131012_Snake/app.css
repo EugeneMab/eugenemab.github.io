@@ -2,10 +2,6 @@
     font-family: 'Segoe UI', sans-serif
 }
 
-span {
-    font-style: italic
-}
-
 .cell_common {
     width: 16px;
     height: 16px;
