@@ -11,20 +11,20 @@
                 if (used[o.index].cnt <= 0) {
                     return false;
                 }
-                stac[top] = {
+                stac[stacTop] = {
                     val: used[o.index].val,
                     oper: o
                 };
                 used[o.index].cnt--;
                 remain--;
-                top++;
+                stacTop++;
                 return true;
             },
             Restore: function () {
-                var res = stac[top - 1];
+                var res = stac[stacTop - 1];
                 used[res.oper.index].cnt++;
                 remain++;
-                top--;
+                stacTop--;
             },
             Show: function (r) {
                 return used[r.oper.index].val;
@@ -33,25 +33,25 @@
     }
     var Add = {
         Try: function (o) {
-            if (top < 2) {
+            if (stacTop < 2) {
                 return false;
             }
-            var l = stac[top - 2];
-            var r = stac[top - 1];
-            stac[top - 2] = {
+            var l = stac[stacTop - 2];
+            var r = stac[stacTop - 1];
+            stac[stacTop - 2] = {
                 val: (l.val + r.val),
                 oper: o,
                 left: l,
                 right: r
             };
-            top--;
+            stacTop--;
             return true;
         },
         Restore: function (o) {
-            var res = stac[top - 1];
-            stac[top - 1] = res.left;
-            stac[top] = res.right;
-            top++;
+            var res = stac[stacTop - 1];
+            stac[stacTop - 1] = res.left;
+            stac[stacTop] = res.right;
+            stacTop++;
         },
         Show: function (r) {
             return "(" + r.left.oper.Show(r.left) + "+" + r.right.oper.Show(r.right) + ")";
@@ -59,25 +59,25 @@
     };
     var Subtract = {
         Try: function (o) {
-            if (top < 2) {
+            if (stacTop < 2) {
                 return false;
             }
-            var l = stac[top - 2];
-            var r = stac[top - 1];
-            stac[top - 2] = {
+            var l = stac[stacTop - 2];
+            var r = stac[stacTop - 1];
+            stac[stacTop - 2] = {
                 val: (l.val - r.val),
                 oper: o,
                 left: l,
                 right: r
             };
-            top--;
+            stacTop--;
             return true;
         },
         Restore: function () {
-            var res = stac[top - 1];
-            stac[top - 1] = res.left;
-            stac[top] = res.right;
-            top++;
+            var res = stac[stacTop - 1];
+            stac[stacTop - 1] = res.left;
+            stac[stacTop] = res.right;
+            stacTop++;
         },
         Show: function (r) {
             return "(" + r.left.oper.Show(r.left) + "-" + r.right.oper.Show(r.right) + ")";
@@ -85,25 +85,25 @@
     };
     var Multiply = {
         Try: function (o) {
-            if (top < 2) {
+            if (stacTop < 2) {
                 return false;
             }
-            var l = stac[top - 2];
-            var r = stac[top - 1];
-            stac[top - 2] = {
+            var l = stac[stacTop - 2];
+            var r = stac[stacTop - 1];
+            stac[stacTop - 2] = {
                 val: (l.val * r.val),
                 oper: o,
                 left: l,
                 right: r
             };
-            top--;
+            stacTop--;
             return true;
         },
         Restore: function () {
-            var res = stac[top - 1];
-            stac[top - 1] = res.left;
-            stac[top] = res.right;
-            top++;
+            var res = stac[stacTop - 1];
+            stac[stacTop - 1] = res.left;
+            stac[stacTop] = res.right;
+            stacTop++;
         },
         Show: function (r) {
             return "(" + r.left.oper.Show(r.left) + "*" + r.right.oper.Show(r.right) + ")";
@@ -111,25 +111,25 @@
     };
     var Divide = {
         Try: function (o) {
-            if (top < 2 || Math.abs(stac[top - 1].val) < 0.00001) {
+            if (stacTop < 2 || Math.abs(stac[stacTop - 1].val) < 0.00001) {
                 return false;
             }
-            var l = stac[top - 2];
-            var r = stac[top - 1];
-            stac[top - 2] = {
+            var l = stac[stacTop - 2];
+            var r = stac[stacTop - 1];
+            stac[stacTop - 2] = {
                 val: (l.val / r.val),
                 oper: o,
                 left: l,
                 right: r
             };
-            top--;
+            stacTop--;
             return true;
         },
         Restore: function () {
-            var res = stac[top - 1];
-            stac[top - 1] = res.left;
-            stac[top] = res.right;
-            top++;
+            var res = stac[stacTop - 1];
+            stac[stacTop - 1] = res.left;
+            stac[stacTop] = res.right;
+            stacTop++;
         },
         Show: function (r) {
             return "(" + r.left.oper.Show(r.left) + "/" + r.right.oper.Show(r.right) + ")";
@@ -137,11 +137,11 @@
     };
     var Negate = {
         Try: function (o) {
-            if (top < 1 || stac[top - 1].oper == o) {
+            if (stacTop < 1 || stac[stacTop - 1].oper == o) {
                 return false;
             }
-            var l = stac[top - 1];
-            stac[top - 1] = {
+            var l = stac[stacTop - 1];
+            stac[stacTop - 1] = {
                 val: (-l.val),
                 oper: o,
                 left: l
@@ -149,8 +149,8 @@
             return true;
         },
         Restore: function () {
-            var res = stac[top - 1];
-            stac[top - 1] = res.left;
+            var res = stac[stacTop - 1];
+            stac[stacTop - 1] = res.left;
         },
         Show: function (r) {
             return "(-" + r.left.oper.Show(r.left) + ")";
@@ -162,7 +162,7 @@
     var remain; // int
     var choice; // [] Operation
     var stac; // [] Result{ val: float, oper: Operation, left: Result, right: Result }
-    var top; // int
+    var stacTop; // int
     var count; // int
     function Solve(input) {
         size = input.length;
@@ -182,11 +182,11 @@
         }
         count = 0;
         stac = [];
-        top = 0;
+        stacTop = 0;
         Search(0);
     }
     function Search() {
-        if (remain == 0 && top == 1 && Math.abs(stac[0].val - 24) < 0.00001) {
+        if (remain == 0 && stacTop == 1 && Math.abs(stac[0].val - 24) < 0.00001) {
             count++;
             document.getElementById("output").innerHTML += count + ": " + stac[0].oper.Show(stac[0]) + "=24\r\n";
             return;
