@@ -1,0 +1,645 @@
+<html>
+<head>
+<title>Dodolingi
+</title>
+<style>
+body
+{
+	font-family: Calibri, Arial, sans-serif;
+}
+</style>
+</head>
+<body bgcolor="#fffff0" text="#1f3f7d">
+<center><h1>Doudouling (version 2015)</h1>
+<h2>Dodolingi (veson 2015)</h2>
+an artificial language by Jian Huang<br>
+un atifizal ling pe mi<br></center>
+<ol>
+<li><a href="#introduction">Introduction</a>
+<li><a href="#sample">Sample Passages</a>
+<li><a href="#schema">Schema Detail</a>
+<li><a href="#discuss">Discussions</a>
+<li><a href="dict.html">Doudouling to English Dictionary</a>
+<li><a href="word.html">English to Doudouling Dictionary</a>
+<li><a href="dup.html">Duplication analysis</a>
+<li><a href="index.html">English translation (this document)</a>
+<li><a href="chinese.html">Chinese translation</a>
+<li><a href="dodolingi.html">Doudouling translation (reflective introduction)</a>
+<li><a href="http://conlang.wikia.com/wiki/Doudouling">Doudouling in "wikia" site</a>
+</ol>
+<a name=introduction>
+<center><h2>Introduction</h2>
+</center>
+<h3>Principles: compress Latin words into C-V syllable</h3>
+<p>
+The main idea of my artificial language is to simplify Latin words into one-consonant plus one-vowel structure, wherein the one-vowel is permitted to be nasal.
+That is because we think this structure is the best for singing.
+Also, it is required to avoid adding too many extra syllables.
+</p>
+<p>
+Most Latin word can be regarded as the structure below:<br>
+<center><b>{s} {consonant} {r/l} {i/u} vowel {i/u} {consonant} {consonant}</b></center>
+We write it simple like below:<br>
+<center><b>s C1 (r/l) S1 V S2 C2 C3</b></center>
+Our target is simplify this kind of structure into the one below:<br>
+<center><b>C V (V can be nasal)</b></center>
+</p>
+<h3>Part {s}</h3>
+<p>
+First, the {s}, the most popular combinations are {sp-}, {st-}, {sc-}, we convert them into a single consonant,
+respectively, {ph}, {th}, {ch}, their pronounciations are assigned as [w], [dz], [j] (or use [t&#x0283;] (ch) alternatively) in order.<br/>
+Examples: state =&gt; thate; spera=&gt;phera;  sport =&gt; phota; science =&gt; chienzo<br>
+</p>
+<h3>Part {consonant 1}</h3>
+<p>
+Then, the {C1}, we simplify them into the legal consonants below:<br>
+<center><b>b p m f v<br>d t n s z<br>g c h r l</b></center>
+Where, the pronunciations are assigned as, z to [ts] (from German), c to [k] absolutely, h to [&#x014B;] (ng) (may be not good, or use [&#x0283;] alternatively),
+r to [h] (from French, we avoid the hard-to-pronounce [r])<br>
+Some details can be considered in further improvement,
+but the main goal is to simplify them into a single and easy consonant.<br>
+One exception is that {pt} is converted to {b}.<br>
+Rules: ph =&gt; f; w =&gt; v; th =&gt; t; c ([s]) =&gt; z; q,k =&gt; c; x =&gt; ch; ch ([&#x0283;]/[t&#x0283;]) =&gt; ch; j,y =&gt; g (via gi-); pt =&gt; b<br>
+Examples: photo =&gt; foto; wagon =&gt; vagon; cent =&gt; zente; center =&gt; zenter; aqua =&gt; aca; question =&gt; cethon; tank =&gt; tanco; xerox =&gt; cherose; china =&gt; china; japan =&gt; gapan; adopt =&gt; adoba
+</p>
+<h3>Part {r/l}</h3>
+<p>
+Then, the {r/l}, they will be removed.
+But, this will cause great loss of information and then create confusions.
+So a compensated vowel will appended at the end of the word. For {r}, {-o}; for {l}, {-u}:<br>
+Examples: tract =&gt; tato; train =&gt; teno; creat =&gt; ceato; glad =&gt; gadu; class =&gt; casu
+</p>
+<h3>Part {semivowel 1}</h3>
+<p>
+The {S1}, the semivowel before vowel are mostly useless and can be delete,
+except sometimes they appears in the stem of words, like piano and violet.
+We should seperate the word into to two C-V syllables, then an additional syllable is created.
+</p>
+<h3>Part {vowel}</h3>
+<p>
+The {V} is simple relatively. Just convert y =&gt; i.
+</p>
+<h3>Part {semivowel 2}</h3>
+<p>
+The {S2}, the semi-vowel after vowel.
+At this time, {V+S2} can be regarded as a diphthongue.
+We simplify all diphthongues into five legal combinations: {au}, {ai}, {ei}, {ou}, {oi}.
+Further, they are represented by {a}, {e}, {i}, {o}, {u) with a compensating {-i}</br>
+ao/oa =&gt; au =&gt; a ..-i; ae/ea =&gt; ai =&gt; e ..-i; ee =&gt; ei =&gt; i ..-i; oo =&gt; ou =&gt; o ..-i; oe/eo/eu =&gt; oi =&gt; u ..-i<br>
+Examples: cause =&gt; casi; daemon=&gt;demoni; coffee =&gt; cofihi; moustache =&gt; mothachi; phoenix=&gt;funisi; Europe =&gt; Uropi<br>
+</p>
+<h3>Part {consonant 2}</h3>
+<p>
+The {C2} is a little complex,
+because three situations are to be considered:<br>
+First, if {C2} is {r} or {l}, it will be removed and need a compensating {-a}<br>
+Examples: depart =&gt; depata; alt =&gt; ata; culture =&gt; cutura; curt =&gt; cuta; court =&gt; cota<br>
+Second, if {C2} is {n} or {m}, it will cause the vowel into variation of nasal: aN, eN, iN, oN, uN<br>
+The {N} should used as {n} or {m} according to the following consonant, if {b},{p},{ph} or {m}, {N} is {m}; else {N} is {n}.<br>
+Examples: cant =&gt; canta; simple =&gt; simpu; autumn =&gt; atunni; environment =&gt; envirommento<br>
+Third, if {C2} is others, it will be removed and need a compensating {-e}<br>
+Examples: fact =&gt; fate; experiment (xp is treated as k+sp) =&gt; epherimente; sign =&gt; sine; dogmatic =&gt; domatice
+</p>
+<h3>Part {consonant 3}</h3>
+<p>
+Finally, for the {C3}, if the {C3} is the last letter of the latin word, we consider it to be an additional syllable.<br>
+Examples: construct =&gt; conthuto; verb =&gt; veba<br>
+Otherwise, an additional {-e-} is inserted.<br>
+Examples: partner =&gt; patenera
+</p>
+<h3>Ending and compensating</h3>
+<p>
+The principle of making rules for ending-vowels are making them diverse.<br>
+The appending rules are made for four situations as below. If a word fits two categories,
+the rules with higher precedency will be adopted.<br/>
+For example, the word {tract},
+	a verb should be appended {-a},
+	but the removed {-r-} determines the ending-vowel to be {-o},
+	also the removed {-c} needs a compensating {-e}.
+	The second one has higer precedency, so it finally became {tato}.
+<ol>Rules:
+<li><b>Compensating</b><br>
+removed -r- : -o<br>
+removed -l- : -u<br>
+<br>
+compressed diphthong : -i<br>
+<br>
+removed -r / -l : -a<br>
+removed double-consonant : -e<br>
+<li><b>Native</b><br>
+if the root ends with a vowel<br>
+<li><b>Complement ( or natural )</b><br>
+nominative (subject) noun : -o<br>
+genitive (predicative) noun : -e<br>
+accusative (object) noun : -o (alernatively: -a)<br>
+plural noun : -i<br>
+normal verb : -a<br>
+(alernatively: past tense verb : -e) (prefer to use modal verb suffix {-ha})<br>
+(alernatively: future tense verb: -o (prefer to use modal verb suffix {-va})<br>
+(alernatively: continuous tense verb : -i (prefer to use modal verb suffix {-thin})<br>
+(alernatively: passive voice verb : -u (prefer to use modal verb suffix {-pen})<br>
+verb : -a<br>
+adjective : -e<br>
+adverb : -i<br>
+preposition, conjunction : -e<br>
+</ol>
+</p>
+<h3>Omitting last syllable</h3>
+Because the last syllable sometimes bears little information,
+they can be omitted.
+The principle of omitting is:
+the appearing information is more than the omitted one.<br>
+At first, we observe the last syllable,
+and give score for consonant and vowel respectively,
+using the below table.<br>
+<table border=1 width="100%">
+<tr><td><b>Score</b></td><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td></tr>
+<tr><td><b>Consonant</b></td><td>None,h,m,n,ng</td><td>s,t,r,l</td><td>p,d,c</td><td>b,g,f,v,z</td><td>ph,th,ch</td></tr>
+<tr><td><b>Vowel</b></td><td>Complement</td><td>Compensate -a,-e</td><td>Compensate -o,-u</td><td>Compensate -i</td><td>Native</td></tr>
+</table>
+If the score of consonant or vowel is 4, so one should not omit.<br>
+Otherwise, we set the sum of scores of consonant and vowel.
+If the length after omitting is larger than the sum,
+one may omit the last syllable.<br>
+After omitting, the consonant still remain in spelling,
+but the accent does not change.
+The remaining {m}, {n}, {g} might modify the nasal pronunciation of the penultimate syllable.<br>
+An example: important =&gt; impotanta; CScore(t) = 1, VScore(-a) = 1, sum = 1 + 1 = 2, length(impotan) = 3 &gt;= 2, thus: impotant.<br>
+Another example: provide =&gt; povido; CScore(d) = 2, VScore(-o) = 2, sum = 2 + 2 =4, length(povi) = 2 &lt; 4, thus: povido.<br>
+</p>
+<h3>Word choice</h3>
+<p>
+The Latin word we used are the words composed of Latin roots which appeared in English.<br>
+</p>
+<h3>Accent</h3>
+<p>
+Accent falls at the vowel before the last consonant.
+</p>
+<a name=sample>
+<center><h2>Sample Passages</h2></center>
+<p>
+For each group, the first line is Doudouling,
+the second line is Latin roots,
+and the third line is English meaning.
+</br>
+Note: the ending consonants are silent except {m} or {n}.
+</p>
+<pre>
+Titu  : Babel Tethe, Genesis, Bibu
+title : babel text , genesis, bible
+Title : Babel Text , Genesis, Bible
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:1
+
+To  la    mundo the de un  ling     e   de un  parol .
+tot illa  mund  est de un  lingu    et  de un  parol .
+The whole earth was of one language and of one speech.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:2
+
+Can   vogag-lu       a  la   orental , ocure-go     ce   dichover-ha-lu   un
+quant voyage-lor     ad illa oriental, occur-il     que  discover-hab-lor un
+As    they journeyed east            , it happened, that they have found  a
+
+panu  in la   tere de Chinar; e   viva-lu    idi  .
+plan  in illa terr de Shinar; et  viv-lor    id   .
+plain in the  land of Shinar; and they lived there.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:3
+
+Dit-lu    un  a  un ater, "Ven , ni    lase a  fe   le   tili , e   li  combutha
+dit-lor   un  ad un altr, "ven , nostr lass ad fer  illa tile , et  lor combust
+They said one to another, "Come, let's      make    bricks    , and burn them
+
+entirementi." Ha-lu    peter po  tilo , e   usa-lu    la   tar po  la   motar .
+entire     ." hab lor  petr  pro tile , et  use-lor   illa tar pro illa mortar.
+thoroughly ." They had brick for stone, and they used the  tar for the  mortar.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:4
+
+Dit-lu   , "Ven , ni    lase conthuto  po  ni    un uba , e   un turet ,
+dit-lor  , "ven , nostr lass construct pro nostr un urb , et  un turret,
+They said, "Come, let's      build     us        a  city, and a  tower ,
+
+sa    capit arive   a  la   zel , e   ni    lase fe   po  ni    un nom ;
+se    capit arrive  ad illa cele, et  nostr lass fer  pro nostr un nom ;
+whose top   reaches to the  sky , and let's      make us        a  name;
+
+ezebe  ce  divid-pen-nu         a  uter  su    la   sufaza  de to  la
+except que divid-prehend-nostr  ad ulter super illa surface de tot illa
+lest       we    be   scattered abroad   on    the  surface of the whole
+
+mundo."
+mund ."
+earth." 
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:5
+
+Gehova dechend   a  vis  la   uba  e   la  turet , ce    le   infant   de hom
+Jehowa descend   ad visa illa urba et  la  turret, que   illa infant   de hom
+Yahweh came down to see  the  city and the tower , which the  children of men
+
+conthuto-ha  .
+construct-hab.
+had built    .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:6
+
+Gehova dit , "Atenzon  , the-lu   un  popul , e   ha-lu     to   un  ling    ;
+Jehowa dit , "attention, est-lor  un  popul , et  hab-lor   tot  un  lingu   ;
+Yahweh said, "Behold   , they are one people, and they have all  one language;
+
+e   the-zi   ce   origin-lu  a  fe . hotemp   nule   , ce    intend-lu
+et  est-hoc  que  origin-lor ad fer. hoc-temp nul    , que   intend-lor
+and this is  what they begin to do . Now      nothing, which they intend
+
+a  fe , resithu-pen-va     de   li  .
+ad fer, resist-prehend-vas de   lor .
+to do , will be withheld   from them.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:7
+
+Ven , ni    lase dechend, e   ada   confus  lo    ling    ,
+Ven , nostr lass descend, et  ad    confuse lor   lingu   ,
+Come, let's      down   , and there confuse their language,
+
+da   ne  pu-lu    compendo   la   parol  de un ater."
+ad   neg lor-poss comprehend illa parol  de un altr."
+that they may not understand one another's speech  ."
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:8
+
+Da Gehova li  divid      uter   de   idi   a  la   sufaza  de to  la   mundo.
+ad Jehowa lor divid      ultr   de   id    ad illa surface de tot illa mund .
+So Yahweh scattered them abroad from there on the  surface of all the  earth.
+
+Retha-lu de conthuto   la   uba .
+repos-lor de construct illa urb .
+They stopped building  the  city.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:9
+
+Ada       sa nom         apele-pen     co  Babel, ba      Gehova confus   la
+ad        se nom         appel-prehend com Babel, ab      Jehowa confus   illa
+Therefore the name of it was called    as  Babel, because Yahweh confused the
+
+ling     de to  la   mundo, idi  . De   idi  , Gehova li  divid      uter
+lingu    de tot illa mund , id   . De   id   , Jehowa lor divid      ultr
+language of all the  earth, there. From there, Yahweh scattered them abroad
+
+su    la   sufaza  de to  la   mundo.
+super illa surface de tot illa mund .
+on    the  surface of all the  earth.
+</pre>
+<p>2. Lord's Prayer</p>
+<pre>
+Titu  : Na    Pater
+title : nostr patr
+Title : Our   Father
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+
+Na    pater in la   zel,
+nostr patr  in illa cel,
+Our   fater in      heaven,
+
+sant  the ta   nom .
+sanct est tu   nom .
+saint is  your name.
+
+Ven  ta   regim  ,
+ven  tu   regime ,
+Come your kingdom,
+
+fe-pen       ta   volunt,
+fer-prehenad tu   volunt,
+done         your will  ,
+
+co  in la   zel e   su  tere .
+com in ille cel et  sur terr .
+as  in heaven   and on  earch.
+
+Na    peri-di  pan   tu  don  hodi  .
+nostr per-di   pan   tu  dont hoc-di.
+Our   everyday bread you give today .
+
+Padon-tu    na    debit,
+pardon-tu   nostr debit,
+Forgive you our   debts,
+
+co  padon-ha-nu       na    debitor.
+com pardaon-hab-nostr nostr debitor.
+as  we have forgotten our   debtors.
+
+E   tu  ne  ni    dute enter tembazon,
+et  tu  neg nostr duc  entr  temptation
+and you not us    lead into  tempation,
+
+bo  ni    liberat-tu ether de malin.
+ob  nostr liberat-tu extra de malign
+but you us liberate  out   of malign.
+
+Amen.
+amen
+Amen.
+
+</pre>
+<a name=schema>
+<center><h2>Schema</h2></center>
+<table width=100%>
+ <tr bgcolor="ccddff">
+  <td>
+    <b>Alphabet</b>
+  </td>
+  <td>
+    <b>Afabeta</b>
+  </td>
+ </tr>
+ <tr>
+  <td>
+   B P PH M F V<br>
+   D T TH N S Z<br>
+   G C CH H R L<br>
+   A E I O U<br>
+  </td>
+  <td>
+   B P PH M F V<br>
+   D T TH N S Z<br>
+   G C CH H R L<br>
+   A E I O U<br>
+  </td>
+ </tr>
+ <tr bgcolor="ccddff">
+  <td>
+   <b>Phonetics</b>
+  </td>
+  <td>
+   <b>Fonetise</b>
+  </td>
+ </tr>
+ <tr>
+  <td colspan=2>
+   <table width=90% border=1>
+    <tr>
+     <td>B b [b] b in book</td>
+     <td>P p [p] p in pen</td>
+     <td>PH ph [w] w in wall (!)</td>
+     <td>M m [m] m in map</td>
+     <td>F f [f] f in fall</td>
+     <td>V v [v] v in vow</td>
+    </tr>
+    <tr>
+     <td>D d [d] d in dog</td>
+     <td>T t [t] t in take</td>
+     <td>TH th [dz] ds in words (!)</td>
+     <td>N n [n] n in name</td>
+     <td>S s [s] s in say</td>
+     <td>Z z [ts] ts in gets (!)</td>
+    </tr>
+    <tr>   
+     <td>G g [g] g in go</td>
+     <td>C c [k] c in cat (!)</td>
+     <td>CH ch [j] y in yes / [t&#x0283;] ch in chin (!)</td>
+     <td>H h [&#x014B;] ng in long / [&#x0283;] sh in shy (!)</td>
+     <td>R r [h] h in how (!)</td>
+     <td>L l [l] l in low</td>
+    </tr>
+    <tr>
+     <td>A a [&#x0251;] a in tomato</td>
+     <td>E e [&#x025b;] e in set</td>
+     <td>I i [i] i in fit</td>
+     <td>O o [&#x0254;] o in dog</td>
+     <td>U u [u] u in put</td>
+    </tr>
+   </table>
+   Note !: pronuncation need to be cautious<br>
+  </td>
+ </tr>
+ <tr bgcolor="ccddff">
+  <td>
+   <b>Syllable Structure</b>
+  </td>
+  <td>
+   <b>Thuturo de silabu</b>
+  </td>
+  <tr>
+   <td>   
+    [Consonant] Vowel (Nasal)
+   </td>
+   <td>   
+    [Consonanto] Vovelo (Nasale)
+   </td>
+  </tr>
+ <tr bgcolor="ccddff">
+  <td>
+   <b>Accent</b>
+  </td>
+  <td>
+   <b>Azente</b>
+  </td>
+  <tr>
+   <td>
+    If the last syllable is open in writing, accent lies in the penultimate syllable.<br>
+    If the last syllable is not open in writing, accent lies in the last syllable.
+   </td>
+   <td>
+    Si la utima silabu the ovetura in chibo, la azente locata in la penutima silabu.<br>
+    Si la utima silabu nega ovetura in chibo, la azente locata in la utima silabu.<br>
+   </td>
+  </tr>
+ </tr>
+ <tr bgcolor="ccddff">
+  <td>
+   <b>Etymology</b>
+  </td>
+  <td>
+   <b>Etimologi</b>
+  </td>
+ </tr>
+ <tr>
+  <td colspan=2>
+   <b>1.</b>Convert latin words into structure like following:
+    {s} C1 {r/l} S1 V S2 C2<br>
+   <b>2.{s}:</b> sp,st,sc=&gt;ph,th,ch<br>
+   <b>3.C1:</b> q,k=&gt;c; ce/ci=&gt;ze/zi; ch[&#x0283;,t&#x0283;]=&gt;ch; [&#x0292;/d&#x0292;],y=&gt;g; w=&gt;v; x=&gt;ch; ph=&gt;f; th=&gt;t; ch=&gt;ch<br>
+   <b>4.{r/l}:</b> delete, and moved to end-of-word as -o / -u<br>
+   <b>5.S1:</b> deleted if not word stem; else separate to two syllables<br>
+   <b>6.V:</b> just a e i o u, y=&gt;i<br>
+   <b>7.S2:</b> combine with V into variations: au, ai, ei, ou, oi. then convert to a, e, i, o, u with a compensating -i<br>       
+   <b>8.C2:</b><br/>
+	<b>8.a. C2:</b>if {r} / {l}, remove and need a compensating {-a}<br>
+   <b>8.b. C2:</b>if {n} / {m}, combine with V into nasal variations: aN, eN, iN, oN, uN<br>
+   <b>8.c. C2:</b>else remove V and need a compensating {-e}<br>
+   <b>9.C3:</b>create a separate syllable, which needs a ending-vowel<br>
+   <b>9.1. compensated:</b> for -R-, -O; for -L-, -U; for diphthong, -I; for -R/-L, -A; for double-consonant, -E<br>
+   <b>9.2. native:</b> native last vowel<br>
+   <b>9.3. complement:</b> noun nominative -o; genitive -e; accusative -o (alternatively -a); noun plural -i; verb -a; (alternatively: verb past -e; future -o; continuous -i; passive voice -u;) adjective -e; adverb -i<br>
+ </tr>
+ <tr bgcolor="ccddff">
+  <td>
+   <b>Vocabulary</b>
+  </td>
+  <td>
+   <b>Vocabulari</b>
+  </td>
+ </tr>
+ <tr>
+  <td>
+   Words composed by latin roots which appeared in English words
+  </td>
+  <td>
+   Le veba ce deriva de le Latin radi e ce apare in Engichu.
+  </td>
+ </tr>
+ <tr bgcolor="ccddff">
+  <td>
+   <b>Pronoun</b>
+  </td>
+  <td>
+   <b>Ponomo</b>
+  </td>
+ </tr>
+ <tr>
+  <td colspan=2>
+   <table border=1>
+    <tr>
+     <td></td><td colspan=3>Single</td><td colspan=3>Plural</td>
+    </tr>
+    <tr>
+     <td></td><td>First</td><td>Second</td><td>Third</td><td>First</td><td>Second</td><td>Third</td>
+    </tr>
+    <tr>
+     <td>Nominative</td><td>mi</td><td>tu</td><td>go/ga</td><td>nu</td><td>vu</td><td>lu</td>
+    </tr>
+    <tr>
+     <td>Accusative</td><td>me</td><td>te</td><td>se</td><td>ni</td><td>vi</td><td>li</td>
+    </tr>
+    <tr>
+     <td>Genitive</td><td>ma</td><td>ta</td><td>sa</td><td>na</td><td>vo</td><td>lo</td>
+    </tr>
+   </table>
+  </td>
+ </tr>
+ <tr bgcolor="ccddff">
+  <td>
+   <b>Main Words</b>
+  </td>
+  <td>
+   <b>Capite Veba</b>
+  </td>
+ </tr>
+ <tr>
+  <td colspan=2>
+   <table border=1>
+    <tr bgcolor="eeddff">
+     <td>the</td><td>of</td><td>and</td><td>or</td><td>on</td><td>in</td><td>for</td><td>by</td><td>with</td>
+    </tr>
+    <tr>
+     <td>la, le(plural)</td><td>de</td><td>e</td><td>o</td><td>su, supera</td><td>in</td><td>po</td><td>pe</td><td>con</td>
+    </tr>
+    <tr bgcolor="eeddff">
+     <td>this</td><td>that</td><td>who</td><td>what</td><td>when</td><td>where</td><td>why</td><td>how</td><td>which</td>
+    </tr>
+    <tr>
+     <td>zi, ze, hozi</td><td>di, ge, idi</td><td>ci</td><td>ce</td><td>can, canda</td><td>u, ubi</td><td>pa, po-ce</td><td>ca, cale</td><td>cu, cuale</td>
+    </tr>
+    <tr bgcolor="eeddff">
+     <td>as</td><td>under</td><td>so</td><td>if</td><td>then</td><td>because</td><td>though</td><td>also</td><td>from</td>
+    </tr>
+    <tr>
+     <td>co, como</td><td>bu, subu</td><td>si</td><td>si</td><td>da, ada</td><td>ese, po, ba</td><td>conto, anti</td><td>re, encori</td><td>ba, aba</td>
+    </tr>
+    <tr bgcolor="eeddff">
+     <td>man</td><td>woman</td><td>home</td><td>do</td><td>be</td><td>much</td><td>little</td><td>more</td><td>most</td>
+    </tr>
+    <tr>
+     <td>hon, homo</td><td>fema</td><td>domo</td><td>fe, fera</td><td>the, tha, etha</td><td>mu, muta</td><td>paci</td><td>che, eche, pusu</td><td>pim, pimo, mase</td>
+    </tr>
+   </table>
+  </td>
+ </tr>
+</table>
+<a name=discuss>
+<center><h2>Discussion</h2></center>
+thomasruhm: The word 'vogag' looks like it has hard 'g'. Can 'g' be soft in other words?
+<ul>
+	<li>The word {vogag} [v&#x0254;'j&#x0251;] is short form of {vogage} [v&#x0254;'j&#x0251;g&#x025b;].</li>
+	<li>Based on the omission rules, it is decided to drop the last syllable {ge} in pronunciation, but keep the {g} in the spelling.</li>
+	<li>{g} cannot be soft, it's either hard [g] as in English {good} or silent in the ending.</li>
+</ul>
+thomasruhm: I see there is an affricate 'c', like the 'z' in 'ezebe'. In that case the 'sc' in 'dechend' changed to 'ch' before 'c' became 'z'.
+<ul>
+	<li>{c} is hard [k] as in English {cat}; or silent in the ending.</li>
+	<li>{z} is for the soft {c} in Latin, but it's pronounced as [ts] in English {gets}.</li>
+	<li>{except} =&gt; {e-k-cept-} =&gt; (-k- is compensated as final e) ; ( pt become b ) =&gt; {e-ze-be}.</li>
+	<li>{descend} =&gt; {de-sk-en-d} =&gt; ( -sk- become ch ) ; (verb adds -a ending) =&gt; dechenda =&gt; (omit last syllable) =&gt; {dechend}.</li>
+	<li>I would say it's kind of random choice, when turning {sc} to {sk} but ignoring the hidden {s} in {except}; it is okay to use {dezend}</li>
+</ul>
+Padraic Brown: One thing was confusing: I had gotten the impression that he was getting rid of "hard to pronounce" sounds like [l] and [r], and yet his texts are replete with words like "parol".
+<ul>
+	<li>The final consonant ({l} in {parol} [pa'h&#x0254;]) is kept in the spelling, but not pronounced; except {n} and {m}</li>
+	<li>{dichover} is pronounced as [diz&#x0254;'v&#x025b;]</li>
+</ul>
+Padraic Brown: Another point of confusion was that he seems to have put himself through an awful regimen of mental gymnastics
+<ul>
+	<li>The goal of this design is to fit Latin roots into consonant-vowel-with-nasal (C-V-n) syllable structure.</li>
+	<li>It is trade-off between two options</li>
+	<li>1) dropping the character not fit into the (C-V-n) structure, which will lose too much info, cause conflict and hard to remember; think about {extract} become {eta}.</li>
+	<li>2) padding vowels, which will cause too many syllables, and too many repetition of the padding vowel; think about {extract} become {ekusuturakutu}</li>
+	<li>So the way is to choose some "important" character of the dropped ones and merge them into another consonant or the last vowel.</li>
+</ul>
+thomasruhm: Did you have the German and eastern European pronunciations in mind, when you decided that way of using <g> and <c>?
+<ul>
+	<li>No. Deciding the way of using <g> and <c> are simply to have one-to-one relationship between spelling and pronunciation</li>
+</ul>
+thomasruhm: The stress in words which originally have two consonants might contribute to the decision on which of them will have to be kept.
+<ul>
+	<li>Yes, the stressed syllable in the original word have higher priority to be kept, and the compensating ending vowel for the stressed syllable is more likely be kept than non-stressed, because it conveys more signal.</li>
+</ul>
+Padraic Brown: (some questions about the order of picking words)
+<ul>
+	<li>The language prefers Latin form than French form than English form</li>
+	<li>The reason is Latin form uses mostly the basic 5 vowels (a,e,i,o,u).</li>
+	<li>Although Latin distinguishes long and short vowels, but they do not make much difference.</li>
+	<li>French and English forms have more kinds of vowels besides the basic 5 vowels, and uses diphthong more frequently, which need more compensation and changes to fit them into C-V-n structures</li>
+</ul>
+<center><h2>Change Log</h2>
+</center>
+2004 Created</br>
+2014 Language changes
+<ul>
+<li>Move {eu} to {u} with compenstating {-i} from {a} with compenstating {-i}</li>
+<li>Use modal verb suffixes, and make it optional to use natural ending-vowel</li>
+<li>Change the score of {g} to 3 from 2</li>
+<li>Add some better choices to main words</li>
+</ul>
+2014 Document changes
+<ul>
+<li>Font and color</li>
+<li>Section names</li>
+<li>Punctuations: use curved braces to replace quotation mark</li>
+<li>Upper case and lower case</li>
+<li>Add more examples</li>
+<li>Use Unicode to show the phonetic symbols; Use UTF-8 encoding in Chinese version</li>
+<li>Fix some wrong examples</li>
+<li>Remove subjective sentences</li>
+<li>Correct the phonetic annotation [a]=&gt;[&#x0251;] [e]=&gt;[&#x025b;] [o]=&gt;[&#x0254;]</li>
+<li>Add the translation of Doudouling</li>
+<li>Add some discussion</li>
+</ul>
+2014 Language changes
+<ul>
+<li>Change {i-} to {g-}</li>
+<li>Change {ch} [z] to {ch] [j]</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,541 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<html>
+<title>兜兜语
+</title>
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<meta charset="UTF-8">
+<body bgcolor="#eeffff" text="#00007f">
+<center><h1>兜兜语<br>Dodoling</h1>
+<a href="http://media.cs.tsinghua.edu.cn/~huangjian/intro/">黄剑</a>的一种人工语言<br>
+un atifizal ling pe me<br></center>
+<ol>
+<li><a href="#introduction">原理:如何把拉丁词压缩成为“辅-元”音节结构</a>
+<li><a href="#sample">范例文段</a>
+<li><a href="#schema">方案细则</a>
+<li><a href="dict.html">兜兜-英文词典</a>
+<li><a href="word.html">英文-兜兜词典</a>
+<li><a href="kind.html">核心词汇分类列表</a>
+</ol>
+<a name=introduction>
+<center><h2>如何把拉丁词压缩成为“辅-元”音节结构</h2>
+</center>
+<p>
+兜兜语的主要思想是把拉丁词简化为“一个辅音+一个元音”的结构。
+因为我觉得这样的结构最适合我拿来哼歌。
+而且，该语言必须维持拉丁词音节的数目。
+当然，这个“一个元音”允许含有鼻音等。
+</p>
+<p>
+大部分的拉丁词的音节都可以看作是由下列结构构成的：<br>
+<center><b>{s} {辅音} {r/l} {i/u} 元音 {i/u} {辅音} {辅音}</b></center>
+我们可以简化为如下形式：<br>
+<center><b>s C1 (R/L) S1 V S2 C2 C3</b></center>
+我们的目标是把音节简化为如下结构：<br>
+<center><b>C V (V可以是鼻音)</b></center>
+</p>
+<p>
+首先，是出现在辅音前面的“s”。
+“s”出现时最常见的三种组合方式是“sp-”、“st-”和“sc-”，
+我们把它们分别转换为单辅音，
+“ph-”、“th-”和“ch-”，
+它们的发音分别是[w]、[dz]和[z](可以选择[tS])。
+例如，spera=>phera；state=>thate；scene=>chene。<br>
+</p>
+<p>
+然后，是第一个辅音“C1”。
+我们把它简化为合法的辅音，如下所示：<br>
+<center><b>b p m f v<br>d t n s z<br>g c h r l</b></center>
+其中，比较特殊的发音定义如下：
+z发[ts](源自德语)，c总是发[k]，h总是发[ng](也许不太好,可以选择[S]),r发[h](参考法语,我不喜欢[r])。<br>
+其中的细节有待商榷，但是主要的目的都是把辅音简化为单个容易发音的辅音。<br>
+特例："pt"应该转换成"b"。<br>
+转换规则：ph=>f；w=>v；th=>t；c([s])=>z；q,k=>c；x=>ch；ch([sh]/[ch])=>ch；j,y=>i-；pt=>b。<br>
+例如：photo=>foto；wagon=>vagon；cente=>zente；aqua=>aca；tank=>tanco；china=>china；japan=>iapan；adopt=>adoba。<br>
+</p>
+<p>
+接着，是辅音后面的“r/l”。
+他们将被去除。
+但是这样会造成相当大程度的信息丢失，以致造成混淆。
+所以我们会在单词的最末尾加上一个补偿性的元音。
+补偿-r-，添加-o；补偿-l-，添加-u：<br>
+例如：tract=>tato；creat=>ceato；glad=>gadu。
+</p>
+<p>
+“S1”，元音前面的半元音，它们通常是没有用的，可以直接去除。
+除了某些情况，例如这个音节是词根，例如piano，
+那么我们不得不把这个音节分割为两“辅+元”音节，以致增加了一个音节。
+</p>
+<p>
+“V”是中心元音，相对来说是最简单的了，只需要把y=>i即可。
+</p>
+<p>
+“S2”，是元音后的半元音。这个时候，“V+S2”可以看作是一个双元音组合。
+我们把所有的双元音组合简化为五种组合：AU、AI、EI、OU和OI。
+然后依次变成A、E、I、O和U，然后在单词的末尾加上补偿元音-I<br>
+ao,oa,eu=>au=>a；ae,ea=>ai=>e；ee=>ei=>i；oo=>ou=>o；oe,eo=>oi=>u。<br>
+例如：daemon=>demoni；phoenix=>funisi。<br>
+</p>
+<p>
+“C2”比较复杂，因为需要分成三种情况来分别考虑：<br>
+首先，如果“C2”是-r或者-l，则去掉这个辅音，在末尾加上补偿元音-A<br>
+第一：depart=>depata；alt=>ata；culture=>cutura；curt=>cuta。<br>
+第二：如果“C2”是-n或者-m，将引起中心元音变成鼻音：An, En, In, On, Un。<br>
+其中“n”可能是-n或者-m，根据后续的辅音而定，如果后续辅音是b-、p-、ph-或者m-，则“n”是-m，否则“n”是-n。<br>
+例如：cant=>canta；simple=>simpu；autumn=>atunni；environment=>envirommento。<br>
+第三：如果“C2”是其他辅音，则去掉这个辅音，在末尾加上补偿元音-E<br>
+例如：fact=>fate；experiment(ecsperimento)=>epherimente；sign=>sine；dogmatic=>domatice。<br>
+</p>
+<p>
+最后，“C3”，元音后面的第二个辅音，
+如果它是拉丁词的最后一个辅音字母，我们为此构造一个末尾音节。<br>
+例如：construct=>conthuto；verb=>veba。<br>
+如果不是最后词末辅音，则需要添加一个“e”来构成一个额外的音节。<br>
+例如：department=>depatementa
+</p>
+<p>
+末尾元音：拉丁系的语言中，词语多以元音结尾。
+例如在西班牙语中，阳性名词用-o结尾，阴性名词用-a。<br>
+但我并不喜欢区分阴阳性。
+该语言中，定制末尾元音规则的宗旨是让末尾元音多样化，就是说五个元音结尾的概率相当。<br>
+添加的规则分为四种情况，如果某个词符合两条或以上时，具有更高优先级的规则生效。
+例如，“tract”这个词，它说一个动词，应该添加-a；但是由于去除了-r-，应该添加-o。
+取出c因该补偿-e。但是第二个(-o)的优先级比较高，所以结果是“tato”。
+<ol>末尾元音添加规则
+<li><b>补偿字母</b><br>
+补偿元音前的R   ： -o<br>
+补偿元音前的L   ： -u<br>
+<br>
+补偿压缩的双元音： -i<br>
+<br>
+补偿元音后的R/L ： -a<br>
+补偿辅音前的辅音： -e<br>
+注：补偿字母内部，o和u的优先级高于i，i的优先级高于a和e，当听优先级的冲突时，选择位置较后的。
+<li><b>自带元音</b><br>
+拉丁词本身以元音结尾<br>
+<li><b>自然元音</b><br>
+名词作主语： -o<br>
+名词的复数： -i<br>
+名词作定语： -e<br>
+名词作宾语： -a<br>
+动词的原形： -a<br>
+动词过去式： -e<br>
+动词将来式： -o<br>
+动词进行式： -i<br>
+动词被动态： -u<br>
+动词的原形： -a<br>
+形容词原形： -e<br>
+副词的原形： -i<br>
+介词或连词： -e<br>
+</ol>
+</p>
+<p>
+<b>省略末尾音节</b><br>
+由于末尾音节有的时候并不带有太多的信息，往往可以省略。省略的原则是：出现的信息量大于等于省略的信息。<br>
+首先，我们观察末尾的音节，分别把辅音和元音分类，给与分值。评分表如下。
+<table border=1 width="100%">
+<tr><td><b>分值</b></td><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td></tr>
+<tr><td><b>辅音</b></td><td>无,h,m,n,(n)g</td><td>s,t,r,l</td><td>p,d,g,c</td><td>b,f,v,z</td><td>ph,th,ch</td></tr>
+<tr><td><b>元音</b></td><td>自然元音</td><td>补偿-a,-e</td><td>补偿-o,-u</td><td>补偿-i</td><td>自带元音</td></tr>
+</table>
+如果辅音的分值或者元音的分值等于4，则不能省略。<br>
+否则设总分值为辅音和元音的分值之和。如果省略后的长度大于等于这个分值，则可以省略末尾音节。<br>
+省略后，仍然书写末尾音节的辅音，m,n,ng会确定倒数第二个音节的鼻音的发音，重音不变。<br>
+例如important=>impotanta，CScore(t)=1,VScore(-a)=1,sum=1+1=2,length(impotan)=3>=2,所以：impotant。<br>
+例如provide=>povido，CScore(d)=2,VScore(-o)=2,sum=2+2=4,length(povi)=2<4,所以：povido。<br>
+</p>
+<p>
+我们只适用在英语的词汇中出现过的拉丁词根。不过人称代词和冠词参考法语定制。<br>
+</p>
+<p>
+重音在拼写形式中最后的辅音前面的元音。
+</p>
+<a name=sample>
+<center><h2>范例文段</h2></center>
+<p>
+每一段的第一行是兜兜语，第二行是相关拉丁词根，第三个是英文词意。</p>
+<p>1. 巴贝塔</p>
+<pre>
+Titu  : Babel Tethe, Genesis, Bibu
+title : babel text , genesis, bible
+Title : Babel Text , Genesis, Bible
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:1
+
+La   to    mundo tha de un  ling     e   de un  parol .
+illa tot   mund  est de un  lingu    et  de un  parol .
+The  whole earth was of one language and of one speech.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:2
+
+Can   lu   voiag     a  la   orental , io ocure     ce   lu   ha   dichover un
+quant lor  voyage    ad illa oriental, il occur     que  lu   hab  discover un
+As    they journeyed         east    , it happened, that they have found    a
+
+panu  in la   tere de Chinar; e   lu   viva  idi  .
+plan  in illa terr de Shinar; et  lor  viv   id   .
+plain in the  land of Shinar; and they lived there.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:3
+
+Lu   dit  un  a  un ato , "Ven , lase ni    fe   tile , e   combutha li
+lor  dit  un  ad un altr, "ven , lass nostr fer  tile , et  combust  lor
+They said one to another, "Come, let's      make brick, and burn     them
+
+entirement." Lu   ha  peto  po  tile , e   lu   util la   tar po  la   motar .
+entire    ." lor  hab petr  pro tile , et  lor  util illa tar pro illa mortar.
+thoroughly." They had brick for stone, and they used the  tar for the  mortar.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:4
+
+Lu   dit , "Ven , lase ni    conthuto  po ni     un uba , e   un turet ,
+lor  dit , "ven , lass nostr construct pro nostr un urb , et  un turret,
+They said, "Come, let's      build     us        a  city, and a  tower ,
+
+sa    capit arive   a  la   zel , e   lase ni    fe   po  ni    un nom ;
+se    capit arrive  ad illa cele, et  lass nostr fer  pro nostr un nom ;
+whose top   reaches to the  sky , and let's      make us        a  name;
+  
+ezebe  ce  nu    pi   divid     a  uteros    su    la   sufaza  de la   to
+except que nostr pris divid     ad ulterious super illa surface de illa tot
+lest       we    be   scattered abroad       on    the  surface of the  whole
+
+munda."
+mund ."
+earth." 
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:5
+
+Ieova  dechend   a  vis  la   uba  e   la  turet , ce    le   infant   de hom
+Jehowa descend   ad visa illa urba et  la  turret, que   illa infant   de hom
+Yahweh came down to see  the  city and the tower , which the  children of men
+
+ha  conthuto .
+hab construct.
+had built    .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:6
+
+Ieova  dit , "Atenzon  , lu   tha un  popul , e   lu   haba to   un  ling    ;
+Jehowa dit , "attention, lor  est un  popul , et  lor  hab  tot  un  lingu   ;
+Yahweh said, "Behold   , they are one people, and they have all  one language;
+
+e   zi   tha ce   lu   origin a  fe . hotemp   nule   , ce    lu   intend
+et  hoc  est que  lor  origin ad fer. hoc-temp nul    , que   lor  intend
+and this is  what they begin  to do . Now      nothing，which they intend
+
+a  fe , va   pi   resithu  de   li  .
+ad fer, vas  pris resist   de   lor .
+to do , will be   withheld from them.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:7
+
+Ven , lase ni    dechend, e   ada   confus  lo    ling    , da   lu
+Ven , lass nostr descend, et  ad    confuse lor   lingu   , ad   lor
+Come, let's go   down   , and there confuse their language, that they
+
+ne  pose compendo   la   parol  de un ato ."
+neg poss comprehend illa parol  de un altr."
+may not  understand one another's speech  ."
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:8
+
+Da Ieova  divid     li   uto    de   idi   a  la   sufaza  de la   to  munda.
+ad Jehowa divid     lor  ultr   de   id    ad illa surface de illa tot mund .
+So Yahweh scattered them abroad from there on the  surface of all  the earth.
+
+Lu   repos de conthuto  la   uba .
+Lor  repos de construct illa urb .
+They stopped  building  the  city.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:9
+
+Ada       la   nom  de se pi   appel  co  Babel, ese     Ieova  confus   la
+ad        illa nom  de se pris appel  com Babel, ex      Jehowa confus   illa
+Therefore the  name of it was  called as  Babel, because Yahweh confused the
+
+ling     de to  la   munda, idi  . De   idi  , Ieova  divid     li   uteros
+lingu    de tot illa mund , id   . De   id   , Jehowa divid     lor  ulterious
+language of all the  earth, there. From there, Yahweh scattered them abroad
+
+su    la   sufaza  de la   to  munda.
+super illa surface de illa tot mund .
+on    the  surface of all  the earth.
+</pre>
+<p>2. 祈祷词</p>
+<pre>
+Titu  : Na    Pato
+title : nostr patr
+Title : Our   Father
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+
+Na    pato  in la   zel,
+nostr patr  in illa cel,
+Our   fater in      heaven,
+
+sant  tha ta   nom .
+sanct est tu   nom .
+saint is  your name.
+
+Ven  ta   regim  ,
+ven  tu   regime ,
+Come your kingdom,
+
+pi   fe  ta   volunt,
+pris fer tu   volunt,
+done     your will  ,
+
+co  in la   zel e   su  tere .
+com in ille cel et  sur terr .
+as  in heaven   and on  earch.
+
+Na    peri-di  pan   tu  don  hodi  .
+nostr per-di   pan   tu  dont hoc-di.
+Our   everyday bread you give today .
+
+Padon-tu    na    debit,
+pardon-tu   nostr debit,
+Forgive you our   debts,
+
+co  nu    ha   padon     na    debitor.
+com nostr hab  pardon    nostr debitor.
+as  we    have forgotten our   debtors.
+
+E   tu  ne  ni    induc ento tembazon,
+et  tu  neg nostr induc entr temptation
+and you not us    lead  into tempation,
+
+bo  tu  ni    liberat  etho   malin.
+ob  tu  nostr liberat  extra  malign
+but you us    liberate out of malign.
+
+Amen.
+amen
+Amen.
+
+</pre>
+<a name=schema>
+<center><h2>方案细则</h2></center>
+<table width=100%>
+ <tr bgcolor="ccddff">
+  <td>
+    <b>字母表</b>
+  </td>
+  <td>
+    <b>Afabeta</b>
+  </td>
+ </tr>
+ <tr>
+  <td>
+   B P PH M F V<br>
+   D T TH N S Z<br>
+   G C CH H R L<br>
+   A E I O U<br>
+  </td>
+  <td>
+   B P PH M F V<br>
+   D T TH N S Z<br>
+   G C CH H R L<br>
+   A E I O U<br>
+  </td>
+ </tr>
+ <tr bgcolor="ccddff">
+  <td>
+   <b>发音</b>
+  </td>
+  <td>
+   <b>Fonetise</b>
+  </td>
+ </tr>
+ <tr>
+  <td colspan=2>
+   <table width=100% border=1>
+    <tr>
+     <td>B[b]: <u>b</u>ook</td>
+     <td>P[p]: <u>p</u>en</td>
+     <td>PH[w]: <u>w</u>all (!)</td>
+     <td>M[m]: <u>m</u>ap</td>
+     <td>F[f]: <u>f</u>all</td>
+     <td>V[v]: <u>v</u>ow</td>
+    </tr>
+    <tr>
+     <td>D[d]: <u>d</u>og</td>
+     <td>T[t]: <u>t</u>ake</td>
+     <td>TH[dz]/[tS]: wor<u>ds</u>/<u>ch</u>in (!)</td>
+     <td>N[n]: <u>n</u>ame</td>
+     <td>S[s]: <u>s</u>ay</td>
+     <td>Z[ts]: ge<u>ts</u> (!)</td>
+    </tr>
+    <tr>   
+     <td>G[g]: <u>g</u>o</td>
+     <td>C[k]: <u>c</u>at (!)</td>
+     <td>CH[z]: <u>z</u>ero (!)</td>
+     <td>H[&eta;(ng&)]/[S]: lo<u>ng</u>/<u>sh</u>y (!)</td>
+     <td>R[h]: <u>h</u>ow (!)</td>
+     <td>L[l]: <u>l</u>ow</td>
+    </tr>
+    <tr>
+     <td>A[a]: tom<u>a</u>to</td>
+     <td>E[e]: s<u>e</u>t</td>
+     <td>I[i]: f<u>i</u>t</td>
+     <td>O[o]: sh<u>o</u>t</td>
+     <td>U[u]: p<u>u</u>t</td>
+    </tr>
+   </table>
+  </td>
+ </tr>
+ <tr bgcolor="ccddff">
+  <td>
+   <b>音节结构</b>
+  </td>
+  <td>
+   <b>Thuture de silabu</b>
+  </td>
+  <tr>
+   <td>   
+    [辅音] 元音 (鼻音)
+   </td>
+   <td>   
+    [Consonanto] Vovelo (Nasale)
+   </td>
+  </tr>
+ <tr bgcolor="ccddff">
+  <td>
+   <b>重音</b>
+  </td>
+  <td>
+   <b>Azente</b>
+  </td>
+  <tr>
+   <td>
+    如果最后一个音节是开音，则重音在倒数第二个音节上。<br>
+    如果最后一个音节不是开音，则重音在最后一个音节上。
+   </td>
+   <td>
+    Si la utima silabu tha ovetura, la azente locata in la penutimata silabu<br>
+    Si la utima silabu nega ovetura, la azente locata in la utima silabu
+   </td>
+  </tr>
+ </tr>
+ <tr bgcolor="ccddff">
+  <td>
+   <b>词源变化</b>
+  </td>
+  <td>
+   <b>Etimologi</b>
+  </td>
+ </tr>
+ <tr>
+  <td colspan=2>
+   <b>1.</b>把拉丁词转换为如下结构：
+    (s) C1 (R/L) S1 V S2 C2<br>
+   <b>2.(s):</b> sp,st,sc => ph,th,ch<br>
+   <b>3.C1:</b> q,k=>c; ce/ci=>ze/zi; ch [sh/tsh]=>ch; [zh/dzh],y=>i-; w=>v; x=>ch; ph=>f; th=>t; ch=>ch<br>
+   <b>4.(R/L):</b> 去除，再词末添加 -o 和 -u<br>
+   <b>5.S1:</b> 如果不在词根，则去除；否则，分割为两个音节<br>
+   <b>6.V:</b> 只有a e i o u，把y=>i<br>
+   <b>7.S2:</b> 转换为 -i 或者 -u，与V结合构成双元音：au, ai, ei, ou, oi，转成a,e,i,o,u，然后需要补偿-i<br>
+   <b>8.C2:</b> 如果是-r或者-l，则去除，然后需要补偿-a<br>
+     <b>C2:</b> 如果是-n或者-m，与V组成鼻音：an, en, in, on, un<br>
+     <b>C3:</b> 否则去除，然后需要补偿-e<br>
+   <b>9.</b>按照下列优先级添加词末元音：<br>
+   <b>9.1. 补偿字母：</b>补偿-r-，加-o；补偿-l-，加-u；补偿双元音：-i；补偿-r/-l：加-a；补偿双辅音：-e<br>
+   <b>9.2. 自带元音：</b>本身的结尾元音<br>
+   <b>9.3. 自然变格：</b>名词主语-o；名词定语-e；名词宾语-a；名词复数-i；
+                     动词原形-a；动词过去式-e；动词将来式-o；动词进行式-i；动词被动态-u；形容词-e；副词-i<br>
+ </tr>
+ <tr bgcolor="ccddff">
+  <td>
+   <b>词汇</b>
+  </td>
+  <td>
+   <b>Vocabulari</b>
+  </td>
+ </tr>
+ <tr>
+  <td>
+   在英文单词中出现的拉丁词，即其词根。
+  </td>
+  <td>
+   Le veba ci pi composu pe latin radi, ci apare in veba de Angesu.
+  </td>
+ </tr>
+ <tr bgcolor="ccddff">
+  <td>
+   <b>代词</b>
+  </td>
+  <td>
+   <b>Ponomo</b>
+  </td>
+ </tr>
+ <tr>
+  <td colspan=2>
+   <table border=1>
+    <tr>
+     <td></td><td colspan=3>单数</td><td colspan=3>复数</td>
+    </tr>
+    <tr>
+     <td></td><td>第一人称</td><td>第二人称</td><td>第三人称</td><td>第一人称</td><td>第二人称</td><td>第三人称</td>
+    </tr>
+    <tr>
+     <td>主格</td><td>mi</td><td>tu</td><td>io/ia</td><td>nu</td><td>vu</td><td>lu</td>
+    </tr>
+    <tr>
+     <td>宾格</td><td>me</td><td>te</td><td>se</td><td>ni</td><td>vi</td><td>li</td>
+    </tr>
+    <tr>
+     <td>所有格</td><td>ma</td><td>ta</td><td>sa</td><td>na</td><td>vo</td><td>lo</td>
+    </tr>
+   </table>
+  </td>
+ </tr>
+ <tr bgcolor="ccddff">
+  <td>
+   <b>主要词汇</b>
+  </td>
+  <td>
+   <b>Capite Veba</b>
+  </td>
+ </tr>
+ <tr>
+  <td colspan=2>
+   <table border=>
+    <tr bgcolor="eeddff">
+     <td>the</td><td>of</td><td>and</td><td>or</td><td>on</td><td>in</td><td>for</td><td>by</td><td>with</td>
+    </tr>
+    <tr>
+     <td>la, le(用于复数)</td><td>de</td><td>e</td><td>o</td><td>su/supera</td><td>in</td><td>po</td><td>pe</td><td>con</td>
+    </tr>
+    <tr bgcolor="eeddff">
+     <td>this</td><td>that</td><td>who</td><td>what</td><td>when</td><td>where</td><td>why</td><td>how</td><td>which</td>
+    </tr>
+    <tr>
+     <td>zi, hozi</td><td>di, idi</td><td>ci</td><td>ce</td><td>can, canda</td><td>u, ubi</td><td>pa, po-ce</td><td>ca, cale</td><td>cu, cuale</td>
+    </tr>
+    <tr bgcolor="eeddff">
+     <td>as</td><td>under</td><td>so</td><td>if</td><td>then</td><td>because</td><td>though</td><td>also</td><td>from</td>
+    </tr>
+    <tr>
+     <td>co, como</td><td>bu, subu</td><td>si</td><td>si</td><td>da, ada</td><td>ese, po</td><td>conto, anti</td><td>re, encori</td><td>ba, aba</td>
+    </tr>
+    <tr bgcolor="eeddff">
+     <td>man</td><td>woman</td><td>home</td><td>do</td><td>be</td><td>much</td><td>little</td><td>more</td><td>most</td>
+    </tr>
+    <tr>
+     <td>hon, homo</td><td>fema</td><td>domo</td><td>fe, fera</td><td>tha, etha</td><td>mu, muta</td><td>paci</td><td>pusu</td><td>mase</td>
+    </tr>
+   </table>
+  </td>
+ </tr>
+</table>
+</body>
+</html>
