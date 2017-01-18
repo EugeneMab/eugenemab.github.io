@@ -16,16 +16,6 @@ body, td
 an artificial language by Jian Huang<br>
 un atifijalan lingo pe min<br></center>
 <ol>
-<li><a href="#introduction">Introduction</a>
-<li><a href="#sample">Sample Passages</a>
-<li><a href="#schema">Schema Detail</a>
-<li><a href="#discuss">Discussions</a>
-<li><a href="dict.html">Doudouling to English Dictionary</a>
-<li><a href="word.html">English to Doudouling Dictionary</a>
-<li><a href="dup.html">Duplication analysis</a>
-<li><a href="index.html">English translation (this document)</a>
-<li><a href="chinese.html">Chinese translation</a>
-<li><a href="dodolingi.html">Doudouling translation (reflective introduction)</a>
 <li><a href="http://conlang.wikia.com/wiki/Doudouling">Doudouling in "wikia" site</a>
 </ol>
 <a name=introduction>
@@ -60,7 +50,16 @@ Then, the {C1}, we simplify them into the legal consonants below:<br>
 Where, the pronunciations are assigned as IPA, such as {j} as [j], {h} as [h], {w} as [w]<br>
 Some details can be considered in further improvement,
 but the main goal is to simplify them into a single and easy consonant.<br>
-Rules: {ph} =&gt; {f}; {w} =&gt; {v}; {r} =&gt; {w}; {th} =&gt; {t}; {c} ([s]) =&gt; {j}; {q}, {c} [k], {ch} ([k]) =&gt; {k}; {x} (at the beginning of a word) =&gt; {j}; {ch} ([&#x0283;]/[t&#x0283;]) =&gt; {j}; {j}, {y} =&gt; {g{ (via {gi-}); {pt} =&gt; {b}; {ti} ([&#x0283;]) =&gt; {j}<br>
+Rules:
+	{pt} =&gt; {b};
+	{ph} =&gt; {f};
+	{w} =&gt; {v};
+	{th} =&gt; {t};
+	{c} ([s]), {x} (at the beginning of a word), {ch} ([&#x0283;]/[t&#x0283;]), {ti} ([&#x0283;]) =&gt; {j};
+	{j}, {y} =&gt; {g} (via {gi-});
+	{q}, {c} [k], {ch} ([k]) =&gt; {k};
+	{r} =&gt; {w};
+	<br>
 Note:<br>
 {v} and {w} are merged into {v}, while {r} uses {w} to avoid difficult pronunciation of [r].<br>
 {pt} is converted to {b}.<br>
@@ -127,11 +126,9 @@ For example, the word {tract},
 removed -r- / -l- : -on<br>
 <br>
 removed -r / -l : -an<br>
+removed double-consonant : -en<br>
 <br>
 compressed diphthong : -in<br>
-<br>
-removed -r / -l : -a<br>
-removed double-consonant : -en<br>
 <li><b>Native</b><br>
 if the root ends with a vowel; {-e} will be changed to {-i}, and {-u} will be changed to {-o}<br>
 <li><b>Complement ( or natural )</b><br>
@@ -490,19 +487,28 @@ Amen .
    <b>1.</b>Convert latin words into structure like following:
     {s} C1 {r/l} S1 V S2 C2<br>
    <b>2.{s}:</b> sp,st,sc=&gt;ts,dz,dz<br>
-   <b>3.C1:</b> q,k=&gt;c; ce/ci=&gt;ze/zi; ch[&#x0283;,t&#x0283;]=&gt;ch; [&#x0292;/d&#x0292;],y=&gt;g; w=&gt;v; x=&gt;ch; ph=&gt;f; th=&gt;t; ch=&gt;ch<br>
-   <b>4.{r/l}:</b> delete, and moved to end-of-word as -o / -u<br>
+   <b>3.C1:</b>
+		{pt} =&gt; {b};
+		{ph} =&gt; {f};
+		{w} =&gt; {v};
+		{th} =&gt; {t};
+		{c} ([s]), {x} (at the beginning of a word), {ch} ([&#x0283;]/[t&#x0283;]), {ti} ([&#x0283;]) =&gt; {j};
+		{j}, {y} =&gt; {g} (via {gi-});
+		{q}, {c} [k], {ch} ([k]) =&gt; {k};
+		{r} =&gt; {w};
+		<br>
+   <b>4.{r/l}:</b> delete, and moved to end-of-word as -on<br>
    <b>5.S1:</b> deleted if not word stem; else separate to two syllables<br>
    <b>6.V:</b> just a e i o u, y=&gt;i<br>
-   <b>7.S2:</b> combine with V into variations: au, ai, ei, ou, oi. then convert to a, e, i, o, u with a compensating -i<br>       
+   <b>7.S2:</b> combine with V into variations: au, ai, ei, ou, oi. then convert to a, e, i, o, u with a compensating -in<br>       
    <b>8.C2:</b><br/>
-	<b>8.a. C2:</b>if {r} / {l}, remove and need a compensating {-a}<br>
+	<b>8.a. C2:</b>if {r} / {l}, remove and need a compensating {-an}<br>
    <b>8.b. C2:</b>if {n} / {m}, combine with V into nasal variations: aN, eN, iN, oN, uN<br>
-   <b>8.c. C2:</b>else remove V and need a compensating {-e}<br>
+   <b>8.c. C2:</b>else remove V and need a compensating {-en}<br>
    <b>9.C3:</b>create a separate syllable, which needs a ending-vowel<br>
-   <b>9.1. compensated:</b> for -R-, -O; for -L-, -U; for diphthong, -I; for -R/-L, -A; for double-consonant, -E<br>
-   <b>9.2. native:</b> native last vowel<br>
-   <b>9.3. complement:</b> noun nominative -o; genitive -e; accusative -o (alternatively -a); noun plural -i; verb -a; (alternatively: verb past -e; future -o; continuous -i; passive voice -u;) adjective -e; adverb -i<br>
+   <b>9.1. compensated:</b> for -R-/-L-, -ON; for -R/-L, -AN; for double-consonant, -EN; for diphthong, -IN;<br>
+   <b>9.2. native:</b> native last vowel;<br>
+   <b>9.3. complement:</b> noun nominative -o; noun plural -o or -i; verb -a; adjective -i; adverb -i<br>
  </tr>
  <tr bgcolor="ccddff">
   <td>
@@ -517,7 +523,7 @@ Amen .
    Words composed by latin roots which appeared in English words
   </td>
   <td>
-   Le veba ce deriva de le Latin radi e ce apare in Engichu.
+   Le veban ke dewiva de le wadi de la Latino e ke apewen in la Engijon.
   </td>
  </tr>
  <tr bgcolor="ccddff">
@@ -544,7 +550,7 @@ Amen .
      <td>Accusative</td><td>me</td><td>te</td><td>se</td><td>ni</td><td>vi</td><td>li</td>
     </tr>
     <tr>
-     <td>Genitive</td><td>ma</td><td>ta</td><td>sa</td><td>na</td><td>vo</td><td>lo</td>
+     <td>Genitive</td><td>ma</td><td>ta</td><td>sa/gi</td><td>na</td><td>vo</td><td>lo</td>
     </tr>
    </table>
   </td>
@@ -561,28 +567,67 @@ Amen .
   <td colspan=2>
    <table border=1>
     <tr bgcolor="eeddff">
-     <td>the</td><td>of</td><td>and</td><td>or</td><td>on</td><td>in</td><td>for</td><td>by</td><td>with</td>
+     <td>ba</td><td></td><td></td><td>bo</td><td>bu</td>
+    </tr>
+    <tr bgcolor="ddeeff">
+     <td>ab</td><td></td><td></td><td>ob</td><td>sub</td>
     </tr>
     <tr>
-     <td>la, le(plural)</td><td>de</td><td>e</td><td>o</td><td>su, supera</td><td>in</td><td>po</td><td>pe</td><td>con</td>
+     <td>from</td><td></td><td></td><td>but</td><td>under</td>
     </tr>
     <tr bgcolor="eeddff">
-     <td>this</td><td>that</td><td>who</td><td>what</td><td>when</td><td>where</td><td>why</td><td>how</td><td>which</td>
+     <td>pa</td><td>pe</td><td>pi</td><td>po</td><td>pu</td>
+    </tr>
+    <tr bgcolor="ddeeff">
+     <td>parse</td><td>per</td><td>prise</td><td>pro</td><td>pot</td>
     </tr>
     <tr>
-     <td>zi, ze, hozi</td><td>di, ge, idi</td><td>ci</td><td>ce</td><td>can, canda</td><td>u, ubi</td><td>pa, po-ce</td><td>ca, cale</td><td>cu, cuale</td>
+     <td>why</td><td>by</td><td>have done</td><td>for</td><td>can</td>
     </tr>
     <tr bgcolor="eeddff">
-     <td>as</td><td>under</td><td>so</td><td>if</td><td>then</td><td>because</td><td>though</td><td>also</td><td>from</td>
+     <td>ma</td><td>me</td><td>mi</td><td></td><td>mu</td>
+    </tr>
+    <tr bgcolor="ddeeff">
+     <td>me</td><td>me</td><td>me</td><td></td><td>mult</td>
     </tr>
     <tr>
-     <td>co, como</td><td>bu, subu</td><td>si</td><td>si</td><td>da, ada</td><td>ese, po, ba</td><td>conto, anti</td><td>re, encori</td><td>ba, aba</td>
+     <td>my</td><td>me</td><td>I</td><td></td><td>some</td>
     </tr>
     <tr bgcolor="eeddff">
-     <td>man</td><td>woman</td><td>home</td><td>do</td><td>be</td><td>much</td><td>little</td><td>more</td><td>most</td>
+     <td>fa</td><td>fe</td><td></td><td></td><td>fu</td>
+    </tr>
+    <tr bgcolor="ddeeff">
+     <td>fact</td><td>fer</td><td></td><td></td><td>fer</td>
     </tr>
     <tr>
-     <td>hon, homo</td><td>fema</td><td>domo</td><td>fe, fera</td><td>the, tha, etha</td><td>mu, muta</td><td>paci</td><td>che, eche, pusu</td><td>pim, pimo, mase</td>
+     <td>thing</td><td>do</td><td>I</td><td></td><td>do (question)</td>
+    </tr>
+    <tr bgcolor="eeddff">
+     <td>va</td><td></td><td>vi</td><td>vo</td><td>vu</td>
+    </tr>
+    <tr bgcolor="ddeeff">
+     <td>vas</td><td></td><td>vos</td><td>vos</td><td>vos</td>
+    </tr>
+    <tr>
+     <td>go</td><td></td><td>you (plural, object)</td><td>your (plural)</td><td>you (plural, subject)</td>
+    </tr>
+    <tr bgcolor="eeddff">
+     <td></td><td>tse</td><td></td><td></td><td></td>
+    </tr>
+    <tr bgcolor="ddeeff">
+     <td></td><td>spec</td><td></td><td></td><td></td>
+    </tr>
+    <tr>
+     <td></td><td>more</td><td></td><td></td><td></td>
+    </tr>
+    <tr bgcolor="eeddff">
+     <td>da</td><td>de</td><td>di</td><td>do</td><td>du</td>
+    </tr>
+    <tr bgcolor="ddeeff">
+     <td>ad</td><td>de</td><td>id</td><td>od</td><td>du</td>
+    </tr>
+    <tr>
+     <td>then</td><td>of</td><td>there</td><td>though</td><td>two</td>
     </tr>
    </table>
   </td>
