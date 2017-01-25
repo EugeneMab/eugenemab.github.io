@@ -1,0 +1,618 @@
+﻿== Idea ==
+{{LangTitle| }}
+{{Template:LangBox
+|Type =pronunciation reform or dialect of a natural language 
+|Alignment =left 
+|Head =right 
+|Tonal = 
+|Declined = 
+|Conjugated = 
+|Genders =prnoouns only 
+|Case = 
+|NNumber =yes
+|Definiteness = 
+|Gender = 
+|Voice =yes
+|Mood = 
+|Person = 
+|VNumber =
+|Tense =yes 
+|Aspect = 
+|NounCases = 
+|NounDefinite = 
+|NounNumber =1000 
+|NounGender = 
+|VerbPerson = 
+|VerbNumber =1000 
+|VerbAspect = 
+|VerbTense = 
+|VerbMood = 
+|VerbVoice = 
+|AdjCase = 
+|AdjNumber =1000 
+|AdjDefinite = 
+|AdjGender = 
+|AdjComparative = 
+|AdjSuperlative =
+|Supine = 
+|Gerund =
+|Participle =
+|Infinitive = 
+|Modality =
+|Phonology = 
+|Words =250000 
+|Creator =Eugenemab |Name = English-IPA|NativeName = énglish / énglishə|TargetLexiconSize = 250000|Adverbs = 1000}}
+For centuries, there has been a movement to reform the spelling of English. It seeks to change English spelling so that it is more consistent, matches pronunciation better. (Refer to https://en.wikipedia.org/wiki/English-language_spelling_reform#References) However, the spelling reform has rarely attracted widespread public support due to various reasons.
+
+So, I propose an idea to solve the problem by another way around. Instead of changing the spelling to fit the pronunciation, we may '''change the pronunciation to fit the spelling'''. (Refer to https://en.wikipedia.org/wiki/Spelling_pronunciation)
+
+The idea is to give a fixed pronunciation for each of the 26 letters. The most straightforward way is to assign the exact same IPA to each letter. (Refer to https://en.wikipedia.org/wiki/International_Phonetic_Alphabet). The stress is fixed at one position, and a simple choice is always at the first vowel. For the consonant clusters which are hard to pronounce, we add an optional schwa [ə] to make them easy to pronounce, but the schwa should not change the stress position.
+
+== Rules ==
+* Every character is always pronounced as the International Phonetic Alphabet of itself.
+* The stress is always located at the first vowel.
+* Add an optional schwa [ə] to break consonant clusters, but the schwa should not change the stress position.
+
+== Advantages ==
+* Spelling and pronunciation is always consistent.
+* Need not to republish any English publications.
+* Need not to relearn, because everyone knows the spelling can change his/her pronunciation accordingly.
+* Can be used with the existing pronunciation, as a new English dialect.
+* It may be more close to the ancient English pronunciation.
+
+==Classification and Dialects==
+
+
+It is a pronunciation reform of English language.
+
+It is also a dialect of English.
+==Phonology==
+===Consonants===
+{| border="1" cellpadding="1" cellspacing="1" class="wikitable article-table" style="width: 660px; text-align:center;"
+! style="width: 68px; "|
+! style="width: 68px; " |Bilabial
+! style="width: 68px; " |Labio-dental
+! style="width: 68px; " |Dental
+! style="width: 68px; " |Alveolar
+! style="width: 68px; " |Post-alveolar
+! style="width: 68px; " |Retroflex
+! style="width: 68px; " |Palatal
+! style="width: 68px; " |Velar
+! style="width: 68px; " |Uvular
+! style="width: 68px; " |Pharyngeal
+! style="width: 68px; " |Epiglottal
+! style="width: 68px; " |Glottal
+|-
+!Nasal
+| m
+|
+|
+| n
+|
+|
+|
+|
+|
+|
+|
+|
+|-
+!Plosive
+| p b
+|
+|
+| t d
+|
+|
+| c
+| k g
+| q
+|
+|
+|
+|-
+!Fricative
+|
+| f v
+|
+| s z
+|
+|
+|
+| x
+|
+|
+|
+| h
+|-
+!Affricate
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|-
+!Approximant
+|w
+|
+|
+|
+|
+|
+| j
+|
+|
+|
+|
+|
+|-
+!Trill
+|
+|
+|
+| r
+|
+|
+|
+|
+|
+|
+|
+|
+|-
+!Flap or tap
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|-
+!Lateral fric.
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|-
+!Lateral app.
+|
+|
+|
+| l
+|
+|
+|
+|
+|
+|
+|
+|
+|-
+!Lateral flap
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|}
+
+===Vowels===
+{|class="wikitable article-table" style="width: 540px; text-align:center;"
+! style="width: 90px; "|
+! style="width: 90px; " |Front
+! style="width: 90px; " |Near-front
+! style="width: 90px; " |Central
+! style="width: 90px; " |Near-back
+! style="width: 90px; " |Back
+|-
+!High
+| i
+|
+|
+|
+| u
+|-
+!Near-high
+|
+|
+|
+|
+|
+|-
+!High-mid
+|
+|
+|
+|
+|
+|-
+!Mid
+|e
+|
+|
+|
+|o
+|-
+!Low-mid
+|
+|
+|
+|
+|
+|-
+!Near-low
+|
+|
+|
+|
+|
+|-
+!Low
+|a
+|
+|
+|
+|
+|}
+
+===Phonotactics===
+
+
+==Writing System==
+{| border="1" cellpadding="1" cellspacing="1" class="article-table" style="width: 650px; text-align:center"
+! scope="row"|Letter
+|A a
+|B b
+|C c
+|D d
+|E e
+|F f
+|G g
+|H h
+|I i
+|J j
+|K k
+|L l
+|-
+! scope="row"|Sound
+| style="background-color:#f9f9f9;"|[a]
+| style="background-color:#f9f9f9;"|[b]
+| style="background-color:#f9f9f9;"|[c]
+| style="background-color:#f9f9f9;"|[d]
+| style="background-color:#f9f9f9;"|[e]
+| style="background-color:#f9f9f9;"|[f]
+| style="background-color:#f9f9f9;"|[g]
+| style="background-color:#f9f9f9;"|[h]
+| style="background-color:#f9f9f9;"|[i]
+| style="background-color:#f9f9f9;"|[j]
+| style="background-color:#f9f9f9;"|[k]
+| style="background-color:#f9f9f9;"|[l]
+|-
+! scope="row"|Letter
+|M m
+|N n
+|O o
+|P p
+|Q q
+|R r
+|S s
+|T t
+|U u
+|V v
+|W w
+|X x
+|-
+! scope="row"|Sound
+| style="background-color:#f9f9f9;"|[m]
+| style="background-color:#f9f9f9;"|[n]
+| style="background-color:#f9f9f9;"|[o]
+| style="background-color:#f9f9f9;"|[p]
+| style="background-color:#f9f9f9;"|[q]
+| style="background-color:#f9f9f9;"|[r]
+| style="background-color:#f9f9f9;"|[s]
+| style="background-color:#f9f9f9;"|[t]
+| style="background-color:#f9f9f9;"|[u]
+| style="background-color:#f9f9f9;"|[v]
+| style="background-color:#f9f9f9;"|[w]
+| style="background-color:#f9f9f9;"|[x]
+|-
+! scope="row"|Letter
+|Y y
+|Z z
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|-
+! scope="row"|Sound
+| style="background-color:#f9f9f9;"|[y]
+| style="background-color:#f9f9f9;"|[z]
+| style="background-color:#f9f9f9;"|
+| style="background-color:#f9f9f9;"|
+| style="background-color:#f9f9f9;"|
+| style="background-color:#f9f9f9;"|
+| style="background-color:#f9f9f9;"|
+| style="background-color:#f9f9f9;"|
+| style="background-color:#f9f9f9;"|
+| style="background-color:#f9f9f9;"|
+| style="background-color:#f9f9f9;"|
+| style="background-color:#f9f9f9;"|
+|}
+
+{|
+!Letter
+!Pronunciation
+!Alternative Pronunciation
+!Comment
+|-
+|a
+|[a]
+|[ɑ]
+|https://en.wikipedia.org/wiki/Open_front_unrounded_vowel
+|-
+|b
+|[b]
+|
+|
+|-
+|c
+|[c]
+|[ʃ]
+|https://en.wikipedia.org/wiki/Voiceless_palatal_stop#Palatal_or_alveolo-palatal
+|-
+|d
+|[d]
+|
+|
+|-
+|e
+|[e]
+|[ɛ]
+|https://en.wikipedia.org/wiki/Close-mid_front_unrounded_vowel
+|-
+|f
+|[f]
+|
+|
+|-
+|g
+|[g]
+|[ɡ]
+|https://en.wikipedia.org/wiki/Voiced_velar_stop ; double storey [ɡ] and single-storey [g] are considered equivalent in IPA.
+|-
+|h
+|[h]
+|
+|
+|-
+|i
+|[i]
+|
+|
+|-
+|j
+|[j]
+|
+|https://en.wikipedia.org/wiki/Palatal_approximant#Palatal ; Note: it is "yoke" but not "joke"
+|-
+|k
+|[k]
+|
+|
+|-
+|l
+|[l]
+|
+|
+|-
+|m
+|[m]
+|
+|
+|-
+|n
+|[n]
+|[ŋ]
+|https://en.wikipedia.org/wiki/Velar_nasal ; [ŋ] is acceptable before [k] or [g]
+|-
+|o
+|[o]
+|[ʃ]
+|https://en.wikipedia.org/wiki/Open-mid_back_rounded_vowel
+|-
+|p
+|[p]
+|
+|
+|-
+|q
+|[q]
+|[θ]
+|https://en.wikipedia.org/wiki/Voiceless_uvular_stop
+|-
+|r
+|[r]
+|[ɹ]
+|https://en.wikipedia.org/wiki/Dental,_alveolar_and_postalveolar_trills
+|-
+|s
+|[s]
+|
+|
+|-
+|t
+|[t]
+|
+|
+|-
+|u
+|[u]
+|
+|
+|-
+|p
+|[p]
+|
+|
+|-
+|w
+|[w]
+|[ʊ]
+|
+|-
+|x
+|[x]
+|[ð]
+|https://en.wikipedia.org/wiki/Voiceless_velar_fricative
+|-
+|y
+|[y]
+|[ɪ]
+|https://en.wikipedia.org/wiki/Close_front_rounded_vowel
+|-
+|z
+|[z]
+|
+|
+|}
+It is recommended to pronounce as defined by IPA.
+
+But some sounds are quite hard for English speakers, we define alternative sounds which are not conflicting with the existing sounds and easier for English speaker to pick up.
+
+==Example text==
+
+=== Lord's Prayer ===
+(https://en.wikipedia.org/wiki/Lord%27s_Prayer)
+{|
+!Spelling
+!Pronunciation
+!Comments
+|-
+|Our Father in heaven,
+|[our fáther in héaven]
+|"th" is [t] and [h], "ea" is [e] and [a]
+|-
+|hallowed be your name,
+|[háləlowed be ýour náme]
+|[ə] is inserted because it is hard to pronounce two [l]; [y] is always a vowel, and get the stress.
+|-
+|your kingdom come,
+|[ýour kíngdom cóme]
+|
+|-
+|your will be done,
+|[ýour wiləl be dóne]
+|
+|-
+|on earth as in heaven.
+|[on éarth as in héaven]
+|
+|-
+|Give us today our daily bread.
+|[gíve us tóday our dáily bréad]
+|"ay" is [a] and [y]
+|-
+|Forgive us our sins
+|[fórgive us our sins]
+|
+|-
+|as we forgive those who sin against us.
+|[as we fórgive thóse wəhó sin ágainst us]
+|"wh" is to hard to pronounce, so add a schwa [ə], which make it two syllables, but the stress is still in "o".
+|-
+|Save us from the time of trial
+|[sáve us from the tíme of tríal]
+|
+|-
+|and deliver us from evil.
+|[and déliver us from évil]
+|
+|-
+|For the kingdom, the power, and the glory are yours
+|[for the kíngdom the pówer and the glóry áre ýours]
+|
+|-
+|now and for ever
+|[now and for éver]
+|the [w] can join with [a], so it become [no-wa]
+|-
+|Amen
+|[ámen]
+|
+|}
+
+=== Babel Tex ===
+(https://en.wikipedia.org/wiki/Tower_of_Babel)
+{|
+!Spelling
+!Pronunciation
+!Comment
+|-
+|Now the whole world had one language and a common speech. As people moved eastward, they found a plain in Shinar and settled there.
+|[nówə the wəhóle wórləd had óne lánguage and a cómmon spéech] [as péople móved éastward] [théy found a plain in shínar and sétətled thére]
+|[now] is hard to pronounce; it will sound like [nou]; so we add a schwa to become [nowə]
+|-
+|They said to each other, "Come, let's make bricks and bake them thoroughly." They used brick instead of stone, and tar for mortar.
+|[théy said to éach óther] [cóme] [lets máke bricks and báke them thóroughəly] [théy úsed brick ínstead of stóne] [and tar for mórtar]
+|[gh] is hard to pronounce without a following vowel, so add a schwa [ə]
+|-
+|And they said, "Come, let us build ourselves a city, and a tower whose top is in the heavens; let us make a name for ourselves, lest we be scattered abroad over the face of the whole earth."
+|[and théy said] [cóme] [let us búild óurselves a cíty and a tówer wəhóse top is in the héavens] [let us máke a náme for óurselves] [lest we be scátətered ábroad óver the fáce of the wəhóle éarth]
+|In "build", [ui] is not a familiar sound in English, so treat as two syllables, so we get [búild]
+|-
+|But the Lord came down to see the city and the tower which the sons of men had built.
+|[but the lord cáme dówən to sée the cíty and the tówer wəhich the sons of men had búilt]
+|"see" is two syllables, so it is [sée] ; or pronounce it longer as [se:]
+|-
+|And the Lord said, "Indeed the people are one and they all have one language, and this is what they begin to do; now nothing that they propose to do will be withheld from them.
+|[and the lord said] [índeed the péople áre óne and théy áləl háve óne lánguage] [and this is wəhát théy bégin to do] [nówə nóthing that théy própose to do wíləl be wíthəheld from them]
+|
+|-
+|Come, let Us go down and there confuse their language, that they may not understand one another's speech."
+|[cóme] [let us go dówən and thére cónfuse their lánguage] [that théy máy not únderstand óne ánothers spéech]
+|
+|-
+|So the Lord scattered them abroad from there over the face of all the earth, and they ceased building the city.
+|[so the lord scátətered them ábroad from thére óver the fáce of ál)l the éarth] [and théy céased búilding the cíty]
+|
+|-
+|Therefore its name is called Babel, because there the Lord confused the language of all the earth; and from there the Lord scattered them abroad over the face of all the earth.
+|[thérefore its náme is cáləled bábel] [bécause thére the lord cónfused the lánguage of ál)l the éarth; and from thére the lord scátətered them ábroad óver the fáce of áləl the éarth]
+|}
+
+== Reference ==
+https://eugenemab.github.io/Code/2017/20170121_EnglishIpa/index.html
