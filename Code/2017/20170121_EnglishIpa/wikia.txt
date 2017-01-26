@@ -20,16 +20,16 @@
 |Aspect = 
 |NounCases = 
 |NounDefinite = 
-|NounNumber =1000 
+|NounNumber =400 
 |NounGender = 
 |VerbPerson = 
-|VerbNumber =1000 
+|VerbNumber =600 
 |VerbAspect = 
 |VerbTense = 
 |VerbMood = 
 |VerbVoice = 
 |AdjCase = 
-|AdjNumber =1000 
+|AdjNumber =600 
 |AdjDefinite = 
 |AdjGender = 
 |AdjComparative = 
@@ -39,9 +39,9 @@
 |Participle =
 |Infinitive = 
 |Modality =
-|Phonology = 
+|Phonology =600 
 |Words =250000 
-|Creator =Eugenemab |Name = English-IPA|NativeName = énglish / énglishə|TargetLexiconSize = 250000|Adverbs = 1000}}
+|Creator =Eugenemab |Name = English-IPA|NativeName = énglish / énglishə|TargetLexiconSize = 250000|Adverbs = 100}}
 For centuries, there has been a movement to reform the spelling of English. It seeks to change English spelling so that it is more consistent, matches pronunciation better. (Refer to https://en.wikipedia.org/wiki/English-language_spelling_reform#References) However, the spelling reform has rarely attracted widespread public support due to various reasons.
 
 So, I propose an idea to solve the problem by another way around. Instead of changing the spelling to fit the pronunciation, we may '''change the pronunciation to fit the spelling'''. (Refer to https://en.wikipedia.org/wiki/Spelling_pronunciation)
