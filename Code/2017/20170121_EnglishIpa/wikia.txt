@@ -532,7 +532,7 @@ But some sounds are quite hard for English speakers, we define alternative sound
 |-
 |your kingdom come,
 |[ýour kíngdom cóme]
-|
+|"ng" is [n] and [g]
 |-
 |your will be done,
 |[ýour wiləl be dóne]
