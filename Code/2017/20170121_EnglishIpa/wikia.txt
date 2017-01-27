@@ -451,7 +451,7 @@ It is also a dialect of English.
 |-
 |o
 |[o]
-|[ʃ]
+|[ɔ]
 |https://en.wikipedia.org/wiki/Open-mid_back_rounded_vowel
 |-
 |p
@@ -575,7 +575,7 @@ But some sounds are quite hard for English speakers, we define alternative sound
 |
 |}
 
-=== Babel Tex ===
+=== Babel Text ===
 (https://en.wikipedia.org/wiki/Tower_of_Babel)
 {|
 !Spelling
