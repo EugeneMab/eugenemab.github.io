@@ -21,7 +21,7 @@ u atifijalan lingo pe min<br/></center>
 <a name=introduction>
 <center><h2>Introduction</h2>
 </center>
-<h3>Principles: compress Latin words into C-V syllables</h3>
+<h3>Principles: compress Latin words into {C-V} syllables</h3>
 <p>
 The main idea of my artificial language is to simplify Latin words into one-consonant plus one-vowel structure, wherein the one-vowel is permitted to be nasal.
 That is because we think this structure is the best for singing.
@@ -33,51 +33,78 @@ And the stress position should not impact the meaning of the word.
 Most Latin word can be regarded as the structure below:<br/>
 <center><b>{s} {consonant} {r/l} {i/u} vowel {i/u} {consonant} {consonant}</b></center>
 We write it simple like below:<br/>
-<center><b>s C1 (r/l) S1 V S2 C2 C3</b></center>
+<center><b>{s} {C1} {r/l} {S1} {V} {S2} {C2} {C3}</b></center>
 Our target is simplify this kind of structure into the one below:<br/>
-<center><b>C V (V can be nasal)</b></center>
+<center><b>{V} {V} {N} (nasal)</b></center>
 </p>
 <h3>Part {s}</h3>
 <p>
-First, the {s}, the most popular combinations are {sp-}, {st-}, {sc-}, we convert them into a single consonant,
+First, the {s}, the most popular combinations are {sp-}, {st-}, {sc-}({sk-}), we convert them into a single consonant,
 respectively, {ts}, {dz}, {dz} (via {sti-}), their pronounciations are assigned as [ts], [dz], [dz] in order.<br/>
-Examples: state =&gt; dzati; spera=&gt; tsewa; sport =&gt; tsotan; science =&gt; dzienji<br/>
+Examples:
+	{state} =&gt; {dzati};
+	{spera} =&gt; {tsewa};
+	{sport} =&gt; {tsotan};
+	{science} =&gt; {dzienji}
 </p>
 <h3>Part {consonant 1}</h3>
 <p>
 Then, the {C1}, we simplify them into the legal consonants below:<br/>
-<center><b>b p m f v<br/>d t n s j<br/>g k h w l</b></center>
+<center>
+	<table>
+	<tr><td>{b}</td><td>{p}</td><td>{m}</td><td>{f}</td><td>{v}</td></tr>
+	<tr><td>{d}</td><td>{t}</td><td>{n}</td><td>{s}</td><td>{j}</td></tr>
+	<tr><td>{g}</td><td>{k}</td><td>{h}</td><td>{w}</td><td>{l}</td></tr>
+	</table>
+</center>
 Where, the pronunciations are assigned as IPA, such as {j} as [j], {h} as [h], {w} as [w].<br/>
 Some details can be considered in further improvement,
 but the main goal is to simplify them into a single and easy consonant.<br/>
 Rules:
-	{pt} =&gt; {b};
-	{ph} =&gt; {f};
-	{w} =&gt; {v};
-	{th} =&gt; {t};
-	{c} ([s]), {x} (at the beginning of a word), {ch} ([&#x0283;]/[t&#x0283;]), {ti} ([&#x0283;]) =&gt; {j};
-	{j}, {y} =&gt; {g} (via {gi-});
-	{q}, {c} [k], {ch} ([k]) =&gt; {k};
-	{r} =&gt; {w};
-	<br/>
+	<ul>
+	<li>{pt} =&gt; {b};</li>
+	<li>{ph} =&gt; {f};</li>
+	<li>{w} =&gt; {v};</li>
+	<li>{th} =&gt; {t};</li>
+	<li>{c} ([s]), {x} (at the beginning of a word), {ch} ([&#x0283;]/[t&#x0283;]), {ti} ([&#x0283;]) =&gt; {j};</li>
+	<li>{j}, {y} =&gt; {g} (via {gi-});</li>
+	<li>{q}, {c} [k], {ch} ([k]) =&gt; {k};</li>
+	<li>{r} =&gt; {w};</li>
+	</ul>
 Note:<br/>
 {v} and {w} are merged into {v}, while {r} uses {w} to avoid difficult pronunciation of [r].<br/>
 {pt} is converted to {b}.<br/>
 {x} (not at the beginning of a word) is treated as {k}+{s}.<br/>
-Examples: photo =&gt; foto; wagon =&gt; vagono; cent =&gt; jenti; center =&gt; jentewo; aqua =&gt; aca; question =&gt; kedzono; tank =&gt; tanko; xerox =&gt; jewosen; china =&gt; dzina; japan =&gt; gapano; adopt =&gt; adoba
+Examples:
+	{photo} =&gt; {foto};
+	{wagon} =&gt; {vagono};
+	{cent} =&gt; {jenti};
+	{center} =&gt; {jentewo};
+	{aqua} =&gt; {aka};
+	{question} =&gt; {kedzono};
+	{tank} =&gt; {tanko};
+	{xerox} =&gt; {jewosen};
+	{China} =&gt; {Jina};
+	{japan} =&gt; {gapano};
+	{adopt} =&gt; {adoba}
 </p>
 <h3>Part {r/l}</h3>
 <p>
 Then, the {r/l}, they will be removed.
 But, this will cause great loss of information and then create confusions.
 So a compensated vowel {-on} will be appended at the end of the word<br/>
-Examples: tract =&gt; taton; train =&gt; tenon; creat =&gt; keaton; glad =&gt; gadon; class =&gt; kason
+Examples:
+	{tract} =&gt; {taton};
+	{train} =&gt; {tenon};
+	{creat} =&gt; {keaton};
+	{glad} =&gt; {gadon};
+	{class} =&gt; {kason)
 </p>
 <h3>Part {semivowel 1}</h3>
 <p>
 The {S1}, the semivowel before vowel are mostly useless and can be delete,
 except sometimes they appears in the stem of words, like {piano} and {violin}.
-We should seperate the word into to two C-V syllables, then an additional syllable is created.
+We should seperate the word into to two {C-V} syllables, then an additional syllable is created.
 </p>
 <h3>Part {vowel}</h3>
 <p>
@@ -86,37 +113,68 @@ The {V} is simple relatively. Just convert {y} =&gt; {i}.
 <h3>Part {semivowel 2}</h3>
 <p>
 The {S2}, the semi-vowel after vowel.
-At this time, {V+S2} can be regarded as a diphthongue.
+At this time, {V-S2} can be regarded as a diphthongue.
 We simplify all diphthongues into five legal combinations: {au}, {ai}, {ei}, {ou}, {oi}.
 Further, they are represented by {a}, {e}, {i}, {o}, {u) with a compensating {-in}</br>
-ao/oa =&gt; au =&gt; a ..-in; ae/ea =&gt; ai =&gt; e ..-in; ee =&gt; ei =&gt; i ..-in; oo =&gt; ou =&gt; o ..-in; oe/eo/eu =&gt; oi =&gt; u ..-in<br/>
-Examples: cause =&gt; kasin; daemon =&gt; demonin; coffee =&gt; kofihin; moustache =&gt; modzajin; phoenix =&gt; funisin; Europe =&gt; Uwopin<br/>
+	<ul>
+	<li>{ao/oa} =&gt; {au} =&gt; {a ..-in;}</li>
+	<li>{ae/ea} =&gt; {ai} =&gt; {e ..-in;}</li>
+	<li>{ee} =&gt; {ei} =&gt; {i ..-in;}</li>
+	<li>{oo} =&gt; {ou} =&gt; {o ..-in;}</li>
+	<li>{oe/eo/eu} =&gt; {oi} =&gt; {u ..-in}</li>
+	</ul>
+Examples:
+	{cause} =&gt; {kasin};
+	{daemon} =&gt; {demonin};
+	{coffee} =&gt; {kofihin};
+	{moustache} =&gt; {modzajin};
+	{phoenix} =&gt; {funisin};
+	{Europe} =&gt; {Uwopin}
 </p>
 <h3>Part {consonant 2}</h3>
 <p>
 The {C2} is a little complex,
 because three situations are to be considered:<br/>
 First, if {C2} is {r} or {l}, it will be removed and need a compensating {-an}.<br/>
-Examples: depart =&gt; depatan; alt =&gt; atan; culture =&gt; kutuwan; curt =&gt; kutan; court =&gt; kotan<br/>
+Examples:
+	{depart} =&gt; {depatan};
+	{alt} =&gt; {atan};
+	{culture} =&gt; {kutuwan};
+	{curt} =&gt; {kutan};
+	{court} =&gt; {kotan}
+<br/>
 Second, if {C2} is {n} or {m}, it will cause the vowel into variation of nasal: aN, eN, iN, oN, uN<br/>
 The {N} should used as {n} or {m} according to the following consonant, if {b}, {p}, or {m}, {N} is {m}; else {N} is {n}.<br/>
-Examples: cant =&gt; kanta; simple =&gt; simpo; autumn =&gt; atunnin; environment =&gt; enviwommento<br/>
+Examples:
+	{cant} =&gt; {kanta};
+	{simple} =&gt; {simpo};
+	{autumn} =&gt; {atunnin};
+	{environment} =&gt; {enviwommento}
+<br/>
 Third, if {C2} is others, it will be removed and need a compensating {-en}.<br/>
-Examples: fact =&gt; faten; experiment (xp is treated as k+sp) =&gt; etsewimenten; sign =&gt; sinen; dogmatic =&gt; domatiken
+Examples:
+	{fact} =&gt; {faten};
+	{experiment} ({xp} is treated as {k-sp}) =&gt; {etsewimenten};
+	{sign} =&gt; {sinen};
+	{dogmatic} =&gt; {domatiken}
 </p>
 <h3>Part {consonant 3}</h3>
 <p>
 Finally, for the {C3}, if the {C3} is the last letter of the latin word, we consider it to be an additional syllable.<br/>
-Examples: construct =&gt; kondzuton; verb =&gt; veban<br/>
+Examples:
+	{construct} =&gt; {kondzuton};
+	{verb} =&gt; {veban}
+<br/>
 Otherwise, an additional {-e-} is inserted.<br/>
-Examples: partner =&gt; patenewan
+Examples:
+	{partner} =&gt; {patenewan}
 </p>
 <h3>Ending and compensating</h3>
 <p>
 The principle of making rules for ending-vowels are making them diverse.<br/>
 The appending rules are made for four situations as below.<br/>
 If a word fits two categories,
-the rules with higher precedency will be adopted.<br/>
+the rules with the highest precedency will be adopted.<br/>
 For example, the word {tract},
 	a verb should be appended {-a},
 	but the removed {-r-} determines the ending-vowel to be {-on},
@@ -167,14 +225,14 @@ Stress falls at the last syllable if the word ends with {-e} or {-u} or {-un}, o
 </p>
 <h3>Center of a phrase</h3>
 <p>
-When a center word of a phrase is a single-syllable C+V word, it sounds not strong enought.<br/>
+When a center word of a phrase is a single-syllable C+V word, it sounds not strong enough.<br/>
 To make it sounds good phonetically, we make the center word a short form, namely add {-n}.<br/>
 Example: with me =&gt; ve mi =&gt; ve min; who is he =&gt; ki dze go =&gt; ke dzen go.
 </p>
 <a name=sample>
 <center><h2>Sample Passages</h2></center>
 <p>
-For each group, the first line is Doudouling in full form,
+For each group, the first line is Doudouling in long form,
 the second line is Doudouling in short form,
 the third line is Latin roots,
 and the fourth line is English meaning.
@@ -380,374 +438,375 @@ Amen .
 <a name=schema>
 <center><h2>Schema</h2></center>
 <table width=100%>
- <tr bgcolor="ccddff">
-  <td>
-    <b>Alphabet</b>
-  </td>
-  <td>
-    <b>Afabeta</b>
-  </td>
- </tr>
- <tr>
-  <td>
-   B P M F V TS<br/>
-   D T N S J DZ<br/>
-   G C H R L<br/>
-   A E I O U<br/>
-  </td>
-  <td>
-   B P M F V TS<br/>
-   D T N S J DZ<br/>
-   G C H R L<br/>
-   A E I O U<br/>
-  </td>
- </tr>
- <tr bgcolor="ccddff">
-  <td>
-   <b>Phonetics</b>
-  </td>
-  <td>
-   <b>Fonetise</b>
-  </td>
- </tr>
- <tr>
-  <td colspan=2>
-   <table width=90% border=1>
-    <tr>
-     <td>B b [b] b in book</td>
-     <td>P p [p] p in pen</td>
-     <td>M m [m] m in map</td>
-     <td>F f [f] f in fall</td>
-     <td>V v [v] v in vow</td>
-     <td>TS ts [ts] ts in gets (!)</td>
-    </tr>
-    <tr>
-     <td>D d [d] d in dog</td>
-     <td>T t [t] t in take</td>
-     <td>N n [n] n in name</td>
-     <td>S s [s] s in say</td>
-     <td>J j [j] y in yes (!)</td>
-     <td>DZ dz [dz] ds in words (!)</td>
-    </tr>
-    <tr>   
-     <td>G g [g] g in go</td>
-     <td>C c [k] c in cat (!)</td>
-     <td>H h [h] h in how (!)</td>
-     <td>W w [w] w in wall (!)</td>
-     <td>L l [l] l in low</td>
-    </tr>
-    <tr>
-     <td>A a [&#x0251;] a in yacht</td>
-     <td>E e [&#x025b;] e in set</td>
-     <td>I i [i] i in machine</td>
-     <td>O o [&#x0254;] o in bought</td>
-     <td>U u [u] u in flute</td>
-    </tr>
-   </table>
-   Note !: pronuncation need to be cautious<br/>
-  </td>
- </tr>
- <tr bgcolor="ccddff">
-  <td>
-   <b>Syllable Structure</b>
-  </td>
-  <td>
-   <b>Dzutuwon de silabulen</b>
-  </td>
-  <tr>
-   <td>   
-    [Consonant] Vowel (Nasal)
-   </td>
-   <td>   
-    [Konsonanto] Vovelo (Nasali)
-   </td>
-  </tr>
- <tr bgcolor="ccddff">
-  <td>
-   <b>Stress</b>
-  </td>
-  <td>
-   <b>Ajenten</b>
-  </td>
-  <tr>
-   <td>
-    If the word ends with {-e} or {-u} or {-un}, the stress lies in the last syllable.<br/>
-    Otherwise, the stress lies in the penultimate syllable.
-   </td>
-   <td>
-    Si la veban finisa ve {-e} o {-u} o {-un}, la ajenten lokata in la utiman silabulen.<br/>
-    Si non, la ajenten lokata in la utiman silabulen.<br/>
-   </td>
-  </tr>
- </tr>
- <tr bgcolor="ccddff">
-  <td>
-   <b>Etymology</b>
-  </td>
-  <td>
-   <b>Etimologi</b>
-  </td>
- </tr>
- <tr>
-  <td colspan=2>
-   <b>1.</b>Convert latin words into structure like following:
-    {s} C1 {r/l} S1 V S2 C2<br/>
-   <b>2.{s}:</b> sp,st,sc=&gt;ts,dz,dz<br/>
-   <b>3.C1:</b>
-		{pt} =&gt; {b};
-		{ph} =&gt; {f};
-		{w} =&gt; {v};
-		{th} =&gt; {t};
-		{c} ([s]), {x} (at the beginning of a word), {ch} ([&#x0283;]/[t&#x0283;]), {ti} ([&#x0283;]) =&gt; {j};
-		{j}, {y} =&gt; {g} (via {gi-});
-		{q}, {c} [k], {ch} ([k]) =&gt; {k};
-		{r} =&gt; {w};
-		<br/>
-   <b>4.{r/l}:</b> delete, and moved to end-of-word as -on<br/>
-   <b>5.S1:</b> deleted if not word stem; else separate to two syllables<br/>
-   <b>6.V:</b> just a e i o u, y=&gt;i<br/>
-   <b>7.S2:</b> combine with V into variations: au, ai, ei, ou, oi. then convert to a, e, i, o, u with a compensating -in<br/>       
-   <b>8.C2:</b><br/>
-	<b>8.a. C2:</b>if {r} / {l}, remove and need a compensating {-an}<br/>
-   <b>8.b. C2:</b>if {n} / {m}, combine with V into nasal variations: aN, eN, iN, oN, uN<br/>
-   <b>8.c. C2:</b>else remove V and need a compensating {-en}<br/>
-   <b>9.C3:</b>create a separate syllable, which needs a ending-vowel<br/>
-   <b>9.1. compensated:</b> for -R-/-L-, -ON; for -R/-L, -AN; for double-consonant, -EN; for diphthong, -IN;<br/>
-   <b>9.2. native:</b> native last vowel;<br/>
-   <b>9.3. complement:</b> noun nominative -o; noun plural -o or -i; verb -a; adjective -i; adverb -i<br/>
- </tr>
- <tr bgcolor="ccddff">
-  <td>
-   <b>Vocabulary</b>
-  </td>
-  <td>
-   <b>Vocabulari</b>
-  </td>
- </tr>
- <tr>
-  <td>
-   Words composed by latin roots which appeared in English words
-  </td>
-  <td>
-   Le veban ke dewiva de le wadi de la Latino e ke apewen in la Engijon.
-  </td>
- </tr>
- <tr bgcolor="ccddff">
-  <td>
-   <b>Pronoun</b>
-  </td>
-  <td>
-   <b>Ponomo</b>
-  </td>
- </tr>
- <tr>
-  <td colspan=2>
-   <table border=1>
-    <tr>
-     <td></td><td colspan=3>Single</td><td colspan=3>Plural</td>
-    </tr>
-    <tr>
-     <td></td><td>First</td><td>Second</td><td>Third</td><td>First</td><td>Second</td><td>Third</td>
-    </tr>
-    <tr>
-     <td>Nominative</td><td>mi</td><td>tu</td><td>go/ga</td><td>nu</td><td>vu</td><td>lu</td>
-    </tr>
-    <tr>
-     <td>Accusative</td><td>me</td><td>te</td><td>se</td><td>ni</td><td>vi</td><td>li</td>
-    </tr>
-    <tr>
-     <td>Genitive</td><td>ma</td><td>ta</td><td>sa/gi</td><td>na</td><td>vo</td><td>lo</td>
-    </tr>
-   </table>
-  </td>
- </tr>
- <tr bgcolor="ccddff">
-  <td>
-   <b>Main Words</b>
-  </td>
-  <td>
-   <b>Impotantan Veban</b>
-  </td>
- </tr>
- <tr>
-  <td colspan=2>
-   <table border=1>
-    <tr bgcolor="eeddff">
-     <td>a</td><td>e</td><td>i</td><td>o</td><td>u</td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td>ad</td><td>et</td><td>in</td><td>or</td><td>un</td>
-    </tr>
-    <tr>
-     <td>to</td><td>and</td><td>in</td><td>or</td><td>a</td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td>ba</td><td></td><td></td><td>bo</td><td>bu</td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td>ab</td><td></td><td></td><td>ob</td><td>sub</td>
-    </tr>
-    <tr>
-     <td>from</td><td></td><td></td><td>but</td><td>under</td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td>pa</td><td>pe</td><td>pi</td><td>po</td><td></td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td>parse</td><td>per</td><td>prise</td><td>pro</td><td></td>
-    </tr>
-    <tr>
-     <td>why</td><td>by</td><td>be done</td><td>for</td><td></td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td>ma</td><td>me</td><td>mi</td><td></td><td>mu</td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td>me</td><td>me</td><td>me</td><td></td><td>mult</td>
-    </tr>
-    <tr>
-     <td>my</td><td>me</td><td>I</td><td></td><td>some</td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td></td><td>fe</td><td></td><td>fo</td><td>fu</td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td></td><td>fer</td><td></td><td>front</td><td>fer</td>
-    </tr>
-    <tr>
-     <td></td><td>do</td><td></td><td>most</td><td>do (question)</td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td>va</td><td>ve</td><td>vi</td><td>vo</td><td>vu</td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td>vas</td><td>verse</td><td>vos</td><td>vos</td><td>vos</td>
-    </tr>
-    <tr>
-     <td>will do; go</td><td>with</td><td>you (plural, object)</td><td>your (plural)</td><td>you (plural, subject)</td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td></td><td>tse</td><td></td><td></td><td></td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td></td><td>spec</td><td></td><td></td><td></td>
-    </tr>
-    <tr>
-     <td></td><td>more</td><td></td><td></td><td></td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td>da</td><td>de</td><td>di</td><td>do</td><td>du</td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td>ad</td><td>de</td><td>id</td><td>od</td><td>dur</td>
-    </tr>
-    <tr>
-     <td>then</td><td>of</td><td>there</td><td>though</td><td>when</td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td>ta</td><td>te</td><td></td><td>to</td><td>tu</td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td>tu</td><td>tu</td><td></td><td>tot</td><td>tu</td>
-    </tr>
-    <tr>
-     <td>your (single)</td><td>you (single, object)</td><td></td><td>all</td><td>you (single, subject)</td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td>na</td><td>ne</td><td>ni</td><td>no</td><td>nu</td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td>nos</td><td>ne</td><td>nos</td><td>non</td><td>nos</td>
-    </tr>
-    <tr>
-     <td>our</td><td>not</td><td>us</td><td>no</td><td>we</td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td>sa</td><td>se</td><td>si</td><td></td><td>su</td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td>su</td><td>se</td><td>sic</td><td></td><td>super</td>
-    </tr>
-    <tr>
-     <td>his; her (adjective)</td><td>him</td><td>so; if</td><td></td><td>over</td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td></td><td>je</td><td>ji</td><td></td><td></td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td></td><td>hic</td><td>hic</td><td></td><td></td>
-    </tr>
-    <tr>
-     <td></td><td>this (adjective)</td><td>this (pronoun)</td><td></td><td></td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td></td><td>dze</td><td>dzi</td><td></td><td>dzu</td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td></td><td>est</td><td>est</td><td></td><td>est</td>
-    </tr>
-    <tr>
-     <td></td><td>be</td><td>be doing</td><td></td><td>be (question)</td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td>ga</td><td>ge</td><td>gi</td><td>go</td><td>gu</td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td>illa</td><td>id</td><td>illa</td><td>ill</td><td>in ubi</td>
-    </tr>
-    <tr>
-     <td>she</td><td>that (adjective)</td><td>her (object)</td><td>he</td><td>where</td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td>ka</td><td>ke</td><td>ki</td><td>ko</td><td>ku</td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td>qual</td><td>que</td><td>qui</td><td>com</td><td>quo</td>
-    </tr>
-    <tr>
-     <td>how</td><td>what; that (conjuction)</td><td>who</td><td>as</td><td>which</td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td>ha</td><td>he</td><td>hi</td><td>ho</td><td></td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td>hab</td><td>hab</td><td>hic</td><td>hoc</td><td></td>
-    </tr>
-    <tr>
-     <td>have done</td><td>did</td><td>here</td><td>that (subject)</td><td></td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td></td><td>we</td><td></td><td></td><td></td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td></td><td>re</td><td></td><td></td><td></td>
-    </tr>
-    <tr>
-     <td></td><td>again</td><td></td><td></td><td></td>
-    </tr>
-    <tr bgcolor="eeddff">
-     <td>la</td><td>le</td><td>li</td><td>lo</td><td>lu</td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td>illa</td><td>ill</td><td>lor</td><td>lor</td><td>lor</td>
-    </tr>
-    <tr>
-     <td>the (single)</td><td>the (plural)</td><td>them</td><td>their</td><td>they</td>
-    </tr>
-   </table>
-   <table border=1>
-    <tr bgcolor="eeddff">
-     <td>uni</td><td>duvi</td><td>tison</td><td>kato</td><td>jinki</td><td>sisen</td><td>sebi</td><td>oten</td><td>novi</td><td>deji</td><td>jenti</td><td>milen</td><td>milonen</td>
-    </tr>
-    <tr bgcolor="ddeeff">
-     <td>un</td><td>du</td><td>tri</td><td>quartor</td><td>cinq</td><td>six</td><td>sept</td><td>oct</td><td>nov</td><td>dec</td><td>cent</td><td>mill</td><td>million</td>
-    </tr>
-    <tr>
-     <td>one</td><td>two</td><td>three</td><td>four</td><td>five</td><td>six</td><td>seven</td><td>eight</td><td>nine</td><td>ten</td><td>hundred</td><td>thousand</td><td>million</td>
-    </tr>
-   </table>
-  </td>
- </tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Alphabet</b>
+		</td>
+		<td>
+			<b>Afabetan</b>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			B P M F V TS<br/>
+			D T N S J DZ<br/>
+			G C H R L<br/>
+			A E I O U<br/>
+		</td>
+		<td>
+			B P M F V TS<br/>
+			D T N S J DZ<br/>
+			G C H R L<br/>
+			A E I O U<br/>
+		</td>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Phonetics</b>
+		</td>
+		<td>
+			<b>Fonetisen</b>
+		</td>
+	</tr>
+	<tr>
+		<td colspan=2>
+			<table width=90% border=1>
+				<tr>
+					<td>B b [b] b in book</td>
+					<td>P p [p] p in pen</td>
+					<td>M m [m] m in map</td>
+					<td>F f [f] f in fall</td>
+					<td>V v [v] v in vow</td>
+					<td>TS ts [ts] ts in gets (!)</td>
+				</tr>
+				<tr>
+					<td>D d [d] d in dog</td>
+					<td>T t [t] t in take</td>
+					<td>N n [n] n in name</td>
+					<td>S s [s] s in say</td>
+					<td>J j [j] y in yes (!)</td>
+					<td>DZ dz [dz] ds in words (!)</td>
+				</tr>
+				<tr>   
+					<td>G g [g] g in go</td>
+					<td>C c [k] c in cat (!)</td>
+					<td>H h [h] h in how (!)</td>
+					<td>W w [w] w in wall (!)</td>
+					<td>L l [l] l in low</td>
+				</tr>
+				<tr>
+					<td>A a [&#x0251;] a in yacht</td>
+					<td>E e [&#x025b;] e in set</td>
+					<td>I i [i] i in machine</td>
+					<td>O o [&#x0254;] o in bought</td>
+					<td>U u [u] u in flute</td>
+				</tr>
+			</table>
+			Note !: pronuncation need to be cautious<br/>
+		</td>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Syllable Structure</b>
+		</td>
+		<td>
+			<b>Dzutuwon de silabulen</b>
+		</td>
+		<tr>
+			<td>   
+				[Consonant] Vowel (Nasal)
+			</td>
+			<td>   
+				[Konsonanto] Vovelo (Nasali)
+			</td>
+		</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Stress</b>
+		</td>
+		<td>
+			<b>Ajenten</b>
+		</td>
+		<tr>
+			<td>
+				If the word ends with {-e} or {-u} or {-un}, the stress lies in the last syllable.<br/>
+				Otherwise, the stress lies in the penultimate syllable.
+			</td>
+			<td>
+				Si la veban finija ve {-e} o {-u} o {-un}, la ajenten lokata in la silabulen finali.<br/>
+				Si non, la ajenten lokata in la silabulen penutimatan.<br/>
+			</td>
+		</tr>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Etymology</b>
+		</td>
+		<td>
+			<b>Etimologi</b>
+		</td>
+	</tr>
+	<tr>
+		<td colspan=2>
+			<b>1.</b>Convert latin words into structure like following:
+				{s} {C1} {r/l} {S1} {V} {S2} {C2} {C3}<br/>
+			<b>2.{s}:</b> {sp}=&gt;{ts},{st},{sc-},{sk-}&gt;{dz}<br/>
+			<b>3.{C1}:</b>
+				{pt} =&gt; {b};
+				{ph} =&gt; {f};
+				{w} =&gt; {v};
+				{th} =&gt; {t};
+				{c} ([s]), {x} (at the beginning of a word), {ch} ([&#x0283;]/[t&#x0283;]), {ti} ([&#x0283;]) =&gt; {j};
+				{j}, {y} =&gt; {g} (via {gi-});
+				{q}, {c} [k], {ch} ([k]) =&gt; {k};
+				{r} =&gt; {w};
+			<b>4.{r/l}:</b> delete, and moved to end-of-word as {-on}<br/>
+			<b>5.{S1}:</b> deleted if not word stem; else separate to two syllables<br/>
+			<b>6.{V}:</b> just {a} {e} {i} {o} {u}; {y} =&gt; {i}<br/>
+			<b>7.{S2}:</b> combine with {V} into variations: {au}, {ai}, {ei}, {ou}, {oi}, then convert to {a}, {e}, {i}, {o}, {u} with a compensating {-in}<br/>
+			<b>8.{C2}:</b><br/>
+			<b>8.a. {C2}:</b>if {r} / {l}, remove and need a compensating {-an}<br/>
+			<b>8.b. {C2}:</b>if {n} / {m}, combine with {V} into nasal variations: {aN}, {eN}, {iN}, {oN}, {uN}<br/>
+			<b>8.c. {C2}:</b>else remove and need a compensating {-en}<br/>
+			<b>9.{C3}:</b>create a separate syllable<br/>
+			<b>10:</b>ending-vowel<br/>
+			<b>10.1. compensated:</b> for {r/l} before {V}, {-on}; for {r/l} after {V}, {-an}; for double-consonant, {-en}; for diphthong, {-in};<br/>
+			<b>10.2. native:</b> native last vowel; {e}&gt;{i}, {u}&gt;{o}<br/>
+			<b>10.3. natural:</b> noun single {-o}; noun plural {-o} or {-i}; verb {-a}; adjective {-i}; adverb {-i}<br/>
+		</td>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Vocabulary</b>
+		</td>
+		<td>
+			<b>Vocabulawi</b>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			Words composed by latin roots which appeared in English words
+		</td>
+		<td>
+			Le veban ke dewiva de le wadi de la Latino e ke apewen in la Engijon.
+		</td>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Pronoun</b>
+		</td>
+		<td>
+			<b>Pononon</b>
+		</td>
+	</tr>
+	<tr>
+		<td colspan=2>
+			<table border=1>
+				<tr>
+					<td></td><td colspan=3>Single</td><td colspan=3>Plural</td>
+				</tr>
+				<tr>
+					<td></td><td>First</td><td>Second</td><td>Third</td><td>First</td><td>Second</td><td>Third</td>
+				</tr>
+				<tr>
+					<td>Nominative</td><td>mi</td><td>tu</td><td>go/ga</td><td>nu</td><td>vu</td><td>lu</td>
+				</tr>
+				<tr>
+					<td>Accusative</td><td>me</td><td>te</td><td>se</td><td>ni</td><td>vi</td><td>li</td>
+				</tr>
+				<tr>
+					<td>Genitive</td><td>ma</td><td>ta</td><td>sa/gi</td><td>na</td><td>vo</td><td>lo</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Main Words</b>
+		</td>
+		<td>
+			<b>Impotantan Veban</b>
+		</td>
+	</tr>
+	<tr>
+		<td colspan=2>
+			<table border=1>
+				<tr bgcolor="eeddff">
+					<td>a</td><td>e</td><td>i</td><td>o</td><td>u</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>ad</td><td>et</td><td>in</td><td>or</td><td>un</td>
+				</tr>
+				<tr>
+					<td>to</td><td>and</td><td>in</td><td>or</td><td>a</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ba</td><td></td><td></td><td>bo</td><td>bu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>ab</td><td></td><td></td><td>ob</td><td>sub</td>
+				</tr>
+				<tr>
+					<td>from</td><td></td><td></td><td>but</td><td>under</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>pa</td><td>pe</td><td>pi</td><td>po</td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>parse</td><td>per</td><td>prise</td><td>pro</td><td></td>
+				</tr>
+				<tr>
+					<td>why</td><td>by</td><td>be done</td><td>for</td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ma</td><td>me</td><td>mi</td><td></td><td>mu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>me</td><td>me</td><td>me</td><td></td><td>mult</td>
+				</tr>
+				<tr>
+					<td>my</td><td>me</td><td>I</td><td></td><td>some</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td></td><td>fe</td><td></td><td>fo</td><td>fu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td></td><td>fer</td><td></td><td>front</td><td>fer</td>
+				</tr>
+				<tr>
+					<td></td><td>do</td><td></td><td>most</td><td>do (question)</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>va</td><td>ve</td><td>vi</td><td>vo</td><td>vu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>vas</td><td>verse</td><td>vos</td><td>vos</td><td>vos</td>
+				</tr>
+				<tr>
+					<td>will do; go</td><td>with</td><td>you (plural, object)</td><td>your (plural)</td><td>you (plural, subject)</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td></td><td>tse</td><td></td><td></td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td></td><td>spec</td><td></td><td></td><td></td>
+				</tr>
+				<tr>
+					<td></td><td>more</td><td></td><td></td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>da</td><td>de</td><td>di</td><td>do</td><td>du</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>ad</td><td>de</td><td>id</td><td>od</td><td>dur</td>
+				</tr>
+				<tr>
+					<td>then</td><td>of</td><td>there</td><td>though</td><td>when</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ta</td><td>te</td><td></td><td>to</td><td>tu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>tu</td><td>tu</td><td></td><td>tot</td><td>tu</td>
+				</tr>
+				<tr>
+					<td>your (single)</td><td>you (single, object)</td><td></td><td>all</td><td>you (single, subject)</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>na</td><td>ne</td><td>ni</td><td>no</td><td>nu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>nos</td><td>ne</td><td>nos</td><td>non</td><td>nos</td>
+				</tr>
+				<tr>
+					<td>our</td><td>not</td><td>us</td><td>no</td><td>we</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>sa</td><td>se</td><td>si</td><td></td><td>su</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>su</td><td>se</td><td>sic</td><td></td><td>super</td>
+				</tr>
+				<tr>
+					<td>his; her (adjective)</td><td>him</td><td>so; if</td><td></td><td>over</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td></td><td>je</td><td>ji</td><td></td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td></td><td>hic</td><td>hic</td><td></td><td></td>
+				</tr>
+				<tr>
+					<td></td><td>this (adjective)</td><td>this (pronoun)</td><td></td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td></td><td>dze</td><td>dzi</td><td></td><td>dzu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td></td><td>est</td><td>est</td><td></td><td>est</td>
+				</tr>
+				<tr>
+					<td></td><td>be</td><td>be doing</td><td></td><td>be (question)</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ga</td><td>ge</td><td>gi</td><td>go</td><td>gu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>illa</td><td>id</td><td>illa</td><td>ill</td><td>in ubi</td>
+				</tr>
+				<tr>
+					<td>she</td><td>that (adjective)</td><td>her (object)</td><td>he</td><td>where</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ka</td><td>ke</td><td>ki</td><td>ko</td><td>ku</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>qual</td><td>que</td><td>qui</td><td>com</td><td>quo</td>
+				</tr>
+				<tr>
+					<td>how</td><td>what; that (conjuction)</td><td>who</td><td>as</td><td>which</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ha</td><td>he</td><td>hi</td><td>ho</td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>hab</td><td>hab</td><td>hic</td><td>hoc</td><td></td>
+				</tr>
+				<tr>
+					<td>have done</td><td>did</td><td>here</td><td>that (subject)</td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td></td><td>we</td><td></td><td></td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td></td><td>re</td><td></td><td></td><td></td>
+				</tr>
+				<tr>
+					<td></td><td>again</td><td></td><td></td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>la</td><td>le</td><td>li</td><td>lo</td><td>lu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>illa</td><td>ill</td><td>lor</td><td>lor</td><td>lor</td>
+				</tr>
+				<tr>
+					<td>the (single)</td><td>the (plural)</td><td>them</td><td>their</td><td>they</td>
+				</tr>
+			</table>
+			<table border=1>
+				<tr bgcolor="eeddff">
+					<td>uni</td><td>duvi</td><td>tison</td><td>kato</td><td>jinki</td><td>sisen</td><td>sebi</td><td>oten</td><td>novi</td><td>deji</td><td>jenti</td><td>milen</td><td>milonen</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>un</td><td>du</td><td>tri</td><td>quartor</td><td>cinq</td><td>six</td><td>sept</td><td>oct</td><td>nov</td><td>dec</td><td>cent</td><td>mill</td><td>million</td>
+				</tr>
+				<tr>
+					<td>one</td><td>two</td><td>three</td><td>four</td><td>five</td><td>six</td><td>seven</td><td>eight</td><td>nine</td><td>ten</td><td>hundred</td><td>thousand</td><td>million</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
 </table>
 <a name=discuss>
 <center><h2>Discussion</h2></center>
@@ -824,11 +883,12 @@ Padraic Brown: (some questions about the order of picking words)
 </ul>
 2017 Language changes
 <ul>
-<li>IPA alignment</li>
-<li>Remove {h} [&#x014B;], merge {st} and {sc} into {dz} [dz]</li>
+<li>IPA alignment: {h} [&#x014B;] &gt; {h} [h]; {r} [h] &gt; {w} [w]; {ph} [w] &gt; {ts} [ts]; {z} [ts] &gt; {j} [j]; {ch} [j] &gt; {dz} [dz]</li>
+<li>Merge {th} and {ch} into {dz} [dz]</li>
 <li>Redesign of the ending and the stress</li>
 <li>Long form and short form</li>
-<li>Use long form wheen a single-syllable word is the center of phrase</li>
+<li>Use short form wheen a single-syllable word is the center of phrase</li>
+<li>Make all key words in {C-V} format</li>
 </ul>
 </body>
 </html>
