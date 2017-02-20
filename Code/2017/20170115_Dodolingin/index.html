@@ -74,7 +74,7 @@ Rules:
 Note:<br/>
 {v} and {w} are merged into {v}, while {r} uses {w} to avoid difficult pronunciation of [r].<br/>
 {pt} is converted to {b}.<br/>
-{x} (not at the beginning of a word) is treated as {k}+{s}.<br/>
+{x} (not at the beginning of a word) is treated as {k-s}.<br/>
 Examples:
 	{photo} =&gt; {foto};
 	{wagon} =&gt; {vagono};
@@ -140,7 +140,6 @@ Examples:
 	{depart} =&gt; {depatan};
 	{alt} =&gt; {atan};
 	{culture} =&gt; {kutuwan};
-	{curt} =&gt; {kutan};
 	{court} =&gt; {kotan}
 <br/>
 Second, if {C2} is {n} or {m}, it will cause the vowel into variation of nasal: aN, eN, iN, oN, uN<br/>
@@ -177,26 +176,26 @@ If a word fits two categories,
 the rules with the highest precedency will be adopted.<br/>
 For example, the word {tract},
 	a verb should be appended {-a},
-	but the removed {-r-} determines the ending-vowel to be {-on},
+	but the removed {r-} determines the ending-vowel to be {-on},
 	also the removed {-c} needs a compensating {-en}.
 	The second one has higer precedency, so it finally became {taton}.
 <ol>Rules:
 <li><b>Compensating</b><br/>
-removed -r- / -l- : -on<br/>
+removed {r-} / {l-} : {-on}<br/>
 <br/>
-removed -r / -l : -an<br/>
-removed -consonant : -en<br/>
+removed {-r} / {-l} : {-an}<br/>
+removed {-consonant} : {-en}<br/>
 <br/>
-compressed diphthong : -in<br/>
+compressed diphthong : {-in}<br/>
 <li><b>Native</b><br/>
 if the root ends with a vowel; {-e} will be changed to {-i}, and {-u} will be changed to {-o}<br/>
-<li><b>Complement ( or natural )</b><br/>
-noun : -o<br/>
-plural noun : -o or -i (optional)<br/>
-verb : -a<br/>
-adjective : -i<br/>
-adverb : -i<br/>
-preposition, conjunction : -i<br/>
+<li><b>Natural</b><br/>
+singular noun : {-o}<br/>
+plural noun : {-o} or {-i} (optional)<br/>
+verb : {-a}<br/>
+adjective : {-i}<br/>
+adverb : {-i}<br/>
+preposition, conjunction : {-i}<br/>
 </ol>
 </p>
 <h3>Short form</h3>
@@ -207,12 +206,20 @@ The way to shorten words with three or more syllables:<br/>
 If the last syllable starts with {m} or {n}, or the penultimate syllable ends with {m} or {n};<br/>
 remove the last syllable, and change the vowel of the penultimate syllable to {-un};<br/>
 otherwise remove the last syllable, and change the vowel of the penultimat syllabe to {-e} from {-a}, {-e}, {-i} or {-u} from {-o}, {-u}<br/>
-Example: nation =&gt; najono =&gt; najun; important =&gt; impotantan =&gt; impotun; provide =&gt; povidon =&gt; pove; communicate =&gt; kommunikata =&gt; kommunike; import =&gt; impotan =&gt; impu<br/>
+Example:
+	{nation} =&gt; {najono} =&gt; {najun};
+	{important} =&gt; {impotantan} =&gt; {impotun};
+	{provide} =&gt; {povidon} =&gt; {pove};
+	{communicate} =&gt; {kommunikata} =&gt; {kommunike};
+	{import} =&gt; {impotan} =&gt; {impu}
 <br/>
 The way to of shorten words with two syllables:<br/>
-If the first syllable ends with {-n}, remove the last syllable.<br/>
-If the first syllable does not end with {-n}, remove the last syllable and add {-n} to the first syllable.<br/>
-Example: fact =&gt; faten =&gt; fan; train =&gt; tenon =&gt; ten; camp =&gt; kampo =&gt; kan<br/>
+Join the part before the first vowel, and the first vowel, and {n}.<br/>
+Example:
+	{aqua} =&gt; {aka} =&gt; {an};
+	{fact} =&gt; {faten} =&gt; {fan};
+	{train} =&gt; {tenon} =&gt; {ten};
+	{camp} =&gt; {kampo} =&gt; {kan}
 <br/>
 </p>
 <h3>Word choice</h3>
@@ -225,16 +232,18 @@ Stress falls at the last syllable if the word ends with {-e} or {-u} or {-un}, o
 </p>
 <h3>Center of a phrase</h3>
 <p>
-When a center word of a phrase is a single-syllable C+V word, it sounds not strong enough.<br/>
+When a center word of a phrase is a single-syllable {C-V} word, it sounds not strong enough.<br/>
 To make it sounds good phonetically, we make the center word a short form, namely add {-n}.<br/>
-Example: with me =&gt; ve mi =&gt; ve min; who is he =&gt; ki dze go =&gt; ke dzen go.
+Example:
+	{with me} =&gt; {ve mi} =&gt; {ve min};
+	{who is he} =&gt; {ki dze go} =&gt; {ke dzen go}
 </p>
 <a name=sample>
 <center><h2>Sample Passages</h2></center>
 <p>
-For each group, the first line is Doudouling in long form,
-the second line is Doudouling in short form,
-the third line is Latin roots,
+For each group, the first line is Doudouling in long form;
+the second line is Doudouling in short form;
+the third line is Latin roots;
 and the fourth line is English meaning.
 </p>
 <pre style="whitespace: no-wrap;">
@@ -369,8 +378,9 @@ su    la   sufajan de toti la   mundo.
 su    la   sufe    de ton  la   mun  .
 super illa surface de tot  illa mund .
 on    the  surface of all  the  earth.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
 </pre>
-<p>2. Lord's Prayer</p>
 <pre>
 Titulo : Na    Patewo
 Titu   : Na    Pate
@@ -389,6 +399,8 @@ san   dze ta   non .
 sanct est tu   nom .
 saint is  your name.
 
+--------- --------- --------- --------- --------- --------- --------- ---------
+
 Vena ta   wegimo ,
 Ven  ta   wegun  ,
 ven  tu   regime ,
@@ -404,10 +416,14 @@ ko  i  la   jen  e   su  ten  .
 com in ille cel  et  sur terr .
 as  in heaven    and on  earch.
 
+--------- --------- --------- --------- --------- --------- --------- ---------
+
 Na    pewi-din pan   tu  don  je-din.
 Na    pen-din  pan   tu  don  je-din.
 nostr per-di   pan   tu  dont hoc-di.
 Our   everyday bread you give today .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
 
 Padonan tu   na    debito,
 Padun   tu   na    debe  ,
@@ -419,6 +435,8 @@ ko  padun   ha  nu    na    debitu  .
 com pardaon hab nostr nostr debitor .
 as  we have forgotten our   debtors .
 
+--------- --------- --------- --------- --------- --------- --------- ---------
+
 E   tu  ne  ni    duten entewi tembajono ,
 E   tu  ne  ni    dun   ente   tembajun  ,
 et  tu  neg nostr duc   entr   temptation,
@@ -429,11 +447,14 @@ bo  ni     libewe   tu edze    de malun  .
 ob  nostr  liberat  tu exter   de malign .
 but you us liberate    out     of malign .
 
+--------- --------- --------- --------- --------- --------- --------- ---------
+
 Ameni.
 Amun .
 amen .
 Amen .
 
+--------- --------- --------- --------- --------- --------- --------- ---------
 </pre>
 <a name=schema>
 <center><h2>Schema</h2></center>
@@ -447,16 +468,15 @@ Amen .
 		</td>
 	</tr>
 	<tr>
-		<td>
 			B P M F V TS<br/>
 			D T N S J DZ<br/>
-			G C H R L<br/>
+			G K H W L<br/>
 			A E I O U<br/>
 		</td>
 		<td>
 			B P M F V TS<br/>
 			D T N S J DZ<br/>
-			G C H R L<br/>
+			G K H W L<br/>
 			A E I O U<br/>
 		</td>
 	</tr>
@@ -489,9 +509,9 @@ Amen .
 				</tr>
 				<tr>   
 					<td>G g [g] g in go</td>
-					<td>C c [k] c in cat (!)</td>
-					<td>H h [h] h in how (!)</td>
-					<td>W w [w] w in wall (!)</td>
+					<td>K k [k] k in kilo</td>
+					<td>H h [h] h in how</td>
+					<td>W w [w] w in wall</td>
 					<td>L l [l] l in low</td>
 				</tr>
 				<tr>
@@ -580,7 +600,7 @@ Amen .
 			<b>Vocabulary</b>
 		</td>
 		<td>
-			<b>Vocabulawi</b>
+			<b>Vokabulawi</b>
 		</td>
 	</tr>
 	<tr>
