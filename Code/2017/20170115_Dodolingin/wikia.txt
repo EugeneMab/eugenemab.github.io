@@ -63,7 +63,7 @@ It is trade-off between two options
 
 So the way is to choose some "important" character of the dropped ones and merge them into another consonant or the last vowel.
 
-For example, {extract} => {e-k-str-a-k-t} => {edzatom} pronounced as [ɛ'd͡zɑtɔn].
+For example, {extract} => {e-k-str-a-k-t} => {edzaton} pronounced as [ɛ'd͡zɑtɔn].
 Both {k} letters are dropped;
 {s} is merged with {t} to become {dz} pronounced [d͡z];
 {r} is dropped but represented as a final {-on} suffix.
@@ -83,13 +83,13 @@ The first version was published in 2004, and an updated version is published in 
 
 ====Consonant-vowel-nasal structure====
 
-# Regard Latin words as several syllables, each with a structure like following: {s} {consonant} {r/l} {i/u} vowel {i/u} {consonant} {consonant}; for convenient, we shorten them as {s} {C1} {r/l} {S1} {V} S2 {C2} {C3}
-# {s}: combine with {C1} and convert: {sp} => {ts} ; {st} ; {sc} ; {sk} ; {sch} => {dz} . Examples: {state} => {dzati} ; {spera} => {tsewa} ; {sport} => {tsotan} ; {science} => {dzienzji} .
+# Regard Latin words as several syllables, each with a structure like following: {s} {consonant} {r/l} {i/u} {vowel} {i/u} {consonant} {consonant}; for convenient, we shorten them as {s} {C1} {r/l} {S1} {V} S2 {C2} {C3}
+# {s}: combine with {C1} and convert: {sp} => {ts} ; {st} ; {sc} ; {sk} ; {sch} => {dz} . Examples: {state} => {dzati} ; {spera} => {tsewa} ; {sport} => {tsotan} ; {science} => {dzienji} .
 # {C1}: {q} ; {c} [k] => {k} ; {c} [s] => {j} ; {ch} [ʃ] {ch} [tʃ] => {j} ; [ʒ] [dʒ] {y} => {g-}; {w} => {v} ; {r} => {w} ; {x} at initial => {j} ; {ph} => {f} ; {th} => {t} ; {ch} [k] => {k} ; {pt} => {b} . Examples: {photo} => {foto} ; {wagon} => {vagono} ; {cent} => {jenti} ; {center} => {jentewo} ; {aqua} => {aca} ; {question} => {kedzono} ; {tank} => {tanko} ; {xerox} => {jewosen} ; {china} => {jina} ; {japan} => {gapano} ; {adopt} => {adoba} ; {regal} => {wegali} ; {just} => {gudzi} .
 # {r/l}: delete and move to the end-of-word as compensating {-on} . Examples: {tract} => {taton} ; {train} => {tenon} ; {create} => {keaton} ; {glad} => {gadon} ; {class} => {cason} .
 # {S1}: delete if not word stem; else separate to two syllables . Examples: {opinion} => {opinono} ; {piano} => {piano} .
 # {V}: just keep {a} {e} {i} {o} {u} ; {y} => {i} . Examples: {pyramid} => {piwamido} .
-# {S2}: combine with {V} into variations and need compensating {-in} suffix: {ao} ; {oa} => {au} => {a}..{-in} ; {ae} ; {ea} => {ai} => {e}..{-in} ; {ee} => {ei} => {i}..{-in} ; {oo} => {ou} => {o}..{-in} ; {oe} ; {eo} ; {eu} => {oi} => {u}..{-in} . Examples: {cause} => {kasin} ; {daemon=>demonin} ; {coffee} => {kofihin} ; {moustache} => {modzajin} ; {phoenix=>funisin} ; {Europe} => {Uwopin} .
+# {S2}: combine with {V} into variations and need compensating {-in} suffix: {ao} ; {oa} => {au} => {a}..{-in} ; {ae} ; {ea} => {ai} => {e}..{-in} ; {ee} => {ei} => {i}..{-in} ; {oo} => {ou} => {o}..{-in} ; {oe} ; {eo} ; {eu} => {oi} => {u}..{-in} . Examples: {cause} => {kasin} ; {daemon=>demonin} ; {Poseidon} => {Posidonin} ; {moustache} => {modzajin} ; {phoenix=>funisin} ; {Europe} => {Uwopin} .
 # {C2}:
 ## {C2}: if {r} / {l}, remove and need a compensating {-an} suffix . Examples: {depart} => {depatan} ; {alt} => {atan} ; {culture} => {kutuwan} ; {curt} => {kutan} ; {court} => {kotan} .
 ## {C2}: if {n} / {m}, combine with {V} into nasal variations: {aN}, {eN}, {iN}, {oN}, {uN} ; wherin {N} is normally {n} but is {m} before {b} ; {p} ; or {m} . Examples: {cant} => {kanta} ; {simple} => {simpuli} ; {autumn} => {atunnin} ; {environment} => {enviwommento} .
@@ -610,7 +610,7 @@ Accusative (subject) pronouns can be put in front the verb or after it. Dative p
 For example: {se dita mi} meaning {I say it}, {te se dona ha mi} meaning {I have given it to you}.
 
 Persons, tenses and voices can be indicated by chained suffixes, and also with accusative pronouns.
-For example: {te visa va mi} meaning {I will see you}, {dona ti ha go la libo} meaning {He has been given the book}.
+For example: {te miwa va mi} meaning {I will see you}, {dona ti ha go la libo} meaning {He has been given the book}.
 
 ==Vocabulary==
 ===Core vocabulary===
@@ -727,13 +727,13 @@ For example: {te visa va mi} meaning {I will see you}, {dona ti ha go la libo} m
 |dze
 |-
 !much
-|mu
+|mu, mutan
 |-
 !more
-|tse
+|tse mutan
 |-
 !most
-|fo
+|fo, la fo mutan
 |-
 !few
 |pajin
@@ -808,7 +808,7 @@ The Dodolingin column may contain both short form and long form of the same word
 |who=ki
 |what=ke
 |where=gu, ubi
-|when=du, duwanti
+|when=du, kandi
 |how=ka, kali
 |not=ne
 |all=toto, toti
@@ -846,7 +846,7 @@ The Dodolingin column may contain both short form and long form of the same word
 |snake=sepantan, sepun
 |worm=veman
 |tree=abowan, abu
-|forest=foredzo
+|forest=fowedzo
 |stick=batono, pilo
 |fruit=futon
 |seed=semino
@@ -870,7 +870,7 @@ The Dodolingin column may contain both short form and long form of the same word
 |ear=awin
 |eye=oku, okulo
 |nose=naso
-|mouth=owo, oralo
+|mouth=owo, owalo
 |tooth=dento
 |tongue=lingo
 |fingernail=digiti-teminan
@@ -893,7 +893,7 @@ The Dodolingin column may contain both short form and long form of the same word
 |spit=vomita
 |vomit=vomita
 |blow=popelon
-|breathe=tsiwa, witsiwa
+|breathe=tsiwa, wetsiwa
 |laugh=wiwa
 |see=miwa, tseten
 |hear=adin
@@ -908,14 +908,14 @@ The Dodolingin column may contain both short form and long form of the same word
 |fight=punen
 |hunt=kaba, cabuwa
 |hit=pusan, kupa
-|cut=seten, cupa
+|cut=seten, kupa
 |split=sepawata, sepawe
 |stab=ataken, punen
 |scratch=fikaton
 |dig=edzaven
 |swim=natata
 |fly=avie, aviata
-|walk=ambula, ambo
+|walk=ambula, ambu
 |come=ven, vena
 |lie=dejeba, dejivin
 |sit=seda
@@ -925,15 +925,15 @@ The Dodolingin column may contain both short form and long form of the same word
 |give=don, donan
 |hold=kaba, tena
 |squeeze=kompeson
-|rub=fiton, ficaton
+|rub=fiton, fikaton
 |wash=lava
 |wipe=ewasa
 |pull=taton
 |push=pusan
 |throw=geten
 |tie=gunta, guntin
-|sew=cotuwin
-|count=conta
+|sew=kotuwin
+|count=konta
 |say=dita, din
 |sing=kanta
 |play=luda, pagon
@@ -960,17 +960,17 @@ The Dodolingin column may contain both short form and long form of the same word
 |wind=vento
 |snow=nivo
 |ice=gajon
-|smoke=fump
+|smoke=fumo
 |fire=famon, initen
 |ash=resido
 |burn=injenda
 |road=wotin, via
 |mountain=monto, montano
 |red=wosi, wubi
-|green=vedam
+|green=vedan
 |yellow=favon
 |white=bankon, abinan
-|black=negewi
+|black=negewi, nege
 |night=noten
 |day=diho, din
 |year=anno, an
@@ -993,7 +993,7 @@ The Dodolingin column may contain both short form and long form of the same word
 |correct=koweten
 |near=posimon, aposimon, pojon, apojon
 |far=didzanti, didzun
-|right=dedze, dedzetwen
+|right=dedze, dedzewen
 |left=sindze, sinidzewi
 |at=a, i
 |in=i
@@ -1024,7 +1024,7 @@ The Dodolingin column may contain both short form and long form of the same word
 |Dita lu  , "Vena, ni    lasen kondzuton po  nun   u  uban , e   u  tuweten, sa    kapito awiven  a  la   jelo, e   ni    lasen a  fen  po  nun   u  nomo; ejeben ke  divida ti nu     a  utewan  su    la   sufajan  de toti la    mundo."
 |They said, "Come, let's build us a city, and a tower , whose top reaches to the sky , and let's make us a name; lest we be scattered abroad on the surface of the whole earth."
 |-
-|Gehova dedzenda  a  visa la   uban e   la  tuweten, ke    le   infanti  de le  homi kondzuton ha .
+|Gehova dedzenda  a  miwa la   uban e   la  tuweten, ke    le   infanti  de le  homi kondzuton ha .
 |-
 |Gehova dita, "Atenjonen, dzen lu  uni populo, e   han lu    toti uni lingo   ; e   dzen ji  ke   owiginata lu  a  fen. je-tempo nulen  , ke    intenda lu a  fen, wesidza ti va    ba   lun .
 |Yahweh said, "Behold , they are one people, and they have all one language; and this is what they begin to do . Now nothing, which they intend to do , will be withheld from them.
