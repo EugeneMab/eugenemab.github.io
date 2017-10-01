@@ -1,4 +1,4 @@
-﻿{{LangTitle| Doudouling / Dodolingi }}
+﻿{{LangTitle| Dodolingin }}
 <!-- Visit http://conling.wikia.com/wiki/Portal:Main if you are new or ask the admins for help. -->
 <!-- Fill the progress template in with clean numbers only. -->
 {{Progress
@@ -27,8 +27,8 @@
 |Words= 1500
 }}
 {{Definition
-|Name       = Doudouling
-|NativeName = Dodolingi
+|Name       = Dodolingin
+|NativeName = Dodolingin
 |Type       = Romance / Latin constructed language
 |Alignment  = SVO (normally) ; OVS (pronouns)
 |Head       = Head initial (formal); Head final (casual)
@@ -49,7 +49,11 @@
 
 ==General information==
 ===Idea===
-The main idea of my artificial language is to simplify Latin words into one-consonant plus one-vowel structure, wherein the one-vowel is permitted to be nasal, namely (C-V-n) structure. That is because we think this structure is the best for singing. Also, it is required to avoid adding too many extra syllables.
+The main idea of my artificial language is to simplify Latin words into one-consonant plus one-vowel structure, wherein the one-vowel is permitted to be nasal.
+That is because we think this structure is the best for singing.
+Also, it is required to avoid adding too many extra syllables,
+And the spelling should be very close to the International Phonetic Alphabet (IPA),
+And the stress position should not impact the meaning of the word.
 
 It is trade-off between two options
 
@@ -59,10 +63,10 @@ It is trade-off between two options
 
 So the way is to choose some "important" character of the dropped ones and merge them into another consonant or the last vowel.
 
-For example, {extract} => {e-k-str-a-k-t} => {ethato} pronounced as [ɛ'd͡zɑtɔ].
-Both {k} are dropped;
-{s} is merged with [t} to become {th} pronounced [d͡z];
-{r} is dropped but represented as a final {-o} suffix.
+For example, {extract} => {e-k-str-a-k-t} => {edzatom} pronounced as [ɛ'd͡zɑtɔn].
+Both {k} letters are dropped;
+{s} is merged with {t} to become {dz} pronounced [d͡z];
+{r} is dropped but represented as a final {-on} suffix.
 
 ===History===
 The first version was published in 2004, and an updated version is published in 2014.
@@ -79,65 +83,57 @@ The first version was published in 2004, and an updated version is published in 
 
 ====Consonant-vowel-nasal structure====
 
-# Regard Latin words as several syllables, each with a structure like following: {s} {consonant} {r/l} {i/u} vowel {i/u} {consonant} {consonant}; for convenient, we shorten them as {s} C1 {r/l} S1 V S2 C2 C3
-# {s}: combine with C1 and convert: {sp} => {ph} ; {st} => {th} ; {sc} {sk} => {ch} . Examples: {state} => {thate} ; {spera} => {phera} ; {sport} => {phota} ; {science} => {chienzo} .
-# C1: {q} {k} => {c} ; {ce} => {ze} ; {ci} => {zi} ; {ch} [ʃ] {ch} [tʃ] => {ch} ; [ʒ] [dʒ] {y} => {i-}; {w} => {v} ; {x} => {ch} ; {ph} => {f} ; {th} => {t} ; {ch} => {ch} ; {pt} => {b} . Examples: {photo} => {foto} ; {wagon} => {vagon} ; {cent} => {zente} ; {center} => {zenter} ; {aqua} => {aca} ; {question} => {cethon} ; {tank} => {tanco} ; {xerox} => {cherose} ; {china} => {china} ; {japan} => {gapan} ; {adopt} => {adoba} .
-# {r/l}: delete and move to the end-of-word as compensating {-o} {-u} . Examples: {tract} => {tato} ; {train} => {teno} ; {create} => {ceato} ; {glad} => {gadu} ; {class} => {casu} .
-# S1: delete if not word stem; else separate to two syllables . Examples: {opinion} => {opinon} ; {piano} => {piano} .
-# V: just keep {a} {e} {i} {o} {u} ; {y} => {i} . Examples: {pyramid} => {piramid}
-# S2: combine with V into variations and need compensating {-i} suffix: {ao} {oa} => {au} => {a}..{-i} ; {ae} {ea} => {ai} => {e}..{-i} ; {ee} => {ei} => {i}..{-i} ; {oo} => {ou} => {o}..{-i} ; {oe} {eo} {eu} => {oi} => {u}..{-i} . Examples: {cause} => {casi} ; {daemon=>demoni} ; {coffee} => {cofihi} ; {moustache} => {mothachi} ; {phoenix=>funisi} ; {Europe} => {Uropi} .
-# C2:
-## C2: if {r} / {l}, remove and need a compensating {-a} suffix . Examples: {depart} => {depata} ; {alt} => {ata} ; {culture} => {cutura} ; {curt} => {cuta} ; {court} => {cota} .
-## C2: if {n} / {m}, combine with V into nasal variations: {aN}, {eN}, {iN}, {oN}, {uN} ; wherin {N} is normally {n} but is {m} before {b} {p} {ph} or {m} . Examples: {cant} => {canta} ; {simple} => {simpu} ; {autumn} => {atunni} ; {environment} => {envirommento} .
-## C2: else remove V and need a compensating {-e} suffix . Examples: {fact} => {fate} ; {experiment (xp is treated as k+sp)} => {epherimente} ; {sign} => {sine} ; {dogmatic} => {domatice} .
-# C3: create a separate syllable, which needs a ending-vowel or a padding {-e-} : Examples: {construct} => {conthuto} ; {verb} => {veba} ; {partner} => {patenera} .
+# Regard Latin words as several syllables, each with a structure like following: {s} {consonant} {r/l} {i/u} vowel {i/u} {consonant} {consonant}; for convenient, we shorten them as {s} {C1} {r/l} {S1} {V} S2 {C2} {C3}
+# {s}: combine with {C1} and convert: {sp} => {ts} ; {st} ; {sc} ; {sk} ; {sch} => {dz} . Examples: {state} => {dzati} ; {spera} => {tsewa} ; {sport} => {tsotan} ; {science} => {dzienzji} .
+# {C1}: {q} ; {c} [k] => {k} ; {c} [s] => {j} ; {ch} [ʃ] {ch} [tʃ] => {j} ; [ʒ] [dʒ] {y} => {g-}; {w} => {v} ; {r} => {w} ; {x} at initial => {j} ; {ph} => {f} ; {th} => {t} ; {ch} [k] => {k} ; {pt} => {b} . Examples: {photo} => {foto} ; {wagon} => {vagono} ; {cent} => {jenti} ; {center} => {jentewo} ; {aqua} => {aca} ; {question} => {kedzono} ; {tank} => {tanko} ; {xerox} => {jewosen} ; {china} => {jina} ; {japan} => {gapano} ; {adopt} => {adoba} ; {regal} => {wegali} ; {just} => {gudzi} .
+# {r/l}: delete and move to the end-of-word as compensating {-on} . Examples: {tract} => {taton} ; {train} => {tenon} ; {create} => {keaton} ; {glad} => {gadon} ; {class} => {cason} .
+# {S1}: delete if not word stem; else separate to two syllables . Examples: {opinion} => {opinono} ; {piano} => {piano} .
+# {V}: just keep {a} {e} {i} {o} {u} ; {y} => {i} . Examples: {pyramid} => {piwamido} .
+# {S2}: combine with {V} into variations and need compensating {-in} suffix: {ao} ; {oa} => {au} => {a}..{-in} ; {ae} ; {ea} => {ai} => {e}..{-in} ; {ee} => {ei} => {i}..{-in} ; {oo} => {ou} => {o}..{-in} ; {oe} ; {eo} ; {eu} => {oi} => {u}..{-in} . Examples: {cause} => {kasin} ; {daemon=>demonin} ; {coffee} => {kofihin} ; {moustache} => {modzajin} ; {phoenix=>funisin} ; {Europe} => {Uwopin} .
+# {C2}:
+## {C2}: if {r} / {l}, remove and need a compensating {-an} suffix . Examples: {depart} => {depatan} ; {alt} => {atan} ; {culture} => {kutuwan} ; {curt} => {kutan} ; {court} => {kotan} .
+## {C2}: if {n} / {m}, combine with {V} into nasal variations: {aN}, {eN}, {iN}, {oN}, {uN} ; wherin {N} is normally {n} but is {m} before {b} ; {p} ; or {m} . Examples: {cant} => {kanta} ; {simple} => {simpuli} ; {autumn} => {atunnin} ; {environment} => {enviwommento} .
+## {C2}: else remove {V} and need a compensating {-en} suffix . Examples: {fact} => {faten} ; {experiment (xp is treated as k+sp)} => {etsewimenten} ; {sign} => {sinen} ; {dogmatic} => {domatiken} .
+# {C3}: create a separate syllable, which needs a ending-vowel or a padding {-e-} : Examples: {vivant} => {vivanti} ; {partner} => {patenewan} .
 # Choose the ending-vowel based on the order of priority as below
-## compensating {r/l} : {-o} for dropping {r} ; {-u} for dropping {l}
-## compensating diphthong : {-i} for diphthong V + S3
-## compensating C2 : {-a} for dropping {r} ; {-a} for dropping {l} ; {-e} for dropping C2 ;
-## native: native last vowel in the original word
-## complement: natural ending based on the class of word: noun singular => {-o}; noun plural (optionally) => {-i}; verb => {-a}; adjective => {-e} ; adverb => {-i}
+## compensating {r/l} : {-on} for dropping {r} ; {l}
+## compensating {C2} : {-an} for dropping {r} ; {l}
+## compensating {C2} : {-en} for dropping {C2} ;
+## compensating diphthong : {-in} for diphthong V + S3
+## native: native last vowel in the original word: if the root ends with a vowel; {-e} will be changed to {-i}, and {-u} will be changed to {-o} .
+## complement: natural ending based on the class of word: noun singular => {-o}; noun plural (optionally) => {-i}; verb => {-a}; adjective => {-i} ; adverb => {-i}
 
-For example, the word {tract}, a verb should be appended {-a}, but the removed {-r-} determines the ending-vowel to be {-o}, also the removed {-c} needs a compensating {-e}. The second one has higer priority, so it finally became {tato}.
+For example, the word {tract}, a verb should be appended {-a}, but the removed {-r-} determines the ending-vowel to be {-on}, also the removed {-c} needs a compensating {-en}. The second one has higer priority, so it finally became {taton}.
 
-====Omitting last syllable====
+====Short form====
 
-Because the last syllable sometimes bears little information, they can be omitted.
-The principle of omitting is: the appearing information is more than the omitted one.
-At first, we observe the last syllable, and give score for consonant and vowel respectively, using the below table.
+When a word has two or more syllables, the last syllable sometimes bears little information,
+they can be omitted, and become the short form of a word.
 
-{| border="1" cellpadding="1" cellspacing="1" class="wikitable article-table" style="width: 660px; text-align:left;"
-!Score
-!0
-!1
-!2
-!3
-!4
-|-
-!Consonant
-|{m}, {n}, {h}, (none), {g} after {n}
-|{s}, {t}, {r}, {l}
-|{p}, {d}, {c}
-|{b}, {z}, {g}, {f}, {v}
-|{ph}, {th}, {ch}
-|-
-!Vowel
-|Complement
-|Compensating {-a}, {-e}
-|Compensating {-o}, {-u}
-|Compensating {-i}
-|Native
-|}
+# The way to shorten words with three or more syllables:
+## If the last syllable starts with {m} or {n}, or the penultimate syllable ends with {m} or {n}; remove the last syllable, and change the vowel of the penultimate syllable to {-un} .
+## Otherwise, remove the last syllable, and change the vowel of the penultimat syllabe to {-e} from {-a}, {-e}, {-i} or {-u} from {-o}, {-u} .
+# The way to of shorten words with two syllables:
+## Join the part before the first vowel, and the first vowel, and {n}.
 
-If the score of consonant or vowel is 4, so one should not omit.
-Otherwise, we set the sum of scores of consonant and vowel. If the length after omitting is larger than the sum, one may omit the last syllable.
-After omitting, the consonant still remain in spelling, but the word stress does not change.
-That makes that many words have a long form and a short form.
-The remaining {m}, {n}, {g} might modify the nasal pronunciation of the penultimate syllable.
+Examples
+# {nation} => {najono} => {najun};
+# {important} => {impotantan} => {impotun};
+# {provide} => {povidon} => {pove};
+# {communicate} => {kommunikata} => {kommunike};
+# {import} => {impotan} => {impu}
+# {aqua} => {aka} => {an};
+# {fact} => {faten} => {fan};
+# {train} => {tenon} => {ten};
+# {camp} => {kampo} => {kan}
 
-For example: {important} => {impotanta}; Consonant-Score(t) = 1, Vowel-Score(-a) = 1, Sum = 1 + 1 = 2, Length(impotan) = 3 >= 2, thus: {impotant}.
+====Center of a phrase====
 
-Another example: {provide} => {povido}; Consonant-Score(d) = 2, Vowel-Score(-o) = 2, Sum = 2 + 2 =4, Length(povi) = 2 < 4, thus: {povido}.
+When a center word of a phrase is a single-syllable {C-V} word, it sounds not strong enough .
+To make it sounds good phonetically, we make the center word a short form, namely add {-n} .
+Example:
+# {with me} => {ve mi} => {ve min};
+# {who is he} => {ki dze go} => {ke dzen go}
 
 ===Influence===
 
@@ -177,7 +173,7 @@ Languages which have influence on this language include:
 |
 |
 |
-| ŋ
+|
 |
 |
 |
@@ -373,204 +369,113 @@ Languages which have influence on this language include:
 {|class="wikitable article-table" style="width: 720px; text-align:center;"
 ! style="width: 90px; " |Upper Case
 ! style="width: 90px; " |Lower Case
-! style="width: 90px; " |Normal
-! style="width: 90px; " |Last of a word
-! style="width: 90px; " |Before {h}
-! style="width: 90px; " |After {p} {t} {c}
-! style="width: 90px; " |Before {g} {c} {h}
+! style="width: 90px; " |Pronunciation
 |-
 !A
 |a
-|[ɑ]
-|
-|
-|
-|
+|[ɑ] = [a]
 |-
 !B
 |b
 |[b]
-|[]
-|
-|
-|
-|-
-!C
-|c
-|[k]
-|[]
-|[j]
-|
-|
 |-
 !D
 |d
 |[d]
-|[]
-|
-|
-|
 |-
 !E
 |e
-|[ɛ]
-|
-|
-|
-|
+|[ɛ] = [e]
 |-
 !F
 |f
 |[f]
-|[]
-|
-|
-|
 |-
 !G
 |g
 |[g]
-|[]
-|
-|
-|
 |-
 !H
 |h
-|[ŋ]
-|[]
-|
-|[]
-|
+|[h]
 |-
 !I
 |i
 |[i]
-|
-|
-|
-|
+|-
+!J
+|j
+|[j]
+|-
+!K
+|k
+|[k]
 |-
 !L
 |l
 |[l]
-|[]
-|
-|
-|
 |-
 !M
 |m
 |[m]
-|
-|
-|
-|
 |-
 !N
 |n
 |[n]
-|
-|
-|
-|[ŋ]
 |-
 !O
 |o
-|[ɔ]
-|
-|
-|
-|
+|[ɔ] = [o]
 |-
 !P
 |p
 |[p]
-|[]
-|[w]
-|
-|
-|-
-!R
-|r
-|[h]
-|[]
-|
-|
-|
 |-
 !S
 |s
 |[s]
-|[]
-|
-|
-|
 |-
 !T
 |t
 |[t]
-|[]
-|[d͡z]
-|
-|
 |-
 !U
 |u
 |[u]
-|
-|
-|
-|
 |-
 !V
 |v
 |[v]
-|[]
-|
-|
-|
 |-
-!Z
-|z
-|[t͡s]
-|[]
-|
-|
-|
+!W
+|w
+|[w]
 |}
 
 ===Phonotactics===
-All consonants except {m} and {n} are silent when it is the last letter in a word.
-For example, {bon} [bɔn] meaning {good}, {mar} [mɑ] meaning {sea}, {ma} [mɑ] meaning {my} pronounced the same as {mar}.
-
-There are three consonant clusters: {ph}, {th}, and {ch}.
-They are pronounced as {ph} [w], {th} [d͡z], and {ch} [j].
-For example, {phirit} [wi'hi] meaning {spirit}, {thudenti} [d͡zu'dɛn} meaning {student}, {chibo} ['jibɔ] meaning {script}.
-
-The letter {n} may change from alveolar [n] to velar [ŋ] when it is before {g} [g], {c} [k], or {h} [ŋ].
-For example, {anno} ['ɑnnɔ] meaning {year}, {angu} ['ɑŋgu] meaning {angle}, {enhanza} [ɛŋ'ŋɑnt͡sɑ] meaning {enhance}.
-
-The letter {i} becomes a semivowel [j] when it is either between two vowels, or first in a word with a following vowel.
-For example, {pogete} [pɔ'gɛtɛ] meaning {project}; gunzon [gun't͡sɔn] meaning {junction}.
-
-The affricative consonants {th} [d͡z] and {z} [t͡s] are pronounced together as one consonant. 
-For example, {suthanzale} [sud͡zɑn't͡salɛ] meaning {substantial}.
+All letters can be pronounced as the IPA (International Phonetic Alphabet).
+The three vowel can be pronounced differently using allophones: 
+# A a : [ɑ] = [a]
+# E e : [ɛ] = [e]
+# O o : [ɔ] = [o]
+{ts} and {dz} is pronounced as diphthong.
+# TS ts : [ts] = [t͡s]
+# DZ dz : [dz] = [d͡z]
 
 ===Word stress===
 
-Word stress, namely accent, falls at the vowel before the last consonant, no matter that last consonant is silent or not.
-For example, {super} [su'pɛ] meaning {upper}, {doma} ['dɔmɑ] meaning {sleep}, {impotant} [impɔ'tɑn] meaning {important}.
+Word stress, namely accent, falls at the last syllable if the word ends with {-e} or {-u} or {-un}, otherwise at the penultimate syllable.
+For example, {super} [su'pɛ] meaning {upper}, {doma} ['dɔmɑn] meaning {sleep}, {impotun} [impɔ'tun] meaning {important}.
 
 ===Syllable structure===
 
-The allowed word structure is one or multiple consonant-vowel-nasal syllables with an optional silent ending consonant letter.
+The allowed word structure is one or multiple consonant-vowel-nasal syllables.
 
 It can be express as a regular expression as below:
 
 {|class="wikitable article-table" style="width: 660px; text-align:center;"
 | style="width: 90px; " |
-^ ( ( b | p | ph | m | f | v | d | t | th | n | s | z | g | c | ch | h | r | l)? [aeiou] ( [mn] )? )+ [bpmfvdtnszgchrl] $
+^ ( ( b | p | ts | m | f | v | d | t | dz | n | s | j | g | k | h | w | l)? [aeiou] ( [mn] )? )+ $
 |}
 
 ===Mnemonic alphabet table===
@@ -580,23 +485,23 @@ There is another alphabet layout table as below, which shows better the style of
 {|class="wikitable article-table" style="width: 540px; text-align:left;"
 | style="width: 90px; " |B b [b]
 | style="width: 90px; " |P p [p]
-| style="width: 90px; " |PH ph [w]
+| style="width: 90px; " |TS ts [t͡s]
 | style="width: 90px; " |M m [m]
 | style="width: 90px; " |F f [f]
 | style="width: 90px; " |V v [v]
 |-
 |D d [d]
 |T t [t]
-|TH th [d͡z]
-|N n [n] [ŋ]
+|DZ dz [d͡z]
+|N n [n]
 |S s [s]
-|Z z [t͡s]
+|J j [j]
 |-
 |G g [g]
-|C c [k]
-|CH ch [j]
-|H h [ŋ]
-|R r [h]
+|K k [k]
+|
+|H h [h]
+|W w [w]
 |L l [l]
 |-
 |A a [ɑ]
@@ -690,34 +595,37 @@ There is another alphabet layout table as below, which shows better the style of
  |ParticleVoices = 
 }}
 
-Number is indicated by the article. For example: {la hom} meaning {the man}, {le hom} meaning {the men}.
-It is optionally allowed to use {-i} suffix to indicate plural, but it is not necessary. For example: {le homi} also meaning {the men}.
+Number is indicated by the article. For example: {la homo} meaning {the man}, {le homi} meaning {the men}.
+It is optionally allowed to use {-i} suffix to indicate plural, but it is not necessary. For example: {le homo} also meaning {the men}.
 
-Person can be indicated by pronoun suffixes. For example: {visa-mi} meaning {I look}, {fe-lu} meaning {they do}.
-Another way is to use pronoun standalone. For example: {mi visa} also meaning {I look}, {lu fe} also meaning {they do}.
+Persons are indicated by following pronoun. For example: {miwa mi} meaning {I look}, {fewa lu} meaning {they do}.
+Another way is to use pronoun standalone. For example: {mi miwa} also meaning {I look}, {lu fewa} also meaning {they do}.
 
-Tenses and voices can be indicated by modal verbs.
-For example: {la thudent thudi-va} meaning {the student will study}, {le hom doma-ha} meaning {people slept}, {la pobemu sova-pen} meaning {the problem is solved}.
-Another way is to use modal verbs standalone.
-For example: {la thudent va thudi} also meaning {the student will study}.
+Tenses and voices are indicated by following modal verbs.
+For example: {la dzudento dzudi va} meaning {the student will study}, {le homo doman he} meaning {people slept}, {la pobemon sovan ti} meaning {the problem is solved}.
+Another way is to use modal verbs normally.
+For example: {la dzudento va dzudi} also meaning {the student will study}.
 
 Accusative (subject) pronouns can be put in front the verb or after it. Dative pronouns can also be treated the same.
-For example: {se dita-mi} meaning {I say it}, {te se don-ha-mi} meaning {I have given it to you}.
+For example: {se dita mi} meaning {I say it}, {te se dona ha mi} meaning {I have given it to you}.
 
-Person, tenses and voices can be indicated by chained suffixes, and also with accusative pronouns.
-For example: {te visa-va-mi} meaning {I will see you}, {don-pen-ha-go la liber} meaning {He has been given the book}.
+Persons, tenses and voices can be indicated by chained suffixes, and also with accusative pronouns.
+For example: {te visa va mi} meaning {I will see you}, {dona ti ha go la libo} meaning {He has been given the book}.
 
 ==Vocabulary==
 ===Core vocabulary===
 {| border="1" cellpadding="1" cellspacing="1" class="wikitable article-table" style="width: 300px; text-align:center;"
 ! style="width: 100px; " |English
-! style="width: 200px; " |Doudouling (Dodolingi)
+! style="width: 200px; " |Dodolingin
 |-
-!the (singular)
+!the
 |la
 |-
 !the (plural)
 |le
+|-
+!a
+|u
 |-
 !of
 |de
@@ -732,7 +640,7 @@ For example: {te visa-va-mi} meaning {I will see you}, {don-pen-ha-go la liber} 
 |su
 |-
 !in
-|in
+|i
 |-
 !for
 |po
@@ -741,37 +649,43 @@ For example: {te visa-va-mi} meaning {I will see you}, {don-pen-ha-go la liber} 
 |pe
 |-
 !with
-|con
+|ve
 |-
 !this
-|zi
+|ji
+|-
+!this (adjective)
+|je
 |-
 !that
-|di
+|ho
+|-
+!that (adjective)
+|ge
 |-
 !who
-|ci
+|ki
 |-
 !what
-|ce
+|ke
 |-
 !when
-|can
+|du
 |-
 !where
-|u
+|gu
 |-
 !why
 |pa
 |-
 !how
-|ca
+|ka
 |-
 !which
-|cu
+|ku
 |-
 !as
-|co
+|ko
 |-
 !under
 |bu
@@ -792,517 +706,509 @@ For example: {te visa-va-mi} meaning {I will see you}, {don-pen-ha-go la liber} 
 |ba
 |-
 !though
-|anti
+|do
 |-
 !again
-|re
+|we
 |-
 !also
-|encor
+|we
 |-
 !man
-|hom
+|homo
 |-
 !woman
-|fem
+|fema
 |-
 !do
-|fe
+|fewa
 |-
 !be
-|the
+|dze
 |-
 !much
 |mu
 |-
 !more
-|che
+|tse
 |-
 !most
-|pim
+|fo
 |-
-!little
-|paci
+!few
+|pajin
 |-
 !big
-|gan
+|gandon
 |-
 !small
-|min
+|mini
 |-
 !be doing
-|fe-thin
+|fewa dzi
 |-
 !did
-|fe-ha
+|fewa he
 |-
 !have done
-|fe-ha
+|fewa ha
 |-
 !will do
-|fe-va
+|fewa va
 |-
 !be done
-|fe-pen
+|fewa ti
 |-
 !can
-|pu
+|puda
 |-
 !must
-|man
+|manda
 |-
 !need
-|nezes
+|kiwa
 |-
 !should
-|desev
+|deva
 |-
 !get
-|pen
+|pendon
 |-
 !give
-|don
+|dona
 |-
 !take
-|ten
+|tena
 |-
 !say
-|dit
+|dita
 |-
 !go
-|va
+|vasa
 |-
 !come
-|ven
+|vena
 |}
 
-===Dictionary===
-[https://googledrive.com/host/0B1vYSHirm9n2Wk1BQS00Mk9fTEE/2014/20140308_Dodolingi/dict.html Doudouling to English Dictionary]
-
-[https://googledrive.com/host/0B1vYSHirm9n2Wk1BQS00Mk9fTEE/2014/20140308_Dodolingi/word.html English to Doudouling Dictionary]
-
 ===Swadesh List===
-The Doudouling column may contain both short form and long form of the same word.
+The Dodolingin column may contain both short form and long form of the same word.
 {{Swadesh
-|language=Doudouling (Dodolingi)
-|nativename=Doudouling (Dodolingi)
+|language=Dodolingin
+|nativename=Dodolingin
 |I=mi (accusative: me) (genitive: ma)
 |you (singular)=tu (accusative: te) (genitive: ta)
-|he=go (feminine: ga) (accusative: se) (genitive: sa)
+|he=go (feminine: ga) (accusative: se, feminine: gi) (genitive: sa, feminine: ja)
 |we=nu (accusative: ni) (genitive na)
 |you (plural)=vu (accusative: vi) (genitive: vo)
 |they=lu (accusative: li) (genitive: lo)
-|this=zi (accusative: ze)
-|that=di
-|here=hi, hizi
-|there=i, idi
-|who=ci
-|what=ce
-|where=u, ubi
-|when=can
-|how=ca
+|this=ji (adjective: je)
+|that=ho (adjective: ge)
+|here=hi, hiji
+|there=di, idi
+|who=ki
+|what=ke
+|where=gu, ubi
+|when=du, duwanti
+|how=ka, kali
 |not=ne
-|all=to, tote
-|many=mu, muta
-|some=sever, several
-|few=paci
-|other=ater, atera
-|one=un, une
-|two=du
-|three=tiso, ti-
-|four=cato, ca-
-|five=zince, zin-
-|big=gan, gando
-|long=long, longe
-|wide=late, ampu
-|thick=dense, goso
-|heavy=ponde, gavo
+|all=toto, toti
+|many=mu, mutan
+|some=mu, ge le
+|few=pajin
+|other=ate, atewan
+|one=u, uni, u-
+|two=duvi, du-
+|three=tison, ti-
+|four=kato, ka-
+|five=jinki, jin-
+|big=gan, gandon
+|long=lon, longi
+|wide=lati, ampuli
+|thick=densi, goson
+|heavy=pondi, gavon
 |small=min, mini
-|short=bevo, cuta
-|narrow=limite
-|thin=tenu
-|woman=fem
-|man (adult male)=hom
-|man (human being)=human
-|child=fil, infant
-|wife=phosi
-|husband=mare
-|mother=mater
-|father=pater
-|animal=animal
-|fish=pichin
+|short=bevon, kutan
+|narrow=limiti
+|thin=tenu, tenuvi
+|woman=fen, fema
+|man (adult male)=hon, homo
+|man (human being)=humano
+|child=filo, infanto
+|wife=tsosin
+|husband=mawi
+|mother=mate, matewa
+|father=pate, patewo
+|animal=anime, animalo
+|fish=pidzi
 |bird=avi
-|dog=can, cano
-|louse=lase
-|snake=sepant, sepanta
-|worm=vema
-|tree=abor, abora
-|forest=foretho
-|stick=baton, pilo
-|fruit=futo
-|seed=semin
+|dog=kan, kano
+|louse=lasen
+|snake=sepantan, sepun
+|worm=veman
+|tree=abowan, abu
+|forest=foredzo
+|stick=batono, pilo
+|fruit=futon
+|seed=semino
 |leaf=foli
-|root=radi
-|bark=cotecha
-|flower=foru
-|grass=heba
-|rope=thingo
-|skin=dema
-|meat=cana
-|blood=sangin
-|bone=ose
-|fat=obes
+|root=wadi
+|bark=kotesan
+|flower=fowon
+|grass=heban
+|rope=dzingon
+|skin=deman
+|meat=kanan
+|blood=sangino, sangun
+|bone=osen
+|fat=obesi
 |egg=ovo
-|horn=cona
-|tail=temin
-|feather=pumu
-|hair=pelago
-|head=capit, capito
-|ear=aricu
-|eye=ocu
+|horn=konan
+|tail=teminan
+|feather=pumon
+|hair=kapilen
+|head=kapito, kapo
+|ear=awin
+|eye=oku, okulo
 |nose=naso
-|mouth=oro, oral
-|tooth=dent, dento
+|mouth=owo, oralo
+|tooth=dento
 |tongue=lingo
-|fingernail=digit-temin
+|fingernail=digiti-teminan
 |foot=pedo
 |leg=gambo
-|knee=genuh
+|knee=genu, genuvo
 |hand=man, mano
-|wing=pinon
-|belly=adomen, adomene
-|guts=intethin
-|neck=zeva, colare
-|back=dosa
-|breast=petor, petore
-|heart=coda, cadaca
-|liver=hepar
+|wing=ala
+|belly=adomun, adomenen
+|guts=intedzino, intedzun
+|neck=kolawo
+|back=dosan
+|breast=petowen, petu
+|heart=kodan, kadakan
+|liver=hepato
 |drink=beva
-|eat=vora
-|bite=ocudu
-|suck=sute
-|spit=vomit
+|eat=vowa
+|bite=vowa
+|suck=suten
+|spit=vomita
 |vomit=vomita
-|blow=popelo
-|breathe=phir, phira, rephir
-|laugh=rir, rira
-|see=vis, visa
-|hear=adi
-|know=chi
-|think=pens, pensa
-|smell=odor
-|fear=timid
-|sleep=doma
+|blow=popelon
+|breathe=tsiwa, witsiwa
+|laugh=wiwa
+|see=miwa, tseten
+|hear=adin
+|know=dzin, dzia
+|think=pensa
+|smell=odowo, odu
+|fear=timidi
+|sleep=doman
 |live=viva
-|die=moda
-|kill=zida, mudera, neca
-|fight=pune
-|hunt=caba, cabur
-|hit=pusa
-|cut=sega, cupa
-|split=separat
-|stab=atac, pune
-|scratch=ficato
-|dig=echave, echavate
-|swim=natat, natata
-|fly=aviat, aviata
-|walk=ambu
+|die=motan
+|kill=jida, mudewan, neka
+|fight=punen
+|hunt=kaba, cabuwa
+|hit=pusan, kupa
+|cut=seten, cupa
+|split=sepawata, sepawe
+|stab=ataken, punen
+|scratch=fikaton
+|dig=edzaven
+|swim=natata
+|fly=avie, aviata
+|walk=ambula, ambo
 |come=ven, vena
-|lie=dezeba, dezivi
+|lie=dejeba, dejivin
 |sit=seda
-|stand=thand, thanda
-|turn=tuna
-|fall=cada
-|give=don, dona
-|hold=caba
-|squeeze=compeso
-|rub=fito, ficato
+|stand=dzanda
+|turn=tunan
+|fall=kada
+|give=don, donan
+|hold=kaba, tena
+|squeeze=kompeson
+|rub=fiton, ficaton
 |wash=lava
-|wipe=erasa
-|pull=tato
-|push=pele
-|throw=gete, gate
-|tie=gunt, gunta, gunti
-|sew=coturi
+|wipe=ewasa
+|pull=taton
+|push=pusan
+|throw=geten
+|tie=gunta, guntin
+|sew=cotuwin
 |count=conta
-|say=dit, dita
-|sing=cant, canta
-|play=luda, pagu
-|float=fotu
-|flow=fuchu
-|freeze=figato
-|swell=tuma, ephand
-|sun=sol, solo
-|moon=lun, luna
-|star=thele
-|water=aca
-|rain=zipit, pezipito
-|river=river, fuvu
-|lake=laco
-|sea=mar, maro
-|salt=salin
-|stone=peter
-|sand=lapid, lapido
-|dust=puva, puvera
-|earth=tere
-|cloud=nebul
+|say=dita, din
+|sing=kanta
+|play=luda, pagon
+|float=foton
+|flow=fuson
+|freeze=figaton
+|swell=etsanden
+|sun=solo
+|moon=luna
+|star=dzelen
+|water=aka
+|rain=puvon, pejipiton
+|river=wivewo, fuvon
+|lake=lako
+|sea=mawo
+|salt=salino
+|stone=petewo, pete
+|sand=lapido
+|dust=puvewan, puvan
+|earth=tewen
+|cloud=nebulo, nebu
 |fog=fumo, nebulo
-|sky=zel
+|sky=jelo
 |wind=vento
 |snow=nivo
-|ice=gazu
-|smoke=fum
-|fire=famu, inite
-|ash=residu, zendo
-|burn=inzend
-|road=rot, roti
-|mountain=monto, montan
-|red=rose, rube
-|green=veda
-|yellow=favu
-|white=bancu, abina
-|black=neger
-|night=note
-|day=di, dih, diho
-|year=an, ann, anno
-|warm=calor
-|cold=figo
-|full=penu
-|new=nove, novel
-|old=anzen, anzent, anzente
-|good=bon
-|bad=mal, male
-|rotten=decade
-|dirty=tose
-|straight=rete, theto
-|round=rond, ronde
-|sharp=acut, acute
-|dull=otuse, thupide
-|smooth=gentu
-|wet=humide, humiditi
-|dry=sice, sicate
-|correct=corete
-|near=pochim, apochimo, pocho, apocho
-|far=dithan, ditante
-|right=dether, dethere
-|left=sinther, sinithere
-|at=a, in
-|in=in
-|with=con
+|ice=gajon
+|smoke=fump
+|fire=famon, initen
+|ash=resido
+|burn=injenda
+|road=wotin, via
+|mountain=monto, montano
+|red=wosi, wubi
+|green=vedam
+|yellow=favon
+|white=bankon, abinan
+|black=negewi
+|night=noten
+|day=diho, din
+|year=anno, an
+|warm=kalowi, kali
+|cold=figon
+|full=penon
+|new=nove, noveli
+|old=anjun, anjenti
+|good=boni, bon
+|bad=mali
+|rotten=dekadi
+|dirty=tosen
+|straight=weten, dzeton
+|round=wondi
+|sharp=akuti
+|dull=otusen, dzupidi
+|smooth=gentuli, gentu
+|wet=humidi, humiditi
+|dry=siken, sikaten
+|correct=koweten
+|near=posimon, aposimon, pojon, apojon
+|far=didzanti, didzun
+|right=dedze, dedzetwen
+|left=sindze, sinidzewi
+|at=a, i
+|in=i
+|with=ve
 |and=e
 |if=si
-|because=ba, po ce
-|name=nom, nomo, nomin}}
+|because=ba, po ke
+|name=nomo, nomino}}
 
 ==Example text==
 ===Babel text===
 {| border="1" cellpadding="1" cellspacing="1" class="wikitable article-table" style="width: 660px; text-align:left;"
-!Dodolingi
+!Dodolingin
 !English
 |-
-|Titu : Babel Tethe, Genesis, Bibu
+|Titulo : Babeli Tedzo, Genesiso, Bibulo
 |Title : Babel Text , Genesis, Bible
 |-
-|To la mundo the de un ling e de un parol .
+|Toti  la    mundo dze de uni lingo    e   de uni pawolo.
 |The whole earth was of one language and of one speech.
 |-
-|Can vogag-lu a la orental , ocure-go ce dichover-ha-lu un panu in la tere de Chinar; e viva-lu idi .
+|Du  vogaga he  lu  a  la   owentalo, okuwen he  go ke   didzovewa ha lu  u panon i  la   tewen de la   Jinawo; e   viva he  lu  di   .
 |As they journeyed east , it happened, that they have found a plain in the land of Shinar; and they lived there.
 |-
-|Dit-lu un a un ater, "Ven , ni lase a fe le tili , e li combutha entirementi." Ha-lu peter po tilo , e usa-lu la tar po la motar .
+|Dita lu   uno a  u  atewan, "Vena, ni    lasen a  fen  le  tili, e   li  kombudza entiwementi." Han lu   la   tilo  po  la   petewo, e   utilija lu  la   tawo po  la   motawan.
 |They said one to another, "Come, let's make bricks , and burn them thoroughly ." They had brick for stone, and they used the tar for the mortar.
 |-
-|Dit-lu , "Ven , ni lase conthuto po ni un uba , e un turet , sa capit arive a la zel , e ni lase fe po ni un nom ; ezebe ce divid-pen-nu a uter su la sufaza de to la mundo."
+|Dita lu  , "Vena, ni    lasen kondzuton po  nun   u  uban , e   u  tuweten, sa    kapito awiven  a  la   jelo, e   ni    lasen a  fen  po  nun   u  nomo; ejeben ke  divida ti nu     a  utewan  su    la   sufajan  de toti la    mundo."
 |They said, "Come, let's build us a city, and a tower , whose top reaches to the sky , and let's make us a name; lest we be scattered abroad on the surface of the whole earth."
 |-
-|Gehova dechend a vis la uba e la turet , ce le infant de hom conthuto-ha .
-|Yahweh came down to see the city and the tower , which the children of men had built .
+|Gehova dedzenda  a  visa la   uban e   la  tuweten, ke    le   infanti  de le  homi kondzuton ha .
 |-
-|Gehova dit , "Atenzon , the-lu un popul , e ha-lu to un ling ; e the-zi ce origin-lu a fe . hotemp nule , ce intend-lu a fe , resithu-pen-va de li .
+|Gehova dita, "Atenjonen, dzen lu  uni populo, e   han lu    toti uni lingo   ; e   dzen ji  ke   owiginata lu  a  fen. je-tempo nulen  , ke    intenda lu a  fen, wesidza ti va    ba   lun .
 |Yahweh said, "Behold , they are one people, and they have all one language; and this is what they begin to do . Now nothing, which they intend to do , will be withheld from them.
 |-
-|Ven , ni lase dechend, e ada confus lo ling , da ne pu-lu compendo la parol de un ater."
+|Vena, ni    lasen dedzenda, e   di    konfusa lo    lingo   , da   ne  pun  lu  kompendon  la   pawolo  de u  atewan."
 |Come, let's down , and there confuse their language, that they may not understand one another's speech ."
 |-
-|Da Gehova li divid uter de idi a la sufaza de to la mundo. Retha-lu de conthuto la uba .
+|Da Gehova li  divida     a  utewan de   din   a  la   sufajan  de toti la   mundo.
+Wedza lu     a kondzuton  la   uban.
 |So Yahweh scattered them abroad from there on the surface of all the earth. They stopped building the city.
 |-
-|Ada sa nom apele-pen co Babel, ba Gehova confus la ling de to la mundo, idi . De idi , Gehova li divid uter su la sufaza de to la mundo.
+|Da        sa nomo        apelen ti   ko  Babelo, ba      Gehova konfusa  la lingo    de toti la   mundo, di   . De   din  , Gehova li  divida     utewan su    la   sufajan de toti la   mundo.
 |Therefore the name of it was called as Babel, because Yahweh confused the language of all the earth, there. From there, Yahweh scattered them abroad on the surface of all the earth.
 |}
 
 ===Lord's prayer===
 
 {| border="1" cellpadding="1" cellspacing="1" class="wikitable article-table" style="width: 660px; text-align:left;"
-!Dodolingi
+!Dodolingin
 !English
 |-
-|Titu : Na Pater
+|Titulo : Na    Patewo
 |Title : Our Father
 |-
-|Na pater in la zel,
+|Na    patewo i  la   jelo,
 |Our fater in heaven,
 |-
-|sant the ta nom .
+|santi dze ta   nomo.
 |saint is your name.
 |-
-|Ven ta regim ,
+|Vena ta   wegimo ,
 |Come your kingdom,
 |-
-|fe-pen ta volunt,
+|fen ti   ta   volunto,
 |done your will ,
 |-
-|co in la zel e su tere .
+|ko  i  la   jelo e   su  tewen.
 |as in heaven and on earch.
 |-
-|Na peri-di pan tu don hodi .
+|Na    pewi-din pan   tu  don  je-din.
 |Our everyday bread you give today .
 |-
-|Padon-tu na debit,
+|Padonan tu   na    debito,
 |Forgive you our debts,
 |-
-|co padon-ha-nu na debitor.
+|ko  padonan ha  nu    na    debitowo.
 |as we have forgotten our debtors.
 |-
-|E tu ne ni dute enter tembazon,
+|E   tu  ne  ni    duten entewi tembajono ,
 |and you not us lead into tempation,
 |-
-|bo ni liberat-tu ether de malin.
+|bo  ni     libewata tu edzewen de malinen.
 |but you us liberate out of malign.
+|-
+|Ameni.
+|Amen.
 |}
 
-===Reflective introduction of Doudouling===
+===Reflective introduction of Dodolingin===
 
-Intoduzono
+La intodujonon
 
-La pinzipu: a compeso le Latin veba ada la C-V silabu
+Le pinjipulon: a kompeson le veban Latini enti mu silabulen {K-V}
 
-La magor idea de ma atifizala lingo the a simpifu le Latin veba ada la thuturo de un-consonanto con un-vovelo, in ce la vovelo pemita-pen a the un nasale vovelo. La razon the ba ce pensa-nu ce ze thuturo the la pim bon po canta. Re, the-go recira-pen a pevento de ade muta de le adizonale silabu.
+La idea magowi de ma lingo atifijalan dze a simifion le veban Latini enti la dzutuwon de u konsonanto e u vovelo, gu la vovelo puda dze u vovelo nasali. Dzen go pa ke se pensa nu ke je dzutuwon dze la fo boni po kanta. Ko beni, wekiwa go a peventon a aden dza mutan de le silabulen edzewen. E la dzibuwon deva dze mutan pojon a la Intenajonalan Fonetiki Afabetan (IPA). E la posijono de la ajenten deva ne impaten la semanto de la veban.
 
-Mase de le Latin veba pu regada-pen co la thuturo con baso:
-{s} {consonanto} {r/l} {i/u} vovelo {i/u} {consonanto} {consonanto}.
+Mutan de le veban Latini puda wegadan ti ko la dzutuwon bu hin:
+{s} {konsonanto} {r/l} {i/u} vovelo {i/u} {konsonanto} {konsonanto}
+Dzibon nu ko simpo bu hin:
+{s} {K1} {r/l} {S1} {V} {S2} {K2} {K3}
+Na tagetan dze a simpifion je tseji de dzutuwon enti la uno bu hin:
+{K} {V} {N} (nasali)
+La patan de {s}
 
-Se chibo-nu po simpu co baso:
-s C1 (r/l) S1 V S2 C2 C3.
+A la pimon, la {s}, le kombinajono la fo populawi dze {sp-}, {st-}, {sc-} ({sk-}), li konvetan nu enti u singo konsonanto, wetsetiven-menti, a {ts}, {dz}, {dz} (via {sti-}), lo ponunjajonon asinen ti ko [ts], [dz], [dz] i la odewan.
+Esampulen: {state} => {dzati}; {spera} => {tsewa}; {sport} => {tsotan}; {science} => {dzienji}
 
-La tageta the a simpifu ze phezi de thuturo ada la un co baso:
-C V (V pemita-pen a un nasale vovelo).
+La patan de {konsonanto 1}
 
-Pata {s}
+Da, la {K1}, li simpifion nu enti le konsonanto legali bu hin:
+{b}	{p}	{m}	{f}	{v}
+{d}	{t}	{n}	{s}	{j}
+{g}	{k}	{h}	{w}	{l}
+Gu, le ponunjajonon asinen ti ko IPA, po esampulen {j} ko [j], {h} ko [h], {w} ko [w].
+Mu detelin puda konsidewa ti i le impovemento futuwi, bo la tagetan magowi dze a li simpifion enti u konsonanto singo e fajili.
+Le wegulo:
+{pt} => {b};
+{ph} => {f};
+{w} => {v};
+{th} => {t};
+{c} ([s]), {x} (i la owigino de u veban, {ch} ([ʃ]/[tʃ]), {ti} ([ʃ]) => {j};
+{j}, {y} => {g} (via {gi-});
+{q}, {c} [k], {ch} ([k]) => {k};
+{r} => {w};
+Le noti:
+La {v} e la {w} megan ti enti la {v}, du la {r} utilija la {w} a peventon la ponunjajonon difikutan de la [r].
+{pt} konvetan ti a {b}.
+{x} (ne i la owigino de u veban) konsidewa ti ko {k-s}.
+Esampulen: {photo} => {foto}; {wagon} => {vagono}; {cent} => {jenti}; {center} => {jentewo}; {aqua} => {aka}; {question} => {kedzono}; {tank} => {tanko}; {xerox} => {jewosen}; {chocolate} => {jokolati}; {just} => {gudzi}; {adopt} => {adoba}
+La patan de {r/l}
 
-A la pimo, la {s}, la pim populare combinazon the {sp-}, {st-}, {sc-}, li conveta-nu ada un singu consonanto, rephetivementi, {ph}, {th}, {ch}, lo ponunzazono dona-pen co [w], [d͡z], [z] (o usa [tʃ] (ch) atenativamenti) in la sim odera.
-Esampu: state => thate; spera=>phera; sport => phota; science => chienzo.
+Da, le {r/l}, deleta ti va lu. Bo, kasin va ho u wedujonen gandon de le infomajonan e keaton va ho mu konfusono. Da u vovelo kompensati {-on} apenden ti va i la fino de la veban.
+Esampulen: {tract} => {taton}; {train} => {tenon}; {creat} => {keaton}; {glad} => {gadon}; {class} => {kason)
 
-Pata {consonanto 1}
+La patan de {semivovelo 1}
 
-Ada, la {C1}, se simpifu-nu ada un legale consonanto co baso:
+La {S1}, la semivovelo i la fonton de la vovelo dze futili fekenton-menti, e puda deleta ti, ejeben la kasi du apewen lu i la wadisen de mu veban, ko {piano} e {violin}. Deva nu sepawata la veban enti duvi silabulen de {K-V}, da u silabulen adijonalen keaton ti.
 
-b p m f v
+La patan de {vovelo}
 
-d t n s z
+La {V} dze simpo welativi-menti. Gudzi konvetan {y} => {i}.
 
-g c h r l
+La patan de {semivovelo 2}
 
-Le ponunzazono asine-pen co, z : [t͡s] (de Gemana), c : [k] asolutementi, h : [ŋ] (ng) (o usa [ʃ] atenativementi), r : [h] (de Fanzeso, pevento-nu la [r] ba the-go dificuta a ponunzo).
-Le deteli pu considera-pen in pusu impovomento, bo la magor tageta the a se simpifu ada un singu e simpu consonanto.
-Un ezebone the ce la {pt} ce conveta-pen a {b}.
-Regu: ph => f; w => v; th => t; c ([s]) => z; q,k => c; x => ch; ch ([ʃ]/[tʃ]) => ch; j,y => g (via gi-); pt => b.
-Esampu: photo => foto; wagon => vagon; cent => zente; center => zenter; aqua => aca; question => cethon; tank => tanco; xerox => cherose; china => china; japan => gapan; adopt => adoba.
+La {S2}, la semivovelo podzi la vovelo. I je tempo, la {V-S2} puda wegadan ti ko u ditongen. Simpifion nu toti le ditongen enti jenki kombinajono legali: {au}, {ai}, {ei}, {ou}, {oi}. E puson, wepesenton ti lu pe {a}, {e}, {i}, {o}, {u) ve u {-in} kompensati.
+{ao/oa} => {au} => {a ..-in;}
+{ae/ea} => {ai} => {e ..-in;}
+{ee} => {ei} => {i ..-in;}
+{oo} => {ou} => {o ..-in;}
+{oe/eo/eu} => {oi} => {u ..-in}
+Esampulen: {cause} => {kasin}; {daemon} => {demonin}; {coffee} => {kofihin}; {moustache} => {modzajin}; {phoenix} => {funisin}; {Europe} => {Uwopin}
+La patan de {konsonanto 2}
 
-Pata {r/l}
+La {K2} dze u mini kompikaton, ba ke tison sitajono dze a konsidewa ti:
+A la pimon, si la {K2} dze {r} o {l}, deleta ti va go, e wekiwa go u {-an} kompensati.
+Esampulen: {depart} => {depatan}; {alt} => {atan}; {culture} => {kutuwan}; {court} => {kotan} 
+A la sekondi, si la {K2} dze {n} o {m}, kasin va go ke la vovelo devena enti le vawajono nasali: {aN}, {eN}, {iN}, {oN}, {uN}.
+La {N} deva dze {n} o {m} akodan a la konsonanto sekenti, si {b}, {p}, o {m}, {N} dze {m}; si non, {N} dze {n}.
+Esampulen: {cant} => {kanta}; {simple} => {simpo}; {autumn} => {atunnin}; {environment} => {enviwommento} 
+A la tisemon, si {K2} dze le atewan, deleta ti va go, e wekiwa go u {-en} kompesnati.
+Esampulen: {fact} => {faten}; {experiment} ({xp} wegadan ti ko {k-sp}) => {etsewimenten}; {sign} => {sinen}; {dogmatic} => {domatiken}
 
-Ada, la {r/l}, va-lu deleta-pen. Bo, va-go resuta a un gando vaniti de infomazona e ceato le confuzon. Ada apende-va-nu un vovelo compensate a la fin de la veba. Po {r}, {-o}; po {l}, {-u}:
-Esampu: tract => tato; train => teno; creat => ceato; glad => gadu; class => casu .
+La patan de {konsonanto 3}
 
-Pata {semivovelo 1}
+Finali, po la {K3}, si la {K3} dze la finali letewen de la veban Latini, se konsidewa nu a dze u silabulen adijonalen.
+Esampulen: {construct} => {kondzuton}; {verb} => {veban} 
+Si non, u {-e-} adijonalen insetan ti.
+Esampulen: {partner} => {patenewan}
 
-La {S1}, la semivovelo in fonto de la vovelo ha mini de usago, e pu deleta-pen, ezebe la caso can apare-lu in la rado de veba, co {piano} e {violet}. Deseva-nu separata la veba ada le du C-V silabu, e un adizonale silabu ceato-pen.
+Le vovelo finali e la kompensajono
 
-Pata {vovelo}
+La pinjipulon de le wegulo po la vovelo finali dze a li fewa divesan.
+Le wegalo a apenden dze i le kato sitajono bu hin.
+Si u veban enkontewa duvi kategowi, la wegulo ve la pejedenjon la fo atan adoba ti va.
+Po esampulen, la veban {tract}, u veban deva a apenden ti {-a}, bo la {r-}, ke deleta ti, deteminan ke la vovelo finali dze {-on}, e la {-c}, ke deleta ti, wekiwa u {-en} a kompensata. La sekondi uno haba la pejedenjon la fo atan, da finali devena go a {taton}.
 
-La {V} the simpu relativementi. Guthi conveta {y} => {i}.
+Le wegulo:
+Kompensati
+deleta {r-} / {l-} : {-on}
 
-Pata {semivovelo 2}
+deleta {-r} / {-l} : {-an}
+deleta {-konsonanto} : {-en}
 
-La {S2}, la semivovelo in dosa de la vovelo. Po zi, {V+S2} pu regada-pen co un ditonge. Simpifu-nu to le ditonge ada zince legale combinazoni: {au}, {ai}, {ei}, {ou}, {oi}. E pusu, the-lu repesento-pen pe {a}, {e}, {i}, {o}, {u) con un compensate {-i}.
-ao/oa => au => a ..-i; ae/ea => ai => e ..-i; ee => ei => i ..-i; oo => ou => o ..-i; oe/eo/eu => oi => u ..-i.
-Esampu: cause => casi; daemon=>demoni; coffee => cofihi; moustache => mothachi; phoenix=>funisi; Europe => Uropi.
+kompikaton ditongen: {-in}
+Nativi
+si la wadisen finija ve u vovelo; {-e} jangi ti va a {-i}, e {-u} jangi ti va a {-o}
+Natuwali
+nonin singulawi: {-o}
+nonin puwalon : {-o} o {-i} (obonali)
+veban : {-a}
+agetiven : [-i}
+aveban : {-i}
+peposijonon, kongunjonen : {-i}
+La foman bevon
 
-Pata {consonanto 2}
+Du u veban haba duvi o puson de silabulen, la finali silabulen potan dza mini de infomajonan. pun lu omita ti, e devena lu la foman bevon de u veban.
 
-La {C2} the compesu comparativementi, ba tiso sitazoni nezese considera-pen:
-A pimo, si {C2} the {r} o {l}, remova-pen-va-go e nezese un compensate {-a}.
-Esampu. depart => depata; alt => ata; culture => cutura; curt => cuta; court => cota.
-A seconde, si {C2} the {n} o {m}, resuta-va-go la vovelo ada varazon de nasale: aN, eN, iN, oN, uN.
-La {N} deseva usa {n} o {m} selon la secenze consonanto, si {b},{p},{ph} o {m}, {N} the {m}; atera, {N} the {n}.
-Esampu: cant => canta; simple => simpu; autumn => atunni; environment => envirommento.
-A la tiso, si {C2} the atera, remova-pen-va-go e nezese un compensate {-e}.
-Esampu: fact => fate; experiment ({xp} regada-pen co {k+sp}) => epherimente; sign => sine; dogmatic => domatice.
+La metodo a abevaton u veban ve tison o puson de silaben:
+Si la silabulen finali owiginata ve {m} o {n}, o la silabulen penutimatan finija ve {m} o {n};
+deleta la silabulen finali, e jangi la vovelo de la silabulen penutimatan a {-un};
+si non, deleta la silabulen finali, e jangi la vovelo de la silabulen penutimatan a {-e} ba {-a}, {-e} or {-u} ba {-o}, {-u}
+Esampulen: {nation} => {najono} => {najun}; {important} => {impotantan} => {impotun}; {provide} => {povidon} => {pove}; {communicate} => {kommunikata} => {kommunike}; {import} => {impotan} => {impu} 
+La metodo a abevaton u veban ve duvi silabulen:
+Kombina la patan anti la vovelo pimon, e la vovelo pimon, e {n}.
+Esampulen: {aqua} => {aka} => {an}; {fact} => {faten} => {fan}; {train} => {tenon} => {ten}; {camp} => {kampo} => {kan} 
+Selejonen de veban
 
-Pata {consonanto 3}
+Le veban Latini, ke utilija nu, dze le veban, ke komposa ti pe le wadisen Latini, e ke apewen i la Engijon.
+Ajenten
 
-A final, po la {C3}, si la {C3} the la utima letere de la Latin veba, se considera-nu un adizonale silabu.
-Esampu: construct => conthuto; verb => veba.
-Si atera, un adizonale {-e-} inseta-pen.
-Esampu: partner => patenera.
+La ajenten lokata i la silabulen finali si la veban finija ve {-e} o {-u} o {-un}; si non, i la silabulen penutimatan.
 
-La fino e la compensazon
+La jentewo de u fason
 
-La pinzipu de la regu de la utima vovelo the se fe a divesa.
-Le regu de apende ha le cato sitazoni co baso. Si un veba satifi du categori, Le regu con pusu ata pezedenzo va adoba-pen.
-Po esampu, la veba {tract}, a veba deseva apende-pen {-a}, bo la delezon de {-r-} deseva apende {-o}, e la delezon de {-c-} recira a compensata {-e}. La seconde un ha pim ata pezedenzi, da go finalementi deven a {tato}.
-
-Le regu:
-
-1.Compensate
-
-delezon de -r- : -o ;
-delezon de -l- : -u ;
-
-compezono de ditonge : -i ;
-
-delezon de -r / -l : -a ;
-delezon de dupu consonanto : -e ;
-
-2.Native
-
-Si la origin veba temina con un vovelo
-
-3.Compementu ( o natural )
-
-nominative (sugete) nomo : -o ;
-genitive (pedicativo) nomo : -e ;
-acusative (ogete) nomo : -o (atenativamenti: -a) ;
-puralu nomo : -i ;
-nomala veba : -a ;
-(atenativamenti: veba de pathe tenso : -e) (pefero a usa modal veba sufiche {-ha}) ;
-(atenativamenti: veba de future tenso : -o) (pefero a usa modal veba sufiche {-va}) ;
-(atenativamenti: veba de continose tenso : -i) (pefero a usa modal veba sufiche {-thin}) ;
-(atenativamenti: veba de pasive voco : -e) (pefero a usa modal veba sufiche {-pen}) ;
-veba : -a ;
-agetive : -e ;
-aveba : -i ;
-peposizono, connezon: -e ;
-
-Omita la final silabu
-
-Ba la final silabu convei mini infomazon in tempi, pu-lu omita-pen. La pinzipu a omita the: la infomazon ce apare the pusu dan la infomazon ce disapare.
-A pimo, oseva-nu la utima silabu, et don-nu le punti po la consonanto e la vovelo rephetivementi, usa-thin la base tabu.
-
-Consonanto: 0 = nule,h,m,n,ng ; 1 = s,t,r,l ; 2 = p,d,c ; 3 = b,g,f,v,z; 4 = ph,th,ch ;
-
-Vovelo: 0 = Compementu ; 1 = Compensate -a,-e ; 2 = Compensate -o,-u ; 3 = Compensate -i ; 4 = Native ;
-
-Si la punti de la consonanto o de la vovelo the 4, da ne pu-nu omita la fina silabu.
-Si atera, caculata-nu la sum de le punti de la consonanto e la vovelo. Si la number de silabu ezebe la utima un the pusu dan la sum, pu-nu omita la final silabu.
-Pothe se omita, la consonato remeni la chiburo encor, bo la azente ne changa-va. La {m}, {n}, {g} ce remeni pu encor changa la nasale ponunzazono de la penutima silabu.
-Un esampu: {important} => {impotanta}; consonante-punti(t) = 1, vovele-punti(-a) = 1, sum = 1 + 1 = 2, silabu-number(impotan) = 3 >= 2, ada: {impotant}.
-Un atera esampu: {provide} => {povido}; consonante-punti(d) = 2, vovele-punti(-o) = 2, sum = 2 + 2 =4, silabu-number(povi) = 2 < 4, ada: {povido}.
-
-Selezon de veba
-
-La Latin veba ce usa-nu the le veba ce deriva de le Latin radi e ce apare in Engichu.
-
-Azente
-
-La azente locata in la vovelo in fonto de la utima consonanto.
+Du la veban jentalon de u fason dze u veba ve soli uni silabulen {K-V}, ne sona go fotan sufijenten.
+Po se fewa a sona boni fonetikalementi, fewa nu la veban jentalon a la foman bevon, da aden {-n}.
+Esamulen: {with me} => {ve mi} => {ve min}; {who is he} => {ki dze go} => {ke dzen go}
