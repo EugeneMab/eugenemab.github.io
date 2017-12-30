@@ -1,0 +1,103 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>Pinyi - A Chinese Romanization System</title>
+<style>
+	body, td, th
+	{
+		font-family: Calibri, Arial, sans-serif;
+		font-size: 20px;
+	}
+	div
+	{
+		margin-bottom: 10px;
+	}
+	table
+	{
+		border: 1px solid #ee;
+		border-spacing: 0;
+	}
+	td, th
+	{
+		border: 1px solid #eee;
+		padding: 2px;
+	}
+</style>
+</head>
+<body>
+<h1 style="text-align: center">Pinyi - A Chinese Romanization System (拼一：一种汉字拉丁化方案)</h1>
+
+<h2>Goal</h2>
+	<div>One-to-one mapping between a Chinese character and a code</div>
+	<div>Based on Pinyin system</div>
+	<div>Add additional letters with sounds like "yi" or "ee" after the vowel, so as to make less impact to spelling</div>
+	<div>Use Wubi to generate the additional letters</div>
+	<div>Chinese characters with higher frequency should have zero or less additional letters</div>
+
+<h2>Algorithm</h2>
+
+	<h3>1. Generate mapping from character to Wubi</h2>
+		<div>Generate a unique Wubi for each character, using the data source A.</div>
+		<div>For characters with the same Wubi code, add extra string in the order as:</div>
+		<div>a;b;c;d;e;f;g;h;i;j;k;l;m;n;o;p;q;r;s;t;u;v;w;x;y;aa;ba;ca;da;ea;fa;ga;ha;ia;ja;ka;la;ma;na;oa;pa;qa;ra;sa;ta;ua;va;wa;xa;ya</div>
+
+	<h3>2. Generate mapping from character to Pinyin</h2>
+		<div>Choose a Pinyin for each character, using the data source B and data source C.</div>
+		<div>If a character is in data source C, choose the first Pinyin.</div>
+		<div>If a character is not in data source C, and has a Pinyin using tone 5, chose the one with tone 5</div>
+		<div>Otherwise, choose the first PinYin in alphabetical order</div>
+
+	<h3>3. Generate Pinyi</h2>
+		<div>Go through each characters in the order of data source B:</div>
+		<div>Define prefix the leading consonant and the vowel of Pinyin</div>
+		<div>Define suffix the trailing consonant ("n", "ng", "r"), and convert "r" to "l" (for avoid later conflicts).</div>
+		<div>Try each possible candidate code for the character, to pick the first one which has not been used before it.</div>
+		<div>The order of candidate are:</div>
+
+		<table>
+			<tr><td>prefix + suffix</td><td>Pinyin without tone</td></tr>
+			<tr><td>prefix + encoded[wubi[0]] + suffix</td><td>Pinyin without tone, inserted the "yi"-code of one Wubi letter</td></tr>
+			<tr><td>prefix + encoded[wubi[0]] + encoded[wubi[1]] + suffix</td><td>Pinyin without tone, inserted the "yi"-codes of two Wubi letters</td></tr>
+			<tr><td>prefix + encoded[wubi[0]] + encoded[wubi[1]] + ... + suffix</td><td>Pinyin without tone, inserted the "yi"-codes of more Wubi letters</td></tr>
+			<tr><td>prefix + encoded[wubi[0]] + encoded[wubi[1]] + ... + encoded[extra] + suffix</td><td>Pinyin without tone, inserted the "yi"-codes of all Wubi letters, and extra string</td></tr>
+		</table>
+
+		<div>Encode Table</div>
+		<table>
+			<tr><td>g</td><td>re </td></tr>
+			<tr><td>f</td><td>ri </td></tr>
+			<tr><td>d</td><td>rie</td></tr>
+			<tr><td>s</td><td>rei</td></tr>
+			<tr><td>a</td><td>r  </td></tr>
+			<tr><td>h</td><td>je </td></tr>
+			<tr><td>j</td><td>ji </td></tr>
+			<tr><td>k</td><td>jie</td></tr>
+			<tr><td>l</td><td>jei</td></tr>
+			<tr><td>m</td><td>j  </td></tr>
+			<tr><td>t</td><td>ze </td></tr>
+			<tr><td>r</td><td>zi </td></tr>
+			<tr><td>e</td><td>zie</td></tr>
+			<tr><td>w</td><td>zei</td></tr>
+			<tr><td>q</td><td>z  </td></tr>
+			<tr><td>y</td><td>he </td></tr>
+			<tr><td>u</td><td>hi </td></tr>
+			<tr><td>i</td><td>hie</td></tr>
+			<tr><td>o</td><td>hei</td></tr>
+			<tr><td>p</td><td>h  </td></tr>
+			<tr><td>n</td><td>ye </td></tr>
+			<tr><td>b</td><td>yi </td></tr>
+			<tr><td>v</td><td>yie</td></tr>
+			<tr><td>c</td><td>yei</td></tr>
+			<tr><td>x</td><td>y  </td></tr>
+		</table>
+
+		<div>Extra strings are:</div>
+		<div>a;b;c;d;e;f;g;h;i;j;k;l;m;n;o;p;q;r;s;t;u;v;w;x;y;aa;ba;ca;da;ea;fa;ga;ha;ia;ja;ka;la;ma;na;oa;pa;qa;ra;sa;ta;ua;va;wa;xa;ya</div>
+
+<h2>Data Sources</h2>
+	<div>A. Wubi coding table from <a href="TBD">TBD</a></div>
+	<div>B. Frequency and Pinyin of Chinese characters from <a href="TBD">TBD</a></div>
+	<div>C. Popular proununciation of Chinese characters from <a href="TBD">TBD</a></div>
+
+</html>

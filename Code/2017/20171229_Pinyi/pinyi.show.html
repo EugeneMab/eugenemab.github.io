@@ -1,0 +1,77 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script src="pinyi.ime.js">
+</script>
+<script>
+function convert() {
+	var src = document.getElementById("src").value;
+	var tgt = "";
+	var hov = "";
+	var lines = src.split('\n');
+	for (var row = 0; row < lines.length; row++) {
+		var line = lines[row];
+		for (var pos = 0; pos < line.length; pos++) {
+			var item = line.charAt(pos);
+			var mapped = map[item];
+			if (!mapped) {
+				tgt += item + ' ';
+				hov += item + ' ';
+				continue;
+			}
+			tgt += mapped[0] + ' ';
+			hov += '<span onclick="t(this,\'' + item + '\',\'' + mapped[1] + '\')">' + mapped[0] + '</span> ';
+		}
+		tgt += '\n';
+		hov += '<br/>';
+	}
+	document.getElementById("tgt").innerHTML = tgt;
+	document.getElementById("hov").innerHTML = hov;
+}
+function init() {
+	convert();
+	var srcElem = document.getElementById("src");
+	if (srcElem.addEventListener) {
+		srcElem.addEventListener("input", function() { convert(); }, false);
+	} else if (srcElem.attachEvent) {
+		srcElem.attachEvent("onpropertychange", function() { convert(); });
+	}
+}
+function t(element, text, dupes) {
+	var prev = element.innerHTML;
+	if (prev.substring(0, 1) == text) {
+		element.innerHTML = prev.substring(1, prev.length - (dupes.length + 2));
+		return;
+	}
+	element.innerHTML = text + prev + '(' + dupes + ')';
+}
+</script>
+<body style="font-family: Courier; font-size: 24px;" onload="init()">
+<textarea id="src" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+
+我你他她它
+中国 美国 英国
+爸爸 ;妈妈 ;哥哥 ;弟弟 ;姐姐 ;妹妹 ;兄弟姐妹
+太阳 ;月亮 ;星星 ;地球 
+科学 ;语文 ;数学 ;英语 ;物理 ;地理 ;化学 ;政治 ;生物
+一二三四五六七八九十百千万 ;半边 
+北京 ;上海 ;广州 ; 城市 ;程序员 ;
+光明 ;黑暗 ;空气 ;气功 ; 控制 ;字词 ;词语 ;单词 ;  
+不知道为什么
+年月日时分秒
+东南西北中 前后左右上下 出入来去
+如果 那么 因为 所以 不仅 而且 虽然 但是 和或 首先 然后
+中华人民共和国
+
+石室诗士施氏，嗜狮，誓食十狮。施氏时时适市视狮。十时，适十狮适市。是时，适施氏适市。氏视是十狮，恃矢势，使是十狮逝世。氏拾是十狮尸，适石室。石室湿，氏使侍拭石室。石室拭，氏始试食是十狮尸。食时，始识是十狮尸，实十石狮尸。试释是事。 
+
+</textarea>
+<div id="hov" style="font-family: Calibri; font-size: 24px;">
+</div>
+<br/>
+<textarea id="tgt" cols="180" rows="25" style="font-family: Calibri; font-size: 24px;">
+</textarea>
+<br/>
+</body>
+</html>

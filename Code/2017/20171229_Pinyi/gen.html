@@ -1,0 +1,220 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script src="gen_wubi.js">
+</script>
+<script src="gen_pinyin.js">
+</script>
+<script src="gen_freq.js">
+</script>
+<script>
+function init() {
+	var logOutputs = [];
+	logOutputs.push("data_wubi.length=" + data_wubi.length);
+	logOutputs.push("data_pinyin.length=" + data_pinyin.length);
+	logOutputs.push("data_freq.length=" + data_freq.length);
+
+	var glyphToStroke = {};
+	var extraList = "a;b;c;d;e;f;g;h;i;j;k;l;m;n;o;p;q;r;s;t;u;v;w;x;y;aa;ba;ca;da;ea;fa;ga;ha;ia;ja;ka;la;ma;na;oa;pa;qa;ra;sa;ta;ua;va;wa;xa;ya".split(";");
+	{
+		for (var row = 0; row < data_wubi.length; row++) {
+			var line = data_wubi[row];
+			var items = line.split(" ");
+			if (items.length < 2) {
+				continue;
+			}
+			var strokePrefix = items[0];
+			for (var index = 1; index < items.length; index++) {
+				var glyph = items[index];
+				var stroke = strokePrefix + (index == 1 ? "" : extraList[index - 2]);
+				if (glyphToStroke.hasOwnProperty(glyph)) {
+					continue;
+				}
+				glyphToStroke[glyph] = stroke;
+				// logOutputs.push("s " + glyph + " " + stroke);
+			}
+		}
+	}
+
+	var glyphToPreferSound  = {};
+	{
+		for (var row = 0; row < data_pinyin.length; row++) {
+			var line = data_pinyin[row];
+			var items = line.split(" ");
+			if (items.length < 2) {
+				continue;
+			}
+			var glyph = items[0];
+			var soundRaw = items[1].toLowerCase();
+			var tone = "5";
+			var sound = "";
+			for (var index = 0; index < soundRaw.length; index++) {
+				var oneChar = soundRaw.charAt(index);
+				if ("0" <= oneChar && oneChar <= "9") {
+					tone = oneChar;
+					continue;
+				}
+				sound = sound + oneChar;
+			}
+			sound = sound + tone;
+			glyphToPreferSound[glyph] = sound;
+			// logOutputs.push("p " + glyph + " " + sound);
+		}
+	}
+
+	var strokeToCode = {};
+	{
+		strokeToCode["g"] = "re";
+		strokeToCode["f"] = "ri";
+		strokeToCode["d"] = "rie";
+		strokeToCode["s"] = "rei";
+		strokeToCode["a"] = "r";
+		strokeToCode["h"] = "je";
+		strokeToCode["j"] = "ji";
+		strokeToCode["k"] = "jie";
+		strokeToCode["l"] = "jei";
+		strokeToCode["m"] = "j";
+		strokeToCode["t"] = "ze";
+		strokeToCode["r"] = "zi";
+		strokeToCode["e"] = "zie";
+		strokeToCode["w"] = "zei";
+		strokeToCode["q"] = "z";
+		strokeToCode["y"] = "he";
+		strokeToCode["u"] = "hi";
+		strokeToCode["i"] = "hie";
+		strokeToCode["o"] = "hei";
+		strokeToCode["p"] = "h";
+		strokeToCode["n"] = "ye";
+		strokeToCode["b"] = "yi";
+		strokeToCode["v"] = "yie";
+		strokeToCode["c"] = "yei";
+		strokeToCode["x"] = "y";
+	}
+
+	var codeToGlyph = {};
+	var directOutputs = [];
+	var mappingOutputs = [];
+	{
+		mappingOutputs.push("var map = { \"\": \"\"");
+		for (var row = 0; row < data_freq.length; row++) {
+			var lineRaw = data_freq[row];
+			line = lineRaw.replace("u:", "yu").replace("v", "yu");
+			var items = line.split(",");
+			if (items.length < 2) {
+				continue;
+			}
+			var glyph = items[0];
+			var soundList = items[1].split("/");
+			var soundToExist = {};
+			var hasPreferSound = glyphToPreferSound.hasOwnProperty(glyph);
+			var preferSound = null;
+			if (hasPreferSound) {
+				preferSound = glyphToPreferSound[glyph];
+				soundToExist[preferSound] = 1;
+			}
+			for (var soundIndex = 0; soundIndex < soundList.length; soundIndex++) {
+				var soundRaw = soundList[soundIndex];
+				if (soundRaw.length == 0) {
+					continue;
+				}
+				var lastChar = soundRaw.charAt(soundRaw.length - 1);
+				var sound = (("0" <= lastChar && lastChar <= "9") ? soundRaw : soundRaw + "5").toLowerCase();
+				soundToExist[sound] = 1;
+			}
+			var sortList = [];
+			var sortToSound = {};
+			for (var sound in soundToExist) {
+				if (!soundToExist.hasOwnProperty(sound)) {
+					continue;
+				}
+				var isPreferSound = hasPreferSound && sound == preferSound;
+				var isFive = sound.charAt(sound.length - 1) == "5";
+				var sort = (isPreferSound ? "0" : "1") + (isFive ? "0" : "1") + sound;
+				sortList.push(sort);
+				sortToSound[sort] = sound;
+			}
+			sortList = sortList.sort();
+			if (sortList.length == 0) {
+				logOutputs.push(glyph + " has no sound");
+				continue;
+			}
+			var chosenSound = sortToSound[sortList[0]];
+			// logOutputs.push("c " + glyph + " " + chosenSound);
+			var stem = chosenSound.substring(0,  chosenSound.length - 1);
+			if (!glyphToStroke.hasOwnProperty(glyph)) {
+				logOutputs.push(glyph + " has no stroke");
+				continue;
+			}
+			var prefix;
+			var suffix;
+			if (stem.charAt(stem.length - 1) == "r") {
+				prefix = stem.substring(0, stem.length - 1);
+				suffix = "l";
+			} else if (stem.charAt(stem.length - 1) == "n") {
+				prefix = stem.substring(0, stem.length - 1);
+				suffix = "n";
+			} else if (stem.length >= 2 && stem.substring(stem.length - 2, stem.length) == "ng") {
+				prefix = stem.substring(0, stem.length - 2);
+				suffix = "ng";
+			} else {
+				prefix = stem;
+				suffix = "";
+			}
+			var stroke = glyphToStroke[glyph];
+			var parents = "";
+			var infix = "";
+			var extra = "";
+			var okay = false;
+			for (var trim = 0; ; trim++) {
+				var code = prefix + infix + extra + suffix;
+				if (codeToGlyph.hasOwnProperty(code)) {
+					parents += "(" + codeToGlyph[code] + " " + code + ")";
+					if (trim < stroke.length) {
+						infix = infix + strokeToCode[stroke.substring(trim, trim + 1)];
+						continue;
+					}
+					var extraIndex = trim - stroke.length;
+					if (extraIndex < extraList.length) {
+						var extraStroke = extraList[extraIndex];
+						extra = "";
+						for (var index = 0; index < extraStroke.length; index++) {
+							extra = extra + strokeToCode[extraStroke.substring(index, index + 1)];
+						}
+						continue;
+					}
+					break;
+				}
+				codeToGlyph[code] = glyph;
+				var extraCount = trim > stroke.length ? trim - stroke.length : 0;
+				var record = glyph + "," + code  + "," + stroke + "," + trim + "," + extraCount + "," + parents;
+				directOutputs.push(record);
+				mappingOutputs.push(",\"" + glyph + "\":[\"" + code  + "\",\"" + record + "\"]");
+				okay = true;
+				break;
+			}
+			if (okay) {
+				continue;
+			}
+			logger.push("fail " + glyph + " " + parent);
+		}
+		mappingOutputs.push("};");
+	}
+
+	document.getElementById("hanzi").value = directOutputs.join("\r\n");
+	document.getElementById("ime").value = mappingOutputs.join("\r\n");
+	document.getElementById("log").value = logOutputs.join("\r\n");
+}
+</script>
+<body style="font-family: Courier; font-size: 24px;" onload="init()">
+<textarea id="hanzi" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<br/>
+<textarea id="ime" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<br/>
+<textarea id="log" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<br/>
+</body>
+</html>

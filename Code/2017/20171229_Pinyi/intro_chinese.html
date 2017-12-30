@@ -1,0 +1,103 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>Pinyi - A Chinese Romanization System</title>
+<style>
+	body, td, th
+	{
+		font-family: Calibri, Arial, sans-serif;
+		font-size: 20px;
+	}
+	div
+	{
+		margin-bottom: 10px;
+	}
+	table
+	{
+		border: 1px solid #ee;
+		border-spacing: 0;
+	}
+	td, th
+	{
+		border: 1px solid #eee;
+		padding: 2px;
+	}
+</style>
+</head>
+<body>
+<h1 style="text-align: center">Pinyi - A Chinese Romanization System (拼一：一种汉字拉丁化方案)</h1>
+
+<h2>目标</h2>
+	<div>汉字与编码一一对应</div>
+	<div>以拼音为基础</div>
+	<div>附加类似“一”的声音字母(因为这样对拼写的影响比较小)</div>
+	<div>用五笔码来生成附加字母</div>
+	<div>高频汉字应该不用附加字母或者用比较少的附加字母</div>
+
+<h2>算法</h2>
+
+	<h3>1. 生成从汉字到五笔码的映射表</h2>
+		<div>为每个汉字生成唯一的五笔码(使用数据源A)</div>
+		<div>对于重码的汉字，按以下顺序加入额外的字符串:</div>
+		<div>a;b;c;d;e;f;g;h;i;j;k;l;m;n;o;p;q;r;s;t;u;v;w;x;y;aa;ba;ca;da;ea;fa;ga;ha;ia;ja;ka;la;ma;na;oa;pa;qa;ra;sa;ta;ua;va;wa;xa;ya</div>
+
+	<h3>2. 生成从汉字到拼音的映射表</h2>
+		<div>为每个汉字选择一个拼音(使用数据源B和数据源C)</div>
+		<div>如果数据源C中含有该汉字，选择数据源C中的第一个拼音</div>
+		<div>如果数据源C中不含有该汉字，而且它有一个5声调(轻声)的拼音，选择这个拼音</div>
+		<div>否则，选择字典顺序的第一个拼音</div>
+
+	<h3>3. 生成拼一码</h2>
+		<div>按照数据源B的顺序，依次处理每一个汉字:</div>
+		<div>定义 前缀 = 拼音的声母和元音</div>
+		<div>定义 后缀 = 拼音的结尾辅音字母 ("n", "ng", "r"), 而且要把"r" 转换为 "l" (为了避免接下来的冲突情况).</div>
+		<div>尝试每一种候选的编码，选择第一个没有被使用的编码</div>
+		<div>候选的顺序如下:</div>
+
+		<table>
+			<tr><td>前缀 + 后缀</td><td>无声调的拼音</td></tr>
+			<tr><td>前缀 + 编码[五笔[0]] + 后缀</td><td>无声调的拼音, 插入了一个五笔字母的“一”编码</td></tr>
+			<tr><td>前缀 + 编码[五笔[0]] + 编码[五笔[1]] + 后缀</td><td>无声调的拼音, 插入了两个五笔字母的“一”编码</td></tr>
+			<tr><td>前缀 + 编码[五笔[0]] + 编码[五笔[1]] + ... + 后缀</td><td>无声调的拼音, 插入了更多五笔字母的“一”编码</td></tr>
+			<tr><td>前缀 + 编码[五笔[0]] + 编码[五笔[1]] + ... + 编码[额外字符串] + 后缀</td><td>无声调的拼音,插入了所有五笔字母和额外字符串的“一”编码</td></tr>
+		</table>
+
+		<div>“一”编码码表</div>
+		<table>
+			<tr><td>g</td><td>re </td></tr>
+			<tr><td>f</td><td>ri </td></tr>
+			<tr><td>d</td><td>rie</td></tr>
+			<tr><td>s</td><td>rei</td></tr>
+			<tr><td>a</td><td>r  </td></tr>
+			<tr><td>h</td><td>je </td></tr>
+			<tr><td>j</td><td>ji </td></tr>
+			<tr><td>k</td><td>jie</td></tr>
+			<tr><td>l</td><td>jei</td></tr>
+			<tr><td>m</td><td>j  </td></tr>
+			<tr><td>t</td><td>ze </td></tr>
+			<tr><td>r</td><td>zi </td></tr>
+			<tr><td>e</td><td>zie</td></tr>
+			<tr><td>w</td><td>zei</td></tr>
+			<tr><td>q</td><td>z  </td></tr>
+			<tr><td>y</td><td>he </td></tr>
+			<tr><td>u</td><td>hi </td></tr>
+			<tr><td>i</td><td>hie</td></tr>
+			<tr><td>o</td><td>hei</td></tr>
+			<tr><td>p</td><td>h  </td></tr>
+			<tr><td>n</td><td>ye </td></tr>
+			<tr><td>b</td><td>yi </td></tr>
+			<tr><td>v</td><td>yie</td></tr>
+			<tr><td>c</td><td>yei</td></tr>
+			<tr><td>x</td><td>y  </td></tr>
+		</table>
+
+		<div>额外字符串:</div>
+		<div>a;b;c;d;e;f;g;h;i;j;k;l;m;n;o;p;q;r;s;t;u;v;w;x;y;aa;ba;ca;da;ea;fa;ga;ha;ia;ja;ka;la;ma;na;oa;pa;qa;ra;sa;ta;ua;va;wa;xa;ya</div>
+
+<h2>数据源</h2>
+	<div>A. 五笔编码表 <a href="TBD">TBD</a></div>
+	<div>B. 汉字词频和拼音 <a href="TBD">TBD</a></div>
+	<div>C. 常用汉字的常用拼音 <a href="TBD">TBD</a></div>
+
+</html>
