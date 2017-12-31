@@ -2,6 +2,9 @@
 <head>
 <meta charset="utf-8"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<style>
+	.g { color: #aaa; }
+</style>
 <script src="pinying.ime.js">
 </script>
 <script>
@@ -21,7 +24,12 @@ function convert() {
 				continue;
 			}
 			tgt += mapped[0] + ' ';
-			hov += '<span onclick="t(this,\'' + item + '\',\'' + mapped[1] + '\')">' + mapped[0] + '</span> ';
+			var code = mapped[0];
+			var sep = code.indexOf(".");
+			var prefix = code.substring(0, sep).toLowerCase();
+			var suffix = code.substring(sep);
+			var display = prefix + "<span class=g>" + suffix + "</span>";
+			hov += '<span onclick="t(this,\'' + item + '\',\'' + mapped[1] + '\')">' + display+ '</span> ';
 		}
 		tgt += '\n';
 		hov += '<br/>';
