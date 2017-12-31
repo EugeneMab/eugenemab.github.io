@@ -1,0 +1,87 @@
+著 has no word !
+
+冯 has no word !
+嘉 failed ! with conflicts (佳 JIA.excellent)
+後 has no word !
+涵 failed ! with conflicts (含 HAN.contain)
+藩 has no word !
+垃 has no word !
+圾 has no word !
+淑 has no word !
+褐 has no word !
+缀 has no word !
+踱 has no word !
+氯 failed ! with conflicts (绿 LYU.chlorine)
+厮 has no word !
+趾 failed ! with conflicts (止 ZHI.toe)
+薇 has no word !
+唔 has no word !
+淆 has no word !
+镕 has no word !
+曳 failed ! with conflicts (拽 YE.drag)
+磺 failed ! with conflicts (黄 HUANG.sulfur)
+嚓 has no word !
+醫 has no word !
+
+
+var data_special = {
+	"著": "write",
+	"冯": "rely",
+	"嘉": "excel",
+	"後": "behind",
+	"涵": "content",
+	"藩": "fence",
+	"垃": "trash",
+	"圾": "trash",
+	"淑": "fair",
+	"褐": "brown",
+	"缀": "decorate",
+	"踱": "stroll",
+	"氯": "chloride",
+	"厮": "fellow",
+	"趾": "foot",
+	"薇": "rose",
+	"唔": "oh",
+	"淆": "mix",
+	"镕": "mould",
+	"曳": "pull",
+	"磺": "sulfide",
+	"嚓": "crash",
+	"醫": "doctor"
+};
+
+
+
+
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+裏 has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+秊 has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound

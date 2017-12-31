@@ -1,0 +1,224 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script src="gen_freq.js">
+</script>
+<script src="gen_pinyin.js">
+</script>
+<script>
+function init() {
+	var logOutputs = [];
+	logOutputs.push("data_pinyin.length=" + data_pinyin.length);
+	logOutputs.push("data_freq.length=" + data_freq.length);
+
+	var glyphToPreferSound  = {};
+	{
+		for (var row = 0; row < data_pinyin.length; row++) {
+			var line = data_pinyin[row];
+			var items = line.split(" ");
+			if (items.length < 2) {
+				continue;
+			}
+			var glyph = items[0];
+			var soundRaw = items[1].toLowerCase();
+			var tone = "5";
+			var sound = "";
+			for (var index = 0; index < soundRaw.length; index++) {
+				var oneChar = soundRaw.charAt(index);
+				if ("0" <= oneChar && oneChar <= "9") {
+					tone = oneChar;
+					continue;
+				}
+				sound = sound + oneChar;
+			}
+			sound = sound + tone;
+			glyphToPreferSound[glyph] = sound;
+			// logOutputs.push("p " + glyph + " " + sound);
+		}
+	}
+
+	var aposPattern = /\'/g;
+	var wordPattern = /[a-z]*[aeiouy][a-z]*/g;
+	var wordToCount = {};
+	{
+		for (var row = 0; row < data_freq.length; row++) {
+			var line = data_freq[row];
+			var items = line.split("\t");
+			if (items.length <= 5) {
+				continue;
+			}
+			var rawMeanings = items[5];
+			var meanings = rawMeanings.replace(aposPattern, "");
+			var matches = meanings.toLowerCase().match(wordPattern);
+			if (!matches) {
+				continue;
+			}
+			for (var wordIndex = 0; wordIndex < matches.length; wordIndex++) {
+				var word = matches[wordIndex];
+				if (!wordToCount.hasOwnProperty(word)) {
+					wordToCount[word] = 1;
+					continue;
+				}
+				wordToCount[word] = wordToCount[word] + 1;
+			}
+		}
+	}
+
+	var quotePattern = /\([^)]*\)/g;
+	var extraList = "a;b;c;d;e;f;g;h;i;j;k;l;m;n;o;p;q;r;s;t;u;v;w;x;y;aa;ba;ca;da;ea;fa;ga;ha;ia;ja;ka;la;ma;na;oa;pa;qa;ra;sa;ta;ua;va;wa;xa;ya;ae;be;ce;de;ee;fe;ge;he;ie;je;ke;le;me;ne;oe;pe;qe;re;se;te;ue;ve;we;xe;ye"
+			.split(";");
+	var codeToGlyph = {};
+	var directOutputs = [];
+	var mappingOutputs = [];
+	{
+		mappingOutputs.push("var map = { \"\": [\"\",\"\"]");
+		for (var row = 0; row < data_freq.length; row++) {
+			var line = data_freq[row];
+			var items = line.split("\t");
+			if (items.length <= 5) {
+				continue;
+			}
+			var glyph = items[1];
+			var rawSoundList = items[4];
+			var rawMeanings = items[5];
+
+			var chosenSound;
+			{
+				var soundList = rawSoundList.replace("u:", "yu").replace("v", "yu").split("/");
+				var soundToExist = {};
+				var hasPreferSound = glyphToPreferSound.hasOwnProperty(glyph);
+				var preferSound = null;
+				if (hasPreferSound) {
+					preferSound = glyphToPreferSound[glyph];
+					soundToExist[preferSound] = 1;
+				}
+				for (var soundIndex = 0; soundIndex < soundList.length; soundIndex++) {
+					var soundRaw = soundList[soundIndex];
+					if (soundRaw.length == 0) {
+						continue;
+					}
+					var lastChar = soundRaw.charAt(soundRaw.length - 1);
+					var sound = (("0" <= lastChar && lastChar <= "9") ? soundRaw : soundRaw + "5").toLowerCase();
+					soundToExist[sound] = 1;
+				}
+				var sortList = [];
+				var sortToSound = {};
+				for (var sound in soundToExist) {
+					if (!soundToExist.hasOwnProperty(sound)) {
+						continue;
+					}
+					var isPreferSound = hasPreferSound && sound == preferSound;
+					var isFive = sound.charAt(sound.length - 1) == "5";
+					var sort = (isPreferSound ? "0" : "1") + (isFive ? "0" : "1") + sound;
+					sortList.push(sort);
+					sortToSound[sort] = sound;
+				}
+				sortList = sortList.sort();
+				if (sortList.length == 0) {
+					logOutputs.push(glyph + " has no sound");
+					continue;
+				}
+				chosenSound = sortToSound[sortList[0]];
+				// logOutputs.push("c " + glyph + " " + chosenSound);
+			}
+
+			var meanings = rawMeanings.replace(aposPattern, "");
+			var wordToInQuote = {};
+			{
+				var quotes = meanings.toLowerCase().match(quotePattern);
+				if (quotes) {
+					for (var quoteIndex = 0; quoteIndex < quotes.length; quoteIndex++) {
+						var quote = quotes[quoteIndex];
+						var words = quote.match(wordPattern);
+						if (words) {
+							for (var wordIndex = 0; wordIndex < words.length; wordIndex++) {
+								var word = words[wordIndex];
+								wordToInQuote[word] = true;
+							}
+						}
+					}
+				}
+			}
+
+			var candidates = [];
+			var matches = meanings.toLowerCase().match(wordPattern);
+			if (matches) {
+				for (var wordIndex = 0; wordIndex < matches.length; wordIndex++) {
+					var word = matches[wordIndex];
+					var length = word.length;
+					var wordCount = wordToCount[word];
+					var score = wordIndex + word.length * wordCount;
+					candidates.push({
+						wordText: word,
+						inQuote: wordToInQuote.hasOwnProperty(word) ? 1 : 0,
+						upperCase: meanings.indexOf(word) >= 0 ? 0 : 1,
+						scoreValue: score
+					});
+					// logOutputs.push("c " + glyph + " " + chosenSound + " " + wordIndex + " " + word + " " + length + " " + wordCount + " " + score);
+				}
+				candidates.sort(function (a, b) {
+					var diff = a.inQuote < b.inQuote ? -1 : a.inQuote > b.inQuote ? 1 : 0;
+					if (diff) {
+						return diff;
+					}
+					diff = a.upperCase < b.upperCase ? -1 : a.upperCase > b.upperCase ? 1 : 0;
+					if (diff) {
+						return diff;
+					}
+					diff = a.scoreValue < b.scoreValue ? -1 : a.scoreValue > b.scoreValue ? 1 : 0;
+					if (diff) {
+						return diff;
+					}
+					return a.wordText < b.wordText ? -1 : a.wordText > b.wordText ? 1 : 0;
+				});
+				// logOutputs.push("c " + glyph + " " + chosenSound + " " + candidates[0].wordText);
+			}
+
+			var stem = chosenSound.substring(0,  chosenSound.length - 1);
+			var stemUpper = stem.toUpperCase();
+			var conflicts = "";
+			var okay = false;
+			for (var trial = 0; trial < candidates.length + extraList.length; trial++) {
+				var candidate = candidates[trial];
+				var code = stemUpper + "."
+					+ (trial < candidates.length
+						? candidate.wordText
+						: extraList[trial - candidates.length]);
+				if (codeToGlyph.hasOwnProperty(code)) {
+					conflicts += "(" + codeToGlyph[code] + " " + code + ")";
+					continue;
+				}
+				codeToGlyph[code] = glyph;
+				var extra = trial < candidates.length ? 0 : (trial - candidates.length + 1);
+				var record = glyph + "," + code  + "," + trial + "," + extra + "," + conflicts;
+				directOutputs.push(record);
+				mappingOutputs.push(",\"" + glyph + "\":[\"" + code  + "\",\"" + record + "\"]");
+				okay = true;
+				break;
+			}
+			if (okay) {
+				continue;
+			}
+			logOutputs.push(glyph + " failed ! with conflicts " + conflicts);
+		}
+		mappingOutputs.push("};");
+	}
+
+	document.getElementById("hanzi").value = directOutputs.join("\r\n");
+	document.getElementById("ime").value = mappingOutputs.join("\r\n");
+	document.getElementById("log").value = logOutputs.join("\r\n");
+}
+</script>
+<body style="font-family: Courier; font-size: 24px;" onload="init()">
+<textarea id="hanzi" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<br/>
+<textarea id="ime" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<br/>
+<textarea id="log" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<br/>
+</body>
+</html>
