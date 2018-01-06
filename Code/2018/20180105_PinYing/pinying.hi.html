@@ -1,0 +1,76 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<style>
+	body, textarea {
+		background-color: #000000;
+		color: #00ff00;
+	}
+	.g {
+		color: #007700;
+	}
+</style>
+<script src="pinying.ime.js">
+</script>
+<script>
+function convert() {
+	var src = document.getElementById("src").value;
+	var tgt = "";
+	var hov = "";
+	var lines = src.split('\n');
+	for (var row = 0; row < lines.length; row++) {
+		var line = lines[row];
+		for (var pos = 0; pos < line.length; pos++) {
+			var item = line.charAt(pos);
+			var mapped = map[item];
+			if (!mapped) {
+				tgt += item + ' ';
+				hov += item + ' ';
+				continue;
+			}
+			tgt += mapped[0] + ' ';
+			var code = mapped[0];
+			var sep = code.indexOf(".");
+			var prefix = code.substring(0, sep).toLowerCase();
+			var suffix = code.substring(sep);
+			var display = prefix + "<span class=g>" + suffix + "</span>";
+			hov += '<span onclick="t(this,\'' + item + '\',\'' + mapped[1] + '\')">' + display+ '</span> ';
+		}
+		tgt += '\n';
+		hov += '<br/>';
+	}
+	document.getElementById("tgt").innerHTML = tgt;
+	document.getElementById("hov").innerHTML = hov;
+}
+function init() {
+	convert();
+	var srcElem = document.getElementById("src");
+	if (srcElem.addEventListener) {
+		srcElem.addEventListener("input", function() { convert(); }, false);
+	} else if (srcElem.attachEvent) {
+		srcElem.attachEvent("onpropertychange", function() { convert(); });
+	}
+}
+function t(element, text, dupes) {
+	var prev = element.innerHTML;
+	if (prev.substring(0, 1) == text) {
+		element.innerHTML = prev.substring(1, prev.length - (dupes.length + 2));
+		return;
+	}
+	element.innerHTML = text + prev + '(' + dupes + ')';
+}
+</script>
+<body style="font-family: Courier; font-size: 24px;" onload="init()">
+<textarea id="src" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+一二三四五六七八九十百千万
+
+</textarea>
+<div id="hov" style="font-family: Calibri, Arial, sans-serif; font-size: 24px;">
+</div>
+<br/>
+<textarea id="tgt" cols="180" rows="25" style="font-family:Calibri, Arial, sans-serif; font-size: 24px;">
+</textarea>
+<br/>
+</body>
+</html>

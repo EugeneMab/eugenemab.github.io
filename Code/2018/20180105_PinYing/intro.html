@@ -1,0 +1,69 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>PinYing : A Chinese Romanization System | PIN.stake YING.brave ： YI.single ZHONG.race HAN.dynasty ZI.symbol LA.drag DING.stem HUA.into FANG.square AN.case</title>
+<style>
+	body, td, th
+	{
+		font-family: Calibri, Arial, sans-serif;
+		font-size: 20px;
+	}
+	div
+	{
+		margin-bottom: 10px;
+	}
+	table
+	{
+		border: 1px solid #ee;
+		border-spacing: 0;
+	}
+	td, th
+	{
+		border: 1px solid #eee;
+		padding: 2px;
+	}
+</style>
+</head>
+<body>
+<h1 style="text-align: center">Pinyi : A Chinese Romanization System | PIN.stake YING.brave ： YI.single ZHONG.race HAN.dynasty ZI.symbol LA.drag DING.stem HUA.into FANG.square AN.case</h1>
+
+<h2>Goal</h2>
+	<div>One-to-one mapping between a Chinese character and a code</div>
+	<div>Based on Pinyin system</div>
+	<div>Add English word to distinguish different characters with the same pronunciation</div>
+
+<h2>Algorithm</h2>
+
+	<h3>1. Generate mapping from character to Pinyin</h2>
+		<div>Choose a Pinyin for each character, using the data source A and data source B.</div>
+		<div>If a character is in data source B, choose the first Pinyin.</div>
+		<div>If a character is not in data source B, and has a Pinyin using tone 5, chose the one with tone 5</div>
+		<div>Otherwise, choose the first PinYin in alphabetical order</div>
+
+	<h3>2. Generate the English word frequency</h2>
+		<div>Go through all English words in data source A, and count the number of occurence for each English word</div>
+
+	<h3>3. Generate PinYing</h2>
+		<div>Go through each characters in the order of data source A:</div>
+		<div>For each English word in the meaning column of one Chinese character, calculate the following values</div>
+		<div>Define Is-Partial as whether the word appears with hyphen or before dot</div>
+		<div>Define In-Quote as whether the word appears in a quotation</div>
+		<div>Define Upper-Case as whether the word is using upper case such as names of person or countries</div>
+		<div>Define score-Value = order of the word + length of the English word * 4 + word occurrence in data source A</div>
+		<div>Sort the words in the order of Is-Partial, In-Quote, Upper-Case, Score-Value, and the word string</div>
+		<div>Pick the first code which has not been used before, wherein code is Pinyin without tone + dot + English word</div>
+		<div>If all words have been used, try use extra meaningless letters, which are combined by:</div>
+		<div>{ (empty) ; b ; p ; m ; f ; d ; t ; n ; l ; g ; k ; h; s } x { a ; e ; i ; o ; u }</div>
+
+<h2>Data Sources</h2>
+	<div>A. Frequency and Pinyin of Chinese characters from
+		<a target="_blank" href="http://lingua.mtsu.edu/chinese-computing/statistics/char/list.php?Which=MO">http://lingua.mtsu.edu/chinese-computing/statistics/char/list.php?Which=MO</a>
+		(Modern Chinese Character Frequency List by Jun Da (jda@mtsu.edu))
+	</div>
+	<div>B. Popular proununciation of Chinese characters from
+		<a target="_blank" href="http://zein.se/patrick/3000char.html">http://zein.se/patrick/3000char.html</a>
+		(The most common Chinese characters in order of frequency, by © 2003 – 2009 Patrick Hassel Zein )
+	</div>
+
+</html>

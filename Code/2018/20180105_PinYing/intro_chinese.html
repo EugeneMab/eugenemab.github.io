@@ -1,0 +1,69 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>拼英：一种汉字拉丁化方案 | PIN.stake YING.brave ： YI.single ZHONG.race HAN.dynasty ZI.symbol LA.drag DING.stem HUA.into FANG.square AN.case</title>
+<style>
+	body, td, th
+	{
+		font-family: Calibri, Arial, sans-serif;
+		font-size: 20px;
+	}
+	div
+	{
+		margin-bottom: 10px;
+	}
+	table
+	{
+		border: 1px solid #ee;
+		border-spacing: 0;
+	}
+	td, th
+	{
+		border: 1px solid #eee;
+		padding: 2px;
+	}
+</style>
+</head>
+<body>
+<h1 style="text-align: center">拼英：一种汉字拉丁化方案 | PIN.stake YING.brave ： YI.single ZHONG.race HAN.dynasty ZI.symbol LA.drag DING.stem HUA.into FANG.square AN.case</h1>
+
+<h2>目标</h2>
+	<div>汉字与编码一一对应</div>
+	<div>以拼音为基础</div>
+	<div>加入英语单词来区分同音字</div>
+
+<h2>算法</h2>
+
+	<h3>1. 生成从汉字到拼音的映射表</h2>
+		<div>为每个汉字选择一个拼音(使用数据源A和数据源B)</div>
+		<div>如果数据源B中含有该汉字，选择数据源B中的第一个拼音</div>
+		<div>如果数据源B中不含有该汉字，而且它有一个5声调(轻声)的拼音，选择这个拼音</div>
+		<div>否则，选择字典顺序的第一个拼音</div>
+
+	<h3>2. 生成英语单词词频</h2>
+		<div>扫描整个数据源A，计算每一个英语单词的出现次数</div>
+
+	<h3>3. 生成拼英码</h2>
+		<div>按照数据源A的顺序，依次处理每一个汉字:</div>
+		<div>对于某一个汉字的英文解释里面的所有英文单词，计算以下数值</div>
+		<div>定义 Is-Partial 为是否该词出现在横杠左右或者句点的前面</div>
+		<div>定义 In-Quote 为是否该词出现在某对括号包含的文字里</div>
+		<div>定义 Upper-Case 为是否该词使用了大写字母，例如人名和国家名</div>
+		<div>定义 Score-Value 为（单词在英文解释的长度） + （单词的长度 * 单词的词频)</div>
+		<div>把单词按照 Is-Partial, In-Quote, Upper-Case, Score-Value, 和单词字符串进行排序</div>
+		<div>然后选择第一个没有被使用的编码,编码是无声调拼音 + 点 + 英文单词</div>
+		<div>如果所有单词都已经被占用了，则尝试使用无意义的字母，以如下方式组成:</div>
+		<div>{ (空) ; b ; p ; m ; f ; d ; t ; n ; l ; g ; k ; h; s } x { a ; e ; i ; o ; u }</div>
+
+<h2>数据源</h2>
+	<div>A. 汉字词频和拼音
+		<a target="_blank" href="http://lingua.mtsu.edu/chinese-computing/statistics/char/list.php?Which=MO">http://lingua.mtsu.edu/chinese-computing/statistics/char/list.php?Which=MO</a>
+		(Modern Chinese Character Frequency List by Jun Da 笪骏 (jda@mtsu.edu))
+	</div>
+	<div>B. 常用汉字的常用拼音
+		<a target="_blank" href="http://zein.se/patrick/3000char.html">http://zein.se/patrick/3000char.html</a>
+		(The most common Chinese characters in order of frequency, by © 2003 – 2009 Patrick Hassel Zein )
+	</div>
+
+</html>
