@@ -1,0 +1,821 @@
+<html>
+<head>
+<title>Doudouling (version 2018) Dodolii hin
+</title>
+<style>
+body, td
+{
+	font-family: Calibri, Arial, sans-serif;
+	font-size: 24px;
+}
+</style>
+</head>
+<body bgcolor="#f0fff0" text="#1f3f7d">
+<center><h1>Doudouling (version 2018)</h1>
+<h2>la Dodoligihiin (vesowun 2018)</h2>
+an artificial language by Jian Huang<br/>
+u atifijahuwuu ligin pe miu<br/></center>
+<ol>
+<li><a href="index.html">English introduction (this document)</a>
+<li><a href="dodolii_hin.html">Doudouling introduction (reflective introduction)</a>
+<li><a href="http://conlang.wikia.com/wiki/Doudouling">Doudouling in "wikia" site</a>
+<li><a href="http://conlang.wikia.com/wiki/Dodolii_hin">Doudouling 2018 in "wikia" site</a>
+</ol>
+<a name=introduction>
+<center><h2>Introduction</h2>
+</center>
+<h3>Principles: compress Latin words into {C-V-N} syllables</h3>
+<p>
+The main idea of my artificial language is to simplify Latin words into the structure of
+one optional consonant plus one-vowel plus one optional {n}.
+That is because we think this structure is the best for singing.
+Also, it is required to avoid adding too many extra strong syllables,
+And the spelling should be very close to the International Phonetic Alphabet (IPA),
+And the stress position should not impact the meaning of the word.
+</p>
+<p>
+<h3>Step 1: simplify consonants and consonant clusters</h3>
+<p>
+Simplify consonants and consonant clusters as below.
+</p>
+<center>
+	<table>
+	<tr><td>{b}</td><td>{p}</td><td>{ts}</td><td>{m}</td><td>{f}</td><td>{v}</td></tr>
+	<tr><td>{d}</td><td>{t}</td><td>{dz}</td><td>{n}</td><td>{s}</td><td>{j}</td></tr>
+	<tr><td>{g}</td><td>{k}</td><td>    </td><td>{h}</td><td>{w}</td><td>{l}</td></tr>
+	</table>
+</center>
+<p>
+Rules:
+	<ul>
+	<li>{sp} =&gt; {ts};</li>
+	<li>{st} =&gt; {dz};</li>
+	<li>{sc-}({sk-}) =&gt; {dz} (via {sti-});</li>
+	<li>{pt} =&gt; {b};</li>
+	<li>{ph} =&gt; {f};</li>
+	<li>{w} =&gt; {v};</li>
+	<li>{th} =&gt; {t};</li>
+	<li>{c} ([s]), {x} (at the beginning of a word), {ch} ([&#x0283;]/[t&#x0283;]), {ti} ([&#x0283;]) =&gt; {j};</li>
+	<li>{j}, {y} =&gt; {g} (via {gi-});</li>
+	<li>{q}, {c} [k], {ch} ([k]) =&gt; {k};</li>
+	<li>{r} =&gt; {w};</li>
+	</ul>
+</p>
+<p>
+For some complex clusters, add an {e} to split them, such as {partner} and {investment}.
+</p>
+<h3>Step 2: simplify vowels and diphthongs</h3>
+<p>
+Simplify the diphtongs as below.
+</p>
+<p>
+Rules:
+	<ul>
+	<li>{ao/oa} =&gt; {au} =&gt; {a};</li>
+	<li>{ae/ea} =&gt; {ai} =&gt; {e};</li>
+	<li>{ee} =&gt; {ei} =&gt; {i};</li>
+	<li>{oo} =&gt; {ou} =&gt; {o};</li>
+	<li>{oe/eo/eu} =&gt; {oi} =&gt; {u};</li>
+	</ul>
+</p>
+<p>
+Convert vowel {y} to {i}; and drop some less important vowels.
+</p>
+<h3>Step 3: Compensate the lost sounds</h3>
+<p>
+If keeping only the consonant-vowel-nasal structure for each syllable,
+it often causes great loss of information and then create confusions.
+So we need to add some weak syllables between the last vowel and last nasal to compensate the lost sounds.
+Rules:
+	<ul>
+	<li>Treat the final {m} as {n} with a lost {p}</li>
+	<li>If there was no dropping, compensate {u}/{gu}</li>
+	<li>If no final consonant was dropped, allow at most one compensating syllable</li>
+	<li>If a final consonant was dropped, and no other was dropped, compensate the final consonant</li>
+	<li>If a final consonant was dropped, and others are droppped,
+		compensate the final consonant, and then allow a second compensating syllable</li>
+	</ul>
+Priority to compensate:
+	<ul>
+	<li>Pre-vowel {r} {l}</li>
+	<li>Post-vowel {r} {l}</li>
+	<li>Other consonants</li>
+	<li>Diphtongs</li>
+	</ul>
+</p>
+<p>
+First compensating syllable table:
+</p>
+<center>
+	<table>
+	<tr><td>{b} </td><td>=&gt;</td><td> {vu}     </td><td>{p} </td><td>=&gt;</td><td> {vu}     </td><td>{ts} </td><td>=&gt;</td><td> {tsi}</td><td>{m} </td><td>(n/a)</td><td>          </td><td>{f} </td><td>=&gt;</td><td> {vu}</td><td>{v} </td><td>=&gt;</td><td> {vu}</td><td>          </td><td>     </td><td>     </td></tr>
+	<tr><td>{d} </td><td>=&gt;</td><td> {hi}     </td><td>{t} </td><td>=&gt;</td><td> {hi}     </td><td>{dz} </td><td>=&gt;</td><td> {dzi}</td><td>{n} </td><td>(n/a)</td><td>          </td><td>{s} </td><td>=&gt;</td><td> {ji}</td><td>{j} </td><td>=&gt;</td><td> {ji}</td><td>          </td><td>     </td><td>     </td></tr>
+	<tr><td>{g} </td><td>=&gt;</td><td> {i}/{gi} </td><td>{k} </td><td>=&gt;</td><td> {i}/{gi} </td><td>     </td><td>     </td><td>      </td><td>{h} </td><td>=&gt;</td><td> {u}/{gu} </td><td>{w} </td><td>=&gt;</td><td> {wu}</td><td>{l} </td><td>=&gt;</td><td> {hu}</td><td>diphtongs </td><td>=&gt;</td><td> {fu}</td></tr>
+	</table>
+</center>
+<p>
+Second compensating syllable table after the {i} of first compensating syllable:
+</p>
+<center>
+	<table>
+	<tr><td>{b} </td><td>=&gt;</td><td> {gii} </td><td>{p} </td><td>=&gt;</td><td> {gii} </td><td>{ts} </td><td>(n/a)</td><td>      </td><td>{m} </td><td>(n/a)</td><td>    </td><td>{f} </td><td>=&gt;</td><td> {gii} </td><td>{v} </td><td>=&gt;</td><td> {gii} </td><td>          </td><td>     </td><td>       </td></tr>
+	<tr><td>{d} </td><td>=&gt;</td><td> {gii} </td><td>{t} </td><td>=&gt;</td><td> {gii} </td><td>{dz} </td><td>(n/a)</td><td>      </td><td>{n} </td><td>(n/a)</td><td>    </td><td>{s} </td><td>=&gt;</td><td> {gii} </td><td>{j} </td><td>=&gt;</td><td> {gii} </td><td>          </td><td>     </td><td>       </td></tr>
+	<tr><td>{g} </td><td>=&gt;</td><td> {gii} </td><td>{k} </td><td>=&gt;</td><td> {gii} </td><td>     </td><td>     </td><td>      </td><td>{h} </td><td>(n/a)</td><td>    </td><td>{w} </td><td>=&gt;</td><td> {jii} </td><td>{l} </td><td>=&gt;</td><td> {jii} </td><td>diphtongs </td><td>=&gt;</td><td> {hii} </td></tr>
+	</table>
+</center>
+<p>
+Second compensating syllable table after the {u} of first compensating syllable:
+</p>
+<center>
+	<table>
+	<tr><td>{b} </td><td>=&gt;</td><td> {guu} </td><td>{p} </td><td>=&gt;</td><td> {guu} </td><td>{ts} </td><td>(n/a)</td><td>      </td><td>{m} </td><td>(n/a)</td><td>    </td><td>{f} </td><td>=&gt;</td><td> {guu} </td><td>{v} </td><td>=&gt;</td><td> {guu} </td><td>          </td><td>     </td><td>       </td></tr>
+	<tr><td>{d} </td><td>=&gt;</td><td> {guu} </td><td>{t} </td><td>=&gt;</td><td> {guu} </td><td>{dz} </td><td>(n/a)</td><td>      </td><td>{n} </td><td>(n/a)</td><td>    </td><td>{s} </td><td>=&gt;</td><td> {guu} </td><td>{j} </td><td>=&gt;</td><td> {guu} </td><td>          </td><td>     </td><td>       </td></tr>
+	<tr><td>{g} </td><td>=&gt;</td><td> {guu} </td><td>{k} </td><td>=&gt;</td><td> {guu} </td><td>     </td><td>     </td><td>      </td><td>{h} </td><td>(n/a)</td><td>    </td><td>{w} </td><td>=&gt;</td><td> {wuu} </td><td>{l} </td><td>=&gt;</td><td> {wuu} </td><td>diphtongs </td><td>=&gt;</td><td> {huu} </td></tr>
+	</table>
+</center>
+<p>For {i}/{gi}, use {gi} if following an {i}, use {i} if following other vowels.</p>
+<p>For {u}/{gu}, use {gu} if following an {u}, use {u} if following other vowels.</p>
+<h3>Step 4: Final vowel</h3>
+<p>Convert the final vowel {i} to {e}, and {u} to {o} to avoid confusion with weak syllables.
+</p>
+<h3>Samples</h3>
+Examples:
+	<table>
+	<tr><td>Latin         </td><td>CVN          </td><td>Dropped          </td><td>Compensate         </td></tr>
+	<tr><td>state         </td><td>dza          </td><td>t                </td><td>dzahi              </td></tr>
+	<tr><td>sper          </td><td>tse          </td><td>r                </td><td>tsewu              </td></tr>
+	<tr><td>sport         </td><td>tso          </td><td>t r              </td><td>tsohijii           </td></tr>
+	<tr><td>science       </td><td>dzien        </td><td>j                </td><td>dziejin            </td></tr>
+	<tr><td>photo         </td><td>foto         </td><td>                 </td><td>foto               </td></tr>
+	<tr><td>wagon         </td><td>vagon        </td><td>                 </td><td>vagoun             </td></tr>
+	<tr><td>cent          </td><td>jen          </td><td>t                </td><td>jehin              </td></tr>
+	<tr><td>center        </td><td>jente        </td><td>r                </td><td>jentewu            </td></tr>
+	<tr><td>aqu           </td><td>a            </td><td>k                </td><td>ai                 </td></tr>
+	<tr><td>aquatic       </td><td>akati        </td><td>k                </td><td>akatigi            </td></tr>
+	<tr><td>question      </td><td>kedzon       </td><td>                 </td><td>kedzoun            </td></tr>
+	<tr><td>tank          </td><td>tan          </td><td>k                </td><td>tain               </td></tr>
+	<tr><td>xerox         </td><td>jewo         </td><td>s k              </td><td>jewojigii          </td></tr>
+	<tr><td>chocolate     </td><td>jokola       </td><td>t                </td><td>jokolahi           </td></tr>
+	<tr><td>just          </td><td>gu           </td><td>dz               </td><td>gudzi              </td></tr>
+	<tr><td>adoption      </td><td>adobon       </td><td>                 </td><td>adoboun            </td></tr>
+	<tr><td>train         </td><td>ten          </td><td>r i              </td><td>tewuhuun           </td></tr>
+	<tr><td>tract         </td><td>ta           </td><td>t r k            </td><td>tahijii            </td></tr>
+	<tr><td>create        </td><td>kea          </td><td>t r              </td><td>keahijii           </td></tr>
+	<tr><td>glad          </td><td>ga           </td><td>d l              </td><td>gahijii            </td></tr>
+	<tr><td>class         </td><td>ka           </td><td>s l s            </td><td>kajijii            </td></tr>
+	<tr><td>cause         </td><td>ka           </td><td>s u              </td><td>kajihii            </td></tr>
+	<tr><td>daemon        </td><td>demon        </td><td>i                </td><td>demofun            </td></tr>
+	<tr><td>coffee        </td><td>kofi         </td><td>f i              </td><td>kofivuhuu          </td></tr>
+	<tr><td>moustache     </td><td>modza        </td><td>j u              </td><td>modzajihii         </td></tr>
+	<tr><td>phoenix       </td><td>funi         </td><td>s k i            </td><td>funijigii          </td></tr>
+	<tr><td>phoenician    </td><td>funijan      </td><td>i                </td><td>funijafun          </td></tr>
+	<tr><td>europe        </td><td>uwo          </td><td>p i              </td><td>uwovuhuu           </td></tr>
+	<tr><td>return        </td><td>wetun        </td><td>r                </td><td>wetuwun            </td></tr>
+	<tr><td>depart        </td><td>depa         </td><td>t r              </td><td>depahijii          </td></tr>
+	<tr><td>alt           </td><td>a            </td><td>t l              </td><td>ahijii             </td></tr>
+	<tr><td>culture       </td><td>kutu         </td><td>r l              </td><td>kutuwuwuu          </td></tr>
+	<tr><td>court         </td><td>ko           </td><td>t r u            </td><td>kohijii            </td></tr>
+	<tr><td>cant          </td><td>kan          </td><td>t                </td><td>kahin              </td></tr>
+	<tr><td>simple        </td><td>simpe        </td><td>l                </td><td>simpehu            </td></tr>
+	<tr><td>autumn        </td><td>atun         </td><td>b u              </td><td>atuvuhuun          </td></tr>
+	<tr><td>environment   </td><td>enviwommen   </td><td>t                </td><td>enviwommehin       </td></tr>
+	<tr><td>fact          </td><td>fa           </td><td>t k              </td><td>fahigii            </td></tr>
+	<tr><td>experiment    </td><td>etsewimen    </td><td>t k              </td><td>etsewimehigiin     </td></tr>
+	<tr><td>sign          </td><td>sin          </td><td>g                </td><td>sigin              </td></tr>
+	<tr><td>dogmatic      </td><td>domati       </td><td>k g              </td><td>domatigigii        </td></tr>
+	<tr><td>construct     </td><td>kondzu       </td><td>t r k            </td><td>kondzuhijii        </td></tr>
+	<tr><td>verb          </td><td>ve           </td><td>b r              </td><td>vevuwuu            </td></tr>
+	<tr><td>partner       </td><td>patene       </td><td>r                </td><td>patenewu           </td></tr>
+	<tr><td>investment    </td><td>invedzemen   </td><td>t                </td><td>invedzemehin       </td></tr>
+	<tr><td>continue      </td><td>kontinu      </td><td>                 </td><td>kontino            </td></tr>
+	<tr><td>              </td><td>             </td><td>                 </td><td>                   </td></tr>
+	</table>
+<h3>Word choice</h3>
+<p>
+The Latin word we used are the words composed of Latin roots which appeared in English.<br/>
+</p>
+<h3>Stress</h3>
+<p>
+If the word ends with {ii}, {iin}, {uu}, or {uun}, the stress is at the fourth last vowel.
+</p>
+<p>
+If the word does not end with {ii}, {iin}, {uu}, or {uun}, the stress is at the second last vowel.
+</p>
+<h3>Center of a phrase</h3>
+<p>
+When a center word of a phrase is a single-syllable {C-V-N} word, it sounds not strong enough.<br/>
+To make it sounds good phonetically, we add {-u} after the vowel of the center word.<br/>
+Example:
+	{with me} =&gt; {ve mi} =&gt; {ve miu};
+	{who is he} =&gt; {ki dze go} =&gt; {ke dzeu go};
+	{for this} =&gt; {po ji} =&gt; {po jiu};
+</p>
+<a name=sample>
+<center><h2>Sample Passages</h2></center>
+<p>
+For each group, the first line is Doudouling;
+the second line is Latin roots;
+and the third line is English meaning.
+</p>
+<pre style="whitespace: no-wrap;">
+Titehu : Babehu Tedzi, Genesiji, Bibehu
+title  : babel  text , genesis , bible
+Title  : Babel  Text , Genesis , Bible
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:1
+
+Tohi  la    muhin dze de u   ligin    e   de u   pawohu.
+tot   illa  mund  est de un  lingu    et  de un  parol .
+The whole earth   was of one language and of one speech.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:2
+
+Du  vogai  he  lu  a  la   owentahu, okuwuguu he  go ke   didzovewu ha lu  u
+dur voyage hab lor ad illa oriental, occur    hab il que  discover- ab lor un
+As  they journeyed east            , it happened,    that they have found  a
+
+pahun i  la   tewu wu de la   Jinawu; e   vivu he  lu  di   .
+plan  in illa terr    de illa Shinar; et  viv  hab lor id   .
+plain in the  land    of      Shinar; and they lived   there.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:3
+
+Dihi lu   ugun a  u  atewu wu, "Veun, ni    lajigii a  fewu le  tihu, e   li  kombudzi
+dit  lor  un   ad un alter   , "ven , nostr lax     ad fer  ill tile, et  lor combust
+They said one  to another    , "Come, let's         make    bricks  , and burn them
+
+entiwemehin." Havu lu  la   tihu  po  la   petewu, e   utiliji lu  la   tawu po  la   motawuwuu.
+entire     ." hab  lor illa tile  pro illa petr  , et  util    lor illa tar  pro illa mortar   .
+thoroughly ." They had      brick for      stone , and they used   the  tar  for the  mortar   .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:4
+
+Dihi lu  , "Veun, ni    lajigii kondzuhijii po  nugu  u  uvuwuu, e   u  tuwehijii,
+dit lor  , "ven , nostr lax     construct   pro nostr un urb   , et  un turret   ,
+They said, "Come, let's         build       us        a  city  , and a  tower    ,
+
+sa    kapihi awivuwuu a  la   jehu, e   ni    lajigii a  fewu po  nugu  u  novun;
+se    capit  arrive   ad illa cele, et  nostr lax     ad fer  pro nostr un nom  ;
+whose top    reaches  to the  sky , and let's            make     us    a  name ;
+
+ejevuguu ke  divihi ti nu    a  utewuwuu su    la   sufajijii de tohi la    muhin."
+except   que divid ten nostr ad ulter    super illa surface   de tot  illa  mund ."
+lest         we be scattered  abroad     on    the  surface   of the  whole earth."
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:5
+
+Gehova dedzehin  a  miwu la   uvuwuu e   la  tuwehijii, ke    le   infanhin de le  hovun
+Jehowa descend   ad vis  illa urb    et  la  turret   , que   illa infant   de ill hom
+Yahweh came down to see  the  city   and the tower    , which the  children of     men
+
+kondzuhijii ha .
+kondzu      ha .
+construct   hab.
+had built      .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:6
+
+Gehova dihi, "Atenjohin, dzeu lu  u   popuhu, e   havu lu   tohi u   ligin   ;
+Jehowa dit , "attention, est  lor un  popul , et  hab  lo   tot  un  lingu   ;
+Yahweh said, "Behold   , they are one people, and they have all  one language;
+
+e   dzeu ji  ke   owiginahi lu  a  fewu. je-tevun nuhu   , ke    intehin lu
+et  est  hoc que  origin    lor ad fer . hoc-temp nul    , que   intend  lor
+and this is  what they begin    to do  . Now      nothing, which they intend
+
+a  fewu, wesidzi ti va    ba   lugu.
+ad fer , resist-ten-va    ab   lor .
+to do  , will be withheld from them.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:7
+
+Veun, ni    lajigii dedzehin, e   di    konfuji lo    ligin   ,
+Ven , nostr lax     descend , et  id    confus  lor   lingu   ,
+Come, let's         down    , and there confuse their language,
+
+da   ne  pohi lu  kompehijiin la   pawohu  de u  atewuwuu."
+ad   neg pot  lor comprehend  illa parol   de un alter   ."
+that they may not understand  one another's speech       ."
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:8
+
+Da Gehova li  divihi     a  utewuwuu de   diu   a  la   sufajijii de tohi la   muhin.
+ad Jehowa lor divid      ad ultr     de   id    ad illa surface   de tot  illa mund .
+So Yahweh scattered them abroad      from there on the  surface   of all  the  earth.
+
+Wedzi lu     a kondzuhijii la   uvuwuu.
+Rest  lor    ad construct  illa urb   .
+They stopped building      the  city  .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:9
+
+Da        sa novun       apehuguu ti  ko  Babehu, ba      Gehova konfuji  la
+ad        se nom         appel    ten com Babel , ab      Jehowa confus   illa
+Therefore the name of it was called   as  Babel , because Yahweh confused the
+
+ligin    de tohi la   muhin, di   . De   diu  , Gehova li  divihi     utewuwuu
+lin      de ton  la   mun  , di   . De   din  , Gehu   li  dive       ute
+lingu    de tot  illa mund , id   . De   id   , Jehowa lor divida     ultr
+language of all  the  earth, there. From there, Yahweh scattered them abroad
+
+su    la   sufajijii de tohi la   muhin.
+super illa surface   de tot  illa mund .
+on    the  surface   of all  the  earth.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+</pre>
+<pre>
+Titehu : Na    Patewu
+title  : nostr patr
+Title  : Our   Father
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+
+Na    patewu i  la   jehu   ,
+nostr patr   in illa cel   ,
+Our   fater  in      heaven,
+
+sahin dze ta   novun.
+sant  est tu   nom  .
+saint is  your name .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+
+Veun ta   wegivun,
+Ven  ta   wegun  ,
+ven  tu   regime ,
+Come your kingdom,
+
+fewu ti  ta   voluhin,
+fen  ti  ta   volun  ,
+fer  ten tu   volunt ,
+done     your will   ,
+
+ko  i  la   jehu e   su  tewuwuu.
+com in ille cel  et  sur terr   .
+as  in heaven    and on  earch  .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+
+Na    pewi-diji paun  tu  doun je-diji .
+nostr per-dies  pan   tu  dont hoc-dies.
+Our   everyday  bread you give today   .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+
+Padowun tu   na    debihi,
+pardon  tu   nostr debit ,
+Forgive you  our   debts ,
+
+ko  padowun ha  nu    na    debitowu.
+com pardaon hab nostr nostr debitor .
+as  we have forgotten our   debtors .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+
+E   tu  ne  ni    dui  entewu tembajoun ,
+et  tu  neg nostr duc  entr   temptation,
+and you not us    lead into   tempation ,
+
+bo  ni     libewahi tu edzewuguu de maligin.
+ob  nostr  liberat  tu exter     de malign .
+but you us liberate    out       of malign .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+
+Ameun.
+amen .
+Amen .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+</pre>
+<a name=schema>
+<center><h2>Schema</h2></center>
+<table width=100%>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Alphabet</b>
+		</td>
+		<td>
+			<b>Afabehijii</b>
+		</td>
+	</tr>
+	<tr>
+			B P M F V TS<br/>
+			D T N S J DZ<br/>
+			G K H W L<br/>
+			A E I O U<br/>
+		</td>
+		<td>
+			B P M F V TS<br/>
+			D T N S J DZ<br/>
+			G K H W L<br/>
+			A E I O U<br/>
+		</td>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Phonetics</b>
+		</td>
+		<td>
+			<b>Fonetijigii</b>
+		</td>
+	</tr>
+	<tr>
+		<td colspan=2>
+			<table width=90% border=1>
+				<tr>
+					<td>B b [b] b in book</td>
+					<td>P p [p] p in pen</td>
+					<td>M m [m] m in map</td>
+					<td>F f [f] f in fall</td>
+					<td>V v [v] v in vow</td>
+					<td>TS ts [ts] ts in gets (!)</td>
+				</tr>
+				<tr>
+					<td>D d [d] d in dog</td>
+					<td>T t [t] t in take</td>
+					<td>N n [n] n in name</td>
+					<td>S s [s] s in say</td>
+					<td>J j [j] y in yes (!)</td>
+					<td>DZ dz [dz] ds in words (!)</td>
+				</tr>
+				<tr>   
+					<td>G g [g] g in go</td>
+					<td>K k [k] k in kilo</td>
+					<td>H h [h] h in how</td>
+					<td>W w [w] w in wall</td>
+					<td>L l [l] l in low</td>
+				</tr>
+				<tr>
+					<td>A a [&#x0251;] a in yacht</td>
+					<td>E e [&#x025b;] e in set</td>
+					<td>I i [i] i in machine</td>
+					<td>O o [&#x0254;] o in bought</td>
+					<td>U u [u] u in flute</td>
+				</tr>
+			</table>
+			Note !: pronuncation need to be cautious<br/>
+		</td>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Syllable Structure</b>
+		</td>
+		<td>
+			<b>Dzutuwuwuu de silabuhuwuu</b>
+		</td>
+		<tr>
+			<td>   
+				[Consonant] Vowel (Nasal)
+			</td>
+			<td>   
+				[Konsonahin] Vovehu (Nasahu)
+			</td>
+		</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Stress</b>
+		</td>
+		<td>
+			<b>Ajehigiin</b>
+		</td>
+		<tr>
+			<td>
+				If the word ends with {ii}, {iin}, {uu}, or {uun}, the stress is in the fourth last vowel; otherwise, the second last vowel.
+			</td>
+			<td>
+				Si la vevuwu finiji ve {ii}, {iin}, {uu}, o {uun}, la ajehigiin dze su la katevuwuun finahu vovehu; si nou, la sekohin finahu vovehu.<br/>
+			</td>
+		</tr>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Vocabulary</b>
+		</td>
+		<td>
+			<b>Vokabulawe</b>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			Words composed by latin roots which appeared in English words
+		</td>
+		<td>
+			Le vevuwuu ke dewivu de le wahi de la Latiun e ke apewuguu i la Engijijii.
+		</td>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Pronoun</b>
+		</td>
+		<td>
+			<b>Ponovuwuun</b>
+		</td>
+	</tr>
+	<tr>
+		<td colspan=2>
+			<table border=1>
+				<tr>
+					<td></td><td colspan=3>Single</td><td colspan=3>Plural</td>
+				</tr>
+				<tr>
+					<td></td><td>First</td><td>Second</td><td>Third</td><td>First</td><td>Second</td><td>Third</td>
+				</tr>
+				<tr>
+					<td>Nominative</td><td>mi</td><td>tu</td><td>go/ga</td><td>nu</td><td>vu</td><td>lu</td>
+				</tr>
+				<tr>
+					<td>Accusative</td><td>me</td><td>te</td><td>se/ja</td><td>ni</td><td>vi</td><td>li</td>
+				</tr>
+				<tr>
+					<td>Genitive</td><td>ma</td><td>ta</td><td>sa/gi</td><td>na</td><td>vo</td><td>lo</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b>Main Words</b>
+		</td>
+		<td>
+			<b>Impotahijiin Vevuwuu</b>
+		</td>
+	</tr>
+	<tr>
+		<td colspan=2>
+			<table border=1>
+				<tr bgcolor="eeddff">
+					<td>a</td><td>e</td><td>i</td><td>o</td><td>u</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>ad</td><td>et</td><td>in</td><td>or</td><td>un</td>
+				</tr>
+				<tr>
+					<td>to</td><td>and</td><td>in</td><td>or</td><td>a</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ba</td><td></td><td></td><td>bo</td><td>bu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>ab</td><td></td><td></td><td>ob</td><td>sub</td>
+				</tr>
+				<tr>
+					<td>from</td><td></td><td></td><td>but</td><td>under</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>pa</td><td>pe</td><td></td><td>po</td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>parse</td><td>per</td><td></td><td>pro</td><td></td>
+				</tr>
+				<tr>
+					<td>why</td><td>by</td><td></td><td>for</td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ma</td><td>me</td><td>mi</td><td></td><td>mu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>me</td><td>me</td><td>me</td><td></td><td>mult</td>
+				</tr>
+				<tr>
+					<td>my</td><td>me</td><td>I</td><td></td><td>some</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td></td><td>fe</td><td></td><td>fo</td><td>fu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td></td><td>fer</td><td></td><td>front</td><td>fer</td>
+				</tr>
+				<tr>
+					<td></td><td>do</td><td></td><td>most</td><td>do (question)</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>va</td><td>ve</td><td>vi</td><td>vo</td><td>vu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>vas</td><td>verse</td><td>vos</td><td>vos</td><td>vos</td>
+				</tr>
+				<tr>
+					<td>will do; go</td><td>with</td><td>you (plural, object)</td><td>your (plural)</td><td>you (plural, subject)</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td></td><td>tse</td><td></td><td></td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td></td><td>spec</td><td></td><td></td><td></td>
+				</tr>
+				<tr>
+					<td></td><td>more</td><td></td><td></td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>da</td><td>de</td><td>di</td><td>do</td><td>du</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>ad</td><td>de</td><td>id</td><td>od</td><td>dur</td>
+				</tr>
+				<tr>
+					<td>then</td><td>of</td><td>there</td><td>though</td><td>when</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ta</td><td>te</td><td>ti</td><td>to</td><td>tu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>tu</td><td>tu</td><td>ten</td><td>tot</td><td>tu</td>
+				</tr>
+				<tr>
+					<td>your (single)</td><td>you (single, object)</td><td>be done</td><td>all</td><td>you (single, subject)</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>na</td><td>ne</td><td>ni</td><td>no</td><td>nu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>nos</td><td>ne</td><td>nos</td><td>non</td><td>nos</td>
+				</tr>
+				<tr>
+					<td>our</td><td>not</td><td>us</td><td>no</td><td>we</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>sa</td><td>se</td><td>si</td><td></td><td>su</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>su</td><td>se</td><td>sic</td><td></td><td>super</td>
+				</tr>
+				<tr>
+					<td>his</td><td>him</td><td>so; if</td><td></td><td>over</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ja</td><td>je</td><td>ji</td><td></td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>sa</td><td>hic</td><td>hic</td><td></td><td></td>
+				</tr>
+				<tr>
+					<td>her (adjective)</td><td>this (adjective)</td><td>this (pronoun)</td><td></td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td></td><td>dze</td><td>dzi</td><td></td><td>dzu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td></td><td>est</td><td>est</td><td></td><td>est</td>
+				</tr>
+				<tr>
+					<td></td><td>be</td><td>be doing</td><td></td><td>be (question)</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ga</td><td>ge</td><td>gi</td><td>go</td><td>gu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>illa</td><td>id</td><td>illa</td><td>ill</td><td>in ubi</td>
+				</tr>
+				<tr>
+					<td>she</td><td>that (adjective)</td><td>her (object)</td><td>he</td><td>where</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ka</td><td>ke</td><td>ki</td><td>ko</td><td>ku</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>qual</td><td>que</td><td>qui</td><td>com</td><td>quo</td>
+				</tr>
+				<tr>
+					<td>how</td><td>what; that (conjuction)</td><td>who</td><td>as</td><td>which</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ha</td><td>he</td><td>hi</td><td>ho</td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>hab</td><td>hab</td><td>hic</td><td>hoc</td><td></td>
+				</tr>
+				<tr>
+					<td>have done</td><td>did</td><td>here</td><td>that (subject)</td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td></td><td>we</td><td></td><td></td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td></td><td>re</td><td></td><td></td><td></td>
+				</tr>
+				<tr>
+					<td></td><td>again</td><td></td><td></td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>la</td><td>le</td><td>li</td><td>lo</td><td>lu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>illa</td><td>ill</td><td>lor</td><td>lor</td><td>lor</td>
+				</tr>
+				<tr>
+					<td>the (single)</td><td>the (plural)</td><td>them</td><td>their</td><td>they</td>
+				</tr>
+			</table>
+			<table border=1>
+				<tr bgcolor="eeddff">
+					<td>ugun</td><td>dugu</td><td>tiwu</td><td>kahijii</td><td>jigin</td><td>sijigii</td><td>sevu</td><td>ohigii</td><td>novu</td><td>deji</td><td>jehin</td><td>mihu</td><td>milohun</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>un</td><td>du</td><td>tri</td><td>quartor</td><td>cinq</td><td>six</td><td>sept</td><td>oct</td><td>nov</td><td>dec</td><td>cent</td><td>mill</td><td>million</td>
+				</tr>
+				<tr>
+					<td>one</td><td>two</td><td>three</td><td>four</td><td>five</td><td>six</td><td>seven</td><td>eight</td><td>nine</td><td>ten</td><td>hundred</td><td>thousand</td><td>million</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<a name=discuss>
+<center><h2>Discussion</h2></center>
+thomasruhm: The word 'vogag' looks like it has hard 'g'. Can 'g' be soft in other words?
+<ul>
+	<li>The word {vogag} [v&#x0254;'j&#x0251;] is short form of {vogage} [v&#x0254;'j&#x0251;g&#x025b;].</li>
+	<li>Based on the omission rules, it is decided to drop the last syllable {ge} in pronunciation, but keep the {g} in the spelling.</li>
+	<li>{g} cannot be soft, it's either hard [g] as in English {good} or silent in the ending.</li>
+</ul>
+thomasruhm: I see there is an affricate 'c', like the 'z' in 'ezebe'. In that case the 'sc' in 'dechend' changed to 'ch' before 'c' became 'z'.
+<ul>
+	<li>{c} is hard [k] as in English {cat}; or silent in the ending.</li>
+	<li>{z} is for the soft {c} in Latin, but it's pronounced as [ts] in English {gets}.</li>
+	<li>{except} =&gt; {e-k-cept-} =&gt; (-k- is compensated as final e) ; ( pt become b ) =&gt; {e-ze-be}.</li>
+	<li>{descend} =&gt; {de-sk-en-d} =&gt; ( -sk- become ch ) ; (verb adds -a ending) =&gt; dechenda =&gt; (omit last syllable) =&gt; {dechend}.</li>
+	<li>I would say it's kind of random choice, when turning {sc} to {sk} but ignoring the hidden {s} in {except}; it is okay to use {dezend}</li>
+</ul>
+Padraic Brown: One thing was confusing: I had gotten the impression that he was getting rid of "hard to pronounce" sounds like [l] and [r], and yet his texts are replete with words like "parol".
+<ul>
+	<li>The final consonant ({l} in {parol} [pa'h&#x0254;]) is kept in the spelling, but not pronounced; except {n} and {m}</li>
+	<li>{dichover} is pronounced as [diz&#x0254;'v&#x025b;]</li>
+</ul>
+Padraic Brown: Another point of confusion was that he seems to have put himself through an awful regimen of mental gymnastics
+<ul>
+	<li>The goal of this design is to fit Latin roots into consonant-vowel-with-nasal (C-V-n) syllable structure.</li>
+	<li>It is trade-off between two options</li>
+	<li>1) dropping the character not fit into the (C-V-n) structure, which will lose too much info, cause conflict and hard to remember; think about {extract} become {eta}.</li>
+	<li>2) padding vowels, which will cause too many syllables, and too many repetition of the padding vowel; think about {extract} become {ekusuturakutu}</li>
+	<li>So the way is to choose some "important" character of the dropped ones and merge them into another consonant or the last vowel.</li>
+</ul>
+thomasruhm: Did you have the German and eastern European pronunciations in mind, when you decided that way of using &lt;g&gt; and &lt;c&gt;?
+<ul>
+	<li>No. Deciding the way of using &lt;g&gt; and &lt;c&gt; are simply to have one-to-one relationship between spelling and pronunciation</li>
+</ul>
+thomasruhm: The stress in words which originally have two consonants might contribute to the decision on which of them will have to be kept.
+<ul>
+	<li>Yes, the stressed syllable in the original word have higher priority to be kept, and the compensating ending vowel for the stressed syllable is more likely be kept than non-stressed, because it conveys more signal.</li>
+</ul>
+Padraic Brown: (some questions about the order of picking words)
+<ul>
+	<li>The language prefers Latin form than French form than English form</li>
+	<li>The reason is Latin form uses mostly the basic 5 vowels (a,e,i,o,u).</li>
+	<li>Although Latin distinguishes long and short vowels, but they do not make much difference.</li>
+	<li>French and English forms have more kinds of vowels besides the basic 5 vowels, and uses diphthong more frequently, which need more compensation and changes to fit them into C-V-n structures</li>
+</ul>
+<center><h2>Change Log</h2>
+</center>
+2004 Created</br>
+2014 Language changes
+<ul>
+<li>Move {eu} to {u} with compenstating {-i} from {a} with compenstating {-i}</li>
+<li>Use modal verb suffixes, and make it optional to use natural ending-vowel</li>
+<li>Change the score of {g} to 3 from 2</li>
+<li>Add some better choices to main words</li>
+</ul>
+2014 Document changes
+<ul>
+<li>Font and color</li>
+<li>Section names</li>
+<li>Punctuations: use curved braces to replace quotation mark</li>
+<li>Upper case and lower case</li>
+<li>Add more examples</li>
+<li>Use Unicode to show the phonetic symbols; Use UTF-8 encoding in Chinese version</li>
+<li>Fix some wrong examples</li>
+<li>Remove subjective sentences</li>
+<li>Correct the phonetic annotation [a]=&gt;[&#x0251;] [e]=&gt;[&#x025b;] [o]=&gt;[&#x0254;]</li>
+<li>Add the translation of Doudouling</li>
+<li>Add some discussion</li>
+</ul>
+2014 Language changes
+<ul>
+<li>Change {i-} to {g-}</li>
+<li>Change {ch} [z] to {ch] [j]</li>
+</ul>
+2017 Language changes
+<ul>
+<li>IPA alignment: {h} [&#x014B;] &gt; {h} [h]; {r} [h] &gt; {w} [w]; {ph} [w] &gt; {ts} [ts]; {z} [ts] &gt; {j} [j]; {ch} [j] &gt; {dz} [dz]</li>
+<li>Merge {th} and {ch} into {dz} [dz]</li>
+<li>Redesign of the ending and the stress</li>
+<li>Long form and short form</li>
+<li>Use short form when a single-syllable word is the center of phrase</li>
+<li>Make all key words in {C-V} format</li>
+</ul>
+2018 Language changes
+<ul>
+<li>Use weak syllables to compensate, merge long form and short form</li>
+</ul>
+</body>
+</html>
