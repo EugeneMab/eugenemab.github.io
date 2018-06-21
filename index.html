@@ -1,10 +1,93 @@
+<!DOCTYPE html>
 <html>
 <head>
-	<title>EugeneMab.GitHub.IO: Redirect Page</title>
-	<meta HTTP-EQUIV="REFRESH" content="0; url=/Code/index.html">
+	<script type="text/javascript">
+		function sort_by_date(one, two) {
+			return one.date < two.date ? -1 : one.date > two.date ? 1 :
+				one.name < two.name ? -1 : one.name > two.name ? 1 : 0;
+		}
+		function sort_by_name(one, two) {
+			return one.name < two.name ? -1 : one.name > two.name ? 1 : 0;
+		}
+		function onload() {
+			var doc = document;
+			var basic = doc.getElementById("basic");
+			var children = basic.childNodes;
+			var children_len = children.length;
+			var programs = [];
+			var program;
+			for (var row = 0; row < children_len; row++) {
+				var child = children[row];
+				if (child.nodeName == "#text") {
+					var date = child.nodeValue.replace(/^\s+|\s+$/g, '');
+					program = { date: date, year: date.substring(0, 4) };
+					continue;
+				}
+				if (child.nodeName == "A") {
+					var name = child.innerHTML;
+					program.link = child.attributes[0].nodeValue;
+					program.name = name;
+					program.initial = name.substring(0, 1);
+					programs.push(program);
+					continue;
+				}
+			}
+			var prog_by_date = programs.slice(0).sort(sort_by_date);
+			var prog_by_name = programs.slice(0).sort(sort_by_name);
+			var go_top = "<a href='#date'>#</a> <a href='#name'>*</a>";
+			var date_list = "";
+			var date_menu = "<tr><td>" + go_top + "</td></td><td><a name='date'>Date</a></td></tr>"
+			var prog_by_date_len = prog_by_date.length;
+			for (var row = 0; row < prog_by_date_len; row++) {
+				var prog = prog_by_date[row];
+				if (row == 0 || prog.year != prog_by_date[row - 1].year) {
+					date_list += "<tr><td>" + go_top + "</td><td></td><td><a name='" + prog.year + "'>" + prog.year + "</a></td></tr>";
+					date_menu += "<tr><td></td><td></td><td><a href='#" + prog.year + "'>" + prog.year + "</a></td></tr>";
+				}
+				date_list += "<tr><td></td><td></td><td></td><td>" + prog.date + "</td><td><a href='" + prog.link + "'>" + prog.name + "</a></td></tr>";
+			}
+			var name_list = "";
+			var name_menu = "<tr><td>" + go_top + "</td><td><a name='name'>Name</a></td></tr>"
+			var prog_by_name_len = prog_by_name.length;
+			for (var row = 0; row < prog_by_name_len; row++) {
+				var prog = prog_by_name[row];
+				if (row == 0 || prog.initial != prog_by_name[row - 1].initial) {
+					name_list += "<tr><td>" + go_top + "</td><td></td><td><a name='" + prog.initial + "'>" + prog.initial + "</a></td></tr>";
+					name_menu += "<tr><td></td><td></td><td><a href='#" + prog.initial + "'>" + prog.initial + "</a></td></tr>";
+				}
+				name_list += "<tr><td></td><td></td><td></td><td><a href='" + prog.link + "'>" + prog.name + "</a></td><td>" + prog.date + "</td></tr>";
+			}
+			var head = "<table>";
+			var tail = "</table>";
+			for (var row = 0; row < 100; row++) {
+				tail += "<br/>";
+			}
+			out = head + date_menu + date_list + name_menu + name_list + tail;
+			basic.style.display = "none";
+			doc.getElementById("gen").innerHTML = out;
+		}
+	</script>
 </head>
-<body onload="javascript:window.location='/Code/index.html';">
-	This page should redirect to <a href="/Code/index.html">/Code/index.html<a> automatically.
-	If not, click <a href="/Code/index.html">this</a>.
+<body onload="javascript:onload();">
+<div id="basic">
+	2004-10-01 <a href="2004/20041001_Dodolingi/index.html">Dodolingi (2004)</a><br/>
+	2013-08-25 <a href="2013/20130825_HelloWorld/index.html">Hello World</a><br/>
+	2013-08-26 <a href="2013/20130826_CarGame/index.html">Car Game</a><br/>
+	2013-08-27 <a href="2013/20130827_EightQueen/index.html">Eight Queen</a><br/>
+	2013-08-29 <a href="2013/20130829_TwentyFour/index.html">Twenty Four Game</a><br/>
+	2013-09-08 <a href="2013/20130908_TicTacToe/index.html">Tic Tac Toe</a><br/>
+	2013-09-17 <a href="2013/20130917_Tetris/index.html">Tetris</a><br/>
+	2013-10-12 <a href="2013/20131012_Snake/default.htm">Snake</a><br/>
+	2014-03-08 <a href="2014/20140308_Dodolingi/index.html">Dodolingi (2014)</a><br/>
+	2015-06-19 <a href="2015/20150619_Dodolingi/index.html">Dodolingi (2015)</a><br/>
+	2017-01-15 <a href="2017/20170115_Dodolingin/index.html">Dodolingin (2017)</a><br/>
+	2017-01-21 <a href="2017/20170121_EnglishIpa/index.html">English IPA Spelling Pronunciation</a><br/>
+	2017-12-29 <a href="2017/20171229_Pinyi/index.html">Pinyi</a><br/>
+	2017-12-30 <a href="2017/20171230_PinYing/index.html">PinYing 2017</a><br/>
+	2018-01-05 <a href="2018/20180105_PinYing/index.html">PinYing 2018</a><br/>
+	2018-04-19 <a href="2018/20180620_Dodoliehehen/index.html">Doudouling (2018)</a><br/>
+</div>
+<div id="gen">
+</div>
 </body>
 </html>
