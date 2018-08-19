@@ -32,9 +32,23 @@ function setLang(language) {
 		element.innerHTML = element.getAttribute(language);
 	}
 }
+function onLoad() {
+	var url = window.location.href;
+	if (!url) {
+		return;
+	}
+	if (url.endsWith('#c')) {
+		setLang('c');
+		return;
+	}
+	if (url.endsWith('#d')) {
+		setLang('d');
+		return;
+	}
+}
 </script>
 </head>
-<body bgcolor="#f0fff0" text="#1f3f7d">
+<body bgcolor="#f0fff0" text="#1f3f7d" onload="onLoad()">
 <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 <meta charset="UTF-8">
 <center><h1><span class=t c='兜兜语(2018版本)' d='La Dodoliehehen (vesowun 2018)'>Doudouling (version 2018)</span></h1>
@@ -498,14 +512,14 @@ Amen .
 --------- --------- --------- --------- --------- --------- --------- ---------
 </pre>
 <a name=schema>
-<center><h2>Schema</h2></center>
+<center><span class=t c='方案' d='La desien'><h2>Schema</span></h2></center>
 <table width=100%>
 	<tr bgcolor="ccddff">
 		<td>
-			<b>Alphabet</b>
+			<b><span class=t c='字母表' d='La afabehiji'>Alphabet</span></b>
 		</td>
 		<td>
-			<b>Afabehiji</b>
+			<b>La afabehiji</b>
 		</td>
 	</tr>
 	<tr>
@@ -524,10 +538,10 @@ Amen .
 	</tr>
 	<tr bgcolor="ccddff">
 		<td>
-			<b>Phonetics</b>
+			<b><span class=t c='发音规则' d='La fonetijee'>Phonetics</span></b>
 		</td>
 		<td>
-			<b>Fonetijee</b>
+			<b>La fonetijee</b>
 		</td>
 	</tr>
 	<tr>
@@ -564,72 +578,81 @@ Amen .
 					<td>U u [u] u in flute</td>
 				</tr>
 			</table>
-			Note !: pronuncation need to be cautious<br/>
+			<span class=t
+				c='! 注解: 这些发音规则需要特别注意.'
+				d='! La notajoun: le ponunjajowun kiwu atenjohin.'
+				>! Note: pronuncations need attension.<span class=t c='' d=''><br/>
 		</td>
 	</tr>
 	<tr bgcolor="ccddff">
 		<td>
-			<b>Syllable Structure</b>
+			<b><span class=t c='音节结构' d='La dzutuwoowo de silabehuwu'>Syllable Structure</span></b>
 		</td>
 		<td>
-			<b>Dzutuwoowo de silabehuwu</b>
+			<b>La dzutuwoowo de silabehuwu</b>
 		</td>
 		<tr>
 			<td>   
-				[Consonant] Vowel (Nasal)
+				<span class=t c='[辅音] 元音 [辅音]' d='[Konsonahin] Vovehu [Nasahu]'>[Consonant] Vowel [Nasal]</span>
 			</td>
 			<td>   
-				[Konsonahin] Vovehu (Nasahu)
+				[Konsonahin] Vovehu [Nasahu]
 			</td>
 		</tr>
 	<tr bgcolor="ccddff">
 		<td>
-			<b>Stress</b>
+			<b><span class=t c='' d=''>Stress</span></b>
 		</td>
 		<td>
-			<b>Ajehiin</b>
+			<b>La ajehiin</b>
 		</td>
 		<tr>
 			<td>
-				The stress is at the rightmost vowel which is the same as the last vowel.
+				<span class=t
+					c='重音落在跟最后一个元音不一样的最右边的元音.'
+					d='La ajehiin dze su la vovehu la fo dedzewuu ke nei la sivun ko la vovehu finahu.'
+					>The stress is at the rightmost vowel which is the same as the last vowel.</span>
 			</td>
 			<td>
-				La ajehiin dze su la fo dedzewuu vovehu ke nei la sivun ko la finahu vovehu.
+				La ajehiin dze su la vovehu la fo dedzewuu ke nei la sivun ko la vovehu finahu.
 			</td>
 		</tr>
 	</tr>
 	<tr bgcolor="ccddff">
 		<td>
-			<b>Vocabulary</b>
+			<b><span class=t c='词汇' d='La vokabulawiu'>Vocabulary</span></b>
 		</td>
 		<td>
-			<b>Vokabulawiu</b>
+			<b>La vokabulawiu</b>
 		</td>
 	</tr>
 	<tr>
 		<td>
-			Words composed by latin roots which appeared in English words
+			<span class=t
+				c='词汇来自在英语中出现的拉丁词根.'
+				d='Le vevuwu ke dewivu de le wahijee de Latiun e ke apewuhuu i Engijeje'
+				>The words deriving from Latin roots which appear in English.</span><br/>
 		</td>
 		<td>
-			Le vevuwu ke dewivu de le wahi de la Latiun e ke apewuhuu i la Engijeje.
+			Le vevuwu ke dewivu de le wahijee de Latiun e ke apewuhuu i Engijeje.
 		</td>
 	</tr>
 	<tr bgcolor="ccddff">
 		<td>
-			<b>Pronoun</b>
+			<b><span class=t c='代词' d='La ponovuwun'>Pronoun</span></b>
 		</td>
 		<td>
-			<b>Ponovuwun</b>
+			<b>La ponovuwun</b>
 		</td>
 	</tr>
 	<tr>
 		<td colspan=2>
 			<table border=1>
 				<tr>
-					<td></td><td colspan=3>Single</td><td colspan=3>Plural</td>
+					<td></td><td colspan=3><span class=t c='单数' d='Le singulawu'>Single</span></td><td colspan=3><span class=t c='复数' d='Le puwahuwu'>Plural</span></td>
 				</tr>
 				<tr>
-					<td></td><td>First</td><td>Second</td><td>Third</td><td>First</td><td>Second</td><td>Third</td>
+					<td></td><td># 1</td><td># 2</td><td># 3</td><td># 1</td><td># 2</td><td># 3</td>
 				</tr>
 				<tr>
 					<td>Nominative</td><td>mi</td><td>tu</td><td>go/ga</td><td>nu</td><td>vu</td><td>lu</td>
@@ -645,10 +668,10 @@ Amen .
 	</tr>
 	<tr bgcolor="ccddff">
 		<td>
-			<b>Main Words</b>
+			<b><span class=t c='主要词汇' d='Le vevuwu impotahijin'>Main Words</span></b>
 		</td>
 		<td>
-			<b>Impotahijin Vevuwu</b>
+			<b>Le vevuwu impotahijin</b>
 		</td>
 	</tr>
 	<tr>
@@ -832,7 +855,7 @@ Amen .
 	</tr>
 </table>
 <a name=discuss>
-<center><h2>Discussion</h2></center>
+<center><h2><span class=t c='讨论' d='La didzusoun'>Discussion</span></h2></center>
 thomasruhm: The word 'vogag' looks like it has hard 'g'. Can 'g' be soft in other words?
 <ul>
 	<li>The word {vogag} [v&#x0254;'j&#x0251;] is short form of {vogage} [v&#x0254;'j&#x0251;g&#x025b;].</li>
