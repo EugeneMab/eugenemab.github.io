@@ -1,45 +1,99 @@
 <html>
+<!--
+<span class=t c='' d=''>
+</span>
+<span class=t
+	c=''
+	d=''
+	>
+-->
 <head>
 <title>Doudouling (version 2018) Dodoliisin
 </title>
 <style>
 body, td
 {
-	font-family: Calibri, Arial, sans-serif;
+	font-family: Calibri, SimHei, Arial, sans-serif;
 	font-size: 24px;
 }
 </style>
+<script>
+function setLang(language) {
+	var elements = document.getElementsByClassName("t");
+	for (var pos = 0; pos < elements.length; pos++) {
+		var element = elements[pos];
+		if (element.getAttribute('e')) {
+			continue;
+		}
+		element.setAttribute('e', element.innerHTML);
+	}
+	for (var pos = 0; pos < elements.length; pos++) {
+		var element = elements[pos];
+		element.innerHTML = element.getAttribute(language);
+	}
+}
+</script>
 </head>
 <body bgcolor="#f0fff0" text="#1f3f7d">
-<center><h1>Doudouling (version 2018)</h1>
-<h2>la Dodoliehehen (vesowun 2018)</h2>
-an artificial language by Jian Huang<br/>
-u atifijahuwu lien pe miu<br/></center>
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<meta charset="UTF-8">
+<center><h1><span class=t c='兜兜语(2018版本)' d='La Dodoliehehen (vesowun 2018)'>Doudouling (version 2018)</span></h1>
+<h2>La Dodoliehehen (vesowun 2018)</h2>
+<span class=t c='HUANG JIAN 的人工语言' d='U lien atifijahuwu pe JIAN HUANG'>An artificial language by Jian Huang</span><br/>
+U lien atifijahuwu pe miu<br/></center>
 <ol>
-<li><a href="index.html">English introduction (this document)</a>
+<li><a href="#" onclick="setLang('e')"><span class=t c='英语介绍' d='La intodujowun i Engijeje'>English introduction</a></a>
+<li><a href="#" onclick="setLang('c')"><span class=t c='中文介绍' d='La intodujowun i Jineji'>Chinese introduction</span></a>
+<li><a href="#" onclick="setLang('d')"><span class=t c='兜兜语介绍(用兜兜语介绍兜兜语)' d='La intodujowun i Dodoliehehen (La intodujowun wefetivuuwu)'>Doudouling introduction (reflective introduction)</span></a>
 <!--
-<li><a href="dodoliisin.html">Doudouling introduction (reflective introduction)</a>
 <li><a href="http://conlang.wikia.com/wiki/Doudouling">Doudouling in "wikia" site</a>
 <li><a href="http://conlang.wikia.com/wiki/Dodoliisin">Doudouling 2018 in "wikia" site</a>
 -->
 </ol>
 <a name=introduction>
-<center><h2>Introduction</h2>
+<center><h2><span class=t c='介绍' d='La intodujowun'>Introduction</span></h2>
 </center>
-<h3>Principles: compress Latin words into {C-V-N} syllables</h3>
+<h3><span class=t
+	c='基本原则: 把拉丁词汇压缩为{辅音-元音-鼻音}{C-V-N}结构'
+	d='Le pinjipehuwu: a kompejiji le vevuwu de Latiun ehin le silabehuwu {K-V-N}'
+	>Principles: compress Latin words into {C-V-N} syllables</span></h3>
 <p>
-The main idea of my artificial language is to simplify Latin words into the structure of
-one optional consonant plus one vowel plus one optional {n} or {m}.
-That is because we think this structure is the best for singing.
-Also, it is required to avoid adding too many extra strong syllables,
-And the spelling should be very close to the International Phonetic Alphabet (IPA),
-And the stress position should not impact the meaning of the word.
+<span class=t
+	c='我的人工语言的主要想法是把拉丁语词汇简化为一个可选的的辅音加一个元音加一个可选的{n}或者{m}的结构.'
+	d='La ideau de ma lien atifijahuwu dze a simpifihu le vevuwu de Latiun ehin la dzutuwoowo de u konsonahin obonahu ve u vovehu ve u {n} o {m} obonahu'
+	>The main idea of my artificial language is to simplify Latin words into the structure of one optional consonant plus one vowel plus one optional {n} or {m}.
+</span>
+<span class=t
+	c='因为我们觉得这种结构最适合唱歌.'
+	d='Dzeu ho ke se pejin nu ke je dzutuwoowo dze la fo boun po a kanhin.'
+	>That is because we think this structure is the best for singing.
+</span>
+<span class=t
+	c='而且它不应该增加太多的额外音节.'
+	d='E, devu go a pevehijin a inkejiji dza muhiji de le silabehuwu edzawuu.'
+	>Also, it should avoid adding too many extra strong syllables.
+</span>
+<span class=t
+	c='而且拼写应该非常接近国际音标(IPA)。'
+	d='E, la dzibuwowo devu dze muhiji pojiji a la Afabehiji Fonetie Intenajonahuwu (IPA).'
+	>And the spelling should be very close to the International Phonetic Alphabet (IPA).
+</span>
+<span class=t
+	c='而且重音的位置不应该影响词义.'
+	d='E, la posijoun de ajehiin ne devu a impahii la semahin de la vevuwu.'
+	>And the stress position should not impact the meaning of the word.
+</span>
 </p>
 <p>
-<h3>Step 1: simplify consonants and consonant clusters</h3>
+<h3><span class=t
+	c='第一步:简化辅音和辅音组合'
+	d='La faji mo uon: a simpifihu le konsonahin e le kombinajoun de konsonahin'
+	>Step 1: simplify consonants and consonant clusters</span></h3>
 <p>
-Simplify consonants and consonant clusters as below.
-</p>
+<span class=t
+	c='按照如下的规则,把辅音和辅音组合,简化为如下的辅音.'
+	d='Fe simpifihu le konsonahin e le kombinajoun de konsonahin a le konsonahin infewu pe le weguho infewu.'
+	>Simplify consonants and consonant clusters to the consonants as below by the rules below.</span></p>
 <center>
 	<table>
 	<tr><td>{b}</td><td>{p}</td><td>{ts}</td><td>{m}</td><td>{f}</td><td>{v}</td></tr>
@@ -48,7 +102,7 @@ Simplify consonants and consonant clusters as below.
 	</table>
 </center>
 <p>
-Rules:
+<span class=t c='规则' d='Le weguho'>Rules:</span>
 	<ul>
 	<li>{sp} =&gt; {ts};</li>
 	<li>{st} =&gt; {dz};</li>
@@ -57,21 +111,30 @@ Rules:
 	<li>{ph} =&gt; {f};</li>
 	<li>{w} =&gt; {v};</li>
 	<li>{th} =&gt; {t};</li>
-	<li>{c} ([s]), {x} (at the beginning of a word), {ch} ([&#x0283;]/[t&#x0283;]), {ti} ([&#x0283;]) =&gt; {j};</li>
-	<li>{j}, {y} =&gt; {g} (via {gi-});</li>
+	<li>{c} ([s]), {x} (<span class=t c='在词首的时候' d='i la owigiun de u vevuwu'>at the beginning of a word</span>), {ch} ([&#x0283;]/[t&#x0283;]), {ti} ([&#x0283;]) =&gt; {j};</li>
+	<li>{j}, {y} =&gt; {g} (<span class=t c='通过' d='viau'>via</span> {gi-});</li>
 	<li>{q}, {c} ([k]), {ch} ([k]) =&gt; {k};</li>
 	<li>{r} =&gt; {w};</li>
 	</ul>
 </p>
 <p>
-For some complex clusters, add an {e} to split them, such as {partner} and {investment}.
+<span class=t
+	c='对于一些复杂的辅音组合,加入一个{e}来分割辅音,例如{partner}和{investment}.'
+	d='Po mu kombinajoun kompieje, poun u {e} a li sepawahi, ko {partner} e {investment}.'
+	>For some complex clusters, add an {e} to split them, such as {partner} and {investment}.</span>
 </p>
-<h3>Step 2: simplify vowels and diphthongs</h3>
+<h3><span class=t
+	c='第二步:简化元音和元音组合'
+	d='La faji mo duo: a simpifihu le vovehu e le ditoiin'
+	>Step 2: simplify vowels and diphthongs</span></h3>
 <p>
-Simplify the diphthongs as below.
+<span class=t
+	c='按照如下规则简化元音和元音组合.'
+	d='A simpifihu le vovehu e le ditoiin ko le weguho infewu.'
+	>Simplify the vowels and diphthongs as rules below.</span>
 </p>
 <p>
-Rules:
+<span class=t c='规则' d='Le weguho'>Rules:</span>
 	<ul>
 	<li>{ao/oa} =&gt; {au} =&gt; {a};</li>
 	<li>{ae/ea} =&gt; {ai} =&gt; {e};</li>
@@ -81,37 +144,79 @@ Rules:
 	</ul>
 </p>
 <p>
-Convert vowel {y} to {i}; and drop some less important vowels.
+<span class=t
+	c='把{y}转化为{i}; 并且删除一些不太重要的元音.'
+	d='A konvehiji {y} a {i}; e wemovu mu vovehu de impotajijin miun.'
+	>Convert vowel {y} to {i}; and drop some less important vowels.</span>
 </p>
-<h3>Step 3: Compensate the lost sounds</h3>
+<h3><span class=t
+	c='第三步:补偿删除的音素'
+	d='La faji mo tiwu: a kompensahi le soun ke wemovu ti'
+	>Step 3: Compensate the lost sounds</span></h3>
 <p>
-If keeping only the consonant-vowel-nasal structure for each syllable,
-it often causes great loss of information and then create confusions.
-So we need to add some weak syllables between the last vowel and last nasal to compensate the lost sounds.
-Rules:
+<span class=t
+	c='如果只保留每个音节的{CVN}结构,经常会产生很大的信息丢失,并且容易产生混淆.'
+	d='Si teun go sohu le dzutuwoowo {K-V-N} po pewu silabehuwu, ve fekehijin kajihi go mu pehiji gahijin de infomajowun e keahiji mu konfujoun.'
+	>If keeping only the consonant-vowel-nasal structure for each syllable, it often causes great loss of information and then create confusions.</span>
+<span class=t
+	c='因此,我们需要在最后一个元音和最后一个鼻音之间加入一些弱音节,来补偿丢失的音素.'
+	d='Da, kiwu nu a poun mu silabehuwu fagihuwu intewu la vovehu finahu e la nasahu finahu, po kompensahi le soun ke pehiji'
+	>So we need to add some weak syllables between the last vowel and last nasal to compensate the lost sounds.</span>
+</p>
+<span class=t c='规则' d='Le weguho'>Rules:</span>
 	<ul>
-	<li>Treat the final {m} as {n} with a lost {b}</li>
-	<li>If there is no dropping, and the last vowel is not {u}, compensate {u}</li>
-	<li>If there is no dropping, and the last vowel is {u}, compensate {o}</li>
-	<li>If there is any dropping, add compensating suffixes in the reverse order, according to the rule table as below.</li>
+	<li><span class=t
+		c='把结尾的{m}当作是{n}和一个删除的{b}.'
+		d='A regahiji la {m} finahu ko {n} ve u {b} ke pehiji.'
+		>Treat the final {m} as {n} with a lost {b}</span></li>
+	<li><span class=t
+		c='如果没有删除,而且最后一个元音不是{u},补偿{u}.'
+		d='Si nuho wemovu ti, e la vovehu finahu nei {u}, kompensahi {u}.'
+		>If there is no dropping, and the last vowel is not {u}, compensate {u}</span></li>
+	<li><span class=t
+		c='如果没有删除,而且最后一个元音是{u},补偿{o}.'
+		d='Si nuho wemovu ti, e la vovehu finahu dze {u}, kompensahi {o}.'
+		>If there is no dropping, and the last vowel is {u}, compensate {o}</span></li>
+	<li><span class=t
+		c='如果有删除,依据如下规则表格,按照逆序加入补偿后缀.'
+		d='Si mu fau wemovu ti, poun le sufijeee po kompensahi i la odewuwu wevejiji, sekehin la tabehu de weguho infewu.'
+		>If there is any dropping, add compensating suffixes in the reverse order, according to the rule table as below.</span></li>
 	</ul>
 <center>
 	<table>
-	<tr><td>Case \ Dropped sound                      </td><td> {d}/{t} </td><td> {g}/{k} </td><td> {s}/{z} </td><td> {b}/{p}/{v}/{f} </td><td> {r}  </td><td> {l}  </td><td> {i}/{u} </td><td> {h}/{-} </td><td> {dz}  </td><td> {ts}  </td></tr>
-	<tr><td>First    suffix after         {i}         </td><td> {he}    </td><td> {e}     </td><td> {je}    </td><td> {vu}            </td><td> {wu} </td><td> {hu} </td><td> {fu}    </td><td> {u}     </td><td> {dzi} </td><td> {tsi} </td></tr>
-	<tr><td>First    suffix after {a} {e}     {o}     </td><td> {hi}    </td><td> {i}     </td><td> {ji}    </td><td> {vu}            </td><td> {wu} </td><td> {hu} </td><td> {fu}    </td><td> {u}     </td><td> {dzi} </td><td> {tsi} </td></tr>
-	<tr><td>First    suffix after                 {u} </td><td> {hi}    </td><td> {i}     </td><td> {ji}    </td><td> {vo}            </td><td> {wo} </td><td> {ho} </td><td> {fo}    </td><td> {o}     </td><td> {dzi} </td><td> {tsi} </td></tr>
-	<tr><td>Followup suffix after     {e}             </td><td> {e}     </td><td> {e}     </td><td> {e}     </td><td> {e}             </td><td> {je} </td><td> {je} </td><td> {he}    </td><td>         </td><td>       </td><td>       </td></tr>
-	<tr><td>Followup suffix after         {i}         </td><td> {i}     </td><td> {i}     </td><td> {i}     </td><td> {i}             </td><td> {ji} </td><td> {ji} </td><td> {hi}    </td><td>         </td><td>       </td><td>       </td></tr>
-	<tr><td>Followup suffix after             {o}     </td><td> {o}     </td><td> {o}     </td><td> {o}     </td><td> {o}             </td><td> {wo} </td><td> {wo} </td><td> {ho}    </td><td>         </td><td>       </td><td>       </td></tr>
-	<tr><td>Followup suffix after                 {u} </td><td> {u}     </td><td> {u}     </td><td> {u}     </td><td> {u}             </td><td> {wu} </td><td> {wu} </td><td> {hu}    </td><td>         </td><td>       </td><td>       </td></tr>
+	<tr><td><span class=t c='情形\删除音素' d='La sitajoun \ La soun pehiji'>Case \ Dropped sound </span>                     </td><td> {d}/{t} </td><td> {g}/{k} </td><td> {s}/{z} </td><td> {b}/{p}/{v}/{f} </td><td> {r}  </td><td> {l}  </td><td> {i}/{u} </td><td> {h}/{-} </td><td> {dz}  </td><td> {ts}  </td></tr>
+	<tr><td><span class=t c='首个后缀,接着' d='La sufijeee mo uon, podzi   '>First    suffix after</span>         {i}         </td><td> {he}    </td><td> {e}     </td><td> {je}    </td><td> {vu}            </td><td> {wu} </td><td> {hu} </td><td> {fu}    </td><td> {u}     </td><td> {dzi} </td><td> {tsi} </td></tr>
+	<tr><td><span class=t c='首个后缀,接着' d='La sufijeee mo uon, podzi   '>First    suffix after</span> {a} {e}     {o}     </td><td> {hi}    </td><td> {i}     </td><td> {ji}    </td><td> {vu}            </td><td> {wu} </td><td> {hu} </td><td> {fu}    </td><td> {u}     </td><td> {dzi} </td><td> {tsi} </td></tr>
+	<tr><td><span class=t c='首个后缀,接着' d='La sufijeee mo uon, podzi   '>First    suffix after</span>                 {u} </td><td> {hi}    </td><td> {i}     </td><td> {ji}    </td><td> {vo}            </td><td> {wo} </td><td> {ho} </td><td> {fo}    </td><td> {o}     </td><td> {dzi} </td><td> {tsi} </td></tr>
+	<tr><td><span class=t c='跟随后缀,接着' d='La sufijiee sekehin, podzi  '>Followup suffix after</span>     {e}             </td><td> {e}     </td><td> {e}     </td><td> {e}     </td><td> {e}             </td><td> {je} </td><td> {je} </td><td> {he}    </td><td>         </td><td>       </td><td>       </td></tr>
+	<tr><td><span class=t c='跟随后缀,接着' d='La sufijiee sekehin, podzi  '>Followup suffix after</span>         {i}         </td><td> {i}     </td><td> {i}     </td><td> {i}     </td><td> {i}             </td><td> {ji} </td><td> {ji} </td><td> {hi}    </td><td>         </td><td>       </td><td>       </td></tr>
+	<tr><td><span class=t c='跟随后缀,接着' d='La sufijiee sekehin, podzi  '>Followup suffix after</span>             {o}     </td><td> {o}     </td><td> {o}     </td><td> {o}     </td><td> {o}             </td><td> {wo} </td><td> {wo} </td><td> {ho}    </td><td>         </td><td>       </td><td>       </td></tr>
+	<tr><td><span class=t c='跟随后缀,接着' d='La sufijiee sekehin, podzi  '>Followup suffix after</span>                 {u} </td><td> {u}     </td><td> {u}     </td><td> {u}     </td><td> {u}             </td><td> {wu} </td><td> {wu} </td><td> {hu}    </td><td>         </td><td>       </td><td>       </td></tr>
 	</table>
 </center>
 </p>
-<h3>Samples</h3>
-Examples:
+<h3><span class=t c='范例' d='Le esampehuu'>Examples</span></h3>
+<p>
+<span class=t
+	c='第一列是拉丁语单词.'
+	d='La koluvon mo uon dze la vevuwu de Latiun.'
+	>The first column is Latin word.</span>
+<span class=t
+	c='第二列是简化之后的{CVN}结构.'
+	d='La koluvon mo duo dze la dzutuwoowo {K-V-N} podzi la simpifikajohun.'
+	>The second column is {CVN} structure after simplification.</span>
+<span class=t
+	c='第三列是删除的音素.'
+	d='La koluvon mo tiwu dze le soun ke wemovu ti.'
+	>The third column is the sounds dropped.</span>
+<span class=t
+	c='第四列是补偿以后的兜兜语单词.'
+	d='La koluvon mo kawuu dze le vevuwu de Dodoliehehen podzi la kompensajoun.'
+	>The fourth column is Doudouling word after compensation.</span>
+</p>
+<span class=t c='范例' d='Le esampehuu'>Examples:</span>
 	<table>
-	<tr><td>Latin         </td><td>CVN          </td><td>Dropped          </td><td>Compensate         </td></tr>
+	<tr><td>Latin         </td><td>CVN          </td><td>Dropped          </td><td>Doudouling         </td></tr>
 	<tr><td>state         </td><td>dza          </td><td>t                </td><td>dzahi              </td></tr>
 	<tr><td>sper          </td><td>tse          </td><td>r                </td><td>tsewu              </td></tr>
 	<tr><td>sport         </td><td>tso          </td><td>r t              </td><td>tsohiji            </td></tr>
@@ -149,6 +254,7 @@ Examples:
 	<tr><td>court         </td><td>ko           </td><td>u r t            </td><td>kohijihi           </td></tr>
 	<tr><td>cant          </td><td>kan          </td><td>t                </td><td>kahin              </td></tr>
 	<tr><td>simple        </td><td>simpe        </td><td>l                </td><td>simpehu            </td></tr>
+	<tr><td>hom           </td><td>hon          </td><td>b                </td><td>hovun              </td></tr>
 	<tr><td>autumn        </td><td>atun         </td><td>u b              </td><td>atuvohon           </td></tr>
 	<tr><td>environment   </td><td>enviwommen   </td><td>t                </td><td>enviwommehin       </td></tr>
 	<tr><td>fact          </td><td>fa           </td><td>k t              </td><td>fahii              </td></tr>
@@ -564,13 +670,13 @@ Amen .
 					<td>my</td><td>me</td><td>I</td><td>-th (ordinal)</td><td>some</td>
 				</tr>
 				<tr bgcolor="eeddff">
-					<td></td><td>fe</td><td></td><td>fo</td><td>fu</td>
+					<td>fa</td><td>fe</td><td></td><td>fo</td><td>fu</td>
 				</tr>
 				<tr bgcolor="ddeeff">
-					<td></td><td>fer</td><td></td><td>front</td><td>fer</td>
+					<td>fact</td><td>fer</td><td></td><td>front</td><td>fer</td>
 				</tr>
 				<tr>
-					<td></td><td>do</td><td></td><td>most</td><td>do (question)</td>
+					<td>thing</td><td>do</td><td></td><td>most</td><td>do (question)</td>
 				</tr>
 				<tr bgcolor="eeddff">
 					<td>va</td><td>ve</td><td>vi</td><td>vo</td><td>vu</td>
