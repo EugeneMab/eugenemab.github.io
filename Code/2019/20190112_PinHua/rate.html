@@ -26,9 +26,31 @@ function summarize(maxConflictInfos) {
 	}
 	return output;
 }
-function once(logOutputs, rateOutputs, sampleOutputs, name, characterToEncode, mapOutputs, tableOutputs, characterToExplain) {
+var staticUseFull = false;
+function dictMake(dictionary, key, creater) {
+	var found = dictionary[key];
+	if (found) {
+		return found;
+	}
+	var created = creater();
+	dictionary[key] = created;
+	return created;
+}
+function once(
+		logOutputs,
+		rateOutputs,
+		sampleOutputs,
+		name,
+		characterToEncode,
+		mapOutputs,
+		tableOutputs,
+		suffixOutputs,
+		characterToExplain) {
 	if (mapOutputs) {
 		mapOutputs.push("var map = { \"\": [\"\",\"\"]");
+	}
+	if (!mapOutputs && !staticUseFull) {
+		return;
 	}
 	rateOutputs.push("____");
 	rateOutputs.push("Name: " + name);
@@ -142,7 +164,9 @@ function once(logOutputs, rateOutputs, sampleOutputs, name, characterToEncode, m
 	}
 	sampleOutputs.push(converted);
 	if (mapOutputs) {
+		var suffixToEncodeToLine = {};
 		for (var index = 0; index < data_prepared.length; index++) {
+			// map
 			var character = data_prepared[index];
 			var encode = glyphToEncode[character.g];
 			var explain = characterToExplain(character);
@@ -154,9 +178,35 @@ function once(logOutputs, rateOutputs, sampleOutputs, name, characterToEncode, m
 			}
 			var detail = explain + levelToSegment.join(".");
 			mapOutputs.push(",\"" + character.g + "\":" + JSON.stringify([encode, detail]));
+			// table
 			tableOutputs.push(character.g + "," + encode + "," + detail);
+			// suffix
+			if (levelToSegment[1] == "") {
+				continue;
+			}
+			var suffix = encode.substr(encode.length - 2, 2);
+			var encodeToLine = dictMake(suffixToEncodeToLine, suffix, function() { return {}; });
+			dictMake(encodeToLine, encode, function() { return encode.substr(0, encode.length - 2) + "," + levelToSegment[1]; });
 		}
+		// table
 		mapOutputs.push("};");
+		// suffix
+		for (var suffix in suffixToEncodeToLine) {
+			if (!suffixToEncodeToLine.hasOwnProperty(suffix)) {
+				continue;
+			}
+			var builder = suffix;
+			var encodeToLine = suffixToEncodeToLine[suffix];
+			for (var encode in encodeToLine) {
+				if (!encodeToLine.hasOwnProperty(encode)) {
+					continue;
+				}
+				var line = encodeToLine[encode];
+				builder += " " + line;
+			}
+			suffixOutputs.push(builder);
+		}
+		suffixOutputs.sort();
 	}
 }
 function select(writes, head, tail) {
@@ -195,6 +245,7 @@ function init() {
 	var sampleOutputs = [];
 	var mapOutputs = [];
 	var tableOutputs = [];
+	var suffixOutputs = [];
 
 	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, no stroke"     , function(character) { return character.b; });
 	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, head 1"        , function(character) { return character.b + select(character.v, 1, 0); });
@@ -231,17 +282,17 @@ function init() {
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra 3, Tone, head 2"           , function(character) { return character.b + character.t + select(character.v, 2, 0); });
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra 3, Tone, head 1 tail 1"    , function(character) { return character.b + character.t + select(character.v, 1, 1); });
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, No tone, head 4"        , function(character) { return character.b + select(character.v, 4, 0); });
-	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, No tone, head 4, letter", function(character) { return character.b + letter(character.v, 4, 0, 2); }, mapOutputs, tableOutputs, function(character) { return select(character.v, 4, 0); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, No tone, head 4, letter", function(character) { return character.b + letter(character.v, 4, 0, 2); }, mapOutputs, tableOutputs, suffixOutputs, function(character) { return select(character.v, 4, 0); });
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, No tone, head 3, tail 1", function(character) { return character.b + select(character.v, 3, 1); });
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, No tone, head 2, tail 2", function(character) { return character.b + select(character.v, 2, 2); });
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, Tone, head 3"           , function(character) { return character.b + character.t + select(character.v, 3, 0); });
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, Tone, head 2, tail 1"   , function(character) { return character.b + character.t + select(character.v, 2, 1); });
-	// once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, No tone, head 5"        , function(character) { return character.b + select(character.v, 5, 0); });
-	// once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, No tone, head 4, tail 1", function(character) { return character.b + select(character.v, 4, 1); });
-	// once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, No tone, head 3, tail 2", function(character) { return character.b + select(character.v, 3, 2); });
-	// once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, Tone, head 4"           , function(character) { return character.b + character.t + select(character.v, 4, 0); });
-	// once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, Tone, head 3, tail 1"   , function(character) { return character.b + character.t + select(character.v, 3, 1); });
-	// once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, Tone, head 2, tail 2"   , function(character) { return character.b + character.t + select(character.v, 2, 2); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, No tone, head 5"        , function(character) { return character.b + select(character.v, 5, 0); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, No tone, head 4, tail 1", function(character) { return character.b + select(character.v, 4, 1); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, No tone, head 3, tail 2", function(character) { return character.b + select(character.v, 3, 2); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, Tone, head 4"           , function(character) { return character.b + character.t + select(character.v, 4, 0); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, Tone, head 3, tail 1"   , function(character) { return character.b + character.t + select(character.v, 3, 1); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, Tone, head 2, tail 2"   , function(character) { return character.b + character.t + select(character.v, 2, 2); });
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra A, No tone, full stroke"   , function(character) { return character.b + character.v; });
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra B, Tone, full stroke"      , function(character) { return character.b + character.t + character.v; });
 
@@ -250,9 +301,16 @@ function init() {
 	document.getElementById("sample").value = sampleOutputs.join("\r\n");
 	document.getElementById("map").value = mapOutputs.join("\r\n");
 	document.getElementById("table").value = tableOutputs.join("\r\n");
+	document.getElementById("suffix").value = suffixOutputs.join("\r\n");
+}
+function goFull() {
+	staticUseFull = true;
+	init();
 }
 </script>
 <body style="font-family: Courier; font-size: 24px;" onload="init()">
+<input type="button" value="Full" onclick="goFull()"/>
+<br/>
 <textarea id="rate" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
 </textarea>
 <br/>
@@ -263,6 +321,8 @@ function init() {
 <textarea id="map" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
 </textarea>
 <textarea id="table" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<textarea id="suffix" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
 </textarea>
 <br/>
 </body>
