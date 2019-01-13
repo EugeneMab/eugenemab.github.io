@@ -1,0 +1,177 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script src="gen_freq.js">
+</script>
+<script src="gen_pinyin.js">
+</script>
+<script src="gen_writing.js">
+</script>
+<script src="gen_gbk.js">
+</script>
+<script>
+function init() {
+	var logOutputs = [];
+	logOutputs.push("data_pinyin.length=" + data_pinyin.length);
+	logOutputs.push("data_freq.length=" + data_freq.length);
+	logOutputs.push("data_writing.length=" + data_writing.length);
+	logOutputs.push("data_gbk_level_1.length=" + data_gbk_level_1.length);
+	logOutputs.push("data_gbk_level_2.length=" + data_gbk_level_2.length);
+
+	var glyphToPreferSound  = {};
+	{
+		for (var row = 0; row < data_pinyin.length; row++) {
+			var line = data_pinyin[row];
+			var items = line.split(" ");
+			if (items.length < 2) {
+				continue;
+			}
+			var glyph = items[0];
+			var soundRaw = items[1].toLowerCase();
+			var tone = "5";
+			var sound = "";
+			for (var index = 0; index < soundRaw.length; index++) {
+				var oneChar = soundRaw.charAt(index);
+				if ("0" <= oneChar && oneChar <= "9") {
+					tone = oneChar;
+					continue;
+				}
+				sound = sound + oneChar;
+			}
+			sound = sound + tone;
+			glyphToPreferSound[glyph] = sound;
+			// logOutputs.push("p " + glyph + " " + sound);
+		}
+	}
+
+	var glyphToWrites  = {};
+	{
+		for (var row = 0; row < data_writing.length; row++) {
+			var line = data_writing[row];
+			var items = line.split("\t");
+			if (items.length <= 4) {
+				continue;
+			}
+			var glyph = items[1];
+			var writes = items[3];
+			glyphToWrites[glyph] = writes;
+			// logOutputs.push("w " + glyph + " " + writes);
+		}
+	}
+
+	var writeToVisual = {
+		"1" : "-",
+		"2" : "|",
+		"3" : "/",
+		"4" : "\\\\",
+		"5" : "~"
+	};
+
+	var preparedOutputs = [];
+	{
+		preparedOutputs.push("var data_prepared = [");
+		for (var row = 0; row < data_freq.length; row++) {
+			var line = data_freq[row];
+			var items = line.split("\t");
+			if (items.length <= 5) {
+				continue;
+			}
+			var glyph = items[1];
+			var rawSoundList = items[4];
+
+			var chosenSound;
+			{
+				var soundList = rawSoundList.replace("u:", "yu").replace("v", "yu").split("/");
+				var soundToExist = {};
+				var hasPreferSound = glyphToPreferSound.hasOwnProperty(glyph);
+				var preferSound = null;
+				if (hasPreferSound) {
+					preferSound = glyphToPreferSound[glyph];
+					soundToExist[preferSound] = 1;
+				}
+				for (var soundIndex = 0; soundIndex < soundList.length; soundIndex++) {
+					var soundRaw = soundList[soundIndex];
+					if (soundRaw.length == 0) {
+						continue;
+					}
+					var lastChar = soundRaw.charAt(soundRaw.length - 1);
+					var sound = (("0" <= lastChar && lastChar <= "9") ? soundRaw : soundRaw + "5").toLowerCase();
+					soundToExist[sound] = 1;
+				}
+				var sortList = [];
+				var sortToSound = {};
+				for (var sound in soundToExist) {
+					if (!soundToExist.hasOwnProperty(sound)) {
+						continue;
+					}
+					var isPreferSound = hasPreferSound && sound == preferSound;
+					var isFive = sound.charAt(sound.length - 1) == "5";
+					var sort = (isPreferSound ? "0" : "1") + (isFive ? "0" : "1") + sound;
+					sortList.push(sort);
+					sortToSound[sort] = sound;
+				}
+				sortList = sortList.sort();
+				if (sortList.length == 0) {
+					logOutputs.push(glyph + " has no sound");
+					continue;
+				}
+				chosenSound = sortToSound[sortList[0]];
+				// logOutputs.push("c " + glyph + " " + chosenSound);
+			}
+
+			if (!chosenSound) {
+				logOutputs.push("glyph " + glyph + " has no chosenSound");
+				continue;
+			}
+
+			var writes = glyphToWrites[glyph];
+			if (!writes) {
+				logOutputs.push("glyph " + glyph + " has no writes");
+				continue;
+			}
+			var visualWrites = "";
+			for (var index = 0; index < writes.length; index++) {
+				visualWrites += writeToVisual[writes[index]];
+			}
+
+			var chosenSoundBody = chosenSound.substr(0, chosenSound.length - 1);
+			var chosenSoundTone = chosenSound.substr(chosenSound.length - 1, 1);
+			var level = data_gbk_level_1.indexOf(glyph) >= 0
+				? 1
+				: data_gbk_level_2.indexOf(glyph) >= 2
+					? 2
+					: 3;
+			preparedOutputs.push("{\"g\":\""
+				+ glyph
+				+ "\",\"s\":\""
+				+ chosenSound
+				+ "\",\"b\":\""
+				+ chosenSoundBody
+				+ "\",\"t\":\""
+				+ chosenSoundTone
+				+ "\",\"w\":\""
+				+ writes
+				+ "\",\"v\":\""
+				+ visualWrites
+				+ "\",\"l\":"
+				+ level
+				+ "},");
+		}
+		preparedOutputs[preparedOutputs.length - 1] = preparedOutputs[preparedOutputs.length - 1].substr(0, preparedOutputs[preparedOutputs.length - 1].length - 1);
+		preparedOutputs.push("];");
+	}
+
+	document.getElementById("prepared").value = preparedOutputs.join("\r\n");
+	document.getElementById("log").value = logOutputs.join("\r\n");
+}
+</script>
+<body style="font-family: Courier; font-size: 24px;" onload="init()">
+<textarea id="prepared" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<br/>
+<textarea id="log" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<br/>
+</body>
+</html>
