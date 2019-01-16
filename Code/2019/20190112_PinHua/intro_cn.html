@@ -1,0 +1,104 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>拼划：一种低重码率的汉字拉丁化方案</title>
+<style>
+	body, td, th
+	{
+		font-family: Calibri, Arial, sans-serif;
+		font-size: 20px;
+	}
+	div
+	{
+		margin-bottom: 10px;
+	}
+	table
+	{
+		border: 1px solid #ee;
+		border-spacing: 0;
+	}
+	td, th
+	{
+		border: 1px solid #eee;
+		padding: 2px;
+	}
+</style>
+</head>
+<body>
+<h1 style="text-align: center">拼划：一种低重码率的汉字拉丁化方案</h1>
+
+<h2>目标</h2>
+	<div>汉字与编码一多对应</div>
+	<div>低重码率</div>
+	<div>以拼音为基础</div>
+	<div>按照汉字的前四个笔划，加入两个额外的字母，用以区分同音字</div>
+
+<h2>算法</h2>
+
+	<h3>1. 生成从汉字到拼音的映射表</h2>
+		<div>为每个汉字选择一个拼音(使用数据源A和数据源B)</div>
+		<div>如果数据源B中含有该汉字，选择数据源B中的第一个拼音</div>
+		<div>如果数据源B中不含有该汉字，而且它有一个5声调(轻声)的拼音，选择这个拼音</div>
+		<div>否则，选择字典顺序的第一个拼音</div>
+
+	<h3>2. 生成笔划后缀</h2>
+		<div>扫描整个数据源A，计算每一个英语单词的出现次数</div>
+
+	<h3>3. 生成拼英码</h2>
+		<div>选取前四个笔划(使用数据源C)</div>
+		<div>如果笔划少于四个，用零(0)填充</div>
+		<div>按照下面的转换表，把四个笔划转换为两个字母</div>
+
+<h2>笔划到字母的转换表</h2>
+
+	<table>
+		<tr><td>笔划</td><td>字母</td></tr>
+		<tr><td>--</td><td>g</td></tr>
+		<tr><td>-|</td><td>f</td></tr>
+		<tr><td>-/</td><td>d</td></tr>
+		<tr><td>-\</td><td>s</td></tr>
+		<tr><td>-~</td><td>a</td></tr>
+		<tr><td>|-</td><td>h</td></tr>
+		<tr><td>||</td><td>j</td></tr>
+		<tr><td>|/</td><td>k</td></tr>
+		<tr><td>|\</td><td>l</td></tr>
+		<tr><td>|~</td><td>m</td></tr>
+		<tr><td>/-</td><td>t</td></tr>
+		<tr><td>/|</td><td>r</td></tr>
+		<tr><td>//</td><td>e</td></tr>
+		<tr><td>/\</td><td>w</td></tr>
+		<tr><td>/~</td><td>q</td></tr>
+		<tr><td>\-</td><td>y</td></tr>
+		<tr><td>\|</td><td>u</td></tr>
+		<tr><td>\/</td><td>i</td></tr>
+		<tr><td>\\</td><td>o</td></tr>
+		<tr><td>\~</td><td>p</td></tr>
+		<tr><td>~-</td><td>n</td></tr>
+		<tr><td>~|</td><td>b</td></tr>
+		<tr><td>~/</td><td>v</td></tr>
+		<tr><td>~\</td><td>c</td></tr>
+		<tr><td>~~</td><td>x</td></tr>
+		<tr><td>-0</td><td>g</td></tr>
+		<tr><td>|0</td><td>h</td></tr>
+		<tr><td>/0</td><td>t</td></tr>
+		<tr><td>\0</td><td>y</td></tr>
+		<tr><td>~0</td><td>n</td></tr>
+		<tr><td>00</td><td>z</td></tr>
+	</table>
+
+<h2>数据源</h2>
+	<div>A. 汉字词频和拼音
+		<a target="_blank" href="http://lingua.mtsu.edu/chinese-computing/statistics/char/list.php?Which=MO">http://lingua.mtsu.edu/chinese-computing/statistics/char/list.php?Which=MO</a>
+		(现代汉语单字频率列表 - 笪骏 (jda@mtsu.edu))
+	</div>
+	<div>B. 常用汉字的常用拼音
+		<a target="_blank" href="http://zein.se/patrick/3000char.html">http://zein.se/patrick/3000char.html</a>
+		(The most common Chinese characters in order of frequency, by © 2003 – 2009 Patrick Hassel Zein )
+	</div>
+	<div>C. 汉字笔画
+		<a target="_blank" href="https://github.com/YQ-YSY/stroke-seq_MB/blob/master/text/%E5%8D%95%E5%AD%97_%E7%AC%94%E9%A1%BA%E7%A0%81_29685%E4%B8%AA.txt">https://github.com/YQ-YSY/stroke-seq_MB/blob/master/text/%E5%8D%95%E5%AD%97_%E7%AC%94%E9%A1%BA%E7%A0%81_29685%E4%B8%AA.txt</a>
+		(来自 <a target="_blank" href="https://github.com/YQ-YSY/stroke-seq_MB">https://github.com/YQ-YSY/stroke-seq_MB</a>)
+	</div>
+
+</html>

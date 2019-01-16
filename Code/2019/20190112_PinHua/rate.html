@@ -43,12 +43,10 @@ function once(
 		name,
 		characterToEncode,
 		mapOutputs,
+		imeOutputs,
 		tableOutputs,
 		suffixOutputs,
 		characterToExplain) {
-	if (mapOutputs) {
-		mapOutputs.push("var map = { \"\": [\"\",\"\"]");
-	}
 	if (!mapOutputs && !staticUseFull) {
 		return;
 	}
@@ -164,6 +162,8 @@ function once(
 	}
 	sampleOutputs.push(converted);
 	if (mapOutputs) {
+		// map
+		mapOutputs.push("var map = {\"\":[\"\",\"\"]");
 		var suffixToEncodeToLine = {};
 		for (var index = 0; index < data_prepared.length; index++) {
 			// map
@@ -188,7 +188,7 @@ function once(
 			var encodeToLine = dictMake(suffixToEncodeToLine, suffix, function() { return {}; });
 			dictMake(encodeToLine, encode, function() { return encode.substr(0, encode.length - 2) + "," + levelToSegment[1]; });
 		}
-		// table
+		// map
 		mapOutputs.push("};");
 		// suffix
 		for (var suffix in suffixToEncodeToLine) {
@@ -207,6 +207,27 @@ function once(
 			suffixOutputs.push(builder);
 		}
 		suffixOutputs.sort();
+		// ime
+		imeOutputs.push("var ime = {\"\":\"\"");
+		for (var encode in encodeToInfo) {
+			if (!encodeToInfo.hasOwnProperty(encode)) {
+				continue;
+			}
+			var info = encodeToInfo[encode];
+			if (info.c.length == 1) {
+				imeOutputs.push(",\"" + encode + "\":\"" + info.c[0].g + "\"");
+				continue;
+			}
+			var conflicts = "";
+			for (var index = 1; index < info.c.length; index++) {
+				conflicts += info.c[index].g;
+			}
+			imeOutputs.push(",\"" + encode + "\":\"" + info.c[0].g + "(" + conflicts + ")\"");
+			for (var index = 0; index < info.c.length; index++) {
+				imeOutputs.push(",\"" + encode + index + "\":\"" + info.c[index].g + "\"");
+			}
+		}
+		imeOutputs.push("};");
 	}
 }
 function select(writes, head, tail) {
@@ -244,6 +265,7 @@ function init() {
 	var rateOutputs = [];
 	var sampleOutputs = [];
 	var mapOutputs = [];
+	var imeOutputs = [];
 	var tableOutputs = [];
 	var suffixOutputs = [];
 
@@ -282,7 +304,7 @@ function init() {
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra 3, Tone, head 2"           , function(character) { return character.b + character.t + select(character.v, 2, 0); });
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra 3, Tone, head 1 tail 1"    , function(character) { return character.b + character.t + select(character.v, 1, 1); });
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, No tone, head 4"        , function(character) { return character.b + select(character.v, 4, 0); });
-	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, No tone, head 4, letter", function(character) { return character.b + letter(character.v, 4, 0, 2); }, mapOutputs, tableOutputs, suffixOutputs, function(character) { return select(character.v, 4, 0); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, No tone, head 4, letter", function(character) { return character.b + letter(character.v, 4, 0, 2); }, mapOutputs, imeOutputs, tableOutputs, suffixOutputs, function(character) { return select(character.v, 4, 0); });
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, No tone, head 3, tail 1", function(character) { return character.b + select(character.v, 3, 1); });
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, No tone, head 2, tail 2", function(character) { return character.b + select(character.v, 2, 2); });
 	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, Tone, head 3"           , function(character) { return character.b + character.t + select(character.v, 3, 0); });
@@ -300,6 +322,7 @@ function init() {
 	document.getElementById("log").value = logOutputs.join("\r\n");
 	document.getElementById("sample").value = sampleOutputs.join("\r\n");
 	document.getElementById("map").value = mapOutputs.join("\r\n");
+	document.getElementById("ime").value = imeOutputs.join("\r\n");
 	document.getElementById("table").value = tableOutputs.join("\r\n");
 	document.getElementById("suffix").value = suffixOutputs.join("\r\n");
 }
@@ -319,6 +342,8 @@ function goFull() {
 <textarea id="sample" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
 </textarea>
 <textarea id="map" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<textarea id="ime" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
 </textarea>
 <textarea id="table" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
 </textarea>
