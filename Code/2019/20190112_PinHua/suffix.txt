@@ -48,7 +48,7 @@ cw yi,以
 cy mai,买 cha,叉
 cz you,又
 da wei,威 li,厉励 xu,戌
-2dc si,死 lie,列烈裂 you,友尤 xiong,雄 can,残 shu,殊 zhi,殖 jian,歼 dai,歹殆 xun,殉 yang,殃
+dc si,死 lie,列烈裂 you,友尤 xiong,雄 can,残 shu,殊 zhi,殖 jian,歼 dai,歹殆 xun,殉 yang,殃
 dd yan,厌 sha,厦
 df gan,感 ya,压 zuo,左 ting,厅 chu,厨 xiang,厢 xian,咸
 dg yi,医 chun,唇 ru,辱 chen,辰
