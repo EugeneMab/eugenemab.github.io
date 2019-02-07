@@ -10,6 +10,8 @@
 </style>
 <script src="map.js">
 </script>
+<script src="simplify.js">
+</script>
 <script>
 function convert() {
 	var src = document.getElementById("src").value;
@@ -67,8 +69,49 @@ function goClear() {
 	src.value = "";
 	convert();
 }
+function goSimplify() {
+	var traditional = document.getElementById("tra").value;
+	var simplified = "";
+	for (var index = 0; index < traditional.length; index++) {
+		var trad = traditional.charAt(index);
+		var pairs = leadToMap[trad];
+		var pairFound = false;
+		if (pairs) {
+			for (var pairIndex = 0; pairIndex < pairs.length; pairIndex += 2) {
+				var pairTrad = pairs[pairIndex];
+				var pairSim = pairs[pairIndex + 1];
+				var end = index + pairTrad.length;
+				if (end >= traditional.length) {
+					continue;
+				}
+				if (traditional.substring(index, end) == pairTrad) {
+					simplified += pairSim;
+					index += pairTrad.length - 1;
+					pairFound = true;
+					break;
+				}
+			}
+		}
+		if (pairFound) {
+			continue;
+		}
+		var sim = tradToSim[trad];
+		if (sim) {
+			simplified += sim;
+			continue;
+		}
+		simplified += trad;
+	}
+	document.getElementById("src").value = simplified;
+	convert();
+}
 </script>
 <body style="font-family: Courier; font-size: 24px;" onload="init()">
+<textarea id="tra" cols="180" rows="5">
+</textarea>
+<br/>
+<input type="button" value="Simplify" onclick="goSimplify()"/>
+<br/>
 <input type="button" value="Demo" onclick="goDemo()"/>
 <br/>
 <input type="button" value="Clear" onclick="goClear()"/>
