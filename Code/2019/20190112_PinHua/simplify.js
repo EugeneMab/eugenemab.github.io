@@ -1,3 +1,4 @@
+// processed from https://github.com/skydark/nstools/blob/master/zhtools/zh_wiki.py
 var tradToSim = {
 "獃":"呆",
 "畫":"画",
