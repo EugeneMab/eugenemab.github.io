@@ -13,11 +13,33 @@
 <script src="simplify.js">
 </script>
 <script>
+var whiteSpaces = [
+	" ",
+	"\b",
+	"\t",
+	"\n",
+	"\v",
+	"\f",
+	"\r",
+	"\u0008",
+	"\u0009",
+	"\u000A",
+	"\u000B",
+	"\u000C",
+	"\u000D",
+	"\u0020",
+	"\u0022",
+	"\u0027",
+	"\u005C",
+	"\u00A0",
+	"\u2028",
+	"\u2029",
+	"\uFEFF"]
 function convert() {
 	var src = document.getElementById("src").value;
 	var tgt = "";
 	var hov = "";
-	var lines = src.split('\n');
+	var lines = src.split("\n");
 	for (var row = 0; row < lines.length; row++) {
 		var line = lines[row];
 		for (var pos = 0; pos < line.length; pos++) {
@@ -25,15 +47,19 @@ function convert() {
 			var mapped = map[item];
 			if (!mapped) {
 				tgt += item + ' ';
+				if (whiteSpaces.indexOf(item) >= 0) {
+					hov += '.. ';
+					continue;
+				}
 				hov += item + ' ';
 				continue;
 			}
 			var code = mapped[0];
 			tgt += code + ' ';
-			hov += '<span onclick="t(this,\'' + item + '\')">' + code + '</span> ';
+			hov += "<span onclick='t(this," + item.charCodeAt(0) + ")'>" + code + "</span> ";
 		}
-		tgt += '\n';
-		hov += '<br/>';
+		tgt += "\n";
+		hov += "<br/>";
 	}
 	document.getElementById("tgt").innerHTML = tgt;
 	document.getElementById("hov").innerHTML = hov;
@@ -47,7 +73,8 @@ function init() {
 		srcElem.attachEvent("onpropertychange", function() { convert(); });
 	}
 }
-function t(element, text) {
+function t(element, code) {
+	var text = String.fromCharCode(code);
 	var prev = element.innerHTML;
 	var mapped = map[text];
 	if (prev.substring(0, 1) == text) {
@@ -56,7 +83,7 @@ function t(element, text) {
 		return;
 	}
 	var detail = mapped[1];
-	element.innerHTML = text + prev + '(' + detail + ')';
+	element.innerHTML = text + prev + "(" + detail + ")";
 }
 function goDemo() {
 	var src = document.getElementById("src");
