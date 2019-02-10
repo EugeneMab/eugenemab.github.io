@@ -35,6 +35,8 @@ var whiteSpaces = [
 	"\u2028",
 	"\u2029",
 	"\uFEFF"]
+// if a character has the code in the interval of 0xd800..0xdbff, then it is the first part of the surrogate pair.
+// The next character (second part) must have the code in interval 0xdc00..0xdfff
 function convert() {
 	var src = document.getElementById("src").value;
 	var tgt = "";
@@ -45,18 +47,25 @@ function convert() {
 		for (var pos = 0; pos < line.length; pos++) {
 			var item = line.charAt(pos);
 			var mapped = map[item];
-			if (!mapped) {
-				tgt += item + ' ';
-				if (whiteSpaces.indexOf(item) >= 0) {
-					hov += '.. ';
-					continue;
-				}
-				hov += item + ' ';
+			if (mapped) {
+				var code = mapped[0];
+				tgt += code + ' ';
+				hov += "<span onclick='t(this," + item.charCodeAt(0) + ")'>" + code + "</span> ";
 				continue;
 			}
-			var code = mapped[0];
-			tgt += code + ' ';
-			hov += "<span onclick='t(this," + item.charCodeAt(0) + ")'>" + code + "</span> ";
+			if (whiteSpaces.indexOf(item) >= 0) {
+				tgt += item + ' ';
+				hov += '.. ';
+				continue;
+			}
+			var charCode = item.charCodeAt(0);
+			if (0xd800 <= charCode && charCode <= 0xdbff) {
+				tgt += item;
+				hov += item;
+				continue;
+			}
+			tgt += item + ' ';
+			hov += item + ' ';
 		}
 		tgt += "\n";
 		hov += "<br/>";
@@ -71,6 +80,12 @@ function init() {
 		srcElem.addEventListener("input", function() { convert(); }, false);
 	} else if (srcElem.attachEvent) {
 		srcElem.attachEvent("onpropertychange", function() { convert(); });
+	}
+	var traElem = document.getElementById("tra");
+	if (traElem.addEventListener) {
+		traElem.addEventListener("input", function() { goSimplify(); }, false);
+	} else if (srcElem.attachEvent) {
+		traElem.attachEvent("onpropertychange", function() { goSimplify(); });
 	}
 }
 function t(element, code) {
@@ -92,8 +107,8 @@ function goDemo() {
 	convert();
 }
 function goClear() {
-	var src = document.getElementById("src");
-	src.value = "";
+	document.getElementById("tra").value = "";
+	document.getElementById("src").value = "";
 	convert();
 }
 function goSimplify() {
@@ -134,11 +149,9 @@ function goSimplify() {
 }
 </script>
 <body style="font-family: Courier; font-size: 24px;" onload="init()">
-<input type="button" value="Simplify" onclick="goSimplify()"/>
-<br/>
-<input type="button" value="Demo" onclick="goDemo()"/>
-<br/>
-<input type="button" value="Clear" onclick="goClear()"/>
+<input type="button" value="Simplify" onclick="goSimplify()" style="width: 25%;" />
+<input type="button" value="Demo" onclick="goDemo()" style="width: 25%;"/>
+<input type="button" value="Clear" onclick="goClear()" style="width: 25%;"/>
 <br/>
 Traditional:
 <textarea id="tra" cols="180" rows="12" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
