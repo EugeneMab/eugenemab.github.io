@@ -1,0 +1,210 @@
+https://en.wiktionary.org/wiki/Appendix:Latin_Swadesh_list
+No.	English	Latin
+latina
+1	I	ego
+2	you (singular)	tu
+3	he	is (m.), ea (f.), id (n.)
+4	we	nos
+5	you (plural)	vos
+6	they	ei, ii (m.), eae (f.), ea (n.)
+7	this	hic (m.), haec (f.), hoc (n.)
+8	that	ille (m.), illa (f.), illud (n.)
+9	here	hic
+10	there	illic, ibi
+11	who	quis (m.), quae (f.)
+12	what	quid
+13	where	ubi
+14	when	cum
+15	how	quomodo
+16	not	non, ne
+17	all	omnes (mf.), omnia (n.)
+18	many	multi (m.), multae (f.), multa (n.)
+19	some	aliqui (m.), aliqua (f.), aliquod (n.)
+20	few	pauci (m.), paucae (f.), pauca (n.)
+21	other	alter, alius
+22	one	unus
+23	two	duo
+24	three	tres
+25	four	quattuor
+26	five	quinque
+27	big	magnus
+28	long	longus
+29	wide	latus
+30	thick	crassus
+31	heavy	gravis
+32	small	parvus
+33	short	brevis
+34	narrow	angustus
+35	thin	gracilis
+36	woman	femina
+37	man (adult male)	vir
+38	man (human being)	homo
+39	child	puer
+40	wife	uxor, mulier
+41	husband	maritus
+42	mother	mater
+43	father	pater
+44	animal	animal
+45	fish	piscis
+46	bird	avis
+47	dog	canis
+48	louse	pediculus
+49	snake	serpens
+50	worm	vermis
+51	tree	arbor
+52	forest	silva
+53	stick	hasta, palus
+54	fruit	fructus
+55	seed	semen
+56	leaf	folium
+57	root	radix
+58	bark (of a tree)	cortex
+59	flower	flos
+60	grass	herba
+61	rope	chorda
+62	skin	cutis
+63	meat	caro
+64	blood	sanguis
+65	bone	os
+66	fat (noun)	pinguamen
+67	egg	ovum
+68	horn	cornu
+69	tail	cauda
+70	feather	penna
+71	hair	pilus
+72	head	caput
+73	ear	auris
+74	eye	oculus
+75	nose	nasus, naris
+76	mouth	os
+77	tooth	dens
+78	tongue (organ)	lingua
+79	fingernail	unguis
+80	foot	pes
+81	leg	crus
+82	knee	genu
+83	hand	manus
+84	wing	ala
+85	belly	venter, abdomen
+86	guts	viscera
+87	neck	cervix
+88	back	dorsum
+89	breast	mamma
+90	heart	cor
+91	liver	iecur
+92	to drink	bibere
+93	to eat	edere
+94	to bite	mordere
+95	to suck	sugere
+96	to spit	spuere
+97	to vomit	vomere
+98	to blow	inflare
+99	to breathe	respirare
+100	to laugh	ridere
+101	to see	videre
+102	to hear	audire
+103	to know	scire
+104	to think	cogitare, putare, existimare
+105	to smell	olfacere
+106	to fear	timere
+107	to sleep	dormire
+108	to live	vivere
+109	to die	mori
+110	to kill	necare
+111	to fight	luctari
+112	to hunt	venari
+113	to hit	pellere
+114	to cut	secare
+115	to split	dividere
+116	to stab	pungere
+117	to scratch	scabere
+118	to dig	fodere
+119	to swim	nare, natare
+120	to fly	volare
+121	to walk	ambulare
+122	to come	venire
+123	to lie (as in a bed)	cubare
+124	to sit	sedere
+125	to stand	stare
+126	to turn (intransitive)	vertere
+127	to fall	cadere
+128	to give	dare
+129	to hold	tenere
+130	to squeeze	exprimere
+131	to rub	fricare
+132	to wash	lavare
+133	to wipe	tergere
+134	to pull	trahere
+135	to push	pellere
+136	to throw	iacere
+137	to tie	ligare
+138	to sew	consuere
+139	to count	computare, numerare
+140	to say	dicere
+141	to sing	canere
+142	to play	ludere
+143	to float	fluctuare
+144	to flow	fluere
+145	to freeze	gelare
+146	to swell	augere
+147	sun	sol
+148	moon	luna
+149	star	stella
+150	water	aqua
+151	rain	pluvia
+152	river	flumen, fluvius, amnis
+153	lake	lacus
+154	sea	mare
+155	salt	sal
+156	stone	saxum, lapis, petra
+157	sand	harena
+158	dust	pulvis
+159	earth	humus, terra, ager
+160	cloud	nubes, nebula
+161	fog	caligo, nebula, tenebrae
+162	sky	caelum
+163	wind	ventus
+164	snow	nix
+165	ice	gelu
+166	smoke	fumus
+167	fire	ignis
+168	ash	cinis
+169	to burn	urere, flammare
+170	road	via
+171	mountain	mons
+172	red	ruber, rufus
+173	green	viridis
+174	yellow	croceus
+175	white	albus, candidus
+176	black	ater, niger
+177	night	nox
+178	day	dies
+179	year	annus
+180	warm	calidus
+181	cold	frigidus
+182	full	plenus
+183	new	novus
+184	old	vetus
+185	good	bonus
+186	bad	malus
+187	rotten	putridus
+188	dirty	immundus
+189	straight	rectus
+190	round	rotundus
+191	sharp (as a knife)	acutus
+192	dull (as a knife)	hebes, retusus
+193	smooth	suavis
+194	wet	humidus, aqueus
+195	dry	siccus
+196	correct	rectus
+197	near	propinquus, proximus
+198	far	longus
+199	right	dexter
+200	left	laevus, sinister
+201	at	ad, in
+202	in	in
+203	with	cum
+204	and	et, -que
+205	if	si
+206	because	quod
+207	name	nomen

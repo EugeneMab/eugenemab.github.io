@@ -1,0 +1,1868 @@
+{{LangTitle| Doudouling-2018 / Dodoliehehen }}
+<!-- Visit http://conling.wikia.com/wiki/Portal:Main if you are new or ask the admins for help. -->
+<!-- Fill the progress template in with clean numbers only. -->
+
+{{Progress
+|Phonology= 100
+|NounCases= 100
+|NounDef= 100
+|NounNumbers= 100
+|NounGender= 100
+|VerbPerson= 100
+|VerbNumber= 100
+|VerbAspect= 100
+|VerbTense= 100
+|VerbMood= 100
+|VerbVoice= 100
+|AdjCase= 100
+|AdjNumber= 100
+|AdjDef= 100
+|AdjGen= 100
+|AdjComparative= 100
+|AdjSuperlative= 100
+|Supine= 100
+|Gerund= 100
+|Participle= 100
+|Infinitive= 100
+|Modality= 100
+|Words= 1500
+}}
+{{Definition
+|Name       = Doudouling-2018
+|NativeName = Dodoliehehen
+|Type       = Romance / Latin constructed language
+|Alignment  = SVO (normally) ; OVS (pronouns)
+|Head       = Head initial (formal); Head final (casual)
+|Tonal      = No
+|Declined   = No
+|Conjugated = No
+|Genders    = No
+|NounCase   = No
+|NounNumber = Yes, by articles
+|NounDefiniteness = No
+|NounGender = No
+|VerbVoice  = Yes, by modal verbs
+|VerbMood   = No
+|VerbPerson = Yes, by modal verbs
+|VerbNumber = No
+|VerbTense  = Yes, by modal verbs
+|VerbAspect = No}}
+
+==General information==
+===Idea===
+The main idea of my artificial language is to simplify Latin words into one optional consonant plus one vowel plus one optional nasal structure, namely (C-V-N) structure. That is because we think this structure is the best for singing. Also, it is required to avoid adding too many extra syllables. And the spelling should be very close to the International Phonetic Alphabet (IPA). And the stress position should not impact the meaning of the word.
+
+It is trade-off between two options
+
+1) dropping the character not fit into the (C-V-N) structure, which will lose too much info, cause conflict and hard to remember; think about {extract} become {eta}.
+
+2) padding vowels, which will cause too many syllables, and too many repetition of the padding vowel; think about {extract} become {ekusuturakutu}
+
+So the way is to insert some weak syllables to compensate the information loss of the dropped sounds.
+
+For example, {extract} => {e-k-str-a-k-t} => {edzahiijii} pronounced as [ɛ-'d͡zɑ-hi-i-ji-i].
+The right-side {t} is dropped and compensated by {hi};
+The right-side {k} is dropped and compensated by {i};
+The {r} is dropped and compensated by {ji};
+The left-side {k} is dropped and compensated by {i}.
+
+===History===
+The first version was published in 2004, and an updated version is published in 2014.
+
+[https://eugenemab.github.io/Code/2004/20041001_Dodolingi/index.html Version 2004]
+
+[https://eugenemab.github.io/Code/2014/20140308_Dodolingi/index.html Version 2014]
+
+[https://eugenemab.github.io/Code/2015/20150619_Dodolingi/index.html Version 2015]
+
+[https://eugenemab.github.io/Code/2017/20170115_Dodolingin/index.html Version 2017]
+
+[https://eugenemab.github.io/Code/2018/20180620_Dodoliehehen/index.html Version 2018]
+
+===Design===
+
+Introduction
+
+Principles: compress Latin words into {C-V-N} syllables
+
+The main idea of my artificial language is to simplify Latin words into the structure of one optional consonant plus one vowel plus one optional {n} or {m}. That is because we think this structure is the best for singing. Also, it should avoid adding too many extra strong syllables. And the spelling should be very close to the International Phonetic Alphabet (IPA). And the stress position should not impact the meaning of the word.
+
+Step 1: simplify consonants and consonant clusters
+
+Simplify consonants and consonant clusters to the consonants as below by the rules below.
+
+{| border="0" cellspacing="1" cellpadding="1" style="width:500px;" class="article-table"
+|-
+|{b}
+|{p}
+|{ts}
+|{m}
+|{f}
+|{v}
+|-
+|{d}
+|{t}
+|{dz}
+|{n}
+|{s}
+|{j}
+|-
+|{g}
+|{k}
+|
+|{h}
+|{w}
+|{l}
+|}
+
+Rules:
+
+* {sp} => {ts};
+* {st} => {dz};
+* {sc} {sk} => {dz} (via {sti-});
+* {pt} => {b};
+* {ph} => {f};
+* {w} => {v};
+* {th} => {t};
+* {c} ([s]), {x} (at the beginning of a word), {ch} ([ʃ]/[tʃ]), {ti} ([ʃ]) => {j};
+* {j}, {y} => {g} (via {gi-});
+* {q}, {c} ([k]), {ch} ([k]) => {k};
+* {r} => {w};
+
+For some complex clusters, add an {e} to split them, such as {partner} and {investment}.
+
+Step 2: simplify vowels and diphthongs
+
+Simplify the vowels and diphthongs as rules below.
+
+Rules:
+
+* {ao/oa} => {au} => {a};
+* {ae/ea} => {ai} => {e};
+* {ee} => {ei} => {i};
+* {oo} => {ou} => {o};
+* {oe/eo/eu} => {oi} => {u};
+
+Convert vowel {y} to {i}; and drop some less important vowels.
+
+Step 3: Compensate the lost sounds
+
+If keeping only the consonant-vowel-nasal structure for each syllable, it often causes great loss of information and then create confusions. So we need to add some weak syllables between the last vowel and last nasal to compensate the lost sounds.
+
+Rules:
+
+Treat the final {m} as {n} with a lost {b}
+* If there is no dropping, and the last vowel is not {u}, compensate {u}
+* If there is no dropping, and the last vowel is {u}, compensate {o}
+* If there is any dropping, add compensating suffixes in the reverse order, according to the rule table as below.
+
+{| border="0" cellspacing="1" cellpadding="1" style="width:800px;" class="article-table"
+|-
+|Case \ Dropped sound
+|{d}/{t}
+|{g}/{k}
+|{s}/{z}
+|{b}/{p}/{v}/{f}
+|{r}
+|{l}
+|{i}/{u}
+|{h}/{-}
+|{dz}
+|{ts}
+|-
+|First suffix after {i}
+|{he}
+|{e}
+|{je}
+|{vu}
+|{wu}
+|{hu}
+|{fu}
+|{u}
+|{dzi}
+|{tsi}
+|-
+|First suffix after {a} {e} {o}
+|{hi}
+|{i}
+|{ji}
+|{vu}
+|{wu}
+|{hu}
+|{fu}
+|{u}
+|{dzi}
+|{tsi}
+|-
+|First suffix after {u}
+|{hi}
+|{i}
+|{ji}
+|{vo}
+|{wo}
+|{ho}
+|{fo}
+|{o}
+|{dzi}
+|{tsi}
+|-
+|Followup suffix after {e}
+|{e}
+|{e}
+|{e}
+|{e}
+|{je}
+|{je}
+|{he}
+|
+|
+|
+|-
+|Followup suffix after {i}
+|{i}
+|{i}
+|{i}
+|{i}
+|{ji}
+|{ji}
+|{hi}
+|
+|
+|
+|-
+|Followup suffix after {o}
+|{o}
+|{o}
+|{o}
+|{o}
+|{wo}
+|{wo}
+|{ho}
+|
+|
+|
+|-
+|Followup suffix after {u}
+|{u}
+|{u}
+|{u}
+|{u}
+|{wu}
+|{wu}
+|{hu}
+|
+|
+|
+|}
+
+
+Examples
+
+The first column is Latin word. The second column is {CVN} structure after simplification. The third column is the sounds dropped. The fourth column is Doudouling word after compensation.
+
+Examples:
+
+{| border="0" cellspacing="1" cellpadding="1" style="width:500px;" class="article-table"
+|-
+! Latin
+! CVN
+! Dropped
+! Doudouling
+|-
+|state
+|dza
+|t
+|dzahi
+|-
+|sper
+|tse
+|r
+|tsewu
+|-
+|sport
+|tso
+|r t
+|tsohiji
+|-
+|science
+|dzien
+|j
+|dziejin
+|-
+|photo
+|foto
+|
+|fotou
+|-
+|wagon
+|vagon
+|
+|vagoun
+|-
+|cent
+|jen
+|t
+|jehin
+|-
+|center
+|jente
+|r
+|jentewu
+|-
+|aqu
+|a
+|k
+|ai
+|-
+|aquatic
+|akati
+|k
+|akatie
+|-
+|question
+|kedzon
+|
+|kedzoun
+|-
+|tank
+|tan
+|k
+|tain
+|-
+|xerox
+|jewo
+|k s
+|jewojii
+|-
+|chocolate
+|jokola
+|t
+|jokolahi
+|-
+|just
+|gu
+|dz
+|gudzi
+|-
+|adoption
+|adobon
+|
+|adoboun
+|-
+|train
+|ten
+|r i
+|tefuwun
+|-
+|tract
+|ta
+|r k t
+|tahiiji
+|-
+|create
+|kea
+|r t
+|keahiji
+|-
+|glad
+|ga
+|l d
+|gahiji
+|-
+|class
+|ka
+|l s
+|kajiji
+|-
+|cause
+|ka
+|u s
+|kajihi
+|-
+|daemon
+|demon
+|i
+|demofun
+|-
+|coffee
+|kofi
+|f i
+|kofifuu
+|-
+|moustache
+|modza
+|u j
+|modzajihi
+|-
+|phoenix
+|funi
+|i k s
+|funijeehe
+|-
+|phoenician
+|funijan
+|i
+|funijafun
+|-
+|europe
+|uwo
+|i p
+|uwovuhu
+|-
+|return
+|wetun
+|r
+|wetuwon
+|-
+|depart
+|depa
+|r t
+|depahiji
+|-
+|alt
+|a
+|l t
+|ahiji
+|-
+|art
+|a
+|r t
+|ahiji
+|-
+|arts
+|a
+|r t s
+|ajiiji
+|-
+|culture
+|kutu
+|r l
+|kutuwowo
+|-
+|court
+|ko
+|u r t
+|kohijihi
+|-
+|cant
+|kan
+|t
+|kahin
+|-
+|simple
+|simpe
+|l
+|simpehu
+|-
+|hom
+|hon
+|b
+|hovun
+|-
+|autumn
+|atun
+|u b
+|atuvohon
+|-
+|environment
+|enviwommen
+|t
+|enviwommehin
+|-
+|fact
+|fa
+|k t
+|fahii
+|-
+|experiment
+|etsewimen
+|k t
+|etsewimehiin
+|-
+|sign
+|sin
+|g
+|sien
+|-
+|dogmatic
+|domati
+|g k
+|domatiee
+|-
+|construct
+|kondzu
+|r k t
+|kondzuhiiji
+|-
+|verb
+|ve
+|r b
+|vevuwu
+|-
+|partner
+|patene
+|r
+|patenewu
+|-
+|investment
+|invedzemen
+|t
+|invedzemehin
+|-
+|continue
+|kontinu
+|
+|kontinuo
+|-
+|Doudouling
+|dodolin
+|u u g
+|Dodoliehehen
+|-
+|data
+|data
+|
+|datau
+|-
+|exact
+|esa
+|k k t
+|esahiii
+|-
+|slave
+|sa
+|l v
+|savuwu
+|-
+|salv
+|sa
+|l v
+|savuwu
+|-
+|next
+|ne
+|k dz
+|nedzii
+|}
+
+Word choice
+
+The Latin word we used are the words composed of Latin roots which appear in English.
+
+Stress
+
+The stress is at the rightmost vowel which is the same as the last vowel.
+
+Center of a phrase
+
+When a center word of a phrase is a single-syllable {C-V-N} word, it sounds not strong enough.
+To make it sounds better phonetically, we add {u} or {o} after the vowel of the center word.
+Examples {with me} => {ve mi} => {ve miu}; {who is he} => {ki dze go} => {ke dzeu go}; {for this} => {po ji} => {po jiu}; {the two} => {la du} => {la duo};
+
+===Influence===
+
+Languages which have influence on this language include:
+
+# Latin
+# French
+# English
+# Spanish
+# Portuguese
+# Italian
+# Chinese
+# Japanese
+
+==Phonology==
+===Consonants===
+{| border="1" cellpadding="1" cellspacing="1" class="wikitable article-table" style="width: 660px; text-align:center;"
+! style="width: 68px; "|
+! style="width: 68px; " |Bilabial
+! style="width: 68px; " |Labio-dental
+! style="width: 68px; " |Dental
+! style="width: 68px; " |Alveolar
+! style="width: 68px; " |Post-alveolar
+! style="width: 68px; " |Retroflex
+! style="width: 68px; " |Palatal
+! style="width: 68px; " |Velar
+! style="width: 68px; " |Uvular
+! style="width: 68px; " |Pharyngeal
+! style="width: 68px; " |Epiglottal
+! style="width: 68px; " |Glottal
+|-
+!Nasal
+| m
+|
+|
+| n
+|
+|
+|
+| ŋ
+|
+|
+|
+|
+|-
+!Plosive
+| p b
+|
+|
+| t d
+|
+|
+|
+| k g
+|
+|
+|
+|
+|-
+!Fricative
+|
+| f v
+|
+| s
+|
+|
+|
+|
+|
+|
+|
+| h
+|-
+!Affricate
+|
+|
+|
+| t͡s d͡z
+|
+|
+|
+|
+|
+|
+|
+|
+|-
+!Approximant
+|
+|
+|
+|
+|
+|
+| j
+| w
+|
+|
+|
+|
+|-
+!Trill
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|-
+!Flap or tap
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|-
+!Lateral fric.
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|-
+!Lateral app.
+|
+|
+|
+| l
+|
+|
+|
+|
+|
+|
+|
+|
+|-
+!Lateral flap
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|
+|}
+
+===Vowels===
+{|class="wikitable article-table" style="width: 540px; text-align:center;"
+! style="width: 90px; "|
+! style="width: 90px; " |Front
+! style="width: 90px; " |Near-front
+! style="width: 90px; " |Central
+! style="width: 90px; " |Near-back
+! style="width: 90px; " |Back
+|-
+!Close
+| i
+|
+|
+|
+| u
+|-
+!Near-close
+|
+|
+|
+|
+|
+|-
+!Close-mid
+|
+|
+|
+|
+|
+|-
+!Mid
+|
+|
+|
+|
+|
+|-
+!Open-mid
+| ɛ
+|
+|
+|
+| ɔ
+|-
+!Near-open
+|
+|
+|
+|
+|
+|-
+!Open
+|
+|
+|
+|
+| ɑ
+|}
+
+===Alphabet===
+{|class="wikitable article-table" style="width: 500px; text-align:center;"
+! style="width: 90px; " |Upper Case
+! style="width: 90px; " |Lower Case
+! style="width: 90px; " |Normal
+! style="width: 90px; " |Before {g} {k}
+|-
+!A
+|a
+|[ɑ] / [a]
+|
+|-
+!B
+|b
+|[b]
+|
+|-
+!D
+|d
+|[d]
+|
+|-
+!E
+|e
+|[ɛ] / [e]
+|
+|-
+!F
+|f
+|[f]
+|
+|-
+!G
+|g
+|[g]
+|
+|-
+!H
+|h
+|[h]
+|
+|-
+!I
+|i
+|[i]
+|
+|-
+!J
+|j
+|[j]
+|
+|-
+!K
+|k
+|[k]
+|
+|-
+!L
+|l
+|[l]
+|
+|-
+!M
+|m
+|[m]
+|
+|-
+!N
+|n
+|[n]
+|[ŋ]
+|-
+!O
+|o
+|[ɔ] / [o]
+|
+|-
+!P
+|p
+|[p]
+|
+|-
+!S
+|s
+|[s]
+|
+|-
+!T
+|t
+|[t]
+|
+|-
+!U
+|u
+|[u]
+|
+|-
+!V
+|v
+|[v]
+|
+|-
+!W
+|w
+|[w]
+|
+|-
+!DZ
+|dz
+|[d͡z]
+|
+|-
+!TS
+|ts
+|[t͡s]
+|
+|}
+
+===Syllable structure===
+
+The allowed word structure is one or multiple consonant-vowel-nasal syllables with an optional silent ending consonant letter.
+
+It can be express as a regular expression as below:
+
+{|class="wikitable article-table" style="width: 660px; text-align:center;"
+| style="width: 90px; " |
+^ ( (b|p|ts|m|f|v|d|ts|n|s|j|g|k|h|w|l)? [aeiou] ( [mn] )? )* ( (b|p|ts|m|f|v|d|ts|n|s|j|g|k|h|w|l)? [aeiou] ( n )? ) $
+|}
+
+===Mnemonic alphabet table===
+
+There is another alphabet layout table as below, which shows better the style of this language and help remembering them.
+
+{|class="wikitable article-table" style="width: 540px; text-align:left;"
+| style="width: 90px; " |B b [b]
+| style="width: 90px; " |P p [p]
+| style="width: 90px; " |TS ts [t͡s]
+| style="width: 90px; " |M m [m]
+| style="width: 90px; " |F f [f]
+| style="width: 90px; " |V v [v]
+|-
+|D d [d]
+|T t [t]
+|DZ dz [d͡z]
+|N n [n] [ŋ]
+|S s [s]
+|J j [j]
+|-
+|G g [g]
+|K k [k]
+|
+|H h [h]
+|W w [wh]
+|L l [l]
+|-
+|A a [ɑ] [a]
+|E e [ɛ] [e]
+|I i [i]
+|O o [ɔ] [o]
+|U u [u]
+|
+|}
+
+==Grammar==
+{{agreement
+ |VerbGender = 
+ |VerbCases = 
+ |VerbNumber = 
+ |VerbTenses = Yes (by modal verb)
+ |VerbPerson = Yes (by pronoun suffix)
+ |VerbMoods = 
+ |VerbVoices = Yes (by modal verb)
+
+ |NounGender = 
+ |NounCases = 
+ |NounNumber = Yes (optional)
+ |NounTenses = 
+ |NounPerson = 
+ |NounMoods = 
+ |NounVoices = 
+
+ |AdjectiveGender = 
+ |AdjectiveCases = 
+ |AdjectiveNumber = 
+ |AdjectiveTenses = 
+ |AdjectivePerson = 
+ |AdjectiveMoods = 
+ |AdjectiveVoices = 
+
+ |NumberGender = 
+ |NumberCases = 
+ |NumberNumber = 
+ |NumberTenses = 
+ |NumberPerson = 
+ |NumberMoods = 
+ |NumberVoices = 
+
+ |ParticipleGender = 
+ |ParticipleCases = 
+ |ParticipleNumber = 
+ |ParticipleTenses = 
+ |ParticiplePerson = 
+ |ParticipleMoods = 
+ |ParticipleVoices = 
+
+ |AdverbGender = 
+ |AdverbCases = 
+ |AdverbNumber = 
+ |AdverbTenses = 
+ |AdverbPerson = 
+ |AdverbMoods = 
+ |AdverbVoices = 
+
+ |PronounGender = Yes (3rd person singular)
+ |PronounCases = Yes
+ |PronounNumber = Yes
+ |PronounTenses = 
+ |PronounPerson = 
+ |PronounMoods = 
+ |PronounVoices = 
+
+ |AdpositionGender = 
+ |AdpositionCases = 
+ |AdpositionNumber = 
+ |AdpositionTenses = 
+ |AdpositionPerson = 
+ |AdpositionMoods = 
+ |AdpositionVoices = 
+
+ |ArticleGender = 
+ |ArticleCases = 
+ |ArticleNumber = Yes
+ |ArticleTenses = 
+ |ArticlePerson = 
+ |ArticleMoods = 
+ |ArticleVoices = 
+
+ |ParticleGender = 
+ |ParticleCases = 
+ |ParticleNumber = 
+ |ParticleTenses = 
+ |ParticlePerson = 
+ |ParticleMoods = 
+ |ParticleVoices = 
+}}Number is indicated by the article. For example: {la hovun} meaning {the man}, {le hovun} meaning {the men}.
+
+Person can be indicated by pronoun suffixes. For example: {miwu mi} meaning {I see}, {fewu lu} meaning {they do}.
+
+Tenses and voices can be indicated by modal verbs.
+For example: {la dzudehin dzudiu va} meaning {the student will study}, {le hovun dovuwun ha} meaning {people slept}, {la pobevuwuwun dze sovuwu ti} meaning {the problem is solved}.
+
+Accusative (subject) pronouns can be put in front the verb or after it. Dative pronouns can also be treated the same.
+For example: {se dihe mi} meaning {I say it}, {te se doun ha mi} meaning {I have given it to you}.
+
+Person, tenses and voices can be indicated by chained suffixes, and also with accusative pronouns.
+For example: {te miwu va mi} meaning {I will see you}, {doun ti ha go la libewu} meaning {He has been given the book}.
+
+==Vocabulary==
+===Core vocabulary===
+{| border="1" cellpadding="1" cellspacing="1" class="wikitable article-table" style="width: 800px; text-align:center;"
+!Doudouling-2018
+|a
+|e
+|i
+|o
+|u
+|-
+!Latin root
+|ad
+|et
+|in
+|or
+|un
+|-
+!English
+|to
+|and
+|in
+|or
+|a
+|-
+!Doudouling-2018
+|ba
+|
+|
+|bo
+|bu
+|-
+!Latin root
+|ab
+|
+|
+|ob
+|sub
+|-
+!English
+|from
+|
+|
+|but
+|under
+|-
+!Doudouling-2018
+|pa
+|pe
+|
+|po
+|
+|-
+!Latin root
+|parse
+|per
+|
+|pro
+|
+|-
+!English
+|why
+|by
+|
+|for
+|
+|-
+!Doudouling-2018
+|ma
+|me
+|mi
+|mo
+|mu
+|-
+!Latin root
+|me
+|me
+|me
+|mono
+|mult
+|-
+!English
+|my
+|me
+|I
+|n-th (ordinal)
+|some
+|-
+!Doudouling-2018
+|fa
+|fe
+|
+|fo
+|fu
+|-
+!Latin root
+|fact
+|fer
+|
+|front
+|fer
+|-
+!English
+|thing
+|do
+|
+|most
+|do (question)
+|-
+!Doudouling-2018
+|va
+|ve
+|vi
+|vo
+|vu
+|-
+!Latin root
+|vas
+|verse
+|vos
+|vos
+|vos
+|-
+!English
+|will do; go
+|with
+|you (plural, object)
+|your (plural)
+|you (plural, subject)
+|-
+!Doudouling-2018
+|tse
+|
+|
+|
+|
+|-
+!Latin root
+|spec
+|
+|
+|
+|
+|-
+!English
+|more
+|
+|
+|
+|
+|-
+!Doudouling-2018
+|da
+|de
+|di
+|do
+|du
+|-
+!Latin root
+|ad
+|de
+|id
+|od
+|dur
+|-
+!English
+|then
+|of
+|there
+|though
+|when
+|-
+!Doudouling-2018
+|ta
+|te
+|ti
+|to
+|tu
+|-
+!Latin root
+|tu
+|tu
+|ten
+|tot
+|tu
+|-
+!English
+|your (single)
+|you (single, object)
+|be done
+|all
+|you (single, subject)
+|-
+!Doudouling-2018
+|na
+|ne
+|ni
+|no
+|nu
+|-
+!Latin root
+|nos
+|ne
+|nos
+|non
+|nos
+|-
+!English
+|our
+|not
+|us
+|no
+|we
+|-
+!Doudouling-2018
+|sa
+|se
+|si
+|
+|su
+|-
+!Latin root
+|su
+|se
+|sic
+|
+|super
+|-
+!English
+|his
+|him
+|so; if
+|
+|over
+|-
+!Doudouling-2018
+|ja
+|je
+|ji
+|
+|
+|-
+!Latin root
+|sa
+|hic
+|hic
+|
+|
+|-
+!English
+|her (adjective)
+|this (adjective)
+|this (pronoun)
+|
+|
+|-
+!Doudouling-2018
+|dze
+|dzi
+|
+|dzu
+|
+|-
+!Latin root
+|est
+|est
+|
+|est
+|
+|-
+!English
+|be
+|be doing
+|
+|be (question)
+|
+|-
+!Doudouling-2018
+|ga
+|ge
+|gi
+|go
+|gu
+|-
+!Latin root
+|illa
+|id
+|illa
+|ill
+|in ubi
+|-
+!English
+|she
+|that (adjective)
+|her (object)
+|he
+|where
+|-
+!Doudouling-2018
+|ka
+|ke
+|ki
+|ko
+|ku
+|-
+!Latin root
+|qual
+|que
+|qui
+|com
+|quo
+|-
+!English
+|how
+|what; that (conjuction)
+|who
+|as
+|which
+|-
+!Doudouling-2018
+|ha
+|he
+|hi
+|ho
+|
+|-
+!Latin root
+|hab
+|hab
+|hic
+|hoc
+|
+|-
+!English
+|have done
+|did
+|here
+|that (subject)
+|
+|-
+!Doudouling-2018
+|we
+|
+|
+|
+|
+|-
+!Latin root
+|re
+|
+|
+|
+|
+|-
+!English
+|again
+|
+|
+|
+|
+|-
+!Doudouling-2018
+|la
+|le
+|li
+|lo
+|lu
+|-
+!Latin root
+|illa
+|ill
+|lor
+|lor
+|lor
+|-
+!English
+|the (single)
+|the (plural)
+|them
+|their
+|they
+|}
+
+===Dictionary===
+
+(TBD)
+
+===Swadesh List===
+The Doudouling-2018 column may contain both short form and long form of the same word.
+
+{{Swadesh
+|language=Doudouling-2018
+|nativename=Doudouling-2018 (Dodoliehehen)
+|I=mi (accusative: me) (genitive: ma)
+|you (singular)=tu (accusative: te) (genitive: ta)
+|he=go (accusative: se) (genitive: sa) (feminine: ga, gi, ja)
+|we=nu (accusative: ni) (genitive na)
+|you (plural)=vu (accusative: vi) (genitive: vo)
+|they=lu (accusative: li) (genitive: lo)
+|this=ji (accusative: je)
+|that=ho (accusative: ge)
+|here=hi
+|there=di
+|who=ki
+|what=ke
+|where=gu
+|when=du
+|how=ka
+|not=ne
+|all=to, tohi, ovun
+|many=mu, muhiji
+|some=mu, alie
+|few=pajihi
+|other=atewuwu
+|one=u, uon
+|two=duo
+|three=tiwu
+|four=kawuu
+|five=jien
+|big=gahijin, main
+|long=loin
+|wide=lahi
+|thick=kajiji
+|heavy=gavuwu
+|small=miun, pavuwu
+|short=bevuwu
+|narrow=angudzi
+|thin=gajihuwu
+|woman=fevun
+|man (adult male)=hovun
+|man (human being)=humaun
+|child=fihu, infahin, puewu
+|wife=tsoji, usowuu
+|husband=mawihe
+|mother=matewu
+|father=patewu
+|animal=animahu
+|fish=pidzi
+|bird=avije
+|dog=kaun
+|louse=pedikuho
+|snake=sepehijin
+|worm=vevuwun
+|tree=abowuwu
+|forest=fowedzi, sivuwu
+|stick=batoun, pahu
+|fruit=fuhiji, fuhiiji
+|seed=semiun, semeun
+|leaf=foliu
+|root=radijee
+|bark=kotejiiji
+|flower=fowuwu
+|grass=hevuwu
+|rope=dziejen, kodawu
+|skin=devuwun, kutije
+|meat=kawun, kawou
+|blood=sangiun
+|bone=oji
+|fat=obeji, pingameun
+|egg=ovu
+|horn=kowun
+|tail=temiwun, kadafu
+|feather=puvuwun, pennau
+|hair=piluji
+|head=kapihe
+|ear=awuhu
+|eye=okuho
+|nose=naji
+|mouth=owu, owahu
+|tooth=dehin
+|tongue=lien
+|fingernail=ungije
+|foot=pehi
+|leg=kujiji
+|knee=genuo
+|hand=maun
+|wing=alau
+|belly=adomevun
+|guts=vidzewu
+|neck=kolawuwu, jevijeeje
+|back=dojiji
+|breast=mammau
+|heart=kohiji, kadaiji
+|liver=hepawu
+|drink=bevu
+|eat=vowu
+|bite=modewuwu
+|suck=suhii, sugewu
+|spit=tsuewu
+|vomit=vomihe
+|blow=infahiji
+|breathe=wetsiwu
+|laugh=wihe, widewu
+|see=miwu, vije
+|hear=ahihi
+|know=dziu
+|think=pejin
+|smell=odow
+|fear=timihe
+|sleep=dovuwun
+|live=vivu
+|die=mohiji
+|kill=jihe, nekawu
+|fight=puin, lutawuu
+|hunt=kavu, kabuwo, venawu
+|hit=pujiji, pelewuwu
+|cut=sei, sehii, sekawu
+|split=sepawahi, divihe
+|stab=puin
+|scratch=dzabewu
+|dig=edzavahii, fodewu
+|swim=natahi, natawu
+|fly=aviahi, volawu
+|walk=ambehu
+|come=veun
+|lie=dejevu, kubawu
+|sit=sehi, sedewu
+|stand=dzahin
+|turn=tuvon, vetewuwu
+|fall=kadau, kadewu
+|give=doun
+|hold=kavu, teun
+|squeeze=etsimewuwuu
+|rub=fikawuwu
+|wash=lavu
+|wipe=ewaji, tegewuwu
+|pull=tahiji
+|push=pehu, pelewuwu
+|throw=gehii, gajewu
+|tie=guhin, ligawu
+|sew=konsuewu
+|count=kohihin, computahi
+|say=dihe
+|sing=kahin
+|play=luhi, paiji
+|float=fohihiji, fotahihiji
+|flow=fuewuwu
+|freeze=figahiji, gelawu
+|swell=agewuhu
+|sun=sohu, solou
+|moon=luon, lunau
+|star=dzehu, dzehuwu
+|water=ai
+|rain=puvuwu
+|river=wivewu, fuvuwu
+|lake=lai
+|sea=mawu
+|salt=saliun
+|stone=petewu, lapije
+|sand=lapije, hawenau
+|dust=puva, puvera
+|earth=tewuwu, agewu
+|cloud=nebuho
+|fog=fuvun, nebuho
+|sky=jehu
+|wind=vehin
+|snow=nivu
+|ice=gajiji	
+|smoke=fuvun
+|fire=favuwun, inihee
+|ash=residuo, jinije
+|burn=injehin, famahiji
+|road=rohihi, viau
+|mountain=mohin, montafun
+|red=roji, ruvo
+|green=vehiji
+|yellow=favuwu
+|white=bain, avuwu, abiwun
+|black=negewu
+|night=nohii
+|day=dije
+|year=aun
+|warm=kalowu
+|cold=fieje, figiheje
+|full=pewun
+|new=novu, novehu
+|old=anjehin
+|good=boun
+|bad=mahu
+|rotten=putiheje
+|dirty=immuhin
+|straight=rehii, dzehii
+|round=rohihin, wotuhin
+|sharp=acuhi
+|dull=hebeji
+|smooth=suavu
+|wet=humihe
+|dry=sie
+|correct=kowehiiji
+|near=pojiiji
+|far=didzahin
+|right=dedzewuu
+|left=sindzewu, sinidzewu
+|at=a, i
+|in=i
+|with=ve
+|and=e
+|if=si
+|because=ba, po ke
+|name=novun, nomiun}}
+
+==Example text==
+===Babel text===
+{| border="1" cellpadding="1" cellspacing="1" class="wikitable article-table" style="width: 660px; text-align:left;"
+!Dodoliehehen
+!English
+|-
+|Titehu : Babehu Tedzi, Genesiji, Bibehu
+|Title : Babel Text , Genesis, Bible
+|-
+|Tohi la muhin dze de u lien e de u pawohu.
+|The whole earth was of one language and of one speech.
+|-
+|Du vogai he lu a la owientahu, okuwuu he go ke didzovewu ha lu u pahun i la tewu de la Jinawu; e vivu he lu di .
+|As they journeyed east , it happened, that they have found a plain in the land of Shinar; and they lived there.
+|-
+|Dihe lu uon a u atewuwu, "Veun , ni lajii a fewu le tihu , e li kombudzi entiwemehin." Havu lu la tihu po la petewu, e utilije lu la tawu po la motawuwu..
+|They said one to another, "Come, let's make bricks , and burn them thoroughly ." They had brick for stone, and they used the tar for the mortar.
+|-
+|Dihe lu , "Veun, ni lajii kondzuhiiji po nuo u uvowo, e u tuwehiji, sa kapihe awivuwu a la jehu, e ni lajii a fewu po nuo u novun; ejevuu ke divihe ti nu a utewuwu su la sufajiji de tohi la muhin."
+|They said, "Come, let's build us a city, and a tower , whose top reaches to the sky , and let's make us a name; lest we be scattered abroad on the surface of the whole earth."
+|-
+|Gehovau dedzehin a miwu la uvowo e la tuwehiji, ke le infahin de le hovun kondzuhiiji ha .
+|Yahweh came down to see the city and the tower , which the children of men had built .
+|-
+|Gehova dihe, "Atenjohin, dzeu lu u popuho, e havu lu tohi u lien ; e dzeu ji ke owiginahi lu a fewu. je-tevun nuho , ke intehin lu a fewu, wesidzi ti va ba luo .
+|Yahweh said, "Behold , they are one people, and they have all one language; and this is what they begin to do . Now nothing, which they intend to do , will be withheld from them.
+|-
+|Veun, ni lajii dedzehin, e di konfuji lo lien , da ne pohi lu kompehehijin la pawohu de u atewuwu."
+|Come, let's down , and there confuse their language, that they may not understand one another's speech ."
+|-
+|Da Gehovau li divihe a utewuwu de diu a la sufajiji de tohi la muhin. Wedzi lu a kondzuhiiji la uvowo.
+|So Yahweh scattered them abroad from there on the surface of all the earth. They stopped building the city.
+|-
+|Da sa novun apehuu ti ko Babehu, ba Gehovau konfuji la lien de tohi la muhin, diu . De diu , Gehovau li divihe a utewuwu su la sufajiji de tohi la muhin.
+|Therefore the name of it was called as Babel, because Yahweh confused the language of all the earth, there. From there, Yahweh scattered them abroad on the surface of all the earth.
+|}
+
+===Lord's prayer===
+
+{| border="1" cellpadding="1" cellspacing="1" class="wikitable article-table" style="width: 660px; text-align:left;"
+!Dodolingi
+!English
+|-
+|Titehu : Na Patewu
+|Title : Our Father
+|-
+|Na patewu i la jehu ,
+|Our fater in heaven,
+|-
+|sahin dze ta novun.
+|saint is your name.
+|-
+|Veun ta wegivun,
+|Come your kingdom,
+|-
+|fewu ti ta voluhin,
+|done your will ,
+|-
+|ko i la jehu e su tewuwu.
+|as in heaven and on earch.
+|-
+|Na pewi-dije paun tu doun je-dije .
+|Our everyday bread you give today .
+|-
+|Padowun tu na debihe,
+|Forgive you our debts,
+|-
+|ko padowun ha nu na debitowu.
+|as we have forgotten our debtors.
+|-
+|E tu ne ni dui entewu tembajoun ,
+|and you not us lead into tempation,
+|-
+|bo ni libewahi tu edzewuu de malien.
+|but you us liberate out of malign.
+|-
+|Ameun.
+|Amen.
+|}
+
+===Reflective introduction of Doudouling-2018===
+
+La intodujowun
+
+Le pinjipehuwu: a kompejiji le vevuwu de Latiun ehin le silabehuwu {K-V-N}
+
+La ideau de ma lien atifijahuwu dze a simpifihu le vevuwu de Latiun ehin la dzutuwoowo de u konsonahin obonahu ve u vovehu ve u {n} o {m} obonahu. Dzeu ho ke se pejin nu ke je dzutuwoowo dze la fo boun po a kanhin. E, devu go a pevehijin a inkejiji dza muhiji de le silabehuwu edzawuu. E, la dzibuwowo devu dze muhiji pojiji a la Afabehiji Fonetie Intenajonahuwu (IPA). E, la posijoun de ajehiin ne devu a impahii la semahin de la vevuwu.
+
+La faji uon mo: a simpifihu le konsonahin e le kombinajoun de konsonahin
+Fe simpifihu le konsonahin e le kombinajoun de konsonahin a le konsonahin infewu pe le weguho infewu.
+
+{b}	{p}	{ts}	{m}	{f}	{v}
+{d}	{t}	{dz}	{n}	{s}	{j}
+{g}	{k}		{h}	{w}	{l}
+
+Le weguho
+
+{sp} => {ts};
+{st} => {dz};
+{sc} {sk} => {dz} (via {sti-});
+{pt} => {b};
+{ph} => {f};
+{w} => {v};
+{th} => {t};
+{c} ([s]), {x} (i la owigiun de u vevuwu), {ch} ([ʃ]/[tʃ]), {ti} ([ʃ]) => {j};
+{j}, {y} => {g} (viau {gi-});
+{q}, {c} ([k]), {ch} ([k]) => {k};
+{r} => {w};
+
+Po mu kombinajoun kompieje, poun u {e} a li sepawahi, ko {partner} e {investment}.
+
+La faji duo mo: a simpifihu le vovehu e le ditoiin
+
+A simpifihu le vovehu e le ditoiin ko le weguho infewu.
+
+Le weguho
+
+{ao/oa} => {au} => {a};
+{ae/ea} => {ai} => {e};
+{ee} => {ei} => {i};
+{oo} => {ou} => {o};
+{oe/eo/eu} => {oi} => {u};
+
+A konvehiji {y} a {i}; e wemovu mu vovehu de impotajijin miun.
+
+La faji tiwu mo: a kompensahi le soun ke wemovu ti
+Si teun go sohu le dzutuwoowo {K-V-N} po pewu silabehuwu, ve fekehijin kajihi go mu pehiji gahijin de infomajowun e keahiji mu konfujoun. Da, kiwu nu a poun mu silabehuwu fagihuwu intewu la vovehu finahu e la nasahu finahu, po kompensahi le soun ke pehiji
+
+Le weguho
+
+A regahiji la {m} finahu ko {n} ve u {b} ke pehiji.
+Si nuho wemovu ti, e la vovehu finahu nei {u}, kompensahi {u}.
+Si nuho wemovu ti, e la vovehu finahu dze {u}, kompensahi {o}.
+Si mu fau wemovu ti, poun le sufijeee po kompensahi i la odewuwu wevejiji, sekehin la tabehu de weguho infewu.
+
+La sitajoun \ La soun pehiji	{d}/{t}	{g}/{k}	{s}/{z}	{b}/{p}/{v}/{f}	{r}	{l}	{i}/{u}	{h}/{-}	{dz}	{ts}
+La sufijeee uon mo, podzi {i}	{he}	{e}	{je}	{vu}	{wu}	{hu}	{fu}	{u}	{dzi}	{tsi}
+La sufijeee uon mo, podzi {a} {e} {o}	{hi}	{i}	{ji}	{vu}	{wu}	{hu}	{fu}	{u}	{dzi}	{tsi}
+La sufijeee uon mo, podzi {u}	{hi}	{i}	{ji}	{vo}	{wo}	{ho}	{fo}	{o}	{dzi}	{tsi}
+La sufijiee duo mo, podzi {e}	{e}	{e}	{e}	{e}	{je}	{je}	{he}			
+La sufijiee duo mo, podzi {i}	{i}	{i}	{i}	{i}	{ji}	{ji}	{hi}			
+La sufijiee duo mo, podzi {o}	{o}	{o}	{o}	{o}	{wo}	{wo}	{ho}			
+La sufijiee duo mo, podzi {u}	{u}	{u}	{u}	{u}	{wu}	{wu}	{hu}			
+
+Le esampehuu
+
+La koluvon uon mo dze la vevuwu de Latiun. La koluvon duo mo dze la dzutuwoowo {K-V-N} podzi la simpifikajohun. La koluvon tiwu mo dze le soun ke wemovu ti. La koluvon kawuu mo dze le vevuwu de Dodoliehehen podzi la kompensajoun.
+
+Le esampehuu
+
+Latin	CVN	Dropped	Doudouling
+state	dza	t	dzahi
+sper	tse	r	tsewu
+sport	tso	r t	tsohiji
+science	dzien	j	dziejin
+photo	foto		fotou
+wagon	vagon		vagoun
+cent	jen	t	jehin
+center	jente	r	jentewu
+aqu	a	k	ai
+aquatic	akati	k	akatie
+question	kedzon		kedzoun
+tank	tan	k	tain
+xerox	jewo	k s	jewojii
+chocolate	jokola	t	jokolahi
+just	gu	dz	gudzi
+adoption	adobon		adoboun
+train	ten	r i	tefuwun
+tract	ta	r k t	tahiiji
+create	kea	r t	keahiji
+glad	ga	l d	gahiji
+class	ka	l s	kajiji
+cause	ka	u s	kajihi
+daemon	demon	i	demofun
+coffee	kofi	f i	kofifuu
+moustache	modza	u j	modzajihi
+phoenix	funi	i k s	funijeehe
+phoenician	funijan	i	funijafun
+europe	uwo	i p	uwovuhu
+return	wetun	r	wetuwon
+depart	depa	r t	depahiji
+alt	a	l t	ahiji
+art	a	r t	ahiji
+arts	a	r t s	ajiiji
+culture	kutu	r l	kutuwowo
+court	ko	u r t	kohijihi
+cant	kan	t	kahin
+simple	simpe	l	simpehu
+hom	hon	b	hovun
+autumn	atun	u b	atuvohon
+environment	enviwommen	t	enviwommehin
+fact	fa	k t	fahii
+experiment	etsewimen	k t	etsewimehiin
+sign	sin	g	sien
+dogmatic	domati	g k	domatiee
+construct	kondzu	r k t	kondzuhiiji
+verb	ve	r b	vevuwu
+partner	patene	r	patenewu
+investment	invedzemen	t	invedzemehin
+continue	kontinu		kontinuo
+Doudouling	dodolin	u u g	Dodoliehehen
+data	data		datau
+exact	esa	k k t	esahiii
+slave	sa	l v	savuwu
+salv	sa	l v	savuwu
+next	ne	k dz	nedzii
+
+La selejoin de vevuwu
+
+Le vevuwu de Latiun ke utilije nu dze de le wadijee de Latiun ke apewuhuu i Engijeje.
+
+La ajehiin
+
+La ajehiin dze su la vovehu la fo dedzewuu ke nei la sivun ko la vovehu finahu.
+
+La jentewu de u fajiji
+
+Du la vevuwu jentewahu de u fajiji dze u vevuwu de silabehuwu singulawu, sa soun nei fohiji sufijehiin.
+Po fewu ke sa soun dze tse boun ve fonetie, poun nu u {u} o {o} podzi la vovehu de la vevuwu jentewahu.
+Le esampehuu {with me} => {ve mi} => {ve miu}; {who is he} => {ki dze go} => {ke dzeu go}; {for this} => {po ji} => {po jiu}; {the two} => {la du} => {la duo};
