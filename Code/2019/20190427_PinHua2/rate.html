@@ -1,0 +1,426 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script src="prepare.js">
+</script>
+<script>
+var precision = 6;
+var sample = "大话西游经典台词"
+	+ "曾经有一份真挚的感情摆在我的面前我没有珍惜，等我失去的时候才追悔莫及，人间最痛苦的事莫过于此，你的剑在我的咽喉上刺下去吧，不用在犹豫了！如果上天能给我一次再来一次的机会，我会对哪个女孩说三个字：我爱你，如果非要在这份爱上加一个期限，我希望是一万年！"
+	+ "紫霞仙子：我的意中人是个盖世英雄，有一天他会踩着七色云彩来娶我，我只猜中了前头，可是我却猜不中这结局……";
+function summarize(maxConflictInfos) {
+	var output = "";
+	for (var row = 0 ;row < maxConflictInfos.length; row++) {
+		var entry = maxConflictInfos[row];
+		output += " " + entry.e + ":";
+		var characterList = entry.c;
+		for (var index = 0; index < characterList.length; index++) {
+			output += characterList[index].g;
+		}
+	}
+	return output;
+}
+var staticUseFull = false;
+function dictMake(dictionary, key, creater) {
+	var found = dictionary[key];
+	if (found) {
+		return found;
+	}
+	var created = creater();
+	dictionary[key] = created;
+	return created;
+}
+function once(
+		logOutputs,
+		rateOutputs,
+		sampleOutputs,
+		name,
+		characterToEncode,
+		mapOutputs,
+		imeOutputs,
+		tableOutputs,
+		suffixOutputs,
+		characterToExplain) {
+	if (!mapOutputs && !staticUseFull) {
+		return;
+	}
+	rateOutputs.push("____");
+	rateOutputs.push("Name: " + name);
+	var glyphToEncode = {};
+	for (var level = 1; level <= 3; level++) {
+		var encodeToInfo = {};
+		for (var index = 0; index < data_prepared.length; index++) {
+			var character = data_prepared[index];
+			if (character.l > level) {
+				continue;
+			}
+			var encode = characterToEncode(character);
+			if (level == 3) {
+				glyphToEncode[character.g] = encode;
+			}
+			var info = encodeToInfo[encode];
+			if (!info) {
+				encodeToInfo[encode] = {
+					// encode
+					e: encode,
+					// characters
+					c: [
+						character
+					]
+				};
+				continue;
+			}
+			info.c.push(character);
+		}
+		var characterCount = 0;
+		var encodeCount = 0;
+		var conflictEncodeCount = 0;
+		var maxConflict = 0;
+		var maxConflictInfos = [];
+		for (var encode in encodeToInfo) {
+			if (!encodeToInfo.hasOwnProperty(encode)) {
+				continue;
+			}
+			var info = encodeToInfo[encode];
+			characterCount += info.c.length;
+			encodeCount++;
+			var conflict = info.c.length - 1;
+			if (conflict == 0) {
+				continue;
+			}
+			conflictEncodeCount++;
+			if (conflict < maxConflict) {
+				continue;
+			}
+			if (conflict == maxConflict) {
+				maxConflictInfos.push(info);
+				continue;
+			}
+			maxConflict = conflict;
+			maxConflictInfos = [info];
+		}
+		var averageConflict = characterCount / encodeCount - 1;
+		var conflictEncodeRate = conflictEncodeCount / encodeCount;
+		rateOutputs.push("Level: "
+			+ level
+			+ " chr="
+			+ characterCount
+			+ " enc="
+			+ encodeCount
+			+ " avg="
+			+ averageConflict.toPrecision(precision)
+			+ " cec="
+			+ conflictEncodeCount
+			+ " cer="
+			+ conflictEncodeRate.toPrecision(precision)
+			+ " max="
+			+ maxConflict
+			+ summarize(maxConflictInfos));
+		logOutputs.push("Level: "
+			+ level
+			+ " character="
+			+ characterCount
+			+ " encode="
+			+ encodeCount
+			+ " averageConflict="
+			+ averageConflict
+			+ " conflictEncodeCount="
+			+ conflictEncodeCount
+			+ " conflictEncodeRate="
+			+ conflictEncodeRate
+			+ " maxConflict="
+			+ maxConflict
+			+ " maxConflictInfos="
+			+ JSON.stringify(maxConflictInfos));
+	}
+	sampleOutputs.push("____");
+	sampleOutputs.push("Name: " + name);
+	var converted = "";
+	for (var position = 0; position < sample.length; position++) {
+		var glyph = sample.charAt(position);
+		if (glyph == "\r" || glyph == "\n") {
+			converted += glyph;
+			continue;
+		}
+		var encode = glyphToEncode[glyph];
+		if (!encode) {
+			converted += glyph + " ";
+			continue;
+		}
+		converted += encode + " ";
+		if (converted.length < 100) {
+			continue;
+		}
+		sampleOutputs.push(converted);
+		converted = "";
+	}
+	sampleOutputs.push(converted);
+	if (mapOutputs) {
+		// map
+		mapOutputs.push("var map = {\"\":[\"\",\"\"]");
+		var suffixToEncodeToLine = {};
+		for (var index = 0; index < data_prepared.length; index++) {
+			// map
+			var character = data_prepared[index];
+			var encode = glyphToEncode[character.g];
+			var explain = characterToExplain(character);
+			var info = encodeToInfo[encode];
+			var levelToSegment = ["", "", "", ""];
+			for (var peer = 0; peer < info.c.length; peer++) {
+				var peerCharacter = info.c[peer];
+				levelToSegment[peerCharacter.l] += peerCharacter.g;
+			}
+			var detail = explain + levelToSegment.join(".");
+			mapOutputs.push(",\"" + character.g + "\":" + JSON.stringify([encode, detail]));
+			// table
+			tableOutputs.push(character.g + "," + encode + "," + detail);
+			// suffix
+			if (levelToSegment[1] == "") {
+				continue;
+			}
+			var suffix = encode.substr(encode.length - 1, 1) + character.t;
+			var encodeToLine = dictMake(suffixToEncodeToLine, suffix, function() { return {}; });
+			dictMake(encodeToLine, encode, function() { return character.b + "," + levelToSegment[1]; });
+		}
+		// map
+		mapOutputs.push("};");
+		// suffix
+		for (var suffix in suffixToEncodeToLine) {
+			if (!suffixToEncodeToLine.hasOwnProperty(suffix)) {
+				continue;
+			}
+			var builder = suffix;
+			var encodeToLine = suffixToEncodeToLine[suffix];
+			for (var encode in encodeToLine) {
+				if (!encodeToLine.hasOwnProperty(encode)) {
+					continue;
+				}
+				var line = encodeToLine[encode];
+				builder += " " + line;
+			}
+			suffixOutputs.push(builder);
+		}
+		suffixOutputs.sort();
+		// ime
+		imeOutputs.push("var ime = {\"\":\"\"");
+		for (var encode in encodeToInfo) {
+			if (!encodeToInfo.hasOwnProperty(encode)) {
+				continue;
+			}
+			var info = encodeToInfo[encode];
+			if (info.c.length == 1) {
+				imeOutputs.push(",\"" + encode + "\":\"" + info.c[0].g + "\"");
+				continue;
+			}
+			var conflicts = "";
+			for (var index = 1; index < info.c.length; index++) {
+				conflicts += info.c[index].g;
+			}
+			imeOutputs.push(",\"" + encode + "\":\"" + info.c[0].g + "(" + conflicts + ")\"");
+			for (var index = 0; index < info.c.length; index++) {
+				imeOutputs.push(",\"" + encode + index + "\":\"" + info.c[index].g + "\"");
+			}
+		}
+		imeOutputs.push("};");
+	}
+}
+function select(writes, head, tail) {
+	var lengthMinusTail = writes.length - tail;
+	var selected = "";
+	for (var index = 0; index < writes.length; index++) {
+		if (index < head || lengthMinusTail <= index) {
+			selected += writes.charAt(index);
+		}
+	}
+	return selected;
+}
+var writesToLetter = {
+	"--"   : "g", "-|"   : "f", "-/"   : "d", "-\\"  : "s", "-~"   : "a", "- "   : "g",
+	"|-"   : "h", "||"   : "j", "|/"   : "k", "|\\"  : "l", "|~"   : "m", "| "   : "h",
+	"/-"   : "t", "/|"   : "r", "//"   : "e", "/\\"  : "w", "/~"   : "q", "/ "   : "t",
+	"\\-"  : "y", "\\|"  : "u", "\\/"  : "i", "\\\\" : "o", "\\~"  : "p", "\\ "  : "y",
+	"~-"   : "n", "~|"   : "b", "~/"   : "v", "~\\"  : "c", "~~"   : "x", "~ "   : "n",
+	"  "   : "z"
+};
+function letter(character) {
+	var selected = select(character.v, 2, 0);
+	var basic = character.b;
+	var toned;
+	switch (character.t) {
+		case "1": {
+			toned = basic;
+			break;
+		}
+		case "2": {
+			toned = "aeiou".indexOf(basic[0]) < 0 ? basic[0] + basic : "vv" + basic;
+			break;
+		}
+		case "3": {
+			var firstAeo = -1;
+			var lastIu = -1;
+			for (var index = 0; index < basic.length; index++) {
+				var ch = basic[index];
+				if (firstAeo < 0 && (ch == 'a' || ch == 'e' || ch == 'o')) {
+					firstAeo = index;
+					break;
+				}
+				if (ch == 'i' || ch == 'u') {
+					lastIu = index;
+				}
+			}
+			if (firstAeo >= 0) {
+				toned = basic.substring(0, firstAeo) + basic[firstAeo] + basic.substring(firstAeo);
+				break;
+			}
+			if (lastIu >= 0) {
+				toned = basic.substring(0, lastIu) + basic[lastIu] + basic.substring(lastIu);
+				break;
+			}
+			alert("Fail at letter for basic=" + basic + " tone=" + tone);
+			break;
+		}
+		case "4": {
+			var lastVowel = -1;
+			for (var index = 0; index < basic.length; index++) {
+				var ch = basic[index];
+				if (ch == 'a' || ch == 'e' || ch == 'o' || ch == 'i' || ch == 'u') {
+					lastVowel = index;
+				}
+			}
+			if (lastVowel >= 0) {
+				toned = basic.substring(0, lastVowel + 1) + "h" + basic.substring(lastVowel + 1);
+				break;
+			}
+			alert("Fail at letter for basic=" + basic + " tone=" + tone);
+			break;
+		}
+		case "5": {
+			var lastVowel = -1;
+			for (var index = 0; index < basic.length; index++) {
+				var ch = basic[index];
+				if (ch == 'a' || ch == 'e' || ch == 'o' || ch == 'i' || ch == 'u') {
+					lastVowel = index;
+				}
+			}
+			if (lastVowel >= 0) {
+				toned = basic.substring(0, lastVowel + 1) + "hh" + basic.substring(lastVowel + 1);
+				break;
+			}
+			alert("Fail at letter for basic=" + basic + " tone=" + tone);
+			break;
+		}
+		default: {
+			alert("Fail at letter for basic=" + basic + " tone=" + tone);
+			break;
+		}
+	}
+	var letters = "";
+	{
+		var one = 0;
+		var two = 1;
+		letters = writesToLetter[(one < selected.length ? selected.charAt(one) : " ") + (two < selected.length ? selected.charAt(two) : " ")];
+	}
+	return toned + letters;
+}
+function init() {
+	var logOutputs = [];
+	logOutputs.push("data_prepared.length=" + data_prepared.length);
+
+	var rateOutputs = [];
+	var sampleOutputs = [];
+	var mapOutputs = [];
+	var imeOutputs = [];
+	var tableOutputs = [];
+	var suffixOutputs = [];
+
+	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, no stroke"     , function(character) { return character.b; });
+	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, head 1"        , function(character) { return character.b + select(character.v, 1, 0); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, head 2"        , function(character) { return character.b + select(character.v, 2, 0); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, head 1 tail 1" , function(character) { return character.b + select(character.v, 1, 1); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, head 3"        , function(character) { return character.b + select(character.v, 3, 0); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, head 2, tail 1", function(character) { return character.b + select(character.v, 2, 1); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, head 4"        , function(character) { return character.b + select(character.v, 4, 0); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, head 3, tail 1", function(character) { return character.b + select(character.v, 3, 1); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, head 2, tail 2", function(character) { return character.b + select(character.v, 2, 2); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, head 5"        , function(character) { return character.b + select(character.v, 5, 0); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, head 4, tail 1", function(character) { return character.b + select(character.v, 4, 1); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, head 3, tail 2", function(character) { return character.b + select(character.v, 3, 2); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "No tone, full stroke"   , function(character) { return character.b + character.v; });
+	// once(logOutputs, rateOutputs, sampleOutputs, "Tone, no stroke"        , function(character) { return character.b + character.t; });
+	// once(logOutputs, rateOutputs, sampleOutputs, "Tone, head 1"           , function(character) { return character.b + character.t + select(character.v, 1, 0); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "Tone, head 2"           , function(character) { return character.b + character.t + select(character.v, 2, 0); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "Tone, head 1 tail 1"    , function(character) { return character.b + character.t + select(character.v, 1, 1); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "Tone, head 3"           , function(character) { return character.b + character.t + select(character.v, 3, 0); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "Tone, head 2, tail 1"   , function(character) { return character.b + character.t + select(character.v, 2, 1); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "Tone, head 4"           , function(character) { return character.b + character.t + select(character.v, 4, 0); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "Tone, head 3, tail 1"   , function(character) { return character.b + character.t + select(character.v, 3, 1); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "Tone, head 2, tail 2"   , function(character) { return character.b + character.t + select(character.v, 2, 2); });
+	// once(logOutputs, rateOutputs, sampleOutputs, "Tone, full stroke"      , function(character) { return character.b + character.t + character.v; });
+
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 0, No tone, no stroke"     , function(character) { return character.b; });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 1, No tone, head 1"        , function(character) { return character.b + select(character.v, 1, 0); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 1, Tone, no stroke"        , function(character) { return character.b + character.t; });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 2, No tone, head 2"        , function(character) { return character.b + select(character.v, 2, 0); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 2, No tone, head 1 tail 1" , function(character) { return character.b + select(character.v, 1, 1); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 2, Tone, head 1"           , function(character) { return character.b + character.t + select(character.v, 1, 0); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 3, No tone, head 3"        , function(character) { return character.b + select(character.v, 3, 0); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 3, No tone, head 2, tail 1", function(character) { return character.b + select(character.v, 2, 1); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 3, Tone, head 2"           , function(character) { return letter(character); }, mapOutputs, imeOutputs, tableOutputs, suffixOutputs, function(character) { return character.t + select(character.v, 2, 0); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 3, Tone, head 1 tail 1"    , function(character) { return character.b + character.t + select(character.v, 1, 1); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, No tone, head 4"        , function(character) { return character.b + select(character.v, 4, 0); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, No tone, head 4, letter", function(character) { return character.b + select(character.v, 4, 0, 2); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, No tone, head 3, tail 1", function(character) { return character.b + select(character.v, 3, 1); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, No tone, head 2, tail 2", function(character) { return character.b + select(character.v, 2, 2); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, Tone, head 3"           , function(character) { return character.b + character.t + select(character.v, 3, 0); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 4, Tone, head 2, tail 1"   , function(character) { return character.b + character.t + select(character.v, 2, 1); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, No tone, head 5"        , function(character) { return character.b + select(character.v, 5, 0); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, No tone, head 4, tail 1", function(character) { return character.b + select(character.v, 4, 1); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, No tone, head 3, tail 2", function(character) { return character.b + select(character.v, 3, 2); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, Tone, head 4"           , function(character) { return character.b + character.t + select(character.v, 4, 0); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, Tone, head 3, tail 1"   , function(character) { return character.b + character.t + select(character.v, 3, 1); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra 5, Tone, head 2, tail 2"   , function(character) { return character.b + character.t + select(character.v, 2, 2); });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra A, No tone, full stroke"   , function(character) { return character.b + character.v; });
+	once(logOutputs, rateOutputs, sampleOutputs, "Extra B, Tone, full stroke"      , function(character) { return character.b + character.t + character.v; });
+
+	document.getElementById("rate").value = rateOutputs.join("\r\n");
+	document.getElementById("log").value = logOutputs.join("\r\n");
+	document.getElementById("sample").value = sampleOutputs.join("\r\n");
+	document.getElementById("map").value = mapOutputs.join("\r\n");
+	document.getElementById("ime").value = imeOutputs.join("\r\n");
+	document.getElementById("table").value = tableOutputs.join("\r\n");
+	document.getElementById("suffix").value = suffixOutputs.join("\r\n");
+}
+function goFull() {
+	staticUseFull = true;
+	init();
+}
+</script>
+<body style="font-family: Courier; font-size: 24px;" onload="init()">
+<input type="button" value="Full" onclick="goFull()"/>
+<br/>
+<div>To rate.txt</div>
+<textarea id="rate" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<br/>
+<div>Log</div>
+<textarea id="log" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<div>To sample.txt</div>
+<textarea id="sample" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<div>To map.js</div>
+<textarea id="map" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<div>To ime.js</div>
+<textarea id="ime" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<div>To table.txt</div>
+<textarea id="table" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<div>To suffix.txt</div>
+<textarea id="suffix" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+</textarea>
+<br/>
+</body>
+</html>
