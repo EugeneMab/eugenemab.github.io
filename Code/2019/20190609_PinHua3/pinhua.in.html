@@ -1,0 +1,51 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script src="ime.js">
+</script>
+<script>
+function convert() {
+	var src = document.getElementById("src").value;
+	var tgt = "";
+	var lines = src.split('\n');
+	for (var row = 0; row < lines.length; row++) {
+		var items = lines[row].split(' ');
+		for (var pos = 0; pos < items.length; pos++) {
+			var item = items[pos];
+			var mapped = ime[item];
+			if (!mapped) {
+				tgt += ' ' + item;
+				continue;
+			}
+			tgt += mapped;
+		}
+		tgt += '\n';
+	}
+	document.getElementById("tgt").innerHTML = tgt;
+}
+function init() {
+	convert();
+	var srcElem = document.getElementById("src");
+	if (srcElem.addEventListener) {
+		srcElem.addEventListener("input", function() { convert(); }, false);
+	} else if (srcElem.attachEvent) {
+		srcElem.attachEvent("onpropertychange", function() { convert(); });
+	}
+}
+</script>
+<body style="font-family: Courier; font-size: 24px;" onload="init()">
+<textarea id="src" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+
+woyowoo niyilii tayala taraya tahaha0 
+yiwi eweweehr0 sawawan siliriih0 wuwuluu0 lihiwiuuh qiwiri0 bayaha0 jiyiriuu0 shiwilih0
+bawayaai qiyiwian0 wawaraahn 
+
+</textarea>
+<br/>
+<textarea id="tgt" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+
+
+</textarea>
+</body>
+</html>
