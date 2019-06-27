@@ -182,8 +182,11 @@ function once(
 			/*
 			var suffix = select(character.v, 2, 0) + character.t;
 			*/
+			/*
 			var firstVowel = locateFirstVowel(encode);
 			var suffix = encode.substr(firstVowel, 2);
+			*/
+			var suffix = select(character.v, 2, 0) + character.t;
 			var encodeToLine = dictMake(suffixToEncodeToLine, suffix, function() { return {}; });
 			dictMake(encodeToLine, encode, function() { return character.b + "," + levelToSegment[1]; });
 		}
@@ -242,10 +245,10 @@ function select(writes, head, tail) {
 /*
 var writeToLetter = {
 	"-"  : "w",
-  "|"  : "l",
-  "/"  : "y",
-  "\\" : "h",
-  "~"  : "r"
+	"|"  : "l",
+	"/"  : "y",
+	"\\" : "h",
+	"~"  : "r"
 };
 */
 function locateFirstVowel(input) {
@@ -270,7 +273,7 @@ function locateMainVowel(input) {
 		}
 	}
 	if (lastIu >= 0) {
-    return lastIu;
+		 return lastIu;
 	}
 	alert("Fail at locateMainVowel for input=" + input);
 	return -1;
@@ -284,8 +287,8 @@ function locateLastVowel(input) {
 		}
 	}
 	if (lastVowel >= 0) {
-    return lastVowel;
-  }
+		return lastVowel;
+	}
 	alert("Fail at locateLastVowel for input=" + input);
 	return -1;
 }
@@ -293,7 +296,7 @@ function locateLastVowel(input) {
 function letter(character) {
 	var selected = select(character.v, 2, 0);
 	var basic = character.b;
-  basic = basic == "ng" ? "eng" : basic == "hng" ? "heng" : basic;
+	basic = basic == "ng" ? "eng" : basic == "hng" ? "heng" : basic;
 	var toned;
 	switch (character.t) {
 		case "1": {
@@ -301,23 +304,23 @@ function letter(character) {
 			break;
 		}
 		case "2": {
-      var locationLastVowel = locateLastVowel(basic);
+			var locationLastVowel = locateLastVowel(basic);
 			toned = basic.substring(0, locationLastVowel + 1) + "h" + basic.substring(locationLastVowel + 1);
 			break;
 		}
 		case "3": {
-      var locationMainVowel = locateMainVowel(basic);
+			var locationMainVowel = locateMainVowel(basic);
 			toned = basic.substring(0, locationMainVowel) + basic[locationMainVowel] + basic.substring(locationMainVowel);
 			break;
 		}
 		case "4": {
-      var locationMainVowel = locateMainVowel(basic);
-      var locationLastVowel = locateLastVowel(basic);
+			var locationMainVowel = locateMainVowel(basic);
+			var locationLastVowel = locateLastVowel(basic);
 			toned = basic.substring(0, locationMainVowel) + basic[locationMainVowel] + basic.substring(locationMainVowel, locationLastVowel + 1) + "h" + basic.substring(locationLastVowel + 1);
 			break;
 		}
 		case "5": {
-      var locationLastVowel = locateLastVowel(basic);
+			var locationLastVowel = locateLastVowel(basic);
 			toned = basic.substring(0, locationLastVowel + 1) + "hh" + basic.substring(locationLastVowel + 1);
 			break;
 		}
@@ -326,14 +329,15 @@ function letter(character) {
 			break;
 		}
 	}
-  var locationFirstVowel = locateFirstVowel(toned);
-  var firstVowel = toned[locationFirstVowel];
-  if (selected.length == 1) {
-    return toned.substring(0, locationFirstVowel) + firstVowel + writeToLetter[selected.charAt(0)] + toned.substring(locationFirstVowel);
-  }
-    return toned.substring(0, locationFirstVowel) + firstVowel + writeToLetter[selected.charAt(0)] + firstVowel + writeToLetter[selected.charAt(1)] + toned.substring(locationFirstVowel);
+	var locationFirstVowel = locateFirstVowel(toned);
+	var firstVowel = toned[locationFirstVowel];
+	if (selected.length == 1) {
+		return toned.substring(0, locationFirstVowel) + firstVowel + writeToLetter[selected.charAt(0)] + toned.substring(locationFirstVowel);
+	}
+		return toned.substring(0, locationFirstVowel) + firstVowel + writeToLetter[selected.charAt(0)] + firstVowel + writeToLetter[selected.charAt(1)] + toned.substring(locationFirstVowel);
 }
 */
+/*
 var writesToLetter = {
 	"--"   : "g", "-|"   : "f", "-/"   : "d", "-\\"  : "s", "-~"   : "a", "- "   : "g",
 	"|-"   : "h", "||"   : "j", "|/"   : "k", "|\\"  : "l", "|~"   : "m", "| "   : "h",
@@ -343,25 +347,94 @@ var writesToLetter = {
 	"  "   : "z"
 };
 var toneToLetter = {
-  "1":"e",
-  "2":"a",
-  "3":"o",
-  "4":"u",
-  "5":"i"
+	"1":"e",
+	"2":"a",
+	"3":"o",
+	"4":"u",
+	"5":"i"
 };
 function letter(character) {
 	var selected = select(character.v, 2, 0);
 	var basic = character.b;
 	basic = basic == "ng" ? "eng" : basic == "hng" ? "heng" : basic;
-  var toneLetter = toneToLetter[character.t];
+	var toneLetter = toneToLetter[character.t];
 	var writeLetter = "";
 	{
 		var one = 0;
 		var two = 1;
 		writeLetter = writesToLetter[(one < selected.length ? selected.charAt(one) : " ") + (two < selected.length ? selected.charAt(two) : " ")];
 	}
-  var locationFirstVowel = locateFirstVowel(basic);
+	var locationFirstVowel = locateFirstVowel(basic);
 	return basic.substring(0, locationFirstVowel) + toneLetter + writeLetter + basic.substring(locationFirstVowel);
+}
+*/
+var toneToLetter = {
+	"1":"",
+	"2":"z",
+	"3":"v",
+	"4":"s",
+	"5":"x"
+};
+/*
+var vowelTypeWriteToLetter = {
+	"i-"	: "",
+	"i|"	: "r",
+	"i/"	: "y",
+	"i\\" : "h",
+	"i~"	: "ng",
+	"u-"	: "",
+	"u|"	: "v",
+	"u/"	: "w",
+	"u\\" : "h",
+	"u~"	: "ng"
+};
+*/
+/*
+var vowelTypeWriteToLetter = {
+	"i-"	: "",
+	"i|"	: "h",
+	"i/"	: "y",
+	"i\\" : "hh",
+	"i~"	: "r",
+	"u-"	: "",
+	"u|"	: "h",
+	"u/"	: "w",
+	"u\\" : "hh",
+	"u~"	: "v"
+};
+*/
+var vowelTypeWriteToLetter = {
+	"i-"	: "h",
+	"i|"	: "hh",
+	"i/"	: "y",
+	"i\\" : "yy",
+	"i~"	: "",
+	"u-"	: "h",
+	"u|"	: "hh",
+	"u/"	: "w",
+	"u\\" : "ww",
+	"u~"	: ""
+};
+function letter(character) {
+	var selected = select(character.v, 2, 0);
+	var basic = character.b;
+	basic = basic == "ng" ? "eng" : basic == "hng" ? "heng" : basic;
+	var toned = basic + toneToLetter[character.t];
+	var locationFirstVowel = locateFirstVowel(toned);
+	var firstVowel = toned[locationFirstVowel];
+	var vowelType = firstVowel == "i" || firstVowel == "e" ? "i" : "u";
+	if (selected.length == 1) {
+		return toned.substring(0, locationFirstVowel)
+			+ firstVowel
+			+ vowelTypeWriteToLetter[vowelType + selected.charAt(0)]
+			+ toned.substring(locationFirstVowel);
+	}
+	return toned.substring(0, locationFirstVowel)
+		+ firstVowel
+		+ vowelTypeWriteToLetter[vowelType + selected.charAt(0)]
+		+ firstVowel
+		+ vowelTypeWriteToLetter[vowelType + selected.charAt(1)]
+		+ toned.substring(locationFirstVowel);
 }
 function init() {
 	var logOutputs = [];
