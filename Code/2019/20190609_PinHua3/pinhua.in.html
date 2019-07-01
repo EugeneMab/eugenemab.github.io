@@ -14,11 +14,16 @@ function convert() {
 		for (var pos = 0; pos < items.length; pos++) {
 			var item = items[pos];
 			var mapped = ime[item];
-			if (!mapped) {
-				tgt += ' ' + item;
+			var primary = ime[item + "0"];
+			if (primary) {
+				tgt += primary;
 				continue;
 			}
-			tgt += mapped;
+			if (mapped) {
+				tgt += mapped;
+				continue;
+			}
+			tgt += ' ' + item;
 		}
 		tgt += '\n';
 	}
@@ -37,9 +42,8 @@ function init() {
 <body style="font-family: Courier; font-size: 24px;" onload="init()">
 <textarea id="src" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
 
-wowoov niyihiv tawaha towawa tohoha0 
-yii eeers0 saaan siheyis0 wuuhuv0 lehiius qieyi0 bawoha0 jiyeyiuv0 shiihiz0
-baawaiv qiyiian0 waowans
+waeov naiiv taia toaa tuua 
+yewi eeers seean siois weiuv lueius qeoi baua jaoiuv sheiiz beaaiv qaeian weoans
 
 </textarea>
 <br/>
