@@ -403,6 +403,7 @@ var vowelTypeWriteToLetter = {
 	"u~"	: "v"
 };
 */
+/*
 var vowelTypeWriteToLetter = {
 	"i-"	: "h",
 	"i|"	: "hh",
@@ -434,6 +435,31 @@ function letter(character) {
 		+ vowelTypeWriteToLetter[vowelType + selected.charAt(0)]
 		+ firstVowel
 		+ vowelTypeWriteToLetter[vowelType + selected.charAt(1)]
+		+ toned.substring(locationFirstVowel);
+}
+*/
+var vowelWritelToLetter = {
+	"a-"  : "a" , "e-"  : "e" , "i-"  : "i" , "o-"  : "o" , "u-"  : "u" ,
+	"a|"  : "ah", "e|"  : "eh", "i|"  : "ih", "o|"  : "oh", "u|"  : "uh",
+	"a/"  : "aw", "e/"  : "ey", "i/"  : "iy", "o/"  : "ow", "u/"  : "uw",
+	"a\\" : "oh", "e\\" : "ih", "i\\" : "eh", "o\\" : "uh", "u\\" : "oh",
+	"a~"  : "ow", "e~"  : "iy", "i~"  : "ey", "o~"  : "uw", "u~"  : "ow"
+};
+function letter(character) {
+	var selected = select(character.v, 2, 0);
+	var basic = character.b;
+	basic = basic == "ng" ? "eng" : basic == "hng" ? "heng" : basic;
+	var toned = basic + toneToLetter[character.t];
+	var locationFirstVowel = locateFirstVowel(toned);
+	var firstVowel = toned[locationFirstVowel];
+	if (selected.length == 1) {
+		return toned.substring(0, locationFirstVowel)
+			+ vowelWritelToLetter[firstVowel + selected.charAt(0)]
+			+ toned.substring(locationFirstVowel);
+	}
+	return toned.substring(0, locationFirstVowel)
+		+ vowelWritelToLetter[firstVowel + selected.charAt(0)]
+		+ vowelWritelToLetter[firstVowel + selected.charAt(1)]
 		+ toned.substring(locationFirstVowel);
 }
 function init() {
