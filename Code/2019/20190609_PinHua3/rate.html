@@ -186,7 +186,17 @@ function once(
 			var firstVowel = locateFirstVowel(encode);
 			var suffix = encode.substr(firstVowel, 2);
 			*/
+			/*
 			var suffix = select(character.v, 2, 0) + character.t;
+			*/
+			var selected = select(character.v, 2, 0);
+			var suffix = selected
+				+ character.t
+				+ " "
+				+ writelToLetter[selected.charAt(0)]
+				+ (selected.length == 1 ? "w" : writelToLetter[selected.charAt(1)])
+				+ toneToLetter[character.t];
+			//
 			var encodeToLine = dictMake(suffixToEncodeToLine, suffix, function() { return {}; });
 			dictMake(encodeToLine, encode, function() { return character.b + "," + levelToSegment[1]; });
 		}
