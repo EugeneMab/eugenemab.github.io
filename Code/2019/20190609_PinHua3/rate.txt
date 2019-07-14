@@ -1,5 +1,5 @@
 ____
 Name: Extra 3, Tone, head 2
-Level: 1 chr=3755 enc=3056 avg=0.228730 cec=526 cer=0.172120 max=7 sheiis:事世士势誓逝拭柿
-Level: 2 chr=6696 enc=4680 avg=0.430769 cec=1248 cer=0.266667 max=10 leiis:丽莉吏栗荔栎莅郦枥苈坜
-Level: 3 chr=9901 enc=5778 avg=0.713569 cec=2192 cer=0.379370 max=16 leiis:丽莉吏栗荔栎莅郦枥苈坜麗隸蒞苙藶赲
+Level: 1 chr=3755 enc=3055 avg=0.229133 cec=527 cer=0.172504 max=7 seihis:事世士势誓逝拭柿
+Level: 2 chr=6696 enc=4679 avg=0.431075 cec=1249 cer=0.266937 max=10 leiis:丽莉吏栗荔栎莅郦枥苈坜
+Level: 3 chr=9901 enc=5777 avg=0.713865 cec=2193 cer=0.379609 max=16 leiis:丽莉吏栗荔栎莅郦枥苈坜麗隸蒞苙藶赲
