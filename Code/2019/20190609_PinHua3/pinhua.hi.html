@@ -3,13 +3,21 @@
 <meta charset="utf-8"/>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 <style>
-	old_body, old_textarea {
+	.green {
 		background-color: #c7edcc;
 		color: #000000;
 	}
-	body, textarea {
+	.black {
 		background-color: #000000;
 		color: #00cc00;
+	}
+	.white {
+		background-color: #ffffff;
+		color: #ff33ff;
+	}
+	.button {
+		width: 25%;
+		height: 20%;
 	}
 </style>
 <script src="map.js">
@@ -112,6 +120,12 @@ function t(element, code) {
 	var detail = mapped[1];
 	element.innerHTML = text + prev + "(" + detail + ")";
 }
+function goStyle(className) {
+	document.body.className = className;
+	document.getElementById("tra").className = className;
+	document.getElementById("src").className = className;
+	document.getElementById("tgt").className = className;
+}
 function goDemo() {
 	var src = document.getElementById("src");
 	var demo = document.getElementById("demo");
@@ -160,16 +174,20 @@ function goSimplify() {
 	convert();
 }
 </script>
-<body style="font-family: Courier; font-size: 24px;" onload="init()">
-<input type="button" value="Simplify" onclick="goSimplify()" style="width: 25%;" />
-<input type="button" value="Demo" onclick="goDemo()" style="width: 25%;"/>
-<input type="button" value="Clear" onclick="goClear()" style="width: 25%;"/>
+<body class="black" style="font-family: Courier; font-size: 24px;" onload="init()">
+<input type="button" value="Green" onclick="goStyle('green')" class="button" />
+<input type="button" value="Black" onclick="goStyle('black')" class="button" />
+<input type="button" value="White" onclick="goStyle('white')" class="button" />
+<br/>
+<input type="button" value="Simplify" onclick="goSimplify()" class="button" />
+<input type="button" value="Demo" onclick="goDemo()" class="button" />
+<input type="button" value="Clear" onclick="goClear()" class="button" />
 <br/>
 Traditional:
-<textarea id="tra" cols="180" rows="12" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+<textarea class="black" id="tra" cols="180" rows="12" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
 </textarea>
 <br/>
-<textarea id="demo" cols="180" rows="25" style="display: none;">
+<textarea class="black" id="demo" cols="180" rows="25" style="display: none;">
 我你他她它
 一二三四五六七八九十百千万 ;半边 
 的 一 是 不 了 在 人 有 我 他 这 个 们 中 来 上 大 为 和 国 地 到 以 说 时 要 就 出 会 可 也 你 对 生 能 而 子 那 得 于 着 下 自 之 年 过 发 后
@@ -249,7 +267,7 @@ Traditional:
 
 </textarea>
 Source
-<textarea id="src" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+<textarea class="black" id="src" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
 </textarea>
 <div>.</div><div>.</div><div>.</div><div>.</div><div>.</div>
 <div>.</div><div>.</div><div>.</div><div>.</div><div>.</div>
@@ -261,7 +279,7 @@ Text:
 </div>
 <br/>
 Target
-<textarea id="tgt" cols="180" rows="25" style="font-family:Calibri, Arial, sans-serif; font-size: 24px;">
+<textarea class="black" id="tgt" cols="180" rows="25" style="font-family:Calibri, Arial, sans-serif; font-size: 24px;">
 </textarea>
 <br/>
 </body>
