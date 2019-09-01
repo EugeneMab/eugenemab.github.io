@@ -1,0 +1,37 @@
+data_pinyin.length=2715
+data_freq.length=9933
+data_writing.length=29685
+data_gbk_level_1.length=3755
+data_gbk_level_2.length=3008
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+裏 has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+秊 has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
+ has no sound
