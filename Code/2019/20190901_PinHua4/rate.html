@@ -579,14 +579,14 @@ function letter(character) {
 			break;
 		}
 		case "4": {
-			var locationMainVowel = locateMainVowel(basic);
 			var locationLastVowel = locateLastVowel(basic);
-			toned = basic.substring(0, locationMainVowel) + basic[locationMainVowel] + basic.substring(locationMainVowel, locationLastVowel + 1) + "h" + basic.substring(locationLastVowel + 1);
+			toned = basic.substring(0, locationLastVowel + 1) + "hh" + basic.substring(locationLastVowel + 1);
 			break;
 		}
 		case "5": {
+			var locationMainVowel = locateMainVowel(basic);
 			var locationLastVowel = locateLastVowel(basic);
-			toned = basic.substring(0, locationLastVowel + 1) + "hh" + basic.substring(locationLastVowel + 1);
+			toned = basic.substring(0, locationMainVowel) + basic[locationMainVowel] + basic.substring(locationMainVowel, locationLastVowel + 1) + "h" + basic.substring(locationLastVowel + 1);
 			break;
 		}
 		default: {
