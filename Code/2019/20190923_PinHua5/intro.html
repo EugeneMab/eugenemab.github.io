@@ -1,0 +1,90 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>PinHua - A Chinese Low-Conflict Romanization System</title>
+<style>
+	body, td, th
+	{
+		font-family: Calibri, Arial, sans-serif;
+		font-size: 20px;
+	}
+	div
+	{
+		margin-bottom: 10px;
+	}
+	table
+	{
+		border: 1px solid #ee;
+		border-spacing: 0;
+	}
+	td, th
+	{
+		border: 1px solid #eee;
+		padding: 2px;
+	}
+</style>
+</head>
+<body>
+<h1 style="text-align: center">PinHua - A Chinese Low-Conflict Romanization System</h1>
+
+<h2>Goal</h2>
+	<div>One-to-many mapping between a Chinese character and a code</div>
+	<div>Low conflict rate</div>
+	<div>Based on Pinyin system</div>
+	<div>Add two extra letters based on the two leading strokes to reduce conflict rate</div>
+
+<h2>Algorithm</h2>
+
+	<h3>1. Generate mapping from character to Pinyin</h2>
+		<div>Choose a Pinyin for each character, using the data source A and data source B.</div>
+		<div>If a character is in data source B, choose the first Pinyin.</div>
+		<div>If a character is not in data source B, and has a Pinyin using tone 5, chose the one with tone 5</div>
+		<div>Otherwise, choose the first PinYin in alphabetical order</div>
+		<div>Use "yu" to represent "&uuml;"</div>
+		<div>Add "e" for PinYin without vowel: "ng" -> "eng", "hng" -> "heng"</div>
+
+	<h3>2. Generate stroke letters</h2>
+		<div>Pick the two leading strokes of each character, using data source C</div>
+		<div>If there is only one stroke, pick only the first stroke</div>
+		<div>If the two leading strokes are the same, pick only the first stroke</div>
+		<div>Convert the one or two strokes to letters as table below</div>
+
+	<h3>3. Generate PinHua</h2>
+		<div>Insert the one or two stroke-based letters and tone leter before the first vowel letter</div>
+
+<h2>Stroke-to-Letter Conversion Table</h2>
+	<table>
+		<tr><td>Stroke</td><td>Letter</td></tr>
+		<tr><td>-     </td><td>e     </td></tr>
+		<tr><td>|     </td><td>i     </td></tr>
+		<tr><td>/     </td><td>a     </td></tr>
+		<tr><td>\     </td><td>u     </td></tr>
+		<tr><td>~     </td><td>o     </td></tr>
+	</table>
+
+<h2>Tone-To-Letter Table</h2>
+	<table>
+		<tr><td>Tone</td><td>Letter </td></tr>
+		<tr><td>1 - </td><td>w      </td></tr>
+		<tr><td>2 / </td><td>r      </td></tr>
+		<tr><td>3 v </td><td>v      </td></tr>
+		<tr><td>4 \ </td><td>y      </td></tr>
+		<tr><td>5 . </td><td>h      </td></tr>
+	</table>
+
+<h2>Data Sources</h2>
+	<div>A. Frequency and Pinyin of Chinese characters from
+		<a target="_blank" href="http://lingua.mtsu.edu/chinese-computing/statistics/char/list.php?Which=MO">http://lingua.mtsu.edu/chinese-computing/statistics/char/list.php?Which=MO</a>
+		(Modern Chinese Character Frequency List by Jun Da (jda@mtsu.edu))
+	</div>
+	<div>B. Popular proununciation of Chinese characters from
+		<a target="_blank" href="http://zein.se/patrick/3000char.html">http://zein.se/patrick/3000char.html</a>
+		(The most common Chinese characters in order of frequency, by © 2003 – 2009 Patrick Hassel Zein )
+	</div>
+	<div>C. Stroke of Chinese characters from
+		<a target="_blank" href="https://github.com/YQ-YSY/stroke-seq_MB/blob/master/text/%E5%8D%95%E5%AD%97_%E7%AC%94%E9%A1%BA%E7%A0%81_29685%E4%B8%AA.txt">https://github.com/YQ-YSY/stroke-seq_MB/blob/master/text/%E5%8D%95%E5%AD%97_%E7%AC%94%E9%A1%BA%E7%A0%81_29685%E4%B8%AA.txt</a>
+		(From <a target="_blank" href="https://github.com/YQ-YSY/stroke-seq_MB">https://github.com/YQ-YSY/stroke-seq_MB</a>)
+	</div>
+
+</html>

@@ -1,0 +1,56 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<script src="ime.js">
+</script>
+<script>
+function convert() {
+	var src = document.getElementById("src").value;
+	var tgt = "";
+	var lines = src.split('\n');
+	for (var row = 0; row < lines.length; row++) {
+		var items = lines[row].split(' ');
+		for (var pos = 0; pos < items.length; pos++) {
+			var item = items[pos];
+			var mapped = ime[item];
+			var primary = ime[item + "0"];
+			if (primary) {
+				tgt += primary;
+				continue;
+			}
+			if (mapped) {
+				tgt += mapped;
+				continue;
+			}
+			tgt += ' ' + item;
+		}
+		tgt += '\n';
+	}
+	document.getElementById("tgt").innerHTML = tgt;
+}
+function init() {
+	convert();
+	var srcElem = document.getElementById("src");
+	if (srcElem.addEventListener) {
+		srcElem.addEventListener("input", function() { convert(); }, false);
+	} else if (srcElem.attachEvent) {
+		srcElem.attachEvent("onpropertychange", function() { convert(); });
+	}
+}
+</script>
+<body style="font-family: Courier; font-size: 24px;" onload="init()">
+<textarea id="src" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+
+waevo naivi taiwa toawa tuwa
+moawa .. muera .. mova .. mioya .. mioha
+yewi eyer sewan sioyi weivu lueyiu qeowi bauwa jaoviu sheiri beavai qaewian weoyan ..
+
+</textarea>
+<br/>
+<textarea id="tgt" cols="180" rows="25" style="font-family: 宋体, SimSun, Courier; font-size: 24px;">
+
+
+</textarea>
+</body>
+</html>
