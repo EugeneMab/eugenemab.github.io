@@ -1,0 +1,90 @@
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+<title>拼划：一种低重码率的汉字拉丁化方案</title>
+<style>
+	body, td, th
+	{
+		font-family: Calibri, Arial, sans-serif;
+		font-size: 20px;
+	}
+	div
+	{
+		margin-bottom: 10px;
+	}
+	table
+	{
+		border: 1px solid #ee;
+		border-spacing: 0;
+	}
+	td, th
+	{
+		border: 1px solid #eee;
+		padding: 2px;
+	}
+</style>
+</head>
+<body>
+<h1 style="text-align: center">拼划：一种低重码率的汉字拉丁化方案</h1>
+
+<h2>目标</h2>
+	<div>汉字与编码一多对应</div>
+	<div>低重码率</div>
+	<div>以拼音为基础</div>
+	<div>按照汉字的前两个笔划，加入两个额外的字母，用以降低重码率</div>
+
+<h2>算法</h2>
+
+	<h3>1. 生成从汉字到拼音的映射表</h2>
+		<div>为每个汉字选择一个拼音(使用数据源A和数据源B)</div>
+		<div>如果数据源B中含有该汉字，选择数据源B中的第一个拼音</div>
+		<div>如果数据源B中不含有该汉字，而且它有一个5声调(轻声)的拼音，选择这个拼音</div>
+		<div>否则，选择字典顺序的第一个拼音</div>
+		<div>用"yu"表示"&uuml;"</div>
+		<div>如果拼音没有元音，加入"e": "ng" -> "eng", "hng" -> "heng"</div>
+
+	<h3>2. 生成笔划字母</h2>
+		<div>选取前两个笔划(使用数据源C)</div>
+		<div>如果只有一个笔划，则重复第一笔</div>
+		<div>按照下面的转换表，把两个笔划转换为两个字母</div>
+
+	<h3>3. 生成拼划码</h2>
+		<div>把上述两个笔划字母，加上声调字母，插入到第一个字母之后</div>
+
+<h2>笔划到字母的转换表</h2>
+
+	<table>
+		<tr><td>笔划</td><td>笔划字母</td></tr>
+		<tr><td>-     </td><td>w     </td></tr>
+		<tr><td>|     </td><td>o     </td></tr>
+		<tr><td>/     </td><td>r     </td></tr>
+		<tr><td>\     </td><td>u     </td></tr>
+		<tr><td>~     </td><td>v     </td></tr>
+	</table>
+
+<h2>声调到字母的转换表</h2>
+	<table>
+		<tr><td>声调</td><td>声调字母</td></tr>
+		<tr><td>1 - </td><td>w</td></tr>
+		<tr><td>2 / </td><td>r</td></tr>
+		<tr><td>3 v </td><td>v</td></tr>
+		<tr><td>4 \ </td><td>u</td></tr>
+		<tr><td>5 . </td><td>o</td></tr>
+	</table>
+
+<h2>数据源</h2>
+	<div>A. 汉字词频和拼音
+		<a target="_blank" href="http://lingua.mtsu.edu/chinese-computing/statistics/char/list.php?Which=MO">http://lingua.mtsu.edu/chinese-computing/statistics/char/list.php?Which=MO</a>
+		(现代汉语单字频率列表 - 笪骏 (jda@mtsu.edu))
+	</div>
+	<div>B. 常用汉字的常用拼音
+		<a target="_blank" href="http://zein.se/patrick/3000char.html">http://zein.se/patrick/3000char.html</a>
+		(The most common Chinese characters in order of frequency, by © 2003 – 2009 Patrick Hassel Zein )
+	</div>
+	<div>C. 汉字笔画
+		<a target="_blank" href="https://github.com/YQ-YSY/stroke-seq_MB/blob/master/text/%E5%8D%95%E5%AD%97_%E7%AC%94%E9%A1%BA%E7%A0%81_29685%E4%B8%AA.txt">https://github.com/YQ-YSY/stroke-seq_MB/blob/master/text/%E5%8D%95%E5%AD%97_%E7%AC%94%E9%A1%BA%E7%A0%81_29685%E4%B8%AA.txt</a>
+		(来自 <a target="_blank" href="https://github.com/YQ-YSY/stroke-seq_MB">https://github.com/YQ-YSY/stroke-seq_MB</a>)
+	</div>
+
+</html>
