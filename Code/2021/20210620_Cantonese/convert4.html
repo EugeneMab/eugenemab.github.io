@@ -9,7 +9,10 @@ var vowelToSymbols = {
 	'o':['ō','ó','ǒ','ò','o','ŏ'],
 	'u':['ū','ú','ǔ','ù','u','ŭ']
 };
-var toneToSymbol = [' ', '-', '/', 'V', '\\', ',', 'v'];
+var variationToToneToSymbol = [
+	[' ', '-', '/', 'V', '\\', ',', 'v'],
+	[' ', '=', '<', 'X', '>' , '{', 'x']
+];
 function convert(sound) {
 	var tone = sound.substr(sound.length - 1, 1);
 	var stem = sound.substr(0, sound.length - 1);
@@ -85,7 +88,8 @@ function convert(sound) {
 		}
 	}
 
-	var dot = ' ';
+	// var dot = ' ';
+	var variation = 0;
 	switch (vowel) {
 		case 'aa': {
 			// vowel = 'a';
@@ -95,7 +99,8 @@ function convert(sound) {
 		case 'a': {
 			// vowel = 'e';
 			// vowel = 'aa';
-			dot = '.';
+			// dot = '.';
+			variation = 1;
 			break;
 		}
 		case 'e': {
@@ -120,21 +125,24 @@ function convert(sound) {
 			// vowel = 'ue';
 			// vowel = 'oo';
 			vowel = 'o';
-			dot = '.';
+			// dot = '.';
+			variation = 1;
 			break;
 		}
 		case 'eo': {
 			// vowel = 'io';
 			// vowel = 'oo';
 			vowel = 'o';
-			dot = '.';
+			// dot = '.';
+			variation = 1;
 			break;
 		}
 		case 'yu': {
 			// vowel = 'iu';
 			// vowel = 'uu';
 			vowel = 'u';
-			dot = '.';
+			// dot = '.';
+			variation = 1;
 			break;
 		}
 		case 'm': {
@@ -205,13 +213,13 @@ function convert(sound) {
 				break;
 			}
 		}
-		var toneSymbol = toneToSymbol[index];
+		var toneSymbol = variationToToneToSymbol[variation][index];
 		if (!toneSymbol) {
 			throw 'sound=' + sound;
 		}
 	}
 
-	return head + vowel + tail + dot + toneSymbol;
+	return head + vowel + tail + toneSymbol;
 }
 function onLoad() {
 	var output = 'var glyphToConverted = {\r\n';

@@ -70,8 +70,8 @@ function convert() {
 				var rtlOne = item;
 				for (var mappedIndex = 0; mappedIndex < mappedList.length; mappedIndex++) {
 					var mapped = mappedList[mappedIndex];
-					ltr += ' ' + mapped.substr(mapped.length - 1, 1) + mapped.substr(mapped.length - 2, 1) + mapped.substr(0, mapped.length - 2);
-					var rtlMapped = mapped;
+					ltr += ' ' + mapped.substr(mapped.length - 1, 1) + ' ' + mapped.substr(0, mapped.length - 1);
+					var rtlMapped = mapped.substr(0, mapped.length - 1) + ' ' + mapped.substr(mapped.length - 1, 1);
 					rtlOne = rtlMapped + ' ' + rtlOne;
 				}
 				ltr += '\r\n';
@@ -193,6 +193,12 @@ Traditional:
 </textarea>
 <br/>
 <textarea class="black" id="demo" cols="180" rows="25" style="display: none;">
+诗史试时市事色锡食
+
+输鼠恕薯曙树
+
+温稳韫云允运
+
 我你他她它
 妈 麻 马 骂 吗
 一二三四五六七八九十百千万 ;半边 
