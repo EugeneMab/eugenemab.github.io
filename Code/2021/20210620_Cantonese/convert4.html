@@ -9,6 +9,7 @@ var vowelToSymbols = {
 	'o':['ō','ó','ǒ','ò','o','ŏ'],
 	'u':['ū','ú','ǔ','ù','u','ŭ']
 };
+var toneToSymbol = [' ', '-', '/', 'V', '\\', ',', 'v'];
 function convert(sound) {
 	var tone = sound.substr(sound.length - 1, 1);
 	var stem = sound.substr(0, sound.length - 1);
@@ -56,10 +57,12 @@ function convert(sound) {
 		}
 		case 'gw': {
 			// head = 'gu';
+			head = 'gu';
 			break;
 		}
 		case 'kw': {
 			// head = 'ku';
+			head = 'ku';
 			break;
 		}
 		case 'j': {
@@ -82,14 +85,17 @@ function convert(sound) {
 		}
 	}
 
+	var dot = ' ';
 	switch (vowel) {
 		case 'aa': {
+			// vowel = 'a';
 			vowel = 'a';
 			break;
 		}
 		case 'a': {
 			// vowel = 'e';
-			vowel = 'aa';
+			// vowel = 'aa';
+			dot = '.';
 			break;
 		}
 		case 'e': {
@@ -112,47 +118,53 @@ function convert(sound) {
 		}
 		case 'oe': {
 			// vowel = 'ue';
-			vowel = 'oo';
+			// vowel = 'oo';
+			vowel = 'o';
+			dot = '.';
 			break;
 		}
 		case 'eo': {
 			// vowel = 'io';
-			vowel = 'oo';
+			// vowel = 'oo';
+			vowel = 'o';
+			dot = '.';
 			break;
 		}
 		case 'yu': {
 			// vowel = 'iu';
-			vowel = 'uu';
+			// vowel = 'uu';
+			vowel = 'u';
+			dot = '.';
 			break;
 		}
 		case 'm': {
-			vowel = 'e';
-			tail = 'm';
+			// vowel = 'e';
+			// tail = 'm';
 			break;
 		}
 		case 'ng': {
-			vowel = 'e';
-			tail = 'ng';
+			// vowel = 'e';
+			// tail = 'ng';
 			break;
 		}
 	}
 
 	switch (tail) {
 		case 'p': {
-			tail = 'b';
+			// tail = 'b';
 			break;
 		}
 		case 't': {
-			tail = 'd';
+			// tail = 'd';
 			break;
 		}
 		case 'k': {
-			tail = 'g';
+			// tail = 'g';
 			break;
 		}
 	}
 
-	var vowelSymbolized = '';
+	var toneSymbol = ' ';
 	{
 		var index = -1;
 		switch (tone) {
@@ -174,7 +186,6 @@ function convert(sound) {
 			}
 			case '5': {
 				index = 5;
-				dot = '.';
 				break;
 			}
 			case '6': {
@@ -194,16 +205,13 @@ function convert(sound) {
 				break;
 			}
 		}
-		var vowelLeading = vowel.substr(0, vowel.length -1);
-		var vowelTrailing = vowel.substr(vowel.length -1, 1);
-		var symbols = vowelToSymbols[vowelTrailing];
-		if (!symbols) {
-			throw 'sound=' + sound + ',vowelTrailing=' + vowelTrailing;
+		var toneSymbol = toneToSymbol[index];
+		if (!toneSymbol) {
+			throw 'sound=' + sound;
 		}
-		vowelSymbolized = vowelLeading + symbols[index - 1];
 	}
 
-	return head + vowelSymbolized + tail;
+	return head + vowel + tail + dot + toneSymbol;
 }
 function onLoad() {
 	var output = 'var glyphToConverted = {\r\n';
