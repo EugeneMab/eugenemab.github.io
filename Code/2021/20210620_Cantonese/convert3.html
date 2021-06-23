@@ -1,0 +1,254 @@
+﻿<html>
+<script src="prepare.js">
+</script>
+<script>
+// https://en.wikipedia.org/wiki/Combining_Diacritical_Marks
+var charHorn = '\u031b';
+var charDotBelow = '\u0323';
+var charDiaeresis = '\u0308';
+var charMacron = '\u0304';
+var charAcute = '\u0301';
+var charCaron = '\u030c';
+var charGrave = '\u0300';
+var charBreve = '\u0306';
+var toneSymbols = ["", charMacron, charAcute, charCaron, charGrave, '', charBreve];
+var vowelToSymbols = {
+	'a':['ā','á','ǎ','à','a','ă'],
+	'e':['ē','é','ě','è','e','ĕ'],
+	'i':['ī','í','ǐ','ì','i','ĭ'],
+	'o':['ō','ó','ǒ','ò','o','ŏ'],
+	'u':['ū','ú','ǔ','ù','u','ŭ']
+};
+function convert(sound) {
+	var tone = sound.substr(sound.length - 1, 1);
+	var stem = sound.substr(0, sound.length - 1);
+	var head = '';
+	var vowel = '';
+	var tail = '';
+	if (stem == 'm' || stem == 'hm') {
+		vowel = 'm';
+	} else 	if (stem == 'ng' || stem == 'hng') {
+		vowel = 'ng';
+	} else {
+		var vowelTail;
+		if (stem.startsWith('ng') || stem.startsWith('gw') || stem.startsWith('kw')) {
+			head = stem.substr(0, 2);
+			vowelTail = stem.substr(2);
+		} else if ('aeiouy'.indexOf(stem.substr(0, 1)) < 0) {
+			head = stem.substr(0, 1);
+			vowelTail = stem.substr(1);
+		} else {
+			head = '';
+			vowelTail = stem;
+		}
+
+		if (vowelTail.endsWith('ng')) {
+			vowel = vowelTail.substr(0, vowelTail.length - 2);
+			tail = vowelTail.substr(vowelTail.length - 2, 2);
+		} else if (vowelTail.length != 1 && vowelTail != 'yu' && vowelTail != 'eo' && 'iumnptk'.indexOf(vowelTail.substr(vowelTail.length - 1, 1)) >= 0) {
+			vowel = vowelTail.substr(0, vowelTail.length - 1);
+			tail = vowelTail.substr(vowelTail.length - 1, 1);
+		} else {
+			vowel = vowelTail;
+			tail = '';
+		}
+	}
+	// return head + ' ' + vowel + ' ' + tail + ' ' + tone;
+
+	switch (head) {
+		case 'gw': {
+			head = 'gu';
+			break;
+		}
+		case 'kw': {
+			head = 'ku';
+			break;
+		}
+		case 'z': {
+			head = 'j';
+			break;
+		}
+		case 'c': {
+			head = 'ch';
+			break;
+		}
+		case 'j': {
+			if (vowel == 'i' || vowel == 'yu') {
+				if (tail == 'ng' || tail == 'k') {
+					head = 'y';
+				} else {
+					head = '';
+				}
+			} else {
+				head = 'y';
+			}
+			break;
+		}
+		case 'w': {
+			if (vowel == 'u') {
+				head = '';
+			}
+			break;
+		}
+	}
+
+	var dot = '';
+	switch (vowel) {
+		case 'aa': {
+			vowel = 'a';
+			break;
+		}
+		case 'a': {
+			// vowel = 'a' + charDotBelow;
+			dot = '.';
+			break;
+		}
+		case 'i': {
+			if (tail == 'ng' || tail == 'k') {
+				// vowel = 'ei';
+				break;
+			}
+			break;
+		}
+		case 'u': {
+			if (tail == 'ng' || tail == 'k') {
+				// vowel = 'ou';
+				break;
+			}
+			break;
+		}
+		case 'oe': {
+			// vowel = 'o' + charDotBelow;
+			vowel = 'o';
+			dot = '.';
+			break;
+		}
+		case 'eo': {
+			// vowel = 'o' + charDotBelow;
+			vowel = 'o';
+			dot = '.';
+			break;
+		}
+		case 'yu': {
+			// vowel = 'u' + charDiaeresis;
+			vowel = 'u';
+			dot = '.';
+			break;
+		}
+		case 'm': {
+			vowel = 'e';
+			tail = 'm';
+			break;
+		}
+		case 'ng': {
+			vowel = 'e';
+			tail = 'ng';
+			break;
+		}
+	}
+
+	switch (tail) {
+		case 'p': {
+			tail = 'b';
+			break;
+		}
+		case 't': {
+			tail = 'd';
+			break;
+		}
+		case 'k': {
+			tail = 'g';
+			break;
+		}
+	}
+
+	var vowelSymbolized = '';
+	{
+		var index = -1;
+		switch (tone) {
+			case '1': {
+				index = 1;
+				break;
+			}
+			case '2': {
+				index = 2;
+				break;
+			}
+			case '3': {
+				index = 3;
+				break;
+			}
+			case '4': {
+				index = 4;
+				break;
+			}
+			case '5': {
+				index = 5;
+				break;
+			}
+			case '6': {
+				index = 6;
+				break;
+			}
+			case '7': {
+				index = 1;
+				break;
+			}
+			case '8': {
+				index = 3;
+				break;
+			}
+			case '9': {
+				index = 3;
+				break;
+			}
+		}
+		var vowelLeading = vowel.substr(0, vowel.length -1);
+		var vowelTrailing = vowel.substr(vowel.length -1, 1);
+		var symbols = vowelToSymbols[vowelTrailing];
+		if (!symbols) {
+			throw 'sound=' + sound + ',vowelTrailing=' + vowelTrailing;
+		}
+		vowelSymbolized = vowelLeading + symbols[index - 1];
+	}
+
+	return head + vowelSymbolized + tail + dot;
+}
+function onLoad() {
+	var output = 'var glyphToConverted = {\r\n';
+	var soundToConverted = {};
+	var follow = false;
+	for (var glyph in glyphToSounds) {
+		if (!glyphToSounds.hasOwnProperty(glyph)) {
+			continue;
+		}
+		if (!follow) {
+			follow = true;
+		} else {
+			output += ',\r\n';
+		}
+		var glyphSounds = glyphToSounds[glyph];
+		var convertedList = [];
+		for (var col = 0; col < glyphSounds.length; col++) {
+			var sound = glyphSounds[col];
+			var convertedFound = soundToConverted[sound];
+			if (convertedFound) {
+				convertedList.push(convertedFound);
+				continue;
+			}
+			var converted = convert(sound);
+			soundToConverted[sound] = converted;
+			convertedList.push(converted);
+		}
+		output += '"' + glyph + '":' + JSON.stringify(convertedList);
+	}
+	output += '\r\n}\r\n';
+	document.getElementById('target').value = output;
+}
+</script>
+<body onload="onLoad()">
+<textarea id="target" cols="80" rows="25">
+</textarea>
+<br/>
+</body>
+</html>
