@@ -16,7 +16,8 @@ var variationToToneToSymbol = [
 
 var variationToToneToSymbol = [
 	[' ', '.!!', '.:!', '.::', '.:.', '..:', '...'],
-	[' ', ':!!', '::!', ':::', '::.', ':.:', ':..']
+	[' ', ':!!', '::!', ':::', '::.', ':.:', ':..'],
+	[' ', '!!!', '!:!', '!::', '!:.', '!.:', '!..']
 ];
 function convert(sound) {
 	var tone = sound.substr(sound.length - 1, 1);
@@ -137,9 +138,11 @@ function convert(sound) {
 		case 'eo': {
 			// vowel = 'io';
 			// vowel = 'oo';
-			vowel = 'o';
+			// vowel = 'o';
 			// dot = '.';
-			variation = 1;
+			// variation = 1;
+			vowel = 'u';
+			variation = 2;
 			break;
 		}
 		case 'yu': {
