@@ -13,6 +13,11 @@ var variationToToneToSymbol = [
 	[' ', '-', '/', 'V', '\\', ',', 'v'],
 	[' ', '=', '<', 'X', '>' , '{', 'x']
 ];
+
+var variationToToneToSymbol = [
+	[' ', '.!!', '.:!', '.::', '.:.', '..:', '...'],
+	[' ', ':!!', '::!', ':::', '::.', ':.:', ':..']
+];
 function convert(sound) {
 	var tone = sound.substr(sound.length - 1, 1);
 	var stem = sound.substr(0, sound.length - 1);

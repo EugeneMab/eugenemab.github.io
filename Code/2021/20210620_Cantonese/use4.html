@@ -70,8 +70,8 @@ function convert() {
 				var rtlOne = item;
 				for (var mappedIndex = 0; mappedIndex < mappedList.length; mappedIndex++) {
 					var mapped = mappedList[mappedIndex];
-					ltr += ' ' + mapped.substr(mapped.length - 1, 1) + ' ' + mapped.substr(0, mapped.length - 1);
-					var rtlMapped = mapped.substr(0, mapped.length - 1) + ' ' + mapped.substr(mapped.length - 1, 1);
+					ltr += ' ' + mapped.substr(mapped.length - 2, 2) + mapped.substr(mapped.length - 3, 1) + ' ' + mapped.substr(0, mapped.length - 3);
+					var rtlMapped = mapped.substr(0, mapped.length - 3) + ' ' + mapped.substr(mapped.length - 3, 3);
 					rtlOne = rtlMapped + ' ' + rtlOne;
 				}
 				ltr += '\r\n';
@@ -289,12 +289,12 @@ Source
 <br/>
 Left To Right:
 <br/>
-<textarea class="black" id="ltr" cols="80" rows="25" style="font-family宋体, SimSun, Courier; font-size: 24px;">
+<textarea class="black" id="ltr" cols="80" rows="25" style="font-family:Calibri, Arial, sans-serif; font-size: 24px;">
 </textarea>
 <br/>
 Right To Left:
 <br/>
-<textarea class="black" id="rtl" cols="80" rows="25" style="font-family:宋体, SimSun, Courier; font-size: 24px; text-align: right">
+<textarea class="black" id="rtl" cols="80" rows="25" style="font-family:Calibri, Arial, sans-serif; font-size: 24px; text-align: right">
 </textarea>
 <br/>
 </body>
