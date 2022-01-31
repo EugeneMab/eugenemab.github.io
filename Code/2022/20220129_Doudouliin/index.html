@@ -1,0 +1,943 @@
+<html>
+<!--
+<span class=t c='' d=''>
+</span>
+<span class=t
+	c=''
+	d=''
+	>
+-->
+<head>
+<title>Doudouling (version 2022) Doudouliin
+</title>
+<style>
+body, td
+{
+	font-family: Calibri, SimHei, Arial, sans-serif;
+	font-size: 24px;
+}
+</style>
+<script>
+function setLang(language) {
+	var elements = document.getElementsByClassName("t");
+	for (var pos = 0; pos < elements.length; pos++) {
+		var element = elements[pos];
+		if (element.getAttribute('e')) {
+			continue;
+		}
+		element.setAttribute('e', element.innerHTML);
+	}
+	for (var pos = 0; pos < elements.length; pos++) {
+		var element = elements[pos];
+		element.innerHTML = element.getAttribute(language);
+	}
+}
+function onLoad() {
+	var url = window.location.href;
+	if (!url) {
+		return;
+	}
+	if (url.endsWith('#c')) {
+		setLang('c');
+		return;
+	}
+	if (url.endsWith('#d')) {
+		setLang('d');
+		return;
+	}
+}
+</script>
+</head>
+<body bgcolor="#f0fff0" text="#1f3f7d" onload="onLoad()">
+<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+<meta charset="UTF-8">
+<center><h1><span class=t c='兜兜语(2019版本)' d='La Dodoliehehin (vesuwon 2019)'>Doudouling (version 2022)</span></h1>
+<h2>La Doudouliin (vuweson 2022)</h2>
+<span class=t c='HUANG JIAN 的人工语言' d='U liin atifijuhowa pe JIAN HUANG'>An artificial language by Jian Huang</span><br/>
+U liin awutifitsowa pe me<br/></center>
+<ol>
+<li><a href="#e" onclick="setLang('e')"><span class=t c='英语介绍' d='La intodujiejon i Engijeji'>English introduction</a></a>
+<li><a href="#c" onclick="setLang('c')"><span class=t c='中文介绍' d='La intodujiejon i Jinije'>Chinese introduction</span></a>
+<li><a href="#d" onclick="setLang('d')"><span class=t c='兜兜语介绍(用兜兜语介绍兜兜语)' d='La intodujiejon i Dodoliehehin (La intodujiejon wefetuvoowi)'>Doudouling introduction (reflective introduction)</span></a>
+<!--
+<li><a href="http://conlang.wikia.com/wiki/Doudouling">Doudouling in "wikia" site</a>
+<li><a href="http://conlang.wikia.com/wiki/Dodoliisin">Doudouling 2018 in "wikia" site</a>
+-->
+</ol>
+<a name=introduction>
+<center><h2><span class=t c='介绍' d='La intodujiejon'>Introduction</span></h2>
+</center>
+<h3><span class=t
+	c='基本原则: 把拉丁词汇压缩为{辅音-元音-鼻音}{C-V-N}结构'
+	d='Le pinjipuhowe: a kompijeje le vuvowe de Latuin ihen le silabuhowe {K-V-N}'
+	>Principles: compress Latin words into {C-V-N} syllables</span></h3>
+<p>
+<span class=t
+	c='我的人工语言的主要想法是把拉丁语词汇简化为一个可选的的辅音加一个元音加一个可选的{n}或者{m}的结构.'
+	d='La ideua de ma liin atifijuhowa dze a simpifuhi le vuvowe de Latuin ihen la dzutuwoowu de u konsonihan obonuha ve u vovuhe ve u {n} o {m} obonuha.'
+	>The main idea of my artificial language is to simplify Latin words into the structure of one optional consonant plus one vowel plus one optional {n} or {m}.
+</span>
+<span class=t
+	c='因为我们觉得这种结构最适合唱歌.'
+	d='Dzue ho ba ke se pijen nu ke je dzutuwoowu dze la fo buon po a kihan.'
+	>That is because we think this structure is the best for singing.
+</span>
+<span class=t
+	c='而且它不应该增加太多的额外音节.'
+	d='E, duve go a pevihejen a inkijeje dza miheju de le silabuhowe edzuwoa.'
+	>Also, it should avoid adding too many extra strong syllables.
+</span>
+<span class=t
+	c='而且拼写应该非常接近国际音标(IPA)。'
+	d='E, la dzibuwowu duve dze miheju pijeejo a la Afabiheje Fonetii Intenajonuhuwowa (IPA).'
+	>And the spelling should be very close to the International Phonetic Alphabet (IPA).
+</span>
+<span class=t
+	c='而且重音的位置不应该影响词义.'
+	d='E, la posijuon de ajiheen ne duve a impihea la semihan de la vuvowe.'
+	>And the stress position should not impact the meaning of the word.
+</span>
+</p>
+<p>
+<h3><span class=t
+	c='第一步:简化辅音和辅音组合'
+	d='La fija uun mo: a simpifuhi le konsonihan e le kombinajuon de konsonihan'
+	>Step 1: simplify consonants and consonant clusters</span></h3>
+<p>
+<span class=t
+	c='按照如下的规则,把辅音和辅音组合,简化为如下的辅音.'
+	d='Fe simpifuhi le konsonihan e le kombinajuon de konsonihan a le konsonihan infuwe pe le weguhu infuwe.'
+	>Simplify consonants and consonant clusters to the consonants as below by the rules below.</span></p>
+<center>
+	<table>
+	<tr><td>{b}</td><td>{p}</td><td>{m}</td><td>{f}</td><td>{v}</td></tr>
+	<tr><td>{d}</td><td>{t}</td><td>{n}</td><td>{s}</td><td>{j}</td><td>{ts}</td><td>{dz}</td></tr>
+	<tr><td>{g}</td><td>{k}</td><td>{h}</td><td>{w}</td><td>{l}</td></tr>
+	</table>
+</center>
+<p>
+<span class=t c='规则' d='Le weguhu'>Rules:</span>
+	<ul>
+	<li>{pt} =&gt; {b};</li>
+	<li>{ph} =&gt; {f};</li>
+	<li>{w} =&gt; {v};</li>
+	<li>{th} =&gt; {t};</li>
+	<li>{j} ([j]), {y}  =&gt; {j};</li>
+	<li>{sh} ([&#x0283;]) =&gt; {s};</li>
+	<li>{c} ([s]), {ch} ([&#x0283;]/[t&#x0283;]), {ti} ([&#x0283;]) =&gt; {ts};</li>
+	<li>{z}, {j} [{d&#x0292;}/{&#x0292;}], {g} [{d&#x0292;}/{&#x0292;}] => {dz};</li>
+	<li>{kt} =&gt; {g};</li>
+	<li>{q}, {c} ([k]), {ch} ([k]) =&gt; {k};</li>
+	<li>{r} =&gt; {w};</li>
+	</ul>
+</p>
+<span class=t
+	c='把{y}转化为{i}; 并且删除一些不太重要的元音.'
+	d='Fe konviheje {y} a {i}; e wemuvo mu vovuhe de impotijejan muin.'
+	>Most of the time, double consonant can be converted to signle consonant.</span>
+</p>
+<h3><span class=t
+	c='第二步:简化元音和元音组合'
+	d='La fija duu mo: a simpifuhi le vovuhe e le ditieon'
+	>Step 2: simplify vowels and diphthongs</span></h3>
+<p>
+<span class=t
+	c='按照如下规则简化元音和元音组合.'
+	d='Fe simpifuhi le vovuhe e le ditieon ko le weguhu infuwe.'
+	>Simplify the vowels and diphthongs as rules below.</span>
+</p>
+<p>
+<span class=t c='规则' d='Le weguhu'>Rules:</span>
+	<ul>
+	<li>{ee} =&gt; {ei};</li>
+	<li>{oo} =&gt; {ou};</li>
+	</ul>
+</p>
+<p>
+<span class=t
+	c='把{y}转化为{i}; 并且删除一些不太重要的元音.'
+	d='Fe konviheje {y} a {i}; e wemuvo mu vovuhe de impotijejan muin.'
+	>Convert vowel {y} to {i}; and drop some less important vowels.</span>
+</p>
+<h3><span class=t
+	c='第三步:补偿删除的音素'
+	d='La fija tuwi mo: a kompensiha le suon ke wemuvo ti'
+	>Step 3: Compensate the lost sounds</span></h3>
+<p>
+<span class=t
+	c='如果只保留每个音节的{CVN}结构,经常会产生很大的信息丢失,并且容易产生混淆.'
+	d='Si tuen go suho le dzutuwoowu {K-V-N} po puwe silabuhowe, ve fekihejen kijeha go mu piheje gihejan de infomajuwon, e keiheja mu konfujuon.'
+	>If keeping only the consonant-vowel-nasal structure for each syllable, it often causes great loss of information and then create confusions.</span>
+<span class=t
+	c='因此,我们需要在最后一个元音之前加入一些弱音节,来补偿丢失的音素.'
+	d='Da, kuwi nu a puon mu silabuhowe faguhowi ihan la vovuhe finuha, po kompensiha le suon ke piheje'
+	>So we need to add some weak syllables before the last vowel to compensate the lost sounds.</span>
+</p>
+<span class=t c='规则' d='Le weguhu'>Rules:</span>
+	<ul>
+	<li><span class=t
+		c='把结尾的{m}当作是{n}和一个删除的{b}.'
+		d='Fe wegiheja la {m} finuha ko {n} ve u {b} ke piheje.'
+		>Depending on the lost sound, add soft sound as the below table.</span></li>
+	<li><span class=t
+		c='如果没有删除,补偿{u}.'
+		d='Si nuhu wemuvo ti, kompensiha {u}.'
+		>If the syllable starts with a consonant, add the soft sound in column 4 between the consonant and the vowel.</span></li>
+	<li><span class=t
+		c='如果有删除,依据如下规则表格,按照逆序加入补偿字母组合.'
+		d='Si mu fua wemuvo ti, puon le kombinajuon de afabiheje po kompensiha i la oduwowe wevijeje, sekihen la tabuhe de weguhu infuwe.'
+		>If the syllable starts with a vowel, add the soft sound in column 5 after the vowel.</span></li>
+	</ul>
+<center>
+	<table border="1">
+	<tr><td><span class=t c='情形\删除音素' d='La sitajuon \ La suon piheje'> {s}/{j}/{ts}/{dz} </span></td><td> {r}/{l} </td><td> other           </td><td> CV   </td><td> V    </td></tr>
+	<tr><td><span class=t c='首个组合,接着' d='La kombinajuon uun mo       '>                   </span></td><td>         </td><td> {b}/{p}/{f}/{v} </td><td> {uv} </td><td> {vu} </td></tr>
+	<tr><td><span class=t c='跟随组合,接着' d='La kombinajuon duu mo, pidzo'>                   </span></td><td>         </td><td> {d}/{t}         </td><td> {ih} </td><td> {hi} </td></tr>
+	<tr><td><span class=t c='跟随组合,接着' d='La kombinajuon duu mo, pidzo'>                   </span></td><td>         </td><td> {g}/{k}         </td><td> {i}  </td><td> {i}  </td></tr>
+	<tr><td><span class=t c='跟随组合,接着' d='La kombinajuon duu mo, pidzo'> {s}/{j}/{ts}/{dz} </span></td><td>         </td><td>                 </td><td> {ij} </td><td> {ji} </td></tr>
+	<tr><td><span class=t c='跟随组合,接着' d='La kombinajuon duu mo, pidzo'> {s}/{j}/{ts}/{dz} </span></td><td>         </td><td> {b}/{p}/{f}/{v} </td><td> {uf} </td><td> {fu} </td></tr>
+	<tr><td><span class=t c='跟随组合,接着' d='La kombinajuon duu mo, pidzo'> {s}/{j}/{ts}/{dz} </span></td><td>         </td><td> {d}/{t}         </td><td> {uh} </td><td> {hu} </td></tr>
+	<tr><td><span class=t c='跟随组合,接着' d='La kombinajuon duu mo, pidzo'> {s}/{j}/{ts}/{dz} </span></td><td>         </td><td> {g}/{k}         </td><td> {u}  </td><td> {u}  </td></tr>
+	<tr><td><span class=t c='首个组合,接着' d='La kombinajuon uun mo       '>                   </span></td><td> {r}     </td><td>                 </td><td> {uw} </td><td> {wu} </td></tr>
+	<tr><td><span class=t c='首个组合,接着' d='La kombinajuon uun mo       '>                   </span></td><td> {r}/{l} </td><td> {b}/{p}/{f}/{v} </td><td> {ov} </td><td> {vo} </td></tr>
+	<tr><td><span class=t c='跟随组合,接着' d='La kombinajuon duu mo, pidzo'>                   </span></td><td> {r}/{l} </td><td> {d}/{t}         </td><td> {eh} </td><td> {he} </td></tr>
+	<tr><td><span class=t c='跟随组合,接着' d='La kombinajuon duu mo, pidzo'>                   </span></td><td> {r}/{l} </td><td> {g}/{k}         </td><td> {e}  </td><td> {e}  </td></tr>
+	<tr><td><span class=t c='跟随组合,接着' d='La kombinajuon duu mo, pidzo'> {s}/{j}/{ts}/{dz} </span></td><td> {r}/{l} </td><td>                 </td><td> {ej} </td><td> {je} </td></tr>
+	<tr><td><span class=t c='跟随组合,接着' d='La kombinajuon duu mo, pidzo'> {s}/{j}/{ts}/{dz} </span></td><td> {r}/{l} </td><td> {b}/{p}/{f}/{v} </td><td> {of} </td><td> {fo} </td></tr>
+	<tr><td><span class=t c='跟随组合,接着' d='La kombinajuon duu mo, pidzo'> {s}/{j}/{ts}/{dz} </span></td><td> {r}/{l} </td><td> {d}/{t}         </td><td> {oh} </td><td> {ho} </td></tr>
+	<tr><td><span class=t c='跟随组合,接着' d='La kombinajuon duu mo, pidzo'> {s}/{j}/{ts}/{dz} </span></td><td> {r}/{l} </td><td> {g}/{k}         </td><td> {o}  </td><td> {o}  </td></tr>
+	<tr><td><span class=t c='首个组合,接着' d='La kombinajuon uun mo       '>                   </span></td><td> {l}     </td><td>                 </td><td> {ow} </td><td> {wo} </td></tr>
+	</table>
+</center>
+</p>
+<h3><span class=t c='范例' d='Le esampuhoe'>Examples</span></h3>
+<p>
+<span class=t
+	c='第一列是拉丁语单词.'
+	d='La koluvun uun mo dze la vuvowe de Latuin.'
+	>The first column is Latin word.</span>
+<span class=t
+	c='第二列是简化之后的{CVN}结构.'
+	d='La koluvun duu mo dze la dzutuwoowu {K-V-N} pidzo la simpifikajuhon.'
+	>The second column is {CVN} structure after simplification.</span>
+<span class=t
+	c='第三列是删除的音素.'
+	d='La koluvun tuwi mo dze le suon ke wemuvo ti.'
+	>The third column is the sounds dropped.</span>
+<span class=t
+	c='第四列是补偿以后的兜兜语单词.'
+	d='La koluvun kuwoa mo dze le vuvowe de Dodoliehehin pidzo la kompensajuon.'
+	>The fourth column is Doudouling word after compensation.</span>
+</p>
+<span class=t c='范例' d='Le esampuhoe'>Examples:</span>
+	<table>
+	<tr><td>Latin         </td><td>CVN          </td><td>Dropped          </td><td>Doudouling         </td></tr>
+	<tr><td>state         </td><td>ta           </td><td>s t              </td><td>tuha               </td></tr>
+	<tr><td>sper          </td><td>pe           </td><td>s r              </td><td>peje               </td></tr>
+	<tr><td>sport         </td><td>po           </td><td>s r t            </td><td>poho               </td></tr>
+	<tr><td>science       </td><td>tsien        </td><td>s s              </td><td>tsijiejin          </td></tr>
+	<tr><td>photo         </td><td>foto         </td><td>                 </td><td>foto               </td></tr>
+	<tr><td>wagon         </td><td>vagon        </td><td>                 </td><td>vagon              </td></tr>
+	<tr><td>cent          </td><td>tsen         </td><td>t                </td><td>tsihen             </td></tr>
+	<tr><td>center        </td><td>tsente       </td><td>r                </td><td>tsentuwe           </td></tr>
+	<tr><td>aqu           </td><td>a            </td><td>k                </td><td>ai                 </td></tr>
+	<tr><td>aquatic       </td><td>akati        </td><td>k                </td><td>akatii             </td></tr>
+	<tr><td>question      </td><td>ketson       </td><td>s                </td><td>kijetson           </td></tr>
+	<tr><td>tank          </td><td>tan          </td><td>k                </td><td>tian               </td></tr>
+	<tr><td>xerox         </td><td>sewo         </td><td>s k s            </td><td>siewuo             </td></tr>
+	<tr><td>chocolate     </td><td>tsokola      </td><td>t                </td><td>tsokoliha          </td></tr>
+	<tr><td>just          </td><td>dzu          </td><td>s t              </td><td>dzuhu              </td></tr>
+	<tr><td>adoption      </td><td>adobon       </td><td>                 </td><td>adobon             </td></tr>
+	<tr><td>train         </td><td>tain         </td><td>r                </td><td>tuwain             </td></tr>
+	<tr><td>tract         </td><td>ta           </td><td>r g              </td><td>tea                </td></tr>
+	<tr><td>create        </td><td>kea          </td><td>r t              </td><td>kuweahi            </td></tr>
+	<tr><td>glad          </td><td>ga           </td><td>l d              </td><td>geha               </td></tr>
+	<tr><td>class         </td><td>ka           </td><td>l s              </td><td>keja               </td></tr>
+	<tr><td>cause         </td><td>kau          </td><td>s                </td><td>kijau              </td></tr>
+	<tr><td>daemon        </td><td>daemon       </td><td>                 </td><td>daemon             </td></tr>
+	<tr><td>coffee        </td><td>kofei        </td><td>                 </td><td>kofei              </td></tr>
+	<tr><td>moustache     </td><td>mouta        </td><td>ts               </td><td>moutija            </td></tr>
+	<tr><td>phoenix       </td><td>foeni        </td><td>k s              </td><td>foenui             </td></tr>
+	<tr><td>phoenician    </td><td>foenitsan    </td><td>                 </td><td>foenitsan          </td></tr>
+	<tr><td>europe        </td><td>euwo         </td><td>p                </td><td>euwuvo             </td></tr>
+	<tr><td>return        </td><td>wetun        </td><td>r                </td><td>wetuwun            </td></tr>
+	<tr><td>depart        </td><td>depa         </td><td>r t              </td><td>depeha             </td></tr>
+	<tr><td>alt           </td><td>a            </td><td>l t              </td><td>ahe                </td></tr>
+	<tr><td>art           </td><td>a            </td><td>r t              </td><td>ahe                </td></tr>
+	<tr><td>arts          </td><td>a            </td><td>r t s            </td><td>aho                </td></tr>
+	<tr><td>culture       </td><td>kutu         </td><td>l r              </td><td>kowutuwu           </td></tr>
+	<tr><td>court         </td><td>kou          </td><td>r t              </td><td>kehou              </td></tr>
+	<tr><td>cant          </td><td>kan          </td><td>t                </td><td>kihan              </td></tr>
+	<tr><td>simple        </td><td>simpe        </td><td>l                </td><td>simpowe            </td></tr>
+	<tr><td>hom           </td><td>hom          </td><td>                 </td><td>hom                </td></tr>
+	<tr><td>autumn        </td><td>autum        </td><td>                 </td><td>autumm             </td></tr>
+	<tr><td>environment   </td><td>enviwonmen   </td><td>t                </td><td>enviwonmihen       </td></tr>
+	<tr><td>fact          </td><td>fa           </td><td>g                </td><td>fia                </td></tr>
+	<tr><td>experiment    </td><td>epewimen     </td><td>k s t            </td><td>eupewimihen        </td></tr>
+	<tr><td>sign          </td><td>sin          </td><td>g                </td><td>siin               </td></tr>
+	<tr><td>dogmatic      </td><td>domati       </td><td>g k              </td><td>diomatii           </td></tr>
+	<tr><td>construct     </td><td>kontu        </td><td>s r g            </td><td>kijonteu           </td></tr>
+	<tr><td>verb          </td><td>ve           </td><td>r b              </td><td>vove               </td></tr>
+	<tr><td>partner       </td><td>pane         </td><td>r t r            </td><td>pehanuwe           </td></tr>
+	<tr><td>investment    </td><td>invemn       </td><td>s t t            </td><td>invuhemihen        </td></tr>
+	<tr><td>continue      </td><td>kontinu      </td><td>                 </td><td>kontinu            </td></tr>
+	<tr><td>Doudouling    </td><td>doudoulin    </td><td>g                </td><td>Doudouliin         </td></tr>
+	<tr><td>data          </td><td>data         </td><td>                 </td><td>data               </td></tr>
+	<tr><td>exact         </td><td>esa          </td><td>k g              </td><td>eisia              </td></tr>
+	<tr><td>slave         </td><td>sa           </td><td>l v              </td><td>sova               </td></tr>
+	<tr><td>salv          </td><td>sa           </td><td>l v              </td><td>sova               </td></tr>
+	<tr><td>next          </td><td>ne           </td><td>k s t            </td><td>nue                </td></tr>
+	<tr><td>              </td><td>             </td><td>                 </td><td>                   </td></tr>
+	</table>
+<h3><span class=t c='词汇的选择' d='La selejion de vuvowe'>Word choice</span></h3>
+<p>
+<span class=t
+	c='我们所用的拉丁词汇来自在英语中出现的拉丁词根.'
+	d='Le vuvowe de Latuin ke utiliji nu dze de le wadijei de Latuin ke apuwohoe i Engijeji.'
+	>The Latin word we use are the words composed of Latin roots which appear in English.</span><br/>
+</p>
+<h3><span class=t c='重音' d='La ajiheen'>Stress</span></h3>
+<p>
+<span class=t
+	c='重音落在最后一个元音.'
+	d='La ajiheen dze su la vovuhe finuha.'
+	>The stress is at the last vowel.</span>
+</p>
+<h3><span class=t c='短语的中心词' d='La jentuwe de u fijeja'>Center of a phrase</span></h3>
+<p>
+<a name=sample>
+<center><h2><span class=t c='范例文章' d='Le tidzee esampuhoe'>Sample Passages</span></h2></center>
+<p>
+<span class=t
+	c='每一组里面,第一行是兜兜语;'
+	d='Po puwe guvohowo, la luin uun mo dze la Dodoliehehin;'
+	>For each group, the first line is Doudouling;</span>
+<span class=t
+	c='第二行是拉丁词根;'
+	d='la luin duu mo dze le wadijei de Latuin;'
+	>the second line is Latin roots;</span>
+<span class=t
+	c='第三行是英语原文.'
+	d='e la luin tuwi mo dze la semihan i Engijeji.'
+	>and the third line is English meaning.</span>
+</p>
+<pre style="whitespace: no-wrap;">
+Titowe : Babowe Tue   , Genesiji, Bibowe
+title  : babel  text  , genesis , bible
+Title  : Babel  Text  , Genesis , Bible
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:1
+
+Tiho la   mihun je  de u   liin     e   de u   pawowo.
+tot  illa mund  est de un  ling     et  de un  parol .
+The whole earth was of one language and of one speech.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:2
+
+Du  vojia  he  lu  a  la   owientowa, okuwu  he  jo ke   dijikovuwe ha  lu  u
+dur voyage hab lor ad illa oriental , occur  hab il que  discover   hab lor un
+As  they journeyed east             , it happened,  that they have  found   a
+
+powan i  la   tuwe de la   Sinuwa; e   vuvi he  lu  di   .
+plan  in illa terr de illa Shinar; et  viv  hab lor id   .
+plain in the  land of      Shinar; and they lived   there.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:3
+
+Dii  lu   un  a  u awotuwe, "Ven , ni    lua a  fuwe le  towi  , e   li  kombuhu
+dict lor  un  ad un alter , "ven , nostr lax ad fer  ill tile  , et  lor combust
+They said one to another  , "Come, let's     make        bricks, and burn them
+
+entiwemihen." Huva lu  la   towi  po  la   petuwe, e   utiliji lu  la   tuwa po  la   muwotuwa.
+entirement ." hab  lor illa tile  pro illa petr  , et  utiliz  lor illa tar  pro illa mortar  .
+thoroughly ." They had      brick for      stone , and they used   the  tar  for the  mortar  .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:4
+
+Dii  lu  , "Ven , ni    lua kijonteu  po  ni    u  uvo , e   u  tuwihe,
+dict lor , "ven , nostr lax construct pro nostr un urb , et  un turret,
+They said, "Come, let's     build     us        a  city, and a  tower ,
+
+sa    kapihi awuvi   a  la   tsowe, e   ni    lua a  fuwe po  ni    u  nom  ;
+se    capit  arrive  ad illa cele , et  nostr lax ad fer  pro nostr un nom  ;
+whose top    reaches to the  sky  , and let's        make     us    a  name ;
+
+eutsuve ke  divihi ti  nu    a  uwotuwo su    la   suwufija de tiho la    mihun."
+except  que divid  ten nostr ad ulter   super illa surface  de tot  illa  mund ."
+lest        we be scattered  abroad     on    the  surface  of the  whole earth."
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:5
+
+Jehova dijetsihen a  muwi la   uvo  e   la  tuwihe, ke    le   infihan  de le  hom
+Jehowa descend    ad mir  illa urb  et  la  turret, que   illa infant   de ill hom
+Yahweh came down  to see  the  city and the tower , which the  children of     men
+
+kijonteu  ha .
+construct hab.
+had built    .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:6
+
+Jehova dii , "Atentson , je   lu  u   popowu, e   huva lu   tiho u   liin    ;
+Jehowa dict, "attention, est  lor un  popul , et  hab  lo   tot  un  ling    ;
+Yahweh said, "Behold   , they are one people, and they have all  one language;
+
+e   je   tsi ke   owidziniha lu  a  fuwe. Tse-tem  nowu   , ke    intihen lu
+et  est  hoc que  origin     lor ad fer . hoc-temp nul    , que   intend  lor
+and this is  what they begin     to do  . Now      nothing, which they intend
+
+a  fuwe, wesuhi ti  va    ba   li  .
+ad fer , resist ten vas   ab   lor .
+to do  , will be withheld from them.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:7
+
+Ven , ni    lua dijetsihen, e   di    konfiju lo    liin    ,
+Ven , nostr lax descend   , et  id    confus  lor   ling    ,
+Come, let's     down      , and there confuse their language,
+
+da   ne  piho lu  kompuwehihen la   pawowo de u  awotuwe."
+ad   neg pot  lor comprehend   illa parol  de un alter  ."
+that they may not understand   one another's speech     ."
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:8
+
+Da Jehova li  divihi     a  uwotuwe de   di    a  la   suwufija de tiho la   mihun.
+ad Jehowa lor divid      ad ulter   de   id    ad illa surface  de tot  illa mund .
+So Yahweh scattered them abroad     from there on the  surface  of all  the  earth.
+
+Wuhe lu      a  kijonteu  la   uvo .
+Rest lor     ad construct illa urb .
+They stopped building     the  city.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+11:9
+
+Da        sa nom         apowe  ti  ko  Babowe, ba      Jehova konfiju  la
+ad        se nom         appel  ten com Babel , ab      Jehowa confus   illa
+Therefore the name of it was called as  Babel , because Yahweh confused the
+
+liin     de tiho la   mihun, di   . De   di   , Jehova li  divihi     a  uwotuwe
+ling     de tot  illa mund , id   . De   id   , Jehowa lor divida     ad ulter
+language of all  the  earth, there. From there, Yahweh scattered them abroad
+
+su    la   suwufija de tiho la   mihun.
+super illa surface  de tot  illa mund .
+on    the  surface  of all  the  earth.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+</pre>
+<pre>
+Titowe : Na    Patuwe
+title  : nostr patr
+Title  : Our   Father
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+
+Na    patuwe i  la   tsowe ,
+nostr patr   in illa cel   ,
+Our   fater  in      heaven,
+
+sian  je  ta   nom  .
+sanct est tu   nom  .
+saint is  your name .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+
+Ven  ta   wedzim ,
+ven  tu   regime ,
+Come your kingdom,
+
+fuwe ti  ta   volihun,
+fer  ten tu   volunt ,
+done     your will   ,
+
+ko  i  la   tsowe  e   su  tuwe .
+com in ille cel    et  sur terr .
+as  in      heaven and on  earch.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+
+Na    pewi-diji pan   tu  don  tse-diji.
+nostr per-dies  pan   tu  don  hoc-dies.
+Our   everyday  bread you give today   .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+
+Puwadon tu  na    debihi,
+pardon  tu  nostr debit ,
+Forgive you our   debts ,
+
+ko  pauwdon ha  nu    na    debituwo.
+com pardaon hab nostr nostr debitor .
+as  we have forgotten our   debtors .
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+
+E   tu  ne  ni    diu  entuwe tembatson ,
+et  tu  neg nostr duc  entr   temptation,
+and you not us    lead into   tempation ,
+
+bo  ni     libewiha tu eutuwe de maliin.
+ob  nostr  liberat  tu exter  de malign.
+but you us liberate    out    of malign.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+
+Amen.
+amen.
+Amen.
+
+--------- --------- --------- --------- --------- --------- --------- ---------
+</pre>
+<a name=schema>
+<center><span class=t c='方案' d='La desiin'><h2>Schema</span></h2></center>
+<table width=100%>
+	<tr bgcolor="ccddff">
+		<td>
+			<b><span class=t c='字母表' d='La afabiheje'>Alphabet</span></b>
+		</td>
+		<td>
+			<b>La awofabihe</b>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			B P M F V<br/>
+			D T N S J TS DZ<br/>
+			G K H W L<br/>
+			A E I O U<br/>
+		</td>
+		<td>
+			B P M F V<br/>
+			D T N S J TS DZ<br/>
+			G K H W L<br/>
+			A E I O U<br/>
+		</td>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b><span class=t c='发音规则' d='La fonetijei'>Phonetics</span></b>
+		</td>
+		<td>
+			<b>La fonetii</b>
+		</td>
+	</tr>
+	<tr>
+		<td colspan=2>
+			<table width=90% border=1>
+				<tr>
+					<td>B  b  [b]  b  in book</td>
+					<td>P  p  [p]  p  in pen</td>
+					<td>M  m  [m]  m  in map</td>
+					<td>F  f  [f]  f  in fall</td>
+					<td>V  v  [v]  v  in vow</td>
+				</tr>
+				<tr>
+					<td>D  d  [d]  d  in dog</td>
+					<td>T  t  [t]  t  in take</td>
+					<td>N  n  [n]  n  in name</td>
+					<td>S  s  [s]  s  in say</td>
+					<td>J  j  [j]  y  in yes (!)</td>
+					<td>TS ts [ts] ts in gets (!)</td>
+					<td>DZ dz [dz] ds in words (!)</td>
+				</tr>
+				<tr>   
+					<td>G g [g] g in go</td>
+					<td>K k [k] k in kilo</td>
+					<td>H h [h] h in how</td>
+					<td>W w [w] w in wall</td>
+					<td>L l [l] l in low</td>
+				</tr>
+				<tr>
+					<td>A a [&#x0251;] a in yacht</td>
+					<td>E e [&#x025b;] e in set</td>
+					<td>I i [i]        i in machine</td>
+					<td>O o [&#x0254;] o in bought</td>
+					<td>U u [u]        u in flute</td>
+				</tr>
+			</table>
+			<span class=t
+				c='! 注解: 这些发音规则需要特别注意.'
+				d='! La notajuon: le ponunjajuwon kuwi atenjihon.'
+				>! Note: pronuncations need attention.<span class=t c='' d=''><br/>
+		</td>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b><span class=t c='音节结构' d='La dzutuwoowu de silabuhowe'>Syllable Structure</span></b>
+		</td>
+		<td>
+			<b>La toutuwu de silabowe</b>
+		</td>
+		<tr>
+			<td>   
+				<span class=t c='[辅音] 元音 [辅音]' d='[Konsonihan] Vovuhe [Nasuha]'>[Consonant] Vowel [Nasal]</span>
+			</td>
+			<td>   
+				[Konsonihan] Vovowe [Nasowa]
+			</td>
+		</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b><span class=t c='重音' d='La ajiheen'>Stress</span></b>
+		</td>
+		<td>
+			<b>La aitsien</b>
+		</td>
+		<tr>
+			<td>
+				<span class=t
+					c='重音落在最后一个元音.'
+					d='La ajiheen dze su la vovuhe finuha.'
+					>The stress is at the last vowel.</span>
+			</td>
+			<td>
+				La aitsien je su la vovowe finowa.
+			</td>
+		</tr>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b><span class=t c='词汇' d='La vokabulawui'>Vocabulary</span></b>
+		</td>
+		<td>
+			<b>La vokabulawui</b>
+		</td>
+	</tr>
+	<tr>
+		<td>
+			<span class=t
+				c='词汇来自在英语中出现的拉丁词根.'
+				d='Le vuvowe ke dewuvi de le wadijei de Latuin e ke apuwohoe i Engijeji'
+				>The words deriving from Latin roots which appear in English.</span><br/>
+		</td>
+		<td>
+			Le vuvowe ke dewuvi de le wadijei de Latuin e ke apuwohoe i Engijeji.
+		</td>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b><span class=t c='代词' d='La ponuvowon'>Pronoun</span></b>
+		</td>
+		<td>
+			<b>La ponuvowon</b>
+		</td>
+	</tr>
+	<tr>
+		<td colspan=2>
+			<table border=1>
+				<tr>
+					<td></td><td colspan=3><span class=t c='单数' d='Le singuluwa'>Single</span></td><td colspan=3><span class=t c='复数' d='Le puwuhowa'>Plural</span></td>
+				</tr>
+				<tr>
+					<td></td><td># 1</td><td># 2</td><td># 3</td><td># 1</td><td># 2</td><td># 3</td>
+				</tr>
+				<tr>
+					<td>Nominative</td><td>mi</td><td>tu</td><td>go/ga</td><td>nu</td><td>vu</td><td>lu</td>
+				</tr>
+				<tr>
+					<td>Accusative</td><td>me</td><td>te</td><td>se/ja</td><td>ni</td><td>vi</td><td>li</td>
+				</tr>
+				<tr>
+					<td>Genitive</td><td>ma</td><td>ta</td><td>sa/gi</td><td>na</td><td>vo</td><td>lo</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+	<tr bgcolor="ccddff">
+		<td>
+			<b><span class=t c='主要词汇' d='Le vuvowe impotihejan'>Main Words</span></b>
+		</td>
+		<td>
+			<b>Le vuvowe impotihejan</b>
+		</td>
+	</tr>
+	<tr>
+		<td colspan=2>
+			<table border=1>
+				<tr bgcolor="eeddff">
+					<td>a</td><td>e</td><td>i</td><td>o</td><td>u</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>ad</td><td>et</td><td>in</td><td>or</td><td>un</td>
+				</tr>
+				<tr>
+					<td>to</td><td>and</td><td>in</td><td>or</td><td>a</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ba</td><td></td><td>bi</td><td>bo</td><td>bu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>ab</td><td></td><td>ubi</td><td>ob</td><td>sub</td>
+				</tr>
+				<tr>
+					<td>from</td><td></td><td>where</td><td>but</td><td>under</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>pa</td><td>pe</td><td></td><td>po</td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>parse</td><td>per</td><td></td><td>pro</td><td></td>
+				</tr>
+				<tr>
+					<td>why</td><td>by</td><td></td><td>for</td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ma</td><td>me</td><td>mi</td><td>mo</td><td>mu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>me</td><td>me</td><td>me</td><td>mono</td><td>mult</td>
+				</tr>
+				<tr>
+					<td>my</td><td>me</td><td>I</td><td>-th (ordinal)</td><td>some</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>fa</td><td>fe</td><td></td><td>fo</td><td>fu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>fact</td><td>fer</td><td></td><td>front</td><td>fer</td>
+				</tr>
+				<tr>
+					<td>thing</td><td>do</td><td></td><td>most</td><td>do (question)</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>va</td><td>ve</td><td>vi</td><td>vo</td><td>vu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>vas</td><td>verse</td><td>vos</td><td>vos</td><td>vos</td>
+				</tr>
+				<tr>
+					<td>will do; go</td><td>with</td><td>you (plural, object)</td><td>your (plural)</td><td>you (plural, subject)</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>da</td><td>de</td><td>di</td><td>do</td><td>du</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>ad</td><td>de</td><td>id</td><td>od</td><td>dur</td>
+				</tr>
+				<tr>
+					<td>then</td><td>of</td><td>there</td><td>though</td><td>when</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ta</td><td>te</td><td>ti</td><td>to</td><td>tu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>tu</td><td>tu</td><td>ten</td><td>tot</td><td>tu</td>
+				</tr>
+				<tr>
+					<td>your (single)</td><td>you (single, object)</td><td>be done</td><td>all</td><td>you (single, subject)</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>na</td><td>ne</td><td>ni</td><td>no</td><td>nu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>nos</td><td>ne</td><td>nos</td><td>non</td><td>nos</td>
+				</tr>
+				<tr>
+					<td>our</td><td>not</td><td>us</td><td>no</td><td>we</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>sa</td><td>se</td><td>si</td><td></td><td>su</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>su</td><td>se</td><td>sic</td><td></td><td>super</td>
+				</tr>
+				<tr>
+					<td>his</td><td>him</td><td>so; if</td><td></td><td>over</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ja</td><td>je</td><td>ji</td><td>jo</td><td>ju</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>illa</td><td>est</td><td>est in</td><td>ill</td><td>est fut</td>
+				</tr>
+				<tr>
+					<td>she</td><td>be</td><td>be doing</td><td>he</td><td>be(question)</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>tsa</td><td>tse</td><td>tsi</td><td></td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>hic</td><td>hic</td><td>hic</td><td></td><td></td>
+				</tr>
+				<tr>
+					<td>this (object)</td><td>this (adjective)</td><td>this (subject)</td><td></td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>dza</td><td>dze</td><td>dzi</td><td></td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>hoc</td><td>hoc</td><td>hoc</td><td></td><td></td>
+				</tr>
+				<tr>
+					<td>that (ojbect)</td><td>that (adjective)</td><td>that (subjetct)</td><td></td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ga</td><td>ge</td><td></td><td></td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>illa sa</td><td>illa se</td><td></td><td></td><td></td>
+				</tr>
+				<tr>
+					<td>her (object)</td><td>her (adjective)</td><td></td><td></td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ka</td><td>ke</td><td>ki</td><td>ko</td><td>ku</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>qual</td><td>que</td><td>qui</td><td>com</td><td>quo</td>
+				</tr>
+				<tr>
+					<td>how</td><td>what; that (conjuction)</td><td>who</td><td>as</td><td>which</td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>ha</td><td>he</td><td>hi</td><td></td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>hab</td><td>hab</td><td>hic</td><td></td><td></td>
+				</tr>
+				<tr>
+					<td>have done</td><td>did</td><td>here</td><td></td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td></td><td>we</td><td></td><td></td><td></td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td></td><td>re</td><td></td><td></td><td></td>
+				</tr>
+				<tr>
+					<td></td><td>again</td><td></td><td></td><td></td>
+				</tr>
+				<tr bgcolor="eeddff">
+					<td>la</td><td>le</td><td>li</td><td>lo</td><td>lu</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>illa</td><td>ill</td><td>lor</td><td>lor</td><td>lor</td>
+				</tr>
+				<tr>
+					<td>the (single)</td><td>the (plural)</td><td>them</td><td>their</td><td>they</td>
+				</tr>
+			</table>
+			<table border=1>
+				<tr bgcolor="eeddff">
+					<td>un</td><td>diju</td><td>tuwi</td><td>keha</td><td>tsiin</td><td>sui</td><td>suve</td><td>oi</td><td>nuvo</td><td>dije</td><td>tsihen</td><td>mowi</td><td>milon</td>
+				</tr>
+				<tr bgcolor="ddeeff">
+					<td>un</td><td>du</td><td>tri</td><td>quadr</td><td>cinq</td><td>six</td><td>sept</td><td>oct</td><td>nov</td><td>dec</td><td>cent</td><td>mil</td><td>million</td>
+				</tr>
+				<tr>
+					<td>one</td><td>two</td><td>three</td><td>four</td><td>five</td><td>six</td><td>seven</td><td>eight</td><td>nine</td><td>ten</td><td>hundred</td><td>thousand</td><td>million</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
+<a name=discuss>
+<center><h2><span class=t c='讨论' d='La didzusijon'>Discussion</span></h2></center>
+thomasruhm: The word 'vogag' looks like it has hard 'g'. Can 'g' be soft in other words?
+<ul>
+	<li>The word {vogag} [v&#x0254;'j&#x0251;] is short form of {vogage} [v&#x0254;'j&#x0251;g&#x025b;].</li>
+	<li>Based on the omission rules, it is decided to drop the last syllable {ge} in pronunciation, but keep the {g} in the spelling.</li>
+	<li>{g} cannot be soft, it's either hard [g] as in English {good} or silent in the ending.</li>
+</ul>
+thomasruhm: I see there is an affricate 'c', like the 'z' in 'ezebe'. In that case the 'sc' in 'dechend' changed to 'ch' before 'c' became 'z'.
+<ul>
+	<li>{c} is hard [k] as in English {cat}; or silent in the ending.</li>
+	<li>{z} is for the soft {c} in Latin, but it's pronounced as [ts] in English {gets}.</li>
+	<li>{except} =&gt; {e-k-cept-} =&gt; (-k- is compensated as final e) ; ( pt become b ) =&gt; {e-ze-be}.</li>
+	<li>{descend} =&gt; {de-sk-en-d} =&gt; ( -sk- become ch ) ; (verb adds -a ending) =&gt; dechenda =&gt; (omit last syllable) =&gt; {dechend}.</li>
+	<li>I would say it's kind of random choice, when turning {sc} to {sk} but ignoring the hidden {s} in {except}; it is okay to use {dezend}</li>
+</ul>
+Padraic Brown: One thing was confusing: I had gotten the impression that he was getting rid of "hard to pronounce" sounds like [l] and [r], and yet his texts are replete with words like "parol".
+<ul>
+	<li>The final consonant ({l} in {parol} [pa'h&#x0254;]) is kept in the spelling, but not pronounced; except {n} and {m}</li>
+	<li>{dichover} is pronounced as [diz&#x0254;'v&#x025b;]</li>
+</ul>
+Padraic Brown: Another point of confusion was that he seems to have put himself through an awful regimen of mental gymnastics
+<ul>
+	<li>The goal of this design is to fit Latin roots into consonant-vowel-with-nasal (C-V-n) syllable structure.</li>
+	<li>It is trade-off between two options</li>
+	<li>1) dropping the character not fit into the (C-V-n) structure, which will lose too much info, cause conflict and hard to remember; think about {extract} become {eta}.</li>
+	<li>2) padding vowels, which will cause too many syllables, and too many repetition of the padding vowel; think about {extract} become {ekusuturakutu}</li>
+	<li>So the way is to choose some "important" character of the dropped ones and merge them into another consonant or the last vowel.</li>
+</ul>
+thomasruhm: Did you have the German and eastern European pronunciations in mind, when you decided that way of using &lt;g&gt; and &lt;c&gt;?
+<ul>
+	<li>No. Deciding the way of using &lt;g&gt; and &lt;c&gt; are simply to have one-to-one relationship between spelling and pronunciation</li>
+</ul>
+thomasruhm: The stress in words which originally have two consonants might contribute to the decision on which of them will have to be kept.
+<ul>
+	<li>Yes, the stressed syllable in the original word have higher priority to be kept, and the compensating ending vowel for the stressed syllable is more likely be kept than non-stressed, because it conveys more signal.</li>
+</ul>
+Padraic Brown: (some questions about the order of picking words)
+<ul>
+	<li>The language prefers Latin form than French form than English form</li>
+	<li>The reason is Latin form uses mostly the basic 5 vowels (a,e,i,o,u).</li>
+	<li>Although Latin distinguishes long and short vowels, but they do not make much difference.</li>
+	<li>French and English forms have more kinds of vowels besides the basic 5 vowels, and uses diphthong more frequently, which need more compensation and changes to fit them into C-V-n structures</li>
+</ul>
+<center><h2>Change Log</h2>
+</center>
+2004 Created</br>
+2014 Language changes
+<ul>
+<li>Move {eu} to {u} with compenstating {-i} from {a} with compenstating {-i}</li>
+<li>Use modal verb suffixes, and make it optional to use natural ending-vowel</li>
+<li>Change the score of {g} to 3 from 2</li>
+<li>Add some better choices to main words</li>
+</ul>
+2014 Document changes
+<ul>
+<li>Font and color</li>
+<li>Section names</li>
+<li>Punctuations: use curved braces to replace quotation mark</li>
+<li>Upper case and lower case</li>
+<li>Add more examples</li>
+<li>Use Unicode to show the phonetic symbols; Use UTF-8 encoding in Chinese version</li>
+<li>Fix some wrong examples</li>
+<li>Remove subjective sentences</li>
+<li>Correct the phonetic annotation [a]=&gt;[&#x0251;] [e]=&gt;[&#x025b;] [o]=&gt;[&#x0254;]</li>
+<li>Add the translation of Doudouling</li>
+<li>Add some discussion</li>
+</ul>
+2014 Language changes
+<ul>
+<li>Change {i-} to {g-}</li>
+<li>Change {ch} [z] to {ch] [j]</li>
+</ul>
+2017 Language changes
+<ul>
+<li>IPA alignment: {h} [&#x014B;] &gt; {h} [h]; {r} [h] &gt; {w} [w]; {ph} [w] &gt; {ts} [ts]; {z} [ts] &gt; {j} [j]; {ch} [j] &gt; {dz} [dz]</li>
+<li>Merge {th} and {ch} into {dz} [dz]</li>
+<li>Redesign of the ending and the stress</li>
+<li>Long form and short form</li>
+<li>Use short form when a single-syllable word is the center of phrase</li>
+<li>Make all key words in {C-V} format</li>
+</ul>
+2018 Language changes
+<ul>
+<li>Use weak syllables to compensate, merge long form and short form</li>
+</ul>
+2019 Language changes
+<ul>
+<li>Insert compensating letter combinations before the last vowel</li>
+<li>Stress at last vowel</li>
+</ul>
+2020 Language changes
+<ul>
+<li>Merge compensating letter combinations to at most one per syllable</li>
+<li>Insert compensating letter combinations to all syllables</li>
+<li>Insert compensating letter combinations to be after leading vowel</li>
+<li>Keep diphthong</li>
+</ul>
+</body>
+</html>
