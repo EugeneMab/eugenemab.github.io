@@ -1,0 +1,755 @@
+<html>
+  <!--
+  <span class=t c='' d=''>
+  </span>
+  <span class=t
+    c=''
+    d=''
+    >
+  -->
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <meta charset="UTF-8">
+    <title>
+      Doudouling (version 2022) Doudoulivoonn
+    </title>
+    <style>
+      body, td
+      {
+        font-family: Calibri, SimHei, Arial, sans-serif;
+        font-size: 24px;
+      }
+      table
+      {
+        border-spacing: 0;
+      }
+      table, td
+      {
+        border: solid 1px #777;
+      }
+    </style>
+    <script>
+      function setLang(language) {
+        var elements = document.getElementsByClassName("t");
+        for (var pos = 0; pos < elements.length; pos++) {
+          var element = elements[pos];
+          if (element.getAttribute('e')) {
+            continue;
+          }
+          element.setAttribute('e', element.innerHTML);
+        }
+        for (var pos = 0; pos < elements.length; pos++) {
+          var element = elements[pos];
+          element.innerHTML = element.getAttribute(language);
+        }
+      }
+      function onLoad() {
+        var url = window.location.href;
+        if (!url) {
+          return;
+        }
+        if (url.endsWith('#c')) {
+          setLang('c');
+          return;
+        }
+        if (url.endsWith('#d')) {
+          setLang('d');
+          return;
+        }
+      }
+    </script>
+  </head>
+  <body bgcolor="#f0fff0" text="#1f3f7d" onload="onLoad()">
+    <center>
+      <h1>
+        <span class=t
+          c='兜兜语(2022版本)'
+          d='La Doudoulivoonn (vewuusion 2022)'
+          >Doudouling (version 2022)</span>
+      </h1>
+      <div>
+        <span class=t
+          c='HUANG JIAN 的一种人工语言'
+          d='Un livoonn awuutifitsiahuu pe JIAN HUANG'
+          >An artificial language by Jian Huang</span>
+      </div>
+    </center>
+    <ol>
+      <li>
+        <a href="#e" onclick="setLang('e')">
+          <span class=t
+            c='英语介绍'
+            d='La intuuwoduziitsion in Anguuhejii'
+            >English introduction</span>
+        </a>
+      </li>
+      <li>
+        <a href="#c" onclick="setLang('c')">
+          <span class=t
+            c='中文介绍'
+            d='La intuuwoduziitsion in Tsinejii'
+            >Chinese introduction</span>
+        </a>
+      </li>
+      <li>
+        <a href="#d" onclick="setLang('d')">
+          <span class=t
+            c='兜兜语介绍(用兜兜语介绍兜兜语)'
+            d='La intuuwoduziitsion in Doudoulivoonn (La intuuwoduziitsion wefuuheziitivuu)'
+            >Doudouling introduction (reflective introduction)</span>
+        </a>
+      </li>
+    </ol>
+    <a name='introduction' />
+    <center>
+      <h2>
+        <span class=t
+          c='介绍'
+          d='La intuuwoduziitsion'
+          >Introduction</span>
+      </h2>
+    </center>
+    <h3><span class=t
+      c='基本原则: 把拉丁词汇转换为{辅音-半元音-元音-半元音-鼻音} {C-S-V-S-N}音节结构'
+      d='Le puuwintsipuuhe: a konvewuuhii le vewuufuu de Latin entewuu la sihuulabuuhe de {Konsonahiinn-Semivovehuu-Vovehuu-Semivovehuu-Nasahuu} {K-S-V-S-N}'
+      >Principles: convert Latin words into {Consonant-Semivowel-Voewl-Semivowel-Nasl} {C-S-V-S-N} syllables</span>
+    </h3>
+    <h3><span class=t
+      c='第一步:简化辅音和辅音组合'
+      d='La siihefuu un mo: a simuuhifi le konsonahiinne e le combinatsion de konsonahiinn'
+      >Step 1: simplify consonants and consonant clusters</span></h3>
+    <p>
+      <span class=t
+        c='按照如下的规则,把辅音和辅音组合,简化为如下的辅音.'
+        d='Simpuuhifi le konsonahiinn e le kombinatsion de konsonahiinn a le konsonahiinn infuuwa pe le wuhee infuuwa.'
+        >Simplify consonants and consonant clusters to the consonants as below by the rules below.</span>
+    </p>
+    <center>
+      <table>
+        <tr><td>{b}</td><td>{p}</td><td>{m}</td><td>{f}</td><td>{v} </td><td>    </td><td>   </td></tr>
+        <tr><td>{d}</td><td>{t}</td><td>{n}</td><td>{s}</td><td>{ts}</td><td>{dz}</td><td>{j}</td></tr>
+        <tr><td>{g}</td><td>{k}</td><td>{h}</td><td>{w}</td><td>{l} </td><td>    </td><td>   </td></tr>
+      </table>
+    </center>
+    <p>
+      <span class=t
+        c='规则'
+        d='Le wuhee'
+        >Rules:</span>
+      <ul>
+        <li>{pt} =&gt; {b};</li>
+        <li>{ph} =&gt; {f};</li>
+        <li>{w}  =&gt; {v};</li>
+        <li>{th} =&gt; {t};</li>
+        <li>{c} ([ s ]), {ch} ([ &#x0283; ]/[ t&#x0283; ]), {sh} ([ &#x0283; ]), {t} ([ &#x0283; ]/[ t&#x0283; ]), {x} ([ s ]/[ &#x0283; ]) =&gt; {ts};</li>
+        <li>{j}, {z} =&gt; {dz};</li>
+        <li>{y} ([ j ]) =&gt; {j};</li>
+        <li>{kt} =&gt; {g};</li>
+        <li>{c} ([ k ]), {ch} ([ k ]), {q} =&gt; {k};</li>
+        <li>{r}  =&gt; {w};</li>
+      </ul>
+    </p>
+    <h3>
+      <span class=t
+        c='第二步:转化双重元音'
+        d='La siihefuu dujii mo: a konvewuuhii le vovehuu dupuuhe'
+        >Step 2: convert double vowels</span>
+    </h3>
+    <p>
+    <span class=t
+      c='按照如下规则转换双重元音.'
+      d='Simpuuhifi le vovehuu dupuuhe pe le wuhee infuuwe.'
+      >Simplify the double vowels by the rules below.</span>
+    </p>
+    <p>
+      <span class=t
+        c='规则'
+        d='Le wuhee'
+        >Rules:</span>
+      <ul>
+        <li>{aa} =&gt; {aha};</li>
+        <li>{ee} =&gt; {ei}; </li>
+        <li>{ii} =&gt; {ihi};</li>
+        <li>{oo} =&gt; {ou}; </li>
+        <li>{uu} =&gt; {uhu};</li>
+      </ul>
+    </p>
+    <p>
+      <span class=t
+        c='把{y}转化为{i}.'
+        d='Konvewuuhii {y} a {i}.'
+        >Convert vowel {y} to {i}.</span>
+    </p>
+    <h3><span class=t
+      c='第三步:转换辅音'
+      d='La siihefuu tuuwi mo: a konvewuuhii le konsonahiinn'
+      >Step 3: Convert the consonants</span></h3>
+    <p>
+      <span class=t
+        c='对于末尾鼻音后面的辅音,把它向左移动,并且重复那个鼻音.'
+        d='Po le konsonahiinn pojiihii le finahuu nasahuu, se mofuu a la siwoonntewuu e repehii la son nasahhu.'
+        >For consonants after the closing nasal, move it to the left and repeat the nasal sound.</span>
+    </p>
+    <p>
+      <span class=t
+        c='保留一个音节中的第一个辅音.'
+        d='Ten la puuwim konsonahiinn in un sihuulabuuhe.'
+        >Keep the first consonant in a syllable.</span>
+    </p>
+    <p>
+      <span class=t
+        c='按照如下规则转换一个音节中的后续辅音.'
+        d='Konvewuuhii le konsonahiinn sekuehiinn in un sihuulabuuhe pe le wuhee infuuwa.'
+        >Convert the following consonants in a syllable by the rules below.</span>
+    </p>
+    <center>
+      <table>
+        <tr>
+          <td>
+            <span class=t
+              c='辅音'
+              d='Konsonahiinn'
+              >Consonant</span>
+          </td>
+          <td>
+            <span class=t
+              c='直接在主元音{i}之前'
+              d='Immediahii ahiin madzowuu vovehhu {i}'
+              >Immediately before main vowel {i}</span>
+          </td>
+          <td>
+            <span class=t
+              c='直接在主元音{i}之后'
+              d='Immediahii pojiihii madzowuu vovehhu {i}'
+              >Immediately after main vowel {i}</span>
+          </td>
+          <td>
+            <span class=t
+              c='直接在主元音{u}之前'
+              d='Immediahii ahiin madzowuu vovehhu {u}'
+              >Immediately before main vowel {u}</span>
+          </td>
+          <td>
+            <span class=t
+              c='直接在主元音{u}之后'
+              d='Immediahii pojiihii madzowuu vovehhu {u}'
+              >Immediately after main vowel {u}</span>
+          </td>
+          <td>
+            <span class=t
+              c='在主元音之前'
+              d='Ahiin madzowuu vovehhu'
+              >Before main vowel</span>
+          </td>
+          <td>
+            <span class=t
+              c='在主元音之后'
+              d='Pojiihii madzowuu vovehhu'
+              >After main vowel</span>
+          </td>
+        </tr>
+        <tr><td>{b} / {p}        </td><td>{uuf}</td><td>{fuu}</td><td>{eez}</td><td>{zee}</td><td>{uuf}</td><td>{fuu}</td></tr>
+        <tr><td>{v} / {f}        </td><td>{uuv}</td><td>{vuu}</td><td>{eez}</td><td>{zee}</td><td>{uuv}</td><td>{vuu}</td></tr>
+        <tr><td>{d} / {t}        </td><td>{ooh}</td><td>{hoo}</td><td>{iih}</td><td>{hii}</td><td>{iih}</td><td>{hii}</td></tr>
+        <tr><td>{s} / {ts} / {dz}</td><td>{oow}</td><td>{woo}</td><td>{iij}</td><td>{jii}</td><td>{iij}</td><td>{jii}</td></tr>
+        <tr><td>{g} / {k}        </td><td>{oov}</td><td>{voo}</td><td>{iiz}</td><td>{zii}</td><td>{iiz}</td><td>{zii}</td></tr>
+        <tr><td>{w}              </td><td>{uuw}</td><td>{wuu}</td><td>{eej}</td><td>{jee}</td><td>{uuw}</td><td>{wuu}</td></tr>
+        <tr><td>{l}              </td><td>{uuh}</td><td>{huu}</td><td>{eeh}</td><td>{hee}</td><td>{uuh}</td><td>{huu}</td></tr>
+      </table>
+    </center>
+    <h3>
+      <span class=t
+        c='范例'
+        d='Le eziisampuuhe'
+        >Examples</span>
+    </h3>
+    <p>
+      <span class=t
+        c='第一列是拉丁语单词.'
+        d='La kolum un mo ejii la vewuufuu de Latin.'
+        >The first column is Latin word.</span>
+      <span class=t
+        c='第二列是移动辅音之后的形式.'
+        d='La kolum dujii mo ejii la fowuum pojiihii ke mofu le konsonahiinn.'
+        >The second column is the form after moving consonants.</span>
+      <span class=t
+        c='第三列是兜兜语单词.'
+        d='La kolum tuuwi mo ejii la vewuufu de Doudoulivoonn.'
+        >The third column is Doudouling word.</span>
+    </p>
+    <span class=t
+      c='范例'
+      d='Le esampuhoe'
+      >Examples:</span>
+    <center>
+      <table>
+        <tr><td> Latin         </td><td> Moved        </td><td> Doudouling         </td></tr>
+        <tr><td> state         </td><td> stat         </td><td> siihahii           </td></tr>
+        <tr><td> sper          </td><td> sper         </td><td> suufewuu           </td></tr>
+        <tr><td> sport         </td><td> sport        </td><td> suufowuuhi         </td></tr>
+        <tr><td> science       </td><td> stsiesn      </td><td> soowiejiin         </td></tr>
+        <tr><td> photo         </td><td> foto         </td><td> foto               </td></tr>
+        <tr><td> wagon         </td><td> vagon        </td><td> vagon              </td></tr>
+        <tr><td> cent          </td><td> tsetnn       </td><td> tsehiinn           </td></tr>
+        <tr><td> center        </td><td> tsentew      </td><td> tsentewuu          </td></tr>
+        <tr><td> aqu           </td><td> ak           </td><td> azii               </td></tr>
+        <tr><td> aquatic       </td><td> akuatik      </td><td> akuativoo          </td></tr>
+        <tr><td> question      </td><td> kuestsion    </td><td> kuejiitsion        </td></tr>
+        <tr><td> tank          </td><td> taknn        </td><td> taziinn            </td></tr>
+        <tr><td> xerox         </td><td> tsewoks      </td><td> tsewoziiji         </td></tr>
+        <tr><td> chocolate     </td><td> tsokolat     </td><td> tsokolahii         </td></tr>
+        <tr><td> just          </td><td> dzust        </td><td> dzujiihii          </td></tr>
+        <tr><td> adoption      </td><td> adoptsion    </td><td> adofuutsion        </td></tr>
+        <tr><td> train         </td><td> train        </td><td> tuuwain            </td></tr>
+        <tr><td> tract         </td><td> trag         </td><td> tuuwazii           </td></tr>
+        <tr><td> create        </td><td> kweat        </td><td> kuuweahii          </td></tr>
+        <tr><td> glad          </td><td> glad         </td><td> guuhahii           </td></tr>
+        <tr><td> class         </td><td> klas         </td><td> kuuhajii           </td></tr>
+        <tr><td> cause         </td><td> kaus         </td><td> kaujii             </td></tr>
+        <tr><td> daemon        </td><td> daemon       </td><td> daemon             </td></tr>
+        <tr><td> coffee        </td><td> koffei       </td><td> kovuufei           </td></tr>
+        <tr><td> moustache     </td><td> moustats     </td><td> moujiitajii        </td></tr>
+        <tr><td> phoenix       </td><td> foeniks      </td><td> foenivoojii        </td></tr>
+        <tr><td> phoenician    </td><td> foenitsian   </td><td> foenitsian         </td></tr>
+        <tr><td> europe        </td><td> euwop        </td><td> euwofuu            </td></tr>
+        <tr><td> return        </td><td> weturn       </td><td> wetujeen           </td></tr>
+        <tr><td> depart        </td><td> depawt       </td><td> depawuuhii         </td></tr>
+        <tr><td> alt           </td><td> alt          </td><td> ahuuhii            </td></tr>
+        <tr><td> art           </td><td> awt          </td><td> awuuhii            </td></tr>
+        <tr><td> arts          </td><td> arts         </td><td> awuujii            </td></tr>
+        <tr><td> culture       </td><td> kultuw       </td><td> kuheetujee         </td></tr>
+        <tr><td> court         </td><td> kouwt        </td><td> koujeehii          </td></tr>
+        <tr><td> cant          </td><td> katnn        </td><td> kahiinn            </td></tr>
+        <tr><td> simple        </td><td> simple       </td><td> simpuuhe           </td></tr>
+        <tr><td> hom           </td><td> hom          </td><td> hom                </td></tr>
+        <tr><td> autumn        </td><td> autumn       </td><td> autum              </td></tr>
+        <tr><td> environment   </td><td> enviwonmetnn </td><td> enviwonmehiin      </td></tr>
+        <tr><td> fact          </td><td> fag          </td><td> fazii              </td></tr>
+        <tr><td> experiment    </td><td> eksperimetnn </td><td> eziijiipewimehiinn </td></tr>
+        <tr><td> sign          </td><td> sign         </td><td> sivoon             </td></tr>
+        <tr><td> sing          </td><td> signn        </td><td> sivoonn            </td></tr>
+        <tr><td> dogmatic      </td><td> dogmatik     </td><td> doziimativoo       </td></tr>
+        <tr><td> construct     </td><td> kosnntwug    </td><td> kojiinnteejuzii    </td></tr>
+        <tr><td> verb          </td><td> vewb         </td><td> vewuufuu           </td></tr>
+        <tr><td> partner       </td><td> pawtnew      </td><td> pawuuhiinewuu      </td></tr>
+        <tr><td> investment    </td><td> investmetnn  </td><td> invejiihiimehiinn  </td></tr>
+        <tr><td> continue      </td><td> kontinu      </td><td> kontinu            </td></tr>
+        <tr><td> Doudouling    </td><td> doudoulignn  </td><td> doudoulivoonn      </td></tr>
+        <tr><td> data          </td><td> data         </td><td> data               </td></tr>
+        <tr><td> exact         </td><td> eksag        </td><td> eziisazii          </td></tr>
+        <tr><td> slave         </td><td> slav         </td><td> suuhavuu           </td></tr>
+        <tr><td> salv          </td><td> salv         </td><td> sahuuvuu           </td></tr>
+        <tr><td> next          </td><td> nekst        </td><td> neziijiihii        </td></tr>
+        <!--
+        <tr><td>               </td><td>              </td><td>                    </td></tr>
+        -->
+      </table>
+    </center>
+    <h3>
+      <span class=t
+        c='重音'
+        d='La aziitsehiinn'
+        >Stress</span></h3>
+    <p>
+    <span class=t
+      c='重音落在最后一个非重复元音.'
+      d='La aziitsehiinn ejii in la finahuu non-dupuuhe vovehuu.'
+      >The stress is at the last non-double vowel.</span>
+    </p>
+    <a name='sample' />
+    <center>
+      <h2>
+        <span class=t
+        c='范例文章'
+        d='Le teziijiihii eziisampuuhe'
+        >Sample Passages</span>
+      </h2>
+    </center>
+    <p>
+      <span class=t
+        c='每一组里面,第一行是兜兜语;'
+        d='Po pewi geejuzee, la lin un mo ejii la Doudoulivoonn;'
+        >For each group, the first line is Doudouling;</span>
+      <span class=t
+        c='第二行是拉丁词根;'
+        d='la lin dujii mo ejii le wadivoojii de Latin;'
+        >the second line is Latin roots;</span>
+      <span class=t
+        c='第三行是英语原文.'
+        d='e la lin tuuwi mo ejii la semahiinn in Anguuhejii.'
+        >and the third line is English meaning.</span>
+    </p>
+    <pre style="whitespace: no-wrap;">
+      Tituuhe : Babehuu Teziijiihii, Genesiwoo, Bibuuhe
+      title   : babel   text       , genesis  , bible
+      Title   : Babel   Text       , Genesis  , Bible
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+      11:1
+
+      Tohii la   muhiinn ejii de un  livoonn  e   de un  pawohuu.
+      tot   illa mund    est  de un  ling     et  de un  parol  .
+      The whole  earth   was  of one language and of one speech .
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+      11:2
+
+      Du  vojajii he  lu  a  la   owientahuu, oziikujee he  ihuu ke   diwookovewuu ha  lu  un
+      dur voyage  hab lor ad illa oriental  , occur     hab il   que  discover     hab lor un
+      As  they journeyed  east              , it happened,       that they have found      a
+
+      puuhan in la   tewuu de la   Tsinawuu; e   vivuu he  lu  ihoo .
+      plan   in illa terr  de illa Shinar  ; et  viv   hab lor id   .
+      plain  in the  land  of      Shinar  ; and they lived    there.
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+      11:3
+
+      Divoo lu   un   a  un ahuutewuu, "Ven , ni    laziiji a  fezii le  tihuu , e   li  kombujiihii
+      dikt  lor  un   ad un alter    , "ven , nostr lax     ad fekt  ill tile  , et  lor combust
+      They said  one  to another     , "Come, let's         make         bricks, and burn them
+
+      entiwemehiinn." Hafuu lu  la   tihuu po  la   petewuu, e   utiliwoo lu  la   tawuu po  la   mowuutawuu.
+      entire       ." hab   lor illa tile  pro illa petr   , et  utiliz   lor illa tar   pro illa mortar    .
+      thoroughly   ." They had       brick for      stone  , and they used    the  tar   for the  mortar    .
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+      11:4
+
+      Divoo lu , "Ven , ni    laziijii kojiinnteejuzii po  ni    un ujeefuu, e   un tujeewehii,
+      dikt  lor, "ven , nostr lax      construct       pro nostr un urb    , et  un turret    ,
+      They said, "Come, let's          build           us        a  city   , and a  tower     ,
+
+      ken   kapihoo awuuwivuu a  la   tsehuu, e   ni    laziijii a  fezii po  ni    un nom ;
+      que   capit   arrive    ad illa cele  , et  nostr lax      ad fekt  pro nostr un nom ;
+      whose top     reaches   to the  sky   , and let's             make      us    a  name;
+
+      eziijiitsefuu ke  divihoo ti  nu    a  uheetewuu su    la   sujeefajii de tohii la    muhiinn."
+      except        que divid   ten nostr ad ulter     super illa surface    de tot   illa  mund   ."
+      lest              we be scattered   abroad       on    the  surface    of the   whole earth  ."
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+      11:5
+
+      Dzehova dejiitsehiinn a  miwuu la   ujeefuu e   la  tujeewehii, kem   le   infahiinn de le  hom
+      Jehowa  descend       ad mir   illa urb     et  la  turret    , que   illa infant    de ill hom
+      Yahweh  came down     to see   the  city    and the tower     , which the  children  of     men
+
+      kojiinnteejuzii ha .
+      construct       hab.
+      had built          .
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+      11:6
+
+      Dzehova divoo, "Ahiitentsion, ejii lu  un  popuhee, e   hafuu lu  tohii un  livoonn ;
+      Jehowa  dikt , "attention   , est  lor un  popul  , et  hab   lo  tot   un  ling    ;
+      Yahweh  said , "Behold      , they are one people , and they have all   one language;
+
+      e   ejii tsi kem  owidzinahii lu  a  fezii. Tsiihefuumm nuhee  , kem   intehiinn lu
+      et  est  hic que  originate   lor ad fekt . hic-temp    nul    , que   intend    lor
+      and this is  what they begin      to do   . Now         nothing, which they intend
+
+      a  fezii, wesiwoohii ti  va   afuu li  .
+      ad fekt , resist     ten vas  ab   lor .
+      to do   , will be withheld    from them.
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+      11:7
+
+      Ven , ni    laziijii dejiitsehiinn, e   ihoo  konfujii lo    livoonn ,
+      Ven , nostr lax      descend      , et  id    confus   lor   ling    ,
+      Come, let's          down         , and there confuse  their language,
+
+      ahii ne  pohii lu  kompuuwehehiinn la   pawohuu de un ahuutewuu."
+      ad   neg pot   lor comprehend      illa parol   de un alter    ."
+      that they may not understand       one another's speech        ."
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+      11:8
+
+      Ahii Dzehova li  divihoo    a  uheetewuu de   ihoo  a  la   sujeefajii de tohii la   muhiinn.
+      ad   Jehowa  lor divid      ad ulter     de   id    ad illa surface    de tot   illa mund   .
+      So   Yahweh  scattered them abroad       from there on the  surface    of all   the  earth  .
+
+      Wejiihii lu  a  kojiinnteejuzii la   ujeefu.
+      Rest    lor  ad construct       illa urb   .
+      They stopped    building        the  city  .
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+      11:9
+
+      Ahii      sa nom         afuupehuu ti  ko  Babehuu, afuu    Dzehova konfujii he  la
+      ad        se nom         appel     ten com Babel  , ab      Jehowa  confus   hab illa
+      Therefore the name of it was called    as  Babel  , because Yahweh  confused     the
+
+      livoonn  de tohii la   muhiinn, ihoo . De   ihoo , Dzehova li  divihoo    a  uheetewuu
+      ling     de tot   illa mund   , id   . De   id   , Jehowa  lor divida     ad ulter
+      language of all   the  earth  , there. From there, Yahweh  scattered them abroad
+
+      su    la   sujeefajii de tohii la   muhiinn.
+      super illa surface    de tot   illa mund   .
+      on    the  surface    of all   the  earth  .
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+    </pre>
+    <pre>
+      Tituhe : Na    Patewuu
+      title  : nostr pater
+      Title  : Our   Father
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+
+      Na    patewuu in la   tsehu ,
+      nostr pater   in illa cel   ,
+      Our   fater   in      heaven,
+
+      saziinn ejii ta   nom .
+      sanct   est  tu   nom .
+      saint   is   your name.
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+
+      Ven  ta   wedzim ,
+      ven  tu   regime ,
+      Come your kingdom,
+
+      fezii ti  ta   voluhiinn,
+      fekt  ten tu   volunt   ,
+      done      your will     ,
+
+      ko  in la   tsehuu e   su  tewuu.
+      com in illa cel    et  sur terr .
+      as  in      heaven and on  earch.
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+
+      Na    pewi-diwoo pan   tu  don  tsoohiwoo.
+      nostr per-dies   pan   tu  don  hic-dies.
+      Our   everyday   bread you give today   .
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+
+      Pawuudon tu  na    le  debihoo,
+      pardon   tu  nostr ill debit  ,
+      Forgive  you our       debts  ,
+
+      ko  pawuudon ha  nu    na    le  debitowuu.
+      com pardon   hab nostr nostr ill debitor  .
+      as  we have forgotten  our       debtors  .
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+
+      E   tu  ne  ni    duzii entewuu tefuummtatsion,
+      et  tu  neg nostr duc   entr    temptation    ,
+      and you not us    lead  into    temptation    ,
+
+      ofuu ni    libewahii tu eziijiitewuu de malivoon.
+      ob   nostr liberat   tu exter        de malign  .
+      but  you us liberate    out          of malign  .
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+
+      Amen.
+      amen.
+      Amen.
+
+      --------- --------- --------- --------- --------- --------- --------- ---------
+    </pre>
+    <a name='schema' />
+    <h2>
+      <center>
+        <span class=t
+          c='方案'
+          d='La desivoonn'>Schema</span>
+      </center>
+    </h2>
+    <table width=100%>
+      <tr bgcolor="ccddff">
+        <td>
+          <b>
+            <span class=t
+              c='字母表'
+              d='La ahuufabehii'
+              >Alphabet</span>
+          </b>
+        </td>
+        <td>
+          <b>La ahuufabehii</b>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          B P M F V<br/>
+          D T N S TS DZ J<br/>
+          G K H W L<br/>
+          A E I O U<br/>
+        </td>
+        <td>
+          B P M F V<br/>
+          D T N S TS DZ J<br/>
+          G K H W L<br/>
+          A E I O U<br/>
+        </td>
+      </tr>
+      <tr bgcolor="ccddff">
+        <td>
+          <b><span class=t
+            c='发音规则'
+            d='La fonetivoojii'
+            >Phonetics</span></b>
+        </td>
+        <td>
+          <b>La fonetivoojii</b>
+        </td>
+      </tr>
+      <tr>
+        <td colspan=2>
+          <table width=90% border=1>
+            <tr>
+              <td>B  b  [b]  b  in book</td>
+              <td>P  p  [p]  p  in pen</td>
+              <td>M  m  [m]  m  in map</td>
+              <td>F  f  [f]  f  in fall</td>
+              <td>V  v  [v]  v  in vow</td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>D  d  [d]  d  in dog</td>
+              <td>T  t  [t]  t  in take</td>
+              <td>N  n  [n]  n  in name</td>
+              <td>S  s  [s]  s  in say</td>
+              <td>TS ts [ts] ts in gets (!)</td>
+              <td>DZ dz [dz] ds in words (!)</td>
+              <td>J  j  [j]  y  in yes (!)</td>
+            </tr>
+            <tr>
+              <td>G g [g] g in go</td>
+              <td>K k [k] k in kilo</td>
+              <td>H h [h] h in how</td>
+              <td>W w [w] w in wall</td>
+              <td>L l [l] l in low</td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>A a [&#x0251;] a in yacht</td>
+              <td>E e [&#x025b;] e in set</td>
+              <td>I i [i]        i in machine</td>
+              <td>O o [&#x0254;] o in bought</td>
+              <td>U u [u]        u in flute</td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td>AA aa [&#x0251;] weeker a in yacht</td>
+              <td>EE ee [&#x025b;] weeker e in set</td>
+              <td>II ii [i]        weeker i in machine</td>
+              <td>OO oo [&#x0254;] weeker o in bought</td>
+              <td>UU uu [u]        weeker u in flute</td>
+              <td></td>
+              <td></td>
+            </tr>
+          </table>
+          <span class=t
+            c='! 注解: 这些发音规则需要特别注意.'
+            d='! La notatsion: le puuwonuntsatsion kiwuu ahiitentsion.'
+            >! Note: pronuncations need attension.<span class=t c='' d=''><br/>
+        </td>
+      </tr>
+      <tr bgcolor="ccddff">
+        <td>
+          <b><span class=t
+            c='重音'
+            d='La aziitsehiinn'
+            >Stress</span></b>
+        </td>
+        <td>
+          <b>La ajiheen</b>
+        </td>
+        <tr>
+          <td>
+            <span class=t
+              c='重音落在最后一个非重复元音.'
+              d='La aziitsehiinn ejii in la finahuu non-dupuuhe vovehuu.'
+              >The stress is at the last non-double vowel.</span>
+          </td>
+          <td>
+            La aziitsehiinn ejii in la finahuu non-dupuuhe vovehuu.
+          </td>
+        </tr>
+      </tr>
+    </table>
+    <center>
+      <h2>Change Log</h2>
+    </center>
+    <p>
+      2004 Created
+    </p>
+    <p>
+      2014 Language changes
+      <ul>
+        <li>Move {eu} to {u} with compenstating {-i} from {a} with compenstating {-i}</li>
+        <li>Use modal verb suffixes, and make it optional to use natural ending-vowel</li>
+        <li>Change the score of {g} to 3 from 2</li>
+        <li>Add some better choices to main words</li>
+      </ul>
+    </p>
+    <p>
+      2014 Document changes
+      <ul>
+        <li>Font and color</li>
+        <li>Section names</li>
+        <li>Punctuations: use curved braces to replace quotation mark</li>
+        <li>Upper case and lower case</li>
+        <li>Add more examples</li>
+        <li>Use Unicode to show the phonetic symbols; Use UTF-8 encoding in Chinese version</li>
+        <li>Fix some wrong examples</li>
+        <li>Remove subjective sentences</li>
+        <li>Correct the phonetic annotation [a]=&gt;[&#x0251;] [e]=&gt;[&#x025b;] [o]=&gt;[&#x0254;]</li>
+        <li>Add the translation of Doudouling</li>
+        <li>Add some discussion</li>
+      </ul>
+    </p>
+    <p>
+      2014 Language changes
+      <ul>
+        <li>Change {i-} to {g-}</li>
+        <li>Change {ch} [z] to {ch] [j]</li>
+      </ul>
+    </p>
+    <p>
+      2017 Language changes
+      <ul>
+        <li>IPA alignment: {h} [&#x014B;] &gt; {h} [h]; {r} [h] &gt; {w} [w]; {ph} [w] &gt; {ts} [ts]; {z} [ts] &gt; {j} [j]; {ch} [j] &gt; {dz} [dz]</li>
+        <li>Merge {th} and {ch} into {dz} [dz]</li>
+        <li>Redesign of the ending and the stress</li>
+        <li>Long form and short form</li>
+        <li>Use short form when a single-syllable word is the center of phrase</li>
+        <li>Make all key words in {C-V} format</li>
+      </ul>
+    </p>
+    <p>
+      2018 Language changes
+      <ul>
+      <li>Use weak syllables to compensate, merge long form and short form</li>
+      </ul>
+    </p>
+    <p>
+      2019 Language changes
+      <ul>
+        <li>Insert compensating letter combinations before the last vowel</li>
+        <li>Stress at last vowel</li>
+      </ul>
+    </p>
+    <p>
+      2022 Language changes
+      <ul>
+        <li>Use double vowels to indicate the compensating sound</li>
+        <li>Keep all compensating sound near original location</li>
+        <li>Nasal marker</li>
+      </ul>
+    </p>
+  </body>
+</html>
