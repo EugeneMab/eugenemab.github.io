@@ -39,7 +39,7 @@ const NavigationPane: React.FC = () => {
 
   return (
     <div className="w-64 bg-gray-800 text-white flex flex-col h-full overflow-y-auto shrink-0 relative z-50">
-      <div className="p-4 text-xl font-bold border-b border-gray-700">Dating Notebook</div>
+      <div className="p-4 text-xl font-bold border-b border-gray-700">Dating Show Notebook</div>
       
       <button
         className={clsx(

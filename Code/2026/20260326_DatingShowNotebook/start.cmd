@@ -1,4 +1,4 @@
-::@echo off
+@echo off
 setlocal
 set BASE_DIR=%~dp0
 set FOLDER_PATH=%~f1
@@ -19,7 +19,7 @@ if not "%FOLDER_PATH%"=="%FOLDER_PATH: =%" (
 
 echo Starting Dating Show Notebook...
 echo Project Root: %BASE_DIR%
-echo Data Folder: %FOLDER_PARAM%
+echo Data Folder: %FOLDER_PATH%
 
 if not exist node_modules (
     echo Installing root dependencies...
@@ -37,11 +37,16 @@ if not exist frontend\node_modules (
 cd /d %BASE_DIR%backend
 start /min "DSN_Backend" cmd /c npx tsx index.ts %FOLDER_PATH%
 
+echo.
+echo Backend is starting...
+echo http://localhost:13762/
+echo.
+
 :: Start Frontend
 cd /d %BASE_DIR%frontend
 start /min "DSN_Frontend" cmd /c npx vite
 
 echo.
-echo Service is starting...
-echo UI: http://localhost:3762/
+echo Frontend is starting...
+echo http://localhost:3762/
 echo.

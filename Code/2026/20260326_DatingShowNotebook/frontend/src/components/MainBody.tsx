@@ -50,7 +50,7 @@ const MainBody: React.FC = () => {
         const rect = el.getBoundingClientRect();
         // Calculate point relative to container and account for zoom
         const x = (p.gender === 'male' ? rect.right : rect.left) - containerRect.left;
-        const y = rect.top - containerRect.top + rect.height / 2;
+        const y = rect.top - containerRect.top * 2 + rect.height / 2;
         
         newPositions[p.id] = { x, y, gender: p.gender };
       }
@@ -200,10 +200,8 @@ const MainBody: React.FC = () => {
             const avgY = validMembers.reduce((sum, p) => sum + p.y, 0) / validMembers.length;
             
             // X coordinate between male right and female left
-            let minMaleX = Infinity;
             let maxMaleX = -Infinity;
             let minFemaleX = Infinity;
-            let maxFemaleX = -Infinity;
             
             validMembers.forEach(p => {
               if (p.gender === 'male') {
@@ -213,10 +211,10 @@ const MainBody: React.FC = () => {
               }
             });
             
-            // Default center if one side is missing
-            const teamX = (maxMaleX !== -Infinity && minFemaleX !== Infinity) 
-              ? (maxMaleX + minFemaleX) / 2
-              : (Number(idx) + 1) / (5 + 1) * (containerRef.current?.clientWidth || 1000);
+            // If one side is missing
+            if (!(maxMaleX !== -Infinity && minFemaleX !== Infinity)) return null; 
+
+            const teamX = maxMaleX + (minFemaleX - maxMaleX) * ((Number(idx) + 1) / (5 + 1));
               
             const teamY = avgY;
 
