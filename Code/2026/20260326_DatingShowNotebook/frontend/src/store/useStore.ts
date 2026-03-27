@@ -50,7 +50,6 @@ interface AppState {
 
   fetchData: () => Promise<void>;
   saveData: (newData: AppData) => Promise<void>;
-  setData: (newData: AppData) => void;
   setActiveMode: (mode: ActiveMode) => void;
   setSelectedView: (episodeId: number | null, eventId: string | null) => void;
   setBodyScale: (scale: number) => void;
@@ -84,14 +83,6 @@ export const useStore = create<AppState>((set, get) => ({
       data: newData
     });
     await axios.post('/api/data', newData);
-  },
-
-  setData: (newData) => {
-    const currentData = get().data;
-    set({
-      undoStack: [JSON.parse(JSON.stringify(currentData)), ...get().undoStack].slice(0, 50),
-      data: newData
-    });
   },
 
   setActiveMode: (mode) => set({ activeMode: mode }),

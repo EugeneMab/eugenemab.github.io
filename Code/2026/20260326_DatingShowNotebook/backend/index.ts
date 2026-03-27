@@ -43,13 +43,22 @@ if (!fs.existsSync(path.dirname(dataPath))) {
 function loadData() {
   if (fs.existsSync(dataPath)) {
     try {
-      return JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
+      const content = fs.readFileSync(dataPath, 'utf-8');
+      if (!content.trim()) return defaultData;
+      return JSON.parse(content);
     } catch (e) {
       console.error('Error reading data.json, using default', e);
       return defaultData;
     }
+  } else {
+    // Create default file immediately
+    try {
+      fs.writeFileSync(dataPath, JSON.stringify(defaultData, null, 2), 'utf-8');
+    } catch (e) {
+      console.error('Failed to create default data.json', e);
+    }
+    return defaultData;
   }
-  return defaultData;
 }
 
 app.get('/api/data', (req, res) => {

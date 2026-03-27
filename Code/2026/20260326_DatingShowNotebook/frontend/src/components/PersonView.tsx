@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useStore, Person, Gender } from '../store/useStore';
 import { Plus, Trash2, Hash } from 'lucide-react';
+import { clsx } from 'clsx';
 
 const PersonView: React.FC = () => {
-  const { data, saveData } = useStore();
+  const { data, saveData, bodyScale, descriptionScale } = useStore();
   const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null);
 
   const handleAddPerson = (gender: Gender) => {
@@ -57,7 +58,6 @@ const PersonView: React.FC = () => {
             canvas.height = size;
             const ctx = canvas.getContext('2d');
             if (ctx) {
-              // Center crop
               const minDim = Math.min(img.width, img.height);
               const sx = (img.width - minDim) / 2;
               const sy = (img.height - minDim) / 2;
@@ -81,16 +81,19 @@ const PersonView: React.FC = () => {
   const renderPerson = (person: Person) => (
     <div key={person.id} className="flex border-b border-gray-200 p-4 gap-4 items-start group">
       <div 
-        className={`w-[200px] h-[200px] border-2 flex items-center justify-center cursor-pointer overflow-hidden ${selectedPersonId === person.id ? 'border-blue-500' : 'border-gray-300'}`}
+        className={clsx(
+          "w-[200px] h-[200px] border-2 flex items-center justify-center cursor-pointer overflow-hidden bg-gray-200 shrink-0",
+          selectedPersonId === person.id ? 'border-blue-500' : 'border-gray-300'
+        )}
         onClick={() => setSelectedPersonId(person.id)}
       >
         {person.image ? (
           <img src={person.image} alt={person.name} className="w-full h-full object-cover" />
         ) : (
-          <span className="text-gray-400">Click & Paste Image</span>
+          <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 text-center text-xs px-2">Click & Paste Image</div>
         )}
       </div>
-      <div className="flex-1 flex flex-col gap-2">
+      <div className="flex-1 flex flex-col gap-2 pt-2">
         <input
           className="text-xl font-bold bg-transparent border-none focus:ring-0 w-full"
           value={person.name}
@@ -98,6 +101,7 @@ const PersonView: React.FC = () => {
         />
         <textarea
           className="text-gray-600 bg-transparent border-none focus:ring-0 w-full resize-none"
+          style={{ fontSize: `${descriptionScale}rem` }}
           rows={4}
           value={person.description}
           onChange={(e) => handleUpdatePerson(person.id, { description: e.target.value })}
@@ -127,26 +131,30 @@ const PersonView: React.FC = () => {
   const females = data.people.filter(p => p.gender === 'female');
 
   return (
-    <div className="flex h-full">
-      <div className="flex-1 border-r border-gray-200 overflow-y-auto">
-        <div className="p-4 font-bold border-b border-gray-200 bg-gray-50 uppercase tracking-wider text-sm text-gray-500">Males</div>
-        {males.map(renderPerson)}
-        <button
-          className="w-full p-4 flex items-center justify-center gap-2 text-blue-600 hover:bg-blue-50 transition-colors"
-          onClick={() => handleAddPerson('male')}
-        >
-          <Plus size={20} /> Add Male
-        </button>
-      </div>
-      <div className="flex-1 overflow-y-auto">
-        <div className="p-4 font-bold border-b border-gray-200 bg-gray-50 uppercase tracking-wider text-sm text-gray-500">Females</div>
-        {females.map(renderPerson)}
-        <button
-          className="w-full p-4 flex items-center justify-center gap-2 text-pink-600 hover:bg-pink-50 transition-colors"
-          onClick={() => handleAddPerson('female')}
-        >
-          <Plus size={20} /> Add Female
-        </button>
+    <div className="flex h-full w-full overflow-hidden">
+      <div className="flex-1 flex flex-col h-full overflow-hidden" style={{ transform: `scale(${bodyScale})`, transformOrigin: 'top center' }}>
+        <div className="flex h-full w-full overflow-hidden">
+          <div className="flex-1 border-r border-gray-200 overflow-y-auto">
+            <div className="p-4 font-bold border-b border-gray-200 bg-gray-50 uppercase tracking-wider text-sm text-gray-500">Males</div>
+            {males.map(renderPerson)}
+            <button
+              className="w-full p-4 flex items-center justify-center gap-2 text-blue-600 hover:bg-blue-50 transition-colors"
+              onClick={() => handleAddPerson('male')}
+            >
+              <Plus size={20} /> Add Male
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4 font-bold border-b border-gray-200 bg-gray-50 uppercase tracking-wider text-sm text-gray-500">Females</div>
+            {females.map(renderPerson)}
+            <button
+              className="w-full p-4 flex items-center justify-center gap-2 text-pink-600 hover:bg-pink-50 transition-colors"
+              onClick={() => handleAddPerson('female')}
+            >
+              <Plus size={20} /> Add Female
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -38,7 +38,7 @@ const NavigationPane: React.FC = () => {
   };
 
   return (
-    <div className="w-64 bg-gray-800 text-white flex flex-col h-full overflow-y-auto">
+    <div className="w-64 bg-gray-800 text-white flex flex-col h-full overflow-y-auto shrink-0 relative z-50">
       <div className="p-4 text-xl font-bold border-b border-gray-700">Dating Notebook</div>
       
       <button
@@ -52,18 +52,19 @@ const NavigationPane: React.FC = () => {
       </button>
 
       <div className="flex-1">
-        {data.episodes.map(episode => (
-          <div key={episode.id} className="border-b border-gray-700">
-            {episode.events.map(event => (
-              <div key={event.id} className="flex items-center group relative">
+        {data.episodes.map(episode => {
+          const isSelected = episode.id === selectedEpisodeId;
+          return (
+            <div key={episode.id} className="border-b border-gray-700">
+              <div className="flex items-center group relative">
                 <button
                   className={clsx(
-                    "flex-1 p-3 pl-6 text-left hover:bg-gray-700 transition-colors",
-                    selectedEventId === event.id && "bg-blue-600"
+                    "flex-1 p-3 pl-4 text-left font-bold hover:bg-gray-700 transition-colors",
+                    isSelected && "text-blue-400"
                   )}
-                  onClick={() => setSelectedView(episode.id, event.id)}
+                  onClick={() => setSelectedView(episode.id, episode.events[0]?.id || null)}
                 >
-                  {event.id}
+                  Episode {episode.id}
                 </button>
                 <div className="relative">
                   <button
@@ -76,26 +77,40 @@ const NavigationPane: React.FC = () => {
                     <ChevronDown size={16} />
                   </button>
                   {openDropdown === episode.id && (
-                    <div className="absolute left-0 mt-1 w-40 bg-white text-gray-900 rounded shadow-lg z-50">
+                    <div className="absolute right-0 top-full mt-0 w-48 bg-white text-gray-900 rounded shadow-xl z-[100] border border-gray-200">
                       <button
-                        className="w-full p-2 text-left hover:bg-gray-100 flex items-center gap-2"
+                        className="w-full p-3 text-left hover:bg-gray-100 flex items-center gap-2 border-b border-gray-100"
                         onClick={() => handleAddEpisode()}
                       >
                         <Plus size={14} /> New Episode
                       </button>
                       <button
-                        className="w-full p-2 text-left hover:bg-gray-100 flex items-center gap-2"
+                        className="w-full p-3 text-left hover:bg-gray-100 flex items-center gap-2"
                         onClick={() => handleAddEvent(episode.id)}
                       >
-                        <Plus size={14} /> New Event
+                        <Plus size={14} /> New Event in Ep {episode.id}
                       </button>
                     </div>
                   )}
                 </div>
               </div>
-            ))}
-          </div>
-        ))}
+              <div className="bg-gray-900">
+                {episode.events.map(event => (
+                  <button
+                    key={event.id}
+                    className={clsx(
+                      "w-full p-2 pl-8 text-left text-sm hover:bg-gray-700 transition-colors",
+                      selectedEventId === event.id ? "bg-blue-600 text-white" : "text-gray-400"
+                    )}
+                    onClick={() => setSelectedView(episode.id, event.id)}
+                  >
+                    {event.id}
+                  </button>
+                ))}
+              </div>
+            </div>
+          );
+        })}
         {data.episodes.length === 0 && (
           <button
             className="w-full p-4 text-left hover:bg-gray-700 flex items-center gap-2 text-blue-400"

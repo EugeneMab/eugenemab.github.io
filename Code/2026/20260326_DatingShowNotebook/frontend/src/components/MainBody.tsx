@@ -12,7 +12,7 @@ const MainBody: React.FC = () => {
   
   const containerRef = useRef<HTMLDivElement>(null);
   const imageRefs = useRef<{ [key: number]: HTMLDivElement | null }>({});
-  const [positions, setPositions] = useState<{ [key: number]: { x: number, y: number, w: number, h: number } }>({});
+  const [positions, setPositions] = useState<{ [key: number]: { x: number, y: number, gender: string } }>({});
   const [firstPersonId, setFirstPersonId] = useState<number | null>(null);
 
   const teamColors = ['#f97316', '#06b6d4', '#a855f7', '#84cc16', '#eab308'];
@@ -30,7 +30,6 @@ const MainBody: React.FC = () => {
     return data.people.filter(p => {
       const ranges = p.ranges.split(/\s+/).map(Number).filter(n => !isNaN(n));
       if (ranges.length === 0) return true;
-      // Ranges: 2 4 7 -> [2,4], [7, Infinity]
       for (let i = 0; i < ranges.length; i += 2) {
         const start = ranges[i];
         const end = ranges[i + 1] || Infinity;
@@ -45,28 +44,29 @@ const MainBody: React.FC = () => {
     const containerRect = containerRef.current.getBoundingClientRect();
     const newPositions: typeof positions = {};
     
-    Object.keys(imageRefs.current).forEach(id => {
-      const el = imageRefs.current[Number(id)];
+    filteredPeople.forEach(p => {
+      const el = imageRefs.current[p.id];
       if (el) {
         const rect = el.getBoundingClientRect();
-        newPositions[Number(id)] = {
-          x: rect.left - containerRect.left + rect.width / 2,
-          y: rect.top - containerRect.top + rect.height / 2,
-          w: rect.width,
-          h: rect.height
-        };
+        // Calculate point relative to container and account for zoom
+        const x = (p.gender === 'male' ? rect.right : rect.left) - containerRect.left;
+        const y = rect.top - containerRect.top + rect.height / 2;
+        
+        newPositions[p.id] = { x, y, gender: p.gender };
       }
     });
     setPositions(newPositions);
   };
 
   useEffect(() => {
-    updatePositions();
+    const timer = setTimeout(updatePositions, 100);
     window.addEventListener('resize', updatePositions);
-    return () => window.removeEventListener('resize', updatePositions);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', updatePositions);
+    };
   }, [filteredPeople, bodyScale]);
 
-  // Use a MutationObserver to watch for layout changes
   useEffect(() => {
     if (!containerRef.current) return;
     const observer = new MutationObserver(updatePositions);
@@ -134,9 +134,9 @@ const MainBody: React.FC = () => {
   const females = filteredPeople.filter(p => p.gender === 'female');
 
   return (
-    <div className="h-full flex flex-col" ref={containerRef}>
+    <div className="h-full flex flex-col overflow-hidden" ref={containerRef}>
       {currentEvent && (
-        <div className="p-4 flex justify-center border-b border-gray-100 bg-gray-50">
+        <div className="p-4 flex justify-center border-b border-gray-100 bg-gray-50 shrink-0">
           <input
             className="text-2xl font-bold bg-transparent border-none text-center focus:ring-0"
             value={currentEvent.title}
@@ -145,8 +145,7 @@ const MainBody: React.FC = () => {
         </div>
       )}
       
-      <div className="flex-1 relative flex" style={{ transform: `scale(${bodyScale})`, transformOrigin: 'top center' }}>
-        {/* Connection Layer */}
+      <div className="flex-1 relative" style={{ transform: `scale(${bodyScale})`, transformOrigin: 'top center' }}>
         <svg className="absolute inset-0 pointer-events-none z-0 w-full h-full">
           <defs>
             <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -163,14 +162,12 @@ const MainBody: React.FC = () => {
             </marker>
           </defs>
 
-          {/* Messages */}
           {currentEvent?.messages.map((m, i) => {
             const from = positions[m.from];
             const to = positions[m.to];
             if (!from || !to) return null;
 
-            const fromPerson = data.people.find(p => p.id === m.from);
-            const isMale = fromPerson?.gender === 'male';
+            const isMale = from.gender === 'male';
             const offset = isMale ? 10 : -10;
             
             let color = '';
@@ -195,15 +192,32 @@ const MainBody: React.FC = () => {
             );
           })}
 
-          {/* Teams */}
           {currentEvent && Object.entries(currentEvent.teams).map(([idx, members]) => {
             if (members.length === 0) return null;
             const validMembers = members.map(id => positions[id]).filter(Boolean);
             if (validMembers.length === 0) return null;
 
             const avgY = validMembers.reduce((sum, p) => sum + p.y, 0) / validMembers.length;
-            const middleWidth = containerRef.current?.clientWidth || 1000;
-            const teamX = (Number(idx) + 1) / (5 + 1) * middleWidth;
+            
+            // X coordinate between male right and female left
+            let minMaleX = Infinity;
+            let maxMaleX = -Infinity;
+            let minFemaleX = Infinity;
+            let maxFemaleX = -Infinity;
+            
+            validMembers.forEach(p => {
+              if (p.gender === 'male') {
+                maxMaleX = Math.max(maxMaleX, p.x);
+              } else {
+                minFemaleX = Math.min(minFemaleX, p.x);
+              }
+            });
+            
+            // Default center if one side is missing
+            const teamX = (maxMaleX !== -Infinity && minFemaleX !== Infinity) 
+              ? (maxMaleX + minFemaleX) / 2
+              : (Number(idx) + 1) / (5 + 1) * (containerRef.current?.clientWidth || 1000);
+              
             const teamY = avgY;
 
             return (
@@ -224,8 +238,7 @@ const MainBody: React.FC = () => {
           })}
         </svg>
 
-        {/* People Lists */}
-        <div className="flex-1 flex justify-between px-8 py-4 z-10">
+        <div className="flex justify-between px-8 py-4 z-10 relative">
           <div className="flex flex-col gap-12 w-1/3">
             {males.map(person => (
               <MalePerson
@@ -238,8 +251,6 @@ const MainBody: React.FC = () => {
               />
             ))}
           </div>
-
-          <div className="w-1/3" /> {/* Middle Space */}
 
           <div className="flex flex-col gap-12 w-1/3">
             {females.map(person => (

@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "concurrently \"tsx backend/index.ts\" \"vite frontend\"",
-    "dev:backend": "tsx watch backend/index.ts",
-    "dev:frontend": "vite frontend"
+    "start": "concurrently \"cd backend && tsx index.ts\" \"cd frontend && vite\"",
+    "dev:backend": "cd backend && tsx watch index.ts",
+    "dev:frontend": "cd frontend && vite"
   },
   "dependencies": {
     "concurrently": "^8.2.2",
