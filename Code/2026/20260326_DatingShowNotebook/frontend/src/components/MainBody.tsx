@@ -1,26 +1,38 @@
-import React, { useRef, useMemo, useState, useEffect } from 'react';
-import { useStore, Person, Message, MessageType, Gender } from '../store/useStore';
-import { clsx } from 'clsx';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useStore, Person, Message, MessageType } from '../store/useStore';
 import { renderEventToSvgString } from '../utils/svgRenderer';
 import { svgToJpeg, saveEventImage } from '../utils/imageGen';
-import { 
-  PADDING, ROW_GAP, TITLE_HEIGHT, MALE_TEXT_WIDTH, MALE_IMG_WIDTH, 
-  MID_WIDTH, FEMALE_IMG_WIDTH, FEMALE_TEXT_WIDTH, IMG_HEIGHT,
-  X_MALE_TEXT, X_MALE_IMG, X_MID, X_FEMALE_IMG, X_FEMALE_TEXT, TOTAL_WIDTH,
-  getFilteredPeople, calculatePersonPositions, getMessageStyle, calculateMessageCoords, TEAM_COLORS
+import {
+  PADDING,
+  ROW_GAP,
+  TITLE_HEIGHT,
+  MALE_TEXT_WIDTH,
+  MALE_IMG_WIDTH,
+  MID_WIDTH,
+  FEMALE_IMG_WIDTH,
+  FEMALE_TEXT_WIDTH,
+  IMG_HEIGHT,
+  X_MALE_TEXT,
+  X_MALE_IMG,
+  X_MID,
+  X_FEMALE_IMG,
+  X_FEMALE_TEXT,
+  TOTAL_WIDTH,
+  getFilteredPeople,
+  calculatePersonPositions,
+  getMessageStyle,
+  calculateMessageCoords,
+  TEAM_COLORS,
 } from '../utils/layout';
 
 const MainBody: React.FC = () => {
-  const { 
-    data, selectedEpisodeId, selectedEventId, activeMode, 
-    saveData 
-  } = useStore();
-  
+  const { data, selectedEpisodeId, selectedEventId, activeMode, saveData } = useStore();
+
   const [firstPersonId, setFirstPersonId] = useState<number | null>(null);
 
   const currentEvent = useMemo(() => {
     for (const ep of data.episodes) {
-      const ev = ep.events.find(e => e.id === selectedEventId);
+      const ev = ep.events.find((e) => e.id === selectedEventId);
       if (ev) return ev;
     }
     return null;
@@ -28,7 +40,7 @@ const MainBody: React.FC = () => {
 
   const episodeIndex = useMemo(() => {
     if (selectedEpisodeId === null) return -1;
-    return data.episodes.findIndex(ep => ep.id === selectedEpisodeId) + 1;
+    return data.episodes.findIndex((ep) => ep.id === selectedEpisodeId) + 1;
   }, [data.episodes, selectedEpisodeId]);
 
   const filteredPeople = useMemo(() => {
@@ -38,7 +50,7 @@ const MainBody: React.FC = () => {
   const handleUpdatePerson = (id: number, updates: Partial<Person>) => {
     saveData({
       ...data,
-      people: data.people.map(p => p.id === id ? { ...p, ...updates } : p)
+      people: data.people.map((p) => (p.id === id ? { ...p, ...updates } : p)),
     });
   };
 
@@ -50,26 +62,30 @@ const MainBody: React.FC = () => {
         setFirstPersonId(personId);
       } else {
         if (firstPersonId !== personId) {
-          const person1 = data.people.find(p => p.id === firstPersonId);
-          const person2 = data.people.find(p => p.id === personId);
-          
+          const person1 = data.people.find((p) => p.id === firstPersonId);
+          const person2 = data.people.find((p) => p.id === personId);
+
           if (person1 && person2) {
             const isSameGender = person1.gender === person2.gender;
             const isStrong = activeMode === 'message';
-            
+
             if (!isStrong || !isSameGender) {
               const type: MessageType = isStrong ? 'strong' : 'weak';
               const newMessage: Message = { from: firstPersonId, to: personId, type };
-              
+
               saveData({
                 ...data,
-                episodes: data.episodes.map(ep => ({
+                episodes: data.episodes.map((ep) => ({
                   ...ep,
-                  events: ep.events.map(ev => ev.id === selectedEventId ? {
-                    ...ev,
-                    messages: [...ev.messages, newMessage]
-                  } : ev)
-                }))
+                  events: ep.events.map((ev) =>
+                    ev.id === selectedEventId
+                      ? {
+                          ...ev,
+                          messages: [...ev.messages, newMessage],
+                        }
+                      : ev
+                  ),
+                })),
               });
             }
           }
@@ -79,38 +95,46 @@ const MainBody: React.FC = () => {
     } else if (activeMode === 'eraser') {
       saveData({
         ...data,
-        episodes: data.episodes.map(ep => ({
+        episodes: data.episodes.map((ep) => ({
           ...ep,
-          events: ep.events.map(ev => ev.id === selectedEventId ? {
-            ...ev,
-            messages: ev.messages.filter(m => m.from !== personId && m.to !== personId),
-            teams: Object.fromEntries(
-              Object.entries(ev.teams).map(([idx, members]) => [
-                idx,
-                members.filter(id => id !== personId)
-              ])
-            )
-          } : ev)
-        }))
+          events: ep.events.map((ev) =>
+            ev.id === selectedEventId
+              ? {
+                  ...ev,
+                  messages: ev.messages.filter((m) => m.from !== personId && m.to !== personId),
+                  teams: Object.fromEntries(
+                    Object.entries(ev.teams).map(([idx, members]) => [
+                      idx,
+                      members.filter((id) => id !== personId),
+                    ])
+                  ),
+                }
+              : ev
+          ),
+        })),
       });
     } else if (activeMode.startsWith('team-')) {
       const teamIdx = activeMode.split('-')[1];
       const currentTeam = currentEvent.teams[teamIdx] || [];
       const isMember = currentTeam.includes(personId);
-      
-      const newTeam = isMember 
-        ? currentTeam.filter(id => id !== personId)
+
+      const newTeam = isMember
+        ? currentTeam.filter((id) => id !== personId)
         : [...currentTeam, personId];
 
       saveData({
         ...data,
-        episodes: data.episodes.map(ep => ({
+        episodes: data.episodes.map((ep) => ({
           ...ep,
-          events: ep.events.map(ev => ev.id === selectedEventId ? {
-            ...ev,
-            teams: { ...ev.teams, [teamIdx]: newTeam }
-          } : ev)
-        }))
+          events: ep.events.map((ev) =>
+            ev.id === selectedEventId
+              ? {
+                  ...ev,
+                  teams: { ...ev.teams, [teamIdx]: newTeam },
+                }
+              : ev
+          ),
+        })),
       });
     }
   };
@@ -118,10 +142,12 @@ const MainBody: React.FC = () => {
   const updateTitle = (newTitle: string) => {
     saveData({
       ...data,
-      episodes: data.episodes.map(ep => ({
+      episodes: data.episodes.map((ep) => ({
         ...ep,
-        events: ep.events.map(ev => ev.id === selectedEventId ? { ...ev, title: newTitle } : ev)
-      }))
+        events: ep.events.map((ev) =>
+          ev.id === selectedEventId ? { ...ev, title: newTitle } : ev
+        ),
+      })),
     });
   };
 
@@ -159,8 +185,11 @@ const MainBody: React.FC = () => {
     }
   };
 
-  const males = useMemo(() => filteredPeople.filter(p => p.gender === 'male'), [filteredPeople]);
-  const females = useMemo(() => filteredPeople.filter(p => p.gender === 'female'), [filteredPeople]);
+  const males = useMemo(() => filteredPeople.filter((p) => p.gender === 'male'), [filteredPeople]);
+  const females = useMemo(
+    () => filteredPeople.filter((p) => p.gender === 'female'),
+    [filteredPeople]
+  );
 
   const scale = data.bodyScale || 1;
   const descScale = data.descriptionScale || 1;
@@ -174,9 +203,9 @@ const MainBody: React.FC = () => {
 
   const eventIndex = useMemo(() => {
     if (selectedEpisodeId === null || selectedEventId === null) return -1;
-    const ep = data.episodes.find(e => e.id === selectedEpisodeId);
+    const ep = data.episodes.find((e) => e.id === selectedEpisodeId);
     if (!ep) return -1;
-    return ep.events.findIndex(e => e.id === selectedEventId) + 1;
+    return ep.events.findIndex((e) => e.id === selectedEventId) + 1;
   }, [data.episodes, selectedEpisodeId, selectedEventId]);
 
   useEffect(() => {
@@ -203,24 +232,52 @@ const MainBody: React.FC = () => {
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50 relative">
-      <svg 
-        width={totalWidth} 
-        height={totalHeight} 
+      <svg
+        width={totalWidth}
+        height={totalHeight}
         viewBox={`0 0 ${totalWidth} ${totalHeight}`}
         className="bg-white shadow-lg block"
         style={{ minWidth: totalWidth, minHeight: totalHeight }}
       >
         <defs>
-          <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <marker
+            id="arrowhead-blue"
+            markerWidth="10"
+            markerHeight="7"
+            refX="9"
+            refY="3.5"
+            orient="auto"
+          >
             <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb" />
           </marker>
-          <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <marker
+            id="arrowhead-red"
+            markerWidth="10"
+            markerHeight="7"
+            refX="9"
+            refY="3.5"
+            orient="auto"
+          >
             <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626" />
           </marker>
-          <marker id="arrowhead-lightblue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <marker
+            id="arrowhead-lightblue"
+            markerWidth="10"
+            markerHeight="7"
+            refX="9"
+            refY="3.5"
+            orient="auto"
+          >
             <polygon points="0 0, 10 3.5, 0 7" fill="#93c5fd" />
           </marker>
-          <marker id="arrowhead-lightred" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+          <marker
+            id="arrowhead-lightred"
+            markerWidth="10"
+            markerHeight="7"
+            refX="9"
+            refY="3.5"
+            orient="auto"
+          >
             <polygon points="0 0, 10 3.5, 0 7" fill="#fca5a5" />
           </marker>
         </defs>
@@ -228,7 +285,10 @@ const MainBody: React.FC = () => {
         {/* Title */}
         {currentEvent && (
           <foreignObject x={0} y={0} width={totalWidth} height={TITLE_HEIGHT * scale}>
-            <div xmlns="http://www.w3.org/1999/xhtml" className="w-full h-full flex justify-center items-center border-b border-gray-100 bg-gray-50">
+            <div
+              xmlns="http://www.w3.org/1999/xhtml"
+              className="w-full h-full flex justify-center items-center border-b border-gray-100 bg-gray-50"
+            >
               <input
                 className="font-bold bg-transparent border-none text-center focus:ring-0 w-full"
                 style={{ fontSize: `${2 * scale}rem` }}
@@ -246,24 +306,27 @@ const MainBody: React.FC = () => {
           return (
             <g key={`male-${p.id}`}>
               {isSelected && (
-                <rect 
-                  x={(X_MALE_IMG - 6) * scale} 
-                  y={y - 6 * scale} 
-                  width={(MALE_IMG_WIDTH + 12) * scale} 
-                  height={(IMG_HEIGHT + 12) * scale} 
-                  fill="none" 
-                  stroke="#ff00ff" 
-                  strokeWidth={4 * scale} 
+                <rect
+                  x={(X_MALE_IMG - 6) * scale}
+                  y={y - 6 * scale}
+                  width={(MALE_IMG_WIDTH + 12) * scale}
+                  height={(IMG_HEIGHT + 12) * scale}
+                  fill="none"
+                  stroke="#ff00ff"
+                  strokeWidth={4 * scale}
                   rx={8 * scale}
                 />
               )}
-              <foreignObject 
-                x={X_MALE_TEXT * scale} 
-                y={y} 
-                width={MALE_TEXT_WIDTH * scale} 
+              <foreignObject
+                x={X_MALE_TEXT * scale}
+                y={y}
+                width={MALE_TEXT_WIDTH * scale}
                 height={IMG_HEIGHT * scale}
               >
-                <div xmlns="http://www.w3.org/1999/xhtml" className="flex flex-col text-right pr-2 h-full justify-start pt-2 w-full">
+                <div
+                  xmlns="http://www.w3.org/1999/xhtml"
+                  className="flex flex-col text-right pr-2 h-full justify-start pt-2 w-full"
+                >
                   <input
                     className="font-bold bg-transparent border-none text-right focus:ring-0 p-0 text-blue-900 w-full"
                     style={{ fontSize: `${1.125 * scale}rem` }}
@@ -279,13 +342,13 @@ const MainBody: React.FC = () => {
                   />
                 </div>
               </foreignObject>
-              <foreignObject 
-                x={X_MALE_IMG * scale} 
-                y={y} 
-                width={MALE_IMG_WIDTH * scale} 
+              <foreignObject
+                x={X_MALE_IMG * scale}
+                y={y}
+                width={MALE_IMG_WIDTH * scale}
                 height={IMG_HEIGHT * scale}
               >
-                <div 
+                <div
                   xmlns="http://www.w3.org/1999/xhtml"
                   className="w-full h-full border-2 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-200"
                   onClick={() => handlePersonClick(p.id)}
@@ -295,7 +358,12 @@ const MainBody: React.FC = () => {
                   {p.image ? (
                     <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 px-2 text-center" style={{ fontSize: `${0.75 * scale}rem` }}>No Image (Paste Here)</div>
+                    <div
+                      className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 px-2 text-center"
+                      style={{ fontSize: `${0.75 * scale}rem` }}
+                    >
+                      No Image (Paste Here)
+                    </div>
                   )}
                 </div>
               </foreignObject>
@@ -310,24 +378,24 @@ const MainBody: React.FC = () => {
           return (
             <g key={`female-${p.id}`}>
               {isSelected && (
-                <rect 
-                  x={(X_FEMALE_IMG - 6) * scale} 
-                  y={y - 6 * scale} 
-                  width={(FEMALE_IMG_WIDTH + 12) * scale} 
-                  height={(IMG_HEIGHT + 12) * scale} 
-                  fill="none" 
-                  stroke="#ff00ff" 
-                  strokeWidth={4 * scale} 
+                <rect
+                  x={(X_FEMALE_IMG - 6) * scale}
+                  y={y - 6 * scale}
+                  width={(FEMALE_IMG_WIDTH + 12) * scale}
+                  height={(IMG_HEIGHT + 12) * scale}
+                  fill="none"
+                  stroke="#ff00ff"
+                  strokeWidth={4 * scale}
                   rx={8 * scale}
                 />
               )}
-              <foreignObject 
-                x={X_FEMALE_IMG * scale} 
-                y={y} 
-                width={FEMALE_IMG_WIDTH * scale} 
+              <foreignObject
+                x={X_FEMALE_IMG * scale}
+                y={y}
+                width={FEMALE_IMG_WIDTH * scale}
                 height={IMG_HEIGHT * scale}
               >
-                <div 
+                <div
                   xmlns="http://www.w3.org/1999/xhtml"
                   className="w-full h-full border-2 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-200"
                   onClick={() => handlePersonClick(p.id)}
@@ -337,17 +405,25 @@ const MainBody: React.FC = () => {
                   {p.image ? (
                     <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
                   ) : (
-                    <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 px-2 text-center" style={{ fontSize: `${0.75 * scale}rem` }}>No Image (Paste Here)</div>
+                    <div
+                      className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 px-2 text-center"
+                      style={{ fontSize: `${0.75 * scale}rem` }}
+                    >
+                      No Image (Paste Here)
+                    </div>
                   )}
                 </div>
               </foreignObject>
-              <foreignObject 
-                x={X_FEMALE_TEXT * scale} 
-                y={y} 
-                width={FEMALE_TEXT_WIDTH * scale} 
+              <foreignObject
+                x={X_FEMALE_TEXT * scale}
+                y={y}
+                width={FEMALE_TEXT_WIDTH * scale}
                 height={IMG_HEIGHT * scale}
               >
-                <div xmlns="http://www.w3.org/1999/xhtml" className="flex flex-col text-left pl-2 h-full justify-start pt-2 w-full">
+                <div
+                  xmlns="http://www.w3.org/1999/xhtml"
+                  className="flex flex-col text-left pl-2 h-full justify-start pt-2 w-full"
+                >
                   <input
                     className="font-bold bg-transparent border-none text-left focus:ring-0 p-0 text-red-900 w-full"
                     style={{ fontSize: `${1.125 * scale}rem` }}
@@ -382,8 +458,23 @@ const MainBody: React.FC = () => {
 
               return (
                 <g key={`msg-${i}`}>
-                  <line x1={x1} y1={y1} x2={centerX} y2={y2} stroke={color} strokeWidth={2 * scale} />
-                  <line x1={centerX} y1={y2} x2={x2} y2={y2} stroke={color} strokeWidth={2 * scale} markerEnd={`url(#${marker})`} />
+                  <line
+                    x1={x1}
+                    y1={y1}
+                    x2={centerX}
+                    y2={y2}
+                    stroke={color}
+                    strokeWidth={2 * scale}
+                  />
+                  <line
+                    x1={centerX}
+                    y1={y2}
+                    x2={x2}
+                    y2={y2}
+                    stroke={color}
+                    strokeWidth={2 * scale}
+                    markerEnd={`url(#${marker})`}
+                  />
                 </g>
               );
             }
@@ -391,8 +482,10 @@ const MainBody: React.FC = () => {
             return (
               <line
                 key={`msg-${i}`}
-                x1={x1} y1={y1}
-                x2={x2} y2={y2}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
                 stroke={color}
                 strokeWidth={2 * scale}
                 markerEnd={`url(#${marker})`}
@@ -405,10 +498,10 @@ const MainBody: React.FC = () => {
         <g className="pointer-events-none">
           {(() => {
             if (!currentEvent) return null;
-            
+
             return Object.entries(currentEvent.teams).map(([idx, members]) => {
               if (members.length === 0) return null;
-              const validMembers = members.map(id => personPositions[id]).filter(Boolean);
+              const validMembers = members.map((id) => personPositions[id]).filter(Boolean);
               if (validMembers.length === 0) return null;
 
               const avgY = validMembers.reduce((sum, p) => sum + p.y, 0) / validMembers.length;
@@ -421,8 +514,10 @@ const MainBody: React.FC = () => {
                   {validMembers.map((p, i) => (
                     <line
                       key={`team-${idx}-mem-${i}`}
-                      x1={p.x} y1={p.y}
-                      x2={teamX} y2={teamY}
+                      x1={p.x}
+                      y1={p.y}
+                      x2={teamX}
+                      y2={teamY}
                       stroke={TEAM_COLORS[Number(idx)]}
                       strokeWidth={1.5 * scale}
                       strokeDasharray={4 * scale}

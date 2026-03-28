@@ -19,11 +19,7 @@ const App: React.FC = () => {
       <div className="flex flex-col flex-1 min-w-0 h-full">
         <TopButtonPane />
         <div className="flex-1 overflow-auto bg-white relative">
-          {selectedEpisodeId === null ? (
-            <PersonView />
-          ) : (
-            <MainBody />
-          )}
+          {selectedEpisodeId === null ? <PersonView /> : <MainBody />}
         </div>
       </div>
       <ProgressModal />

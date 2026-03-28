@@ -4,12 +4,14 @@ import { Undo, ZoomIn, Type, Eraser } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const TopButtonPane: React.FC = () => {
-  const { 
-    activeMode, setActiveMode, 
-    data, 
-    setBodyScale, 
-    setDescriptionScale, 
-    undo, selectedEpisodeId 
+  const {
+    activeMode,
+    setActiveMode,
+    data,
+    setBodyScale,
+    setDescriptionScale,
+    undo,
+    selectedEpisodeId,
   } = useStore();
 
   const { bodyScale = 1, descriptionScale = 1 } = data;
@@ -24,8 +26,8 @@ const TopButtonPane: React.FC = () => {
           <button
             title="Send Message"
             className={clsx(
-              "w-10 h-10 border-2 rounded flex overflow-hidden hover:opacity-80 transition-opacity",
-              activeMode === 'message' ? "border-black scale-110" : "border-gray-300"
+              'w-10 h-10 border-2 rounded flex overflow-hidden hover:opacity-80 transition-opacity',
+              activeMode === 'message' ? 'border-black scale-110' : 'border-gray-300'
             )}
             onClick={() => setActiveMode(activeMode === 'message' ? 'select' : 'message')}
           >
@@ -36,8 +38,8 @@ const TopButtonPane: React.FC = () => {
           <button
             title="Send Weak Message"
             className={clsx(
-              "w-10 h-10 border-2 rounded flex overflow-hidden hover:opacity-80 transition-opacity",
-              activeMode === 'weak-message' ? "border-black scale-110" : "border-gray-300"
+              'w-10 h-10 border-2 rounded flex overflow-hidden hover:opacity-80 transition-opacity',
+              activeMode === 'weak-message' ? 'border-black scale-110' : 'border-gray-300'
             )}
             onClick={() => setActiveMode(activeMode === 'weak-message' ? 'select' : 'weak-message')}
           >
@@ -56,8 +58,8 @@ const TopButtonPane: React.FC = () => {
                   key={idx}
                   title={`Team ${idx + 1}`}
                   className={clsx(
-                    "w-8 h-8 rounded-full border-2 transition-all hover:scale-110",
-                    activeMode === mode ? "border-black scale-125" : "border-gray-200"
+                    'w-8 h-8 rounded-full border-2 transition-all hover:scale-110',
+                    activeMode === mode ? 'border-black scale-125' : 'border-gray-200'
                   )}
                   style={{ backgroundColor: color }}
                   onClick={() => setActiveMode(activeMode === mode ? 'select' : mode)}
@@ -72,12 +74,15 @@ const TopButtonPane: React.FC = () => {
           <button
             title="Eraser Mode"
             className={clsx(
-              "w-10 h-10 border-2 rounded flex items-center justify-center hover:opacity-80 transition-opacity",
-              activeMode === 'eraser' ? "border-black scale-110 bg-gray-200" : "border-gray-300"
+              'w-10 h-10 border-2 rounded flex items-center justify-center hover:opacity-80 transition-opacity',
+              activeMode === 'eraser' ? 'border-black scale-110 bg-gray-200' : 'border-gray-300'
             )}
             onClick={() => setActiveMode(activeMode === 'eraser' ? 'select' : 'eraser')}
           >
-            <Eraser size={24} className={clsx(activeMode === 'eraser' ? "text-red-600" : "text-gray-500")} />
+            <Eraser
+              size={24}
+              className={clsx(activeMode === 'eraser' ? 'text-red-600' : 'text-gray-500')}
+            />
           </button>
         </>
       )}
@@ -85,9 +90,9 @@ const TopButtonPane: React.FC = () => {
       <div className="flex-1" />
 
       {/* Sliders */}
-      <div className="flex items-center gap-4">
-        <div className="flex flex-col items-center">
-          <ZoomIn size={16} className="text-gray-500" />
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2">
+          <ZoomIn size={18} className="text-gray-500 shrink-0" />
           <input
             type="range"
             min="0.5"
@@ -98,8 +103,8 @@ const TopButtonPane: React.FC = () => {
             className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
           />
         </div>
-        <div className="flex flex-col items-center">
-          <Type size={16} className="text-gray-500" />
+        <div className="flex items-center gap-2">
+          <Type size={18} className="text-gray-500 shrink-0" />
           <input
             type="range"
             min="0.5"
@@ -113,11 +118,7 @@ const TopButtonPane: React.FC = () => {
       </div>
 
       {/* Undo */}
-      <button
-        title="Undo"
-        className="p-2 hover:bg-gray-100 rounded text-gray-700"
-        onClick={undo}
-      >
+      <button title="Undo" className="p-2 hover:bg-gray-100 rounded text-gray-700" onClick={undo}>
         <Undo size={24} />
       </button>
     </div>

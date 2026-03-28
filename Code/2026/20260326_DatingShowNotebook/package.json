@@ -5,7 +5,9 @@
   "scripts": {
     "start": "concurrently \"cd backend && tsx index.ts\" \"cd frontend && vite\"",
     "dev:backend": "cd backend && tsx watch index.ts",
-    "dev:frontend": "cd frontend && vite"
+    "dev:frontend": "cd frontend && vite",
+    "lint": "npm run lint --prefix frontend",
+    "format": "npm run format --prefix frontend"
   },
   "dependencies": {
     "concurrently": "^8.2.2",

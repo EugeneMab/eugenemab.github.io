@@ -42,7 +42,16 @@ export interface AppData {
   descriptionScale: number;
 }
 
-export type ActiveMode = 'select' | 'message' | 'weak-message' | 'team-0' | 'team-1' | 'team-2' | 'team-3' | 'team-4' | 'eraser';
+export type ActiveMode =
+  | 'select'
+  | 'message'
+  | 'weak-message'
+  | 'team-0'
+  | 'team-1'
+  | 'team-2'
+  | 'team-3'
+  | 'team-4'
+  | 'eraser';
 
 interface AppState {
   data: AppData;
@@ -50,9 +59,9 @@ interface AppState {
   selectedEpisodeId: number | null; // null means Person View
   selectedEventId: number | null;
   undoStack: AppData[];
-  
+
   isRefreshing: boolean;
-  refreshProgress: { current: number, total: number };
+  refreshProgress: { current: number; total: number };
   cancelRefresh: boolean;
 
   fetchData: () => Promise<void>;
@@ -73,7 +82,7 @@ export const useStore = create<AppState>((set, get) => ({
     episodes: [],
     nextUniqueId: 1,
     bodyScale: 1,
-    descriptionScale: 1
+    descriptionScale: 1,
   },
   activeMode: 'message',
   selectedEpisodeId: null,
@@ -86,7 +95,7 @@ export const useStore = create<AppState>((set, get) => ({
   fetchData: async () => {
     const res = await axios.get('/api/data');
     const data: AppData = res.data;
-    
+
     // Focus on the last event of the last episode
     let lastEpisodeId = null;
     let lastEventId = null;
@@ -98,11 +107,11 @@ export const useStore = create<AppState>((set, get) => ({
       }
     }
 
-    set({ 
+    set({
       data,
       selectedEpisodeId: lastEpisodeId,
       selectedEventId: lastEventId,
-      activeMode: 'message'
+      activeMode: 'message',
     });
   },
 
@@ -111,24 +120,25 @@ export const useStore = create<AppState>((set, get) => ({
     const currentData = get().data;
     set({
       undoStack: [JSON.parse(JSON.stringify(currentData)), ...get().undoStack].slice(0, 50),
-      data: newData
+      data: newData,
     });
     await axios.post('/api/data', newData);
   },
 
   setActiveMode: (mode) => set({ activeMode: mode }),
 
-  setSelectedView: (episodeId, eventId) => set({
-    selectedEpisodeId: episodeId,
-    selectedEventId: eventId,
-    activeMode: 'message'
-  }),
+  setSelectedView: (episodeId, eventId) =>
+    set({
+      selectedEpisodeId: episodeId,
+      selectedEventId: eventId,
+      activeMode: 'message',
+    }),
 
   setBodyScale: (scale) => {
     const newData = { ...get().data, bodyScale: scale };
     get().saveData(newData);
   },
-  
+
   setDescriptionScale: (scale) => {
     const newData = { ...get().data, descriptionScale: scale };
     get().saveData(newData);
@@ -140,7 +150,7 @@ export const useStore = create<AppState>((set, get) => ({
     const [prevData, ...remainingStack] = stack;
     set({
       data: prevData,
-      undoStack: remainingStack
+      undoStack: remainingStack,
     });
     axios.post('/api/data', prevData);
   },
@@ -150,8 +160,8 @@ export const useStore = create<AppState>((set, get) => ({
       isRefreshing,
       refreshProgress: {
         current: current !== undefined ? current : state.refreshProgress.current,
-        total: total !== undefined ? total : state.refreshProgress.total
-      }
+        total: total !== undefined ? total : state.refreshProgress.total,
+      },
     }));
   },
 
@@ -162,7 +172,7 @@ export const useStore = create<AppState>((set, get) => ({
     const episodes = data.episodes;
     const eventCount = episodes.reduce((acc, ep) => acc + ep.events.length, 0);
     const totalSteps = eventCount + 1; // +1 for cleanup step
-    
+
     setRefreshState(true, 0, totalSteps);
     setCancelRefresh(false);
 
@@ -203,7 +213,7 @@ export const useStore = create<AppState>((set, get) => ({
     }
 
     // Small delay to let user see 100%
-    await new Promise(r => setTimeout(r, 300));
+    await new Promise((r) => setTimeout(r, 300));
     setRefreshState(false);
-  }
+  },
 }));

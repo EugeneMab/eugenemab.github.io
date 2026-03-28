@@ -51,6 +51,7 @@ Run `kill.cmd` (previously `stop.cmd`) to gracefully shut down the backend servi
 ## Implementation Details
 
 The application uses a unique "SVG-first" rendering strategy:
+
 1. **Coordinate System**: The entire layout is mapped to a logical coordinate system.
 2. **Dynamic Rendering**: React calculates the final SVG `viewBox`, `width`, and `height` based on the current zoom level and content size.
 3. **HTML Integration**: To maintain full interactivity (text selection, input focusing, image pasting), HTML components are wrapped in `foreignObject` with the `http://www.w3.org/1999/xhtml` namespace.

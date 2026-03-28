@@ -16,3 +16,28 @@ body {
   width: 100%;
   height: 100vh;
 }
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #2e004d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #4b0082;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #9400d3;
+}
+
+/* For Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4b0082 #2e004d;
+}
