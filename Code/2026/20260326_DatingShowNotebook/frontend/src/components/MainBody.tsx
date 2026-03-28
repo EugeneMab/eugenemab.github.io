@@ -265,7 +265,7 @@ const MainBody: React.FC = () => {
                     onChange={(e) => handleUpdatePerson(p.id, { name: e.target.value })}
                   />
                   <textarea
-                    className="italic overflow-hidden bg-transparent border-none text-right focus:ring-0 p-0 resize-none text-blue-800 w-full"
+                    className="overflow-hidden bg-transparent border-none text-right focus:ring-0 p-0 resize-none text-blue-800 w-full"
                     style={{ fontSize: `${0.875 * scale * descScale}rem`, height: 'auto' }}
                     value={p.description}
                     rows={Math.max(2, p.description.split('\n').length)}
@@ -342,7 +342,7 @@ const MainBody: React.FC = () => {
                     onChange={(e) => handleUpdatePerson(p.id, { name: e.target.value })}
                   />
                   <textarea
-                    className="italic overflow-hidden bg-transparent border-none text-left focus:ring-0 p-0 resize-none text-red-800 w-full"
+                    className="overflow-hidden bg-transparent border-none text-left focus:ring-0 p-0 resize-none text-red-800 w-full"
                     style={{ fontSize: `${0.875 * scale * descScale}rem`, height: 'auto' }}
                     value={p.description}
                     rows={Math.max(2, p.description.split('\n').length)}
@@ -362,7 +362,8 @@ const MainBody: React.FC = () => {
             if (!from || !to) return null;
 
             const isMale = from.gender === 'male';
-            const offset = (isMale ? 10 : -10) * scale;
+            const vOffset = (isMale ? 10 : -10) * scale;
+            const hOffset = (isMale ? 5 : -5) * scale;
             
             let color = '';
             let marker = '';
@@ -374,16 +375,18 @@ const MainBody: React.FC = () => {
               marker = isMale ? 'arrowhead-lightblue' : 'arrowhead-lightred';
             }
 
+            const x1 = from.x + hOffset;
+            const y1 = from.y + vOffset;
+            const x2 = to.x - hOffset;
+            const y2 = to.y + vOffset;
+
             if (from.gender === to.gender) {
               const centerX = (X_MID + MID_WIDTH / 2) * scale;
-              const y1 = from.y + offset;
-              const y2 = to.y + offset;
 
               return (
                 <g key={`msg-${i}`}>
-                  <line x1={from.x} y1={y1} x2={centerX} y2={y1} stroke={color} strokeWidth={2 * scale} />
-                  <line x1={centerX} y1={y1} x2={centerX} y2={y2} stroke={color} strokeWidth={2 * scale} />
-                  <line x1={centerX} y1={y2} x2={to.x} y2={y2} stroke={color} strokeWidth={2 * scale} markerEnd={`url(#${marker})`} />
+                  <line x1={x1} y1={y1} x2={centerX} y2={y2} stroke={color} strokeWidth={2 * scale} />
+                  <line x1={centerX} y1={y2} x2={x2} y2={y2} stroke={color} strokeWidth={2 * scale} markerEnd={`url(#${marker})`} />
                 </g>
               );
             }
@@ -391,8 +394,8 @@ const MainBody: React.FC = () => {
             return (
               <line
                 key={`msg-${i}`}
-                x1={from.x} y1={from.y + offset}
-                x2={to.x} y2={to.y + offset}
+                x1={x1} y1={y1}
+                x2={x2} y2={y2}
                 stroke={color}
                 strokeWidth={2 * scale}
                 markerEnd={`url(#${marker})`}
