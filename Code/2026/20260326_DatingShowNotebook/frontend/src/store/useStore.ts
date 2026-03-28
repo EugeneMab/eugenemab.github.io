@@ -20,7 +20,7 @@ export interface Message {
 }
 
 export interface Event {
-  id: string;
+  id: number;
   title: string;
   messages: Message[];
   teams: { [teamIndex: string]: number[] };
@@ -28,30 +28,31 @@ export interface Event {
 
 export interface Episode {
   id: number;
+  title: string;
   events: Event[];
 }
 
 export interface AppData {
   people: Person[];
   episodes: Episode[];
-  nextPersonId: number;
+  nextUniqueId: number;
   bodyScale: number;
   descriptionScale: number;
 }
 
-export type ActiveMode = 'select' | 'message' | 'weak-message' | 'team-0' | 'team-1' | 'team-2' | 'team-3' | 'team-4';
+export type ActiveMode = 'select' | 'message' | 'weak-message' | 'team-0' | 'team-1' | 'team-2' | 'team-3' | 'team-4' | 'eraser';
 
 interface AppState {
   data: AppData;
   activeMode: ActiveMode;
   selectedEpisodeId: number | null; // null means Person View
-  selectedEventId: string | null;
+  selectedEventId: number | null;
   undoStack: AppData[];
 
   fetchData: () => Promise<void>;
   saveData: (newData: AppData) => Promise<void>;
   setActiveMode: (mode: ActiveMode) => void;
-  setSelectedView: (episodeId: number | null, eventId: string | null) => void;
+  setSelectedView: (episodeId: number | null, eventId: number | null) => void;
   setBodyScale: (scale: number) => void;
   setDescriptionScale: (scale: number) => void;
   undo: () => void;
@@ -61,18 +62,36 @@ export const useStore = create<AppState>((set, get) => ({
   data: {
     people: [],
     episodes: [],
-    nextPersonId: 1,
+    nextUniqueId: 1,
     bodyScale: 1,
     descriptionScale: 1
   },
-  activeMode: 'select',
-  selectedEpisodeId: 1,
-  selectedEventId: '1-1',
+  activeMode: 'message',
+  selectedEpisodeId: null,
+  selectedEventId: null,
   undoStack: [],
 
   fetchData: async () => {
     const res = await axios.get('/api/data');
-    set({ data: res.data });
+    const data: AppData = res.data;
+    
+    // Focus on the last event of the last episode
+    let lastEpisodeId = null;
+    let lastEventId = null;
+    if (data.episodes.length > 0) {
+      const lastEpisode = data.episodes[data.episodes.length - 1];
+      lastEpisodeId = lastEpisode.id;
+      if (lastEpisode.events.length > 0) {
+        lastEventId = lastEpisode.events[lastEpisode.events.length - 1].id;
+      }
+    }
+
+    set({ 
+      data,
+      selectedEpisodeId: lastEpisodeId,
+      selectedEventId: lastEventId,
+      activeMode: 'message'
+    });
   },
 
   saveData: async (newData) => {
@@ -90,7 +109,7 @@ export const useStore = create<AppState>((set, get) => ({
   setSelectedView: (episodeId, eventId) => set({
     selectedEpisodeId: episodeId,
     selectedEventId: eventId,
-    activeMode: 'select'
+    activeMode: 'message'
   }),
 
   setBodyScale: (scale) => {

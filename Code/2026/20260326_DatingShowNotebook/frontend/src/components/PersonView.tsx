@@ -1,7 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useStore, Person, Gender } from '../store/useStore';
 import { Plus, Trash2, Hash } from 'lucide-react';
 import { clsx } from 'clsx';
+
+const PADDING = 20;
+const COL_GAP = 40;
+const HEADER_HEIGHT = 60;
+const IMG_WIDTH = 200;
+const TEXT_WIDTH = 350;
+const ITEM_HEIGHT = 200;
+const ROW_GAP = 20;
+const BTN_HEIGHT = 60;
+
+const COL_WIDTH = IMG_WIDTH + TEXT_WIDTH + PADDING;
+const X_MALE_COL = PADDING;
+const X_FEMALE_COL = X_MALE_COL + COL_WIDTH + COL_GAP;
+const TOTAL_WIDTH = X_FEMALE_COL + COL_WIDTH + PADDING;
 
 const PersonView: React.FC = () => {
   const { data, saveData } = useStore();
@@ -9,11 +23,14 @@ const PersonView: React.FC = () => {
   const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null);
 
   const handleAddPerson = (gender: Gender) => {
-    const id = data.nextPersonId;
+    const id = data.nextUniqueId;
+    const currentCount = data.people.filter(p => p.gender === gender).length;
+    const countLabel = currentCount + 1;
+    
     const newPerson: Person = {
       id,
       gender,
-      name: `${gender === 'male' ? 'Male' : 'Female'} ${id}`,
+      name: `${gender === 'male' ? 'Male' : 'Female'} ${countLabel}`,
       image: '',
       description: 'Add description...',
       ranges: '1'
@@ -21,7 +38,7 @@ const PersonView: React.FC = () => {
     saveData({
       ...data,
       people: [...data.people, newPerson],
-      nextPersonId: id + 1
+      nextUniqueId: id + 1
     });
   };
 
@@ -39,8 +56,7 @@ const PersonView: React.FC = () => {
     });
   };
 
-  const handlePaste = async (e: ClipboardEvent) => {
-    if (selectedPersonId === null) return;
+  const handlePaste = async (e: React.ClipboardEvent, personId: number) => {
     const items = e.clipboardData?.items;
     if (!items) return;
 
@@ -64,7 +80,7 @@ const PersonView: React.FC = () => {
               const sy = (img.height - minDim) / 2;
               ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
               const base64 = canvas.toDataURL('image/png');
-              handleUpdatePerson(selectedPersonId, { image: base64 });
+              handleUpdatePerson(personId, { image: base64 });
             }
           };
           img.src = event.target?.result as string;
@@ -74,89 +90,151 @@ const PersonView: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    window.addEventListener('paste', handlePaste);
-    return () => window.removeEventListener('paste', handlePaste);
-  }, [selectedPersonId]);
+  const males = useMemo(() => data.people.filter(p => p.gender === 'male'), [data.people]);
+  const females = useMemo(() => data.people.filter(p => p.gender === 'female'), [data.people]);
 
-  const renderPerson = (person: Person) => (
-    <div key={person.id} className="flex border-b border-gray-200 p-4 gap-4 items-start group">
-      <div 
-        className={clsx(
-          "w-[200px] h-[200px] border-2 flex items-center justify-center cursor-pointer overflow-hidden bg-gray-200 shrink-0",
-          selectedPersonId === person.id ? 'border-blue-500' : 'border-gray-300'
-        )}
-        onClick={() => setSelectedPersonId(person.id)}
-      >
-        {person.image ? (
-          <img src={person.image} alt={person.name} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 text-center text-xs px-2">Click & Paste Image</div>
-        )}
-      </div>
-      <div className="flex-1 flex flex-col gap-2 pt-2">
-        <input
-          className="text-xl font-bold bg-transparent border-none focus:ring-0 w-full"
-          value={person.name}
-          onChange={(e) => handleUpdatePerson(person.id, { name: e.target.value })}
-        />
-        <textarea
-          className="text-gray-600 bg-transparent border-none focus:ring-0 w-full resize-none"
-          style={{ fontSize: `${descriptionScale}rem` }}
-          rows={4}
-          value={person.description}
-          onChange={(e) => handleUpdatePerson(person.id, { description: e.target.value })}
-        />
-        <div className="flex gap-2">
-          <button
-            className="flex items-center gap-1 text-sm bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded"
-            onClick={() => {
-              const ranges = prompt('Enter episode ranges (e.g. "2 4 7"):', person.ranges);
-              if (ranges !== null) handleUpdatePerson(person.id, { ranges });
-            }}
-          >
-            <Hash size={14} /> Range: {person.ranges}
-          </button>
-          <button
-            className="flex items-center gap-1 text-sm bg-red-50 text-red-600 hover:bg-red-100 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-            onClick={() => handleDeletePerson(person.id)}
-          >
-            <Trash2 size={14} /> Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  const scale = bodyScale;
+  const descScale = descriptionScale;
+  
+  const maleTotalHeight = HEADER_HEIGHT + males.length * (ITEM_HEIGHT + ROW_GAP) + BTN_HEIGHT + PADDING;
+  const femaleTotalHeight = HEADER_HEIGHT + females.length * (ITEM_HEIGHT + ROW_GAP) + BTN_HEIGHT + PADDING;
+  const totalHeight = Math.max(maleTotalHeight, femaleTotalHeight) * scale;
+  const totalWidth = TOTAL_WIDTH * scale;
 
-  const males = data.people.filter(p => p.gender === 'male');
-  const females = data.people.filter(p => p.gender === 'female');
+  const renderPerson = (person: Person, index: number, xOffset: number) => {
+    const y = (HEADER_HEIGHT + index * (ITEM_HEIGHT + ROW_GAP)) * scale;
+    const isSelected = selectedPersonId === person.id;
+
+    return (
+      <g key={person.id}>
+        <foreignObject 
+          x={xOffset * scale} 
+          y={y} 
+          width={IMG_WIDTH * scale} 
+          height={ITEM_HEIGHT * scale}
+        >
+          <div 
+            xmlns="http://www.w3.org/1999/xhtml"
+            className={clsx(
+              "w-full h-full border-2 flex items-center justify-center cursor-pointer overflow-hidden bg-gray-200 shrink-0",
+              isSelected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'
+            )}
+            onClick={() => setSelectedPersonId(person.id)}
+            onPaste={(e) => handlePaste(e, person.id)}
+            tabIndex={0}
+          >
+            {person.image ? (
+              <img src={person.image} alt={person.name} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 text-center px-2" style={{ fontSize: `${0.75 * scale}rem` }}>
+                Click & Paste Image
+              </div>
+            )}
+          </div>
+        </foreignObject>
+        <foreignObject 
+          x={(xOffset + IMG_WIDTH + PADDING) * scale} 
+          y={y} 
+          width={(TEXT_WIDTH - PADDING) * scale} 
+          height={ITEM_HEIGHT * scale}
+        >
+          <div xmlns="http://www.w3.org/1999/xhtml" className="flex flex-col gap-2 pt-2 h-full w-full">
+            <input
+              className="font-bold bg-transparent border-none focus:ring-0 w-full p-0"
+              style={{ fontSize: `${1.25 * scale}rem` }}
+              value={person.name}
+              onChange={(e) => handleUpdatePerson(person.id, { name: e.target.value })}
+            />
+            <textarea
+              className="text-gray-600 bg-transparent border-none focus:ring-0 w-full resize-none p-0 overflow-hidden"
+              style={{ fontSize: `${scale * descScale}rem`, height: `${100 * scale}px` }}
+              value={person.description}
+              onChange={(e) => handleUpdatePerson(person.id, { description: e.target.value })}
+            />
+            <div className="flex gap-2">
+              <button
+                className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded whitespace-nowrap"
+                style={{ fontSize: `${0.75 * scale}rem` }}
+                onClick={() => {
+                  const ranges = prompt('Enter episode ranges (e.g. "2 4 7"):', person.ranges);
+                  if (ranges !== null) handleUpdatePerson(person.id, { ranges });
+                }}
+              >
+                <Hash size={14 * scale} /> Range: {person.ranges}
+              </button>
+              <button
+                className="flex items-center gap-1 bg-red-50 text-red-600 hover:bg-red-100 px-2 py-1 rounded"
+                style={{ fontSize: `${0.75 * scale}rem` }}
+                onClick={() => handleDeletePerson(person.id)}
+              >
+                <Trash2 size={14 * scale} /> Delete
+              </button>
+            </div>
+          </div>
+        </foreignObject>
+      </g>
+    );
+  };
 
   return (
-    <div className="flex h-full w-full overflow-hidden">
-      <div className="flex-1 flex flex-col h-full overflow-hidden" style={{ transform: `scale(${bodyScale})`, transformOrigin: 'top center' }}>
-        <div className="flex h-full w-full overflow-hidden">
-          <div className="flex-1 border-r border-gray-200 overflow-y-auto">
-            <div className="p-4 font-bold border-b border-gray-200 bg-gray-50 uppercase tracking-wider text-sm text-gray-500">Males</div>
-            {males.map(renderPerson)}
+    <div className="flex-1 overflow-auto bg-gray-50 relative">
+      <svg 
+        width={totalWidth} 
+        height={totalHeight} 
+        viewBox={`0 0 ${totalWidth} ${totalHeight}`}
+        className="bg-white shadow-lg block mx-auto"
+        style={{ minWidth: totalWidth, minHeight: totalHeight }}
+      >
+        {/* Headers */}
+        <foreignObject x={X_MALE_COL * scale} y={0} width={COL_WIDTH * scale} height={HEADER_HEIGHT * scale}>
+          <div xmlns="http://www.w3.org/1999/xhtml" className="w-full h-full flex items-center font-bold border-b border-gray-200 bg-gray-50 uppercase tracking-wider text-gray-500 px-4" style={{ fontSize: `${0.875 * scale}rem` }}>
+            Males
+          </div>
+        </foreignObject>
+        <foreignObject x={X_FEMALE_COL * scale} y={0} width={COL_WIDTH * scale} height={HEADER_HEIGHT * scale}>
+          <div xmlns="http://www.w3.org/1999/xhtml" className="w-full h-full flex items-center font-bold border-b border-gray-200 bg-gray-50 uppercase tracking-wider text-gray-500 px-4" style={{ fontSize: `${0.875 * scale}rem` }}>
+            Females
+          </div>
+        </foreignObject>
+
+        {/* Male List */}
+        {males.map((p, i) => renderPerson(p, i, X_MALE_COL))}
+        <foreignObject 
+          x={X_MALE_COL * scale} 
+          y={(HEADER_HEIGHT + males.length * (ITEM_HEIGHT + ROW_GAP)) * scale} 
+          width={COL_WIDTH * scale} 
+          height={BTN_HEIGHT * scale}
+        >
+          <div xmlns="http://www.w3.org/1999/xhtml" className="w-full h-full">
             <button
-              className="w-full p-4 flex items-center justify-center gap-2 text-blue-600 hover:bg-blue-50 transition-colors"
+              className="w-full h-full flex items-center justify-center gap-2 text-blue-600 hover:bg-blue-50 transition-colors border-t border-gray-100"
+              style={{ fontSize: `${1 * scale}rem` }}
               onClick={() => handleAddPerson('male')}
             >
-              <Plus size={20} /> Add Male
+              <Plus size={20 * scale} /> Add Male
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4 font-bold border-b border-gray-200 bg-gray-50 uppercase tracking-wider text-sm text-gray-500">Females</div>
-            {females.map(renderPerson)}
+        </foreignObject>
+
+        {/* Female List */}
+        {females.map((p, i) => renderPerson(p, i, X_FEMALE_COL))}
+        <foreignObject 
+          x={X_FEMALE_COL * scale} 
+          y={(HEADER_HEIGHT + females.length * (ITEM_HEIGHT + ROW_GAP)) * scale} 
+          width={COL_WIDTH * scale} 
+          height={BTN_HEIGHT * scale}
+        >
+          <div xmlns="http://www.w3.org/1999/xhtml" className="w-full h-full">
             <button
-              className="w-full p-4 flex items-center justify-center gap-2 text-pink-600 hover:bg-pink-50 transition-colors"
+              className="w-full h-full flex items-center justify-center gap-2 text-pink-600 hover:bg-pink-50 transition-colors border-t border-gray-100"
+              style={{ fontSize: `${1 * scale}rem` }}
               onClick={() => handleAddPerson('female')}
             >
-              <Plus size={20} /> Add Female
+              <Plus size={20 * scale} /> Add Female
             </button>
           </div>
-        </div>
-      </div>
+        </foreignObject>
+      </svg>
     </div>
   );
 };

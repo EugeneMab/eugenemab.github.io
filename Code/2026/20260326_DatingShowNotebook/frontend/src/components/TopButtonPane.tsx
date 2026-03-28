@@ -1,6 +1,6 @@
 import React from 'react';
 import { useStore, ActiveMode } from '../store/useStore';
-import { Undo, ZoomIn, Type } from 'lucide-react';
+import { Undo, ZoomIn, Type, Eraser } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const TopButtonPane: React.FC = () => {
@@ -65,6 +65,20 @@ const TopButtonPane: React.FC = () => {
               );
             })}
           </div>
+
+          <div className="h-8 w-px bg-gray-300 mx-2" />
+
+          {/* Eraser Button */}
+          <button
+            title="Eraser Mode"
+            className={clsx(
+              "w-10 h-10 border-2 rounded flex items-center justify-center hover:opacity-80 transition-opacity",
+              activeMode === 'eraser' ? "border-black scale-110 bg-gray-200" : "border-gray-300"
+            )}
+            onClick={() => setActiveMode(activeMode === 'eraser' ? 'select' : 'eraser')}
+          >
+            <Eraser size={24} className={clsx(activeMode === 'eraser' ? "text-red-600" : "text-gray-500")} />
+          </button>
         </>
       )}
 

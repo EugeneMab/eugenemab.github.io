@@ -22,9 +22,10 @@ const defaultData = {
   episodes: [
     {
       id: 1,
+      title: 'Episode 1',
       events: [
         {
-          id: '1-1',
+          id: 2,
           title: 'Episode 1-1',
           messages: [],
           teams: {}
@@ -32,7 +33,7 @@ const defaultData = {
       ]
     }
   ],
-  nextPersonId: 1,
+  nextUniqueId: 3,
   bodyScale: 1,
   descriptionScale: 1
 };
