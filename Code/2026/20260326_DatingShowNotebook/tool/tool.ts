@@ -96,7 +96,7 @@ function spawnCommand(cmd: string, cwd: string, name: string) {
   fs.writeFileSync(cmdFile, `@echo off\ncd /d "${cwd}"\n${cmd}`);
   
   // Using 'start' to run in a separate window and keep it open
-  const startCmd = `start "${name}" cmd.exe /c "${cmdFile}"`;
+  const startCmd = `start /min "${name}" cmd.exe /c "${cmdFile}"`;
   const startCmdFile = path.join(workFolder, `run_${name}.cmd`);
   fs.writeFileSync(startCmdFile, `@echo off\n${startCmd}`);
 

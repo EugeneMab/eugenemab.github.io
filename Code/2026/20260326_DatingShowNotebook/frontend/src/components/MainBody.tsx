@@ -82,7 +82,7 @@ const MainBody: React.FC = () => {
   useLayoutEffect(() => {
     console.log('~~ useLayoutEffect triggered (deps change)');
     updatePositions();
-  }, [filteredPeople, data.bodyScale, data.descriptionScale]);
+  }, [filteredPeople, data.bodyScale, data.descriptionScale, selectedEventId]);
 
   useEffect(() => {
     console.log('~~ useEffect: setting up listeners');
@@ -174,7 +174,7 @@ const MainBody: React.FC = () => {
   const females = filteredPeople.filter(p => p.gender === 'female');
 
   return (
-    <div className="h-full flex flex-col overflow-hidden" ref={containerRef}>
+    <div className="h-full flex flex-col overflow-hidden">
       {currentEvent && (
         <div className="p-4 flex justify-center border-b border-gray-100 bg-gray-50 shrink-0">
           <input
@@ -185,7 +185,7 @@ const MainBody: React.FC = () => {
         </div>
       )}
       
-      <div className="flex-1 relative" style={{ transform: `scale(${data.bodyScale})`, transformOrigin: 'top center' }}>
+      <div className="flex-1 relative" ref={containerRef} style={{ transform: `scale(${data.bodyScale})`, transformOrigin: 'top center' }}>
         <svg className="absolute inset-0 pointer-events-none z-0 w-full h-full">
           <defs>
             <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
