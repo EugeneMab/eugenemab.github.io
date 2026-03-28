@@ -24,13 +24,17 @@ export default tseslint.config(
     rules: {
       ...reactHooks.configs.recommended.rules,
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { varsIgnorePattern: '^_', argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
       'prettier/prettier': 'error',
     },
   },
   // Backend config
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
-    files: ['backend/**/*.ts'],
+    files: ['backend/**/*.ts', 'tool/**/*.ts'],
     languageOptions: {
       ecmaVersion: 2020,
       globals: globals.node,
@@ -39,6 +43,10 @@ export default tseslint.config(
       'prettier': prettierPlugin,
     },
     rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { varsIgnorePattern: '^_', argsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
       'prettier/prettier': 'error',
     },
   },

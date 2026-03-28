@@ -28,14 +28,14 @@ const defaultData = {
           id: 2,
           title: 'Episode 1-1',
           messages: [],
-          teams: {}
-        }
-      ]
-    }
+          teams: {},
+        },
+      ],
+    },
   ],
   nextUniqueId: 3,
   bodyScale: 1,
-  descriptionScale: 1
+  descriptionScale: 1,
 };
 
 // Ensure folder exists
@@ -73,7 +73,7 @@ app.post('/api/data', async (req, res) => {
   try {
     await fsp.writeFile(dataPath, JSON.stringify(req.body, null, 2), 'utf-8');
     res.json({ success: true });
-  } catch (e) {
+  } catch (_err) {
     res.status(500).json({ error: 'Failed to save data' });
   }
 });
@@ -82,7 +82,7 @@ app.post('/api/save-image', async (req, res) => {
   try {
     const { filename, base64 } = req.body;
     if (!filename || !base64) return res.status(400).json({ error: 'Missing filename or base64' });
-    
+
     const filePath = path.join(path.dirname(dataPath), filename);
     const buffer = Buffer.from(base64.split(',')[1], 'base64');
     await fsp.writeFile(filePath, buffer);
@@ -97,11 +97,11 @@ app.post('/api/cleanup-images', async (req, res) => {
   try {
     const { activeFilenames } = req.body;
     if (!activeFilenames) return res.status(400).json({ error: 'Missing activeFilenames' });
-    
+
     const dir = path.dirname(dataPath);
     const files = await fsp.readdir(dir);
     const regex = /^\d\d_\d\d\.jpg$/;
-    
+
     for (const file of files) {
       if (regex.test(file) && !activeFilenames.includes(file)) {
         await fsp.unlink(path.join(dir, file));
