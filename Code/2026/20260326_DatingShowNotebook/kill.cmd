@@ -1,1 +1,1 @@
-@npx tsx ./tool/tool.ts kill %*
+npx tsx ./tool/tool.ts kill %*

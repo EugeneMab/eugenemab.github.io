@@ -24,35 +24,35 @@ const PersonView: React.FC = () => {
 
   const handleAddPerson = (gender: Gender) => {
     const id = data.nextUniqueId;
-    const currentCount = data.people.filter(p => p.gender === gender).length;
+    const currentCount = data.people.filter((p) => p.gender === gender).length;
     const countLabel = currentCount + 1;
-    
+
     const newPerson: Person = {
       id,
       gender,
       name: `${gender === 'male' ? 'Male' : 'Female'} ${countLabel}`,
       image: '',
       description: 'Add description...',
-      ranges: '1'
+      ranges: '1',
     };
     saveData({
       ...data,
       people: [...data.people, newPerson],
-      nextUniqueId: id + 1
+      nextUniqueId: id + 1,
     });
   };
 
   const handleDeletePerson = (id: number) => {
     saveData({
       ...data,
-      people: data.people.filter(p => p.id !== id)
+      people: data.people.filter((p) => p.id !== id),
     });
   };
 
   const handleUpdatePerson = (id: number, updates: Partial<Person>) => {
     saveData({
       ...data,
-      people: data.people.map(p => p.id === id ? { ...p, ...updates } : p)
+      people: data.people.map((p) => (p.id === id ? { ...p, ...updates } : p)),
     });
   };
 
@@ -90,14 +90,16 @@ const PersonView: React.FC = () => {
     }
   };
 
-  const males = useMemo(() => data.people.filter(p => p.gender === 'male'), [data.people]);
-  const females = useMemo(() => data.people.filter(p => p.gender === 'female'), [data.people]);
+  const males = useMemo(() => data.people.filter((p) => p.gender === 'male'), [data.people]);
+  const females = useMemo(() => data.people.filter((p) => p.gender === 'female'), [data.people]);
 
   const scale = bodyScale;
   const descScale = descriptionScale;
-  
-  const maleTotalHeight = HEADER_HEIGHT + males.length * (ITEM_HEIGHT + ROW_GAP) + BTN_HEIGHT + PADDING;
-  const femaleTotalHeight = HEADER_HEIGHT + females.length * (ITEM_HEIGHT + ROW_GAP) + BTN_HEIGHT + PADDING;
+
+  const maleTotalHeight =
+    HEADER_HEIGHT + males.length * (ITEM_HEIGHT + ROW_GAP) + BTN_HEIGHT + PADDING;
+  const femaleTotalHeight =
+    HEADER_HEIGHT + females.length * (ITEM_HEIGHT + ROW_GAP) + BTN_HEIGHT + PADDING;
   const totalHeight = Math.max(maleTotalHeight, femaleTotalHeight) * scale;
   const totalWidth = TOTAL_WIDTH * scale;
 
@@ -107,16 +109,16 @@ const PersonView: React.FC = () => {
 
     return (
       <g key={person.id}>
-        <foreignObject 
-          x={xOffset * scale} 
-          y={y} 
-          width={IMG_WIDTH * scale} 
+        <foreignObject
+          x={xOffset * scale}
+          y={y}
+          width={IMG_WIDTH * scale}
           height={ITEM_HEIGHT * scale}
         >
-          <div 
+          <div
             xmlns="http://www.w3.org/1999/xhtml"
             className={clsx(
-              "w-full h-full border-2 flex items-center justify-center cursor-pointer overflow-hidden bg-gray-200 shrink-0",
+              'w-full h-full border-2 flex items-center justify-center cursor-pointer overflow-hidden bg-gray-200 shrink-0',
               isSelected ? 'border-blue-500 ring-2 ring-blue-200' : 'border-gray-300'
             )}
             onClick={() => setSelectedPersonId(person.id)}
@@ -126,19 +128,25 @@ const PersonView: React.FC = () => {
             {person.image ? (
               <img src={person.image} alt={person.name} className="w-full h-full object-cover" />
             ) : (
-              <div className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 text-center px-2" style={{ fontSize: `${0.75 * scale}rem` }}>
+              <div
+                className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 text-center px-2"
+                style={{ fontSize: `${0.75 * scale}rem` }}
+              >
                 Click & Paste Image
               </div>
             )}
           </div>
         </foreignObject>
-        <foreignObject 
-          x={(xOffset + IMG_WIDTH + PADDING) * scale} 
-          y={y} 
-          width={(TEXT_WIDTH - PADDING) * scale} 
+        <foreignObject
+          x={(xOffset + IMG_WIDTH + PADDING) * scale}
+          y={y}
+          width={(TEXT_WIDTH - PADDING) * scale}
           height={ITEM_HEIGHT * scale}
         >
-          <div xmlns="http://www.w3.org/1999/xhtml" className="flex flex-col gap-2 pt-2 h-full w-full">
+          <div
+            xmlns="http://www.w3.org/1999/xhtml"
+            className="flex flex-col gap-2 pt-2 h-full w-full"
+          >
             <input
               className="font-bold bg-transparent border-none focus:ring-0 w-full p-0"
               style={{ fontSize: `${1.25 * scale}rem` }}
@@ -178,31 +186,49 @@ const PersonView: React.FC = () => {
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50 relative">
-      <svg 
-        width={totalWidth} 
-        height={totalHeight} 
+      <svg
+        width={totalWidth}
+        height={totalHeight}
         viewBox={`0 0 ${totalWidth} ${totalHeight}`}
         className="bg-white shadow-lg block mx-auto"
         style={{ minWidth: totalWidth, minHeight: totalHeight }}
       >
         {/* Headers */}
-        <foreignObject x={X_MALE_COL * scale} y={0} width={COL_WIDTH * scale} height={HEADER_HEIGHT * scale}>
-          <div xmlns="http://www.w3.org/1999/xhtml" className="w-full h-full flex items-center font-bold border-b border-gray-200 bg-gray-50 uppercase tracking-wider text-gray-500 px-4" style={{ fontSize: `${0.875 * scale}rem` }}>
+        <foreignObject
+          x={X_MALE_COL * scale}
+          y={0}
+          width={COL_WIDTH * scale}
+          height={HEADER_HEIGHT * scale}
+        >
+          <div
+            xmlns="http://www.w3.org/1999/xhtml"
+            className="w-full h-full flex items-center font-bold border-b border-gray-200 bg-gray-50 uppercase tracking-wider text-gray-500 px-4"
+            style={{ fontSize: `${0.875 * scale}rem` }}
+          >
             Males
           </div>
         </foreignObject>
-        <foreignObject x={X_FEMALE_COL * scale} y={0} width={COL_WIDTH * scale} height={HEADER_HEIGHT * scale}>
-          <div xmlns="http://www.w3.org/1999/xhtml" className="w-full h-full flex items-center font-bold border-b border-gray-200 bg-gray-50 uppercase tracking-wider text-gray-500 px-4" style={{ fontSize: `${0.875 * scale}rem` }}>
+        <foreignObject
+          x={X_FEMALE_COL * scale}
+          y={0}
+          width={COL_WIDTH * scale}
+          height={HEADER_HEIGHT * scale}
+        >
+          <div
+            xmlns="http://www.w3.org/1999/xhtml"
+            className="w-full h-full flex items-center font-bold border-b border-gray-200 bg-gray-50 uppercase tracking-wider text-gray-500 px-4"
+            style={{ fontSize: `${0.875 * scale}rem` }}
+          >
             Females
           </div>
         </foreignObject>
 
         {/* Male List */}
         {males.map((p, i) => renderPerson(p, i, X_MALE_COL))}
-        <foreignObject 
-          x={X_MALE_COL * scale} 
-          y={(HEADER_HEIGHT + males.length * (ITEM_HEIGHT + ROW_GAP)) * scale} 
-          width={COL_WIDTH * scale} 
+        <foreignObject
+          x={X_MALE_COL * scale}
+          y={(HEADER_HEIGHT + males.length * (ITEM_HEIGHT + ROW_GAP)) * scale}
+          width={COL_WIDTH * scale}
           height={BTN_HEIGHT * scale}
         >
           <div xmlns="http://www.w3.org/1999/xhtml" className="w-full h-full">
@@ -218,10 +244,10 @@ const PersonView: React.FC = () => {
 
         {/* Female List */}
         {females.map((p, i) => renderPerson(p, i, X_FEMALE_COL))}
-        <foreignObject 
-          x={X_FEMALE_COL * scale} 
-          y={(HEADER_HEIGHT + females.length * (ITEM_HEIGHT + ROW_GAP)) * scale} 
-          width={COL_WIDTH * scale} 
+        <foreignObject
+          x={X_FEMALE_COL * scale}
+          y={(HEADER_HEIGHT + females.length * (ITEM_HEIGHT + ROW_GAP)) * scale}
+          width={COL_WIDTH * scale}
           height={BTN_HEIGHT * scale}
         >
           <div xmlns="http://www.w3.org/1999/xhtml" className="w-full h-full">

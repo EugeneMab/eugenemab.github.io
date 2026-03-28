@@ -4,21 +4,37 @@ import { spawn } from 'child_process';
 import * as http from 'http';
 
 const action = process.argv[2];
-const workFolderInput = process.argv[3];
-const dataFolderInput = process.argv[4];
-
-if (!action || !workFolderInput) {
-  console.error('Usage: npx tsx tool/tool.ts <start|kill> <workFolder> [dataFolder]');
-  process.exit(1);
-}
-
 const baseDir = process.cwd();
-const workFolder = path.resolve(workFolderInput);
-const dataFolder = dataFolderInput ? path.resolve(dataFolderInput) : undefined;
+
+// These will be initialized in main() for non-follow actions
+let workFolder: string = '';
+let dataFolder: string | undefined;
 
 async function main() {
+  if (action === 'follow') {
+    await handleFollow();
+    return;
+  }
+
+  const workFolderInput = process.argv[3];
+  const dataFolderInput = process.argv[4];
+
+  if (!action || !workFolderInput) {
+    console.error('Usage: npx tsx tool/tool.ts <start|kill> <workFolder> [dataFolder]');
+    console.error('       npx tsx tool/tool.ts follow <title> <cmdFile>');
+    process.exit(1);
+  }
+
+  workFolder = path.resolve(workFolderInput);
+  dataFolder = dataFolderInput ? path.resolve(dataFolderInput) : undefined;
+
+  console.log(`~~ Action: ${action.toUpperCase()}`);
+  console.log(`~~ Work Folder: ${workFolder}`);
+  if (dataFolder) console.log(`~~ Data Folder: ${dataFolder}`);
+
   // Ensure work folder exists
   if (!fs.existsSync(workFolder)) {
+    console.log(`~~ Creating work folder: ${workFolder}`);
     fs.mkdirSync(workFolder, { recursive: true });
   }
 
@@ -40,48 +56,81 @@ async function handleStart() {
 
   // Install dependencies if needed
   if (!fs.existsSync(path.join(baseDir, 'node_modules'))) {
-    console.log('Installing root dependencies...');
+    console.log('~~ Root dependencies missing. Installing...');
     await runCommand('npm install', baseDir, 'install_root');
+    console.log('~~ Root dependencies installed successfully.');
+  } else {
+    console.log('~~ Root node_modules found. Skipping install.');
   }
 
   if (!fs.existsSync(path.join(baseDir, 'frontend', 'node_modules'))) {
-    console.log('Installing frontend dependencies...');
+    console.log('~~ Frontend dependencies missing. Installing...');
     await runCommand('npm install', path.join(baseDir, 'frontend'), 'install_frontend');
+    console.log('~~ Frontend dependencies installed successfully.');
+  } else {
+    console.log('~~ Frontend node_modules found. Skipping install.');
   }
 
   // Start Backend
-  console.log('Starting Backend...');
+  console.log('~~ Spawning Backend process (Port 13762)...');
   spawnCommand(`npx tsx index.ts "${dataFolder}"`, path.join(baseDir, 'backend'), 'DSN_Backend');
 
   // Start Frontend
-  console.log('Starting Frontend...');
+  console.log('~~ Spawning Frontend process (Port 3762)...');
   spawnCommand('npx vite', path.join(baseDir, 'frontend'), 'DSN_Frontend');
+
+  console.log('~~ All systems launched.');
+  console.log('~~ Access the UI at: http://localhost:3762/');
 }
 
 async function handleKill() {
-  console.log('Stopping Dating Show Notebook...');
-  
+  console.log('~~ Initiating shutdown sequence...');
+
   // Call Backend shutdown
   try {
+    console.log('~~ Requesting Backend graceful shutdown (POST :13762/api/shutdown)...');
     await httpRequest('http://localhost:13762/api/shutdown', 'POST');
-    console.log('Backend shutdown requested.');
-  } catch (e) {
-    console.log('Backend shutdown failed or already stopped.');
+    console.log('~~ Backend shutdown request sent.');
+  } catch (_e) {
+    console.log('~~ Backend unreachable or already stopped.');
   }
 
   // Call Frontend quit
   try {
+    console.log('~~ Requesting Frontend termination (GET :3762/quit)...');
     await httpRequest('http://localhost:3762/quit', 'GET');
-    console.log('Frontend quit requested.');
-  } catch (e) {
-    console.log('Frontend quit failed or already stopped.');
+    console.log('~~ Frontend termination request sent.');
+  } catch (_e) {
+    console.log('~~ Frontend unreachable or already stopped.');
   }
+
+  console.log('~~ Cleanup complete.');
+}
+
+async function handleFollow() {
+  const title = process.argv[3];
+  const cmdFile = process.argv[4];
+  if (!title || !cmdFile) process.exit(1);
+
+  const updateTitle = () => {
+    // Only use standard title command, no ANSI escape sequences
+    spawn('cmd.exe', ['/c', 'title', title]);
+  };
+
+  updateTitle();
+  const interval = setInterval(updateTitle, 1000);
+
+  const proc = spawn('cmd.exe', ['/c', cmdFile], { stdio: 'inherit' });
+  proc.on('close', (code) => {
+    clearInterval(interval);
+    process.exit(code || 0);
+  });
 }
 
 function runCommand(cmd: string, cwd: string, name: string): Promise<void> {
   const cmdFile = path.join(workFolder, `${name}.cmd`);
-  fs.writeFileSync(cmdFile, `@echo off\ncd /d "${cwd}"\n${cmd}`);
-  
+  fs.writeFileSync(cmdFile, `cd /d "${cwd}"\r\n${cmd}`);
+
   return new Promise((resolve, reject) => {
     const proc = spawn('cmd.exe', ['/c', cmdFile], { stdio: 'inherit' });
     proc.on('close', (code) => {
@@ -92,15 +141,22 @@ function runCommand(cmd: string, cwd: string, name: string): Promise<void> {
 }
 
 function spawnCommand(cmd: string, cwd: string, name: string) {
-  const cmdFile = path.join(workFolder, `${name}.cmd`);
-  fs.writeFileSync(cmdFile, `@echo off\ncd /d "${cwd}"\n${cmd}`);
-  
-  // Using 'start' to run in a separate window and keep it open
-  const startCmd = `start /min "${name}" cmd.exe /c "${cmdFile}"`;
-  const startCmdFile = path.join(workFolder, `run_${name}.cmd`);
-  fs.writeFileSync(startCmdFile, `@echo off\n${startCmd}`);
+  // 1. The actual payload script
+  const payloadFile = path.join(workFolder, `${name}_payload.cmd`);
+  fs.writeFileSync(payloadFile, `cd /d "${cwd}"\r\n${cmd}`);
 
-  spawn('cmd.exe', ['/c', startCmdFile], { detached: true, stdio: 'ignore' }).unref();
+  // 2. The follow script that manages the window title
+  const followFile = path.join(workFolder, `${name}_follow.cmd`);
+  const followCmd = `npx tsx "${path.join(baseDir, 'tool', 'tool.ts')}" follow "${name}" "${payloadFile}"`;
+  fs.writeFileSync(followFile, `cd /d "${baseDir}"\r\n${followCmd}`);
+
+  // 3. The launch script that uses 'start /min'
+  const launchFile = path.join(workFolder, `${name}_launch.cmd`);
+  const startCmd = `start /min cmd.exe /c "${followFile}"`;
+  fs.writeFileSync(launchFile, `${startCmd}`);
+
+  // Execute the launch script
+  spawn('cmd.exe', ['/c', launchFile], { detached: true, stdio: 'ignore' }).unref();
 }
 
 function httpRequest(url: string, method: string): Promise<void> {
@@ -110,7 +166,7 @@ function httpRequest(url: string, method: string): Promise<void> {
       method: method,
       hostname: urlObj.hostname,
       port: urlObj.port,
-      path: urlObj.pathname
+      path: urlObj.pathname,
     };
     const req = http.request(options, (res) => {
       res.on('data', () => {});
@@ -121,7 +177,7 @@ function httpRequest(url: string, method: string): Promise<void> {
   });
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error(err);
   process.exit(1);
 });

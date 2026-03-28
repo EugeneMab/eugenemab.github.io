@@ -1,4 +1,4 @@
-import { AppData, Gender, MessageType } from '../store/useStore';
+import { AppData, Gender, MessageType, Person } from '../store/useStore';
 
 export const PADDING = 20;
 export const ROW_GAP = 40;
@@ -19,8 +19,11 @@ export const TOTAL_WIDTH = X_FEMALE_TEXT + FEMALE_TEXT_WIDTH + PADDING;
 
 export function getFilteredPeople(data: AppData, episodeIndex: number) {
   if (episodeIndex <= 0) return data.people;
-  return data.people.filter(p => {
-    const ranges = p.ranges.split(/\s+/).map(Number).filter(n => !isNaN(n));
+  return data.people.filter((p) => {
+    const ranges = p.ranges
+      .split(/\s+/)
+      .map(Number)
+      .filter((n) => !isNaN(n));
     if (ranges.length === 0) return true;
     for (let i = 0; i < ranges.length; i += 2) {
       const start = ranges[i];
@@ -31,8 +34,8 @@ export function getFilteredPeople(data: AppData, episodeIndex: number) {
   });
 }
 
-export function calculatePersonPositions(males: any[], females: any[], scale: number) {
-  const pos: { [id: number]: { x: number, y: number, gender: Gender } } = {};
+export function calculatePersonPositions(males: Person[], females: Person[], scale: number) {
+  const pos: { [id: number]: { x: number; y: number; gender: Gender } } = {};
   males.forEach((p, i) => {
     const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP) + IMG_HEIGHT / 2) * scale;
     const x = (X_MALE_IMG + MALE_IMG_WIDTH) * scale;
@@ -48,8 +51,8 @@ export function calculatePersonPositions(males: any[], females: any[], scale: nu
 
 export function getMessageStyle(type: MessageType, gender: Gender) {
   const isMale = gender === 'male';
-  let color = '';
-  let marker = '';
+  let color;
+  let marker;
   if (type === 'strong') {
     color = isMale ? '#2563eb' : '#dc2626';
     marker = isMale ? 'arrowhead-blue' : 'arrowhead-red';
@@ -60,7 +63,11 @@ export function getMessageStyle(type: MessageType, gender: Gender) {
   return { color, marker };
 }
 
-export function calculateMessageCoords(fromPos: { x: number, y: number, gender: Gender }, toPos: { x: number, y: number, gender: Gender }, scale: number) {
+export function calculateMessageCoords(
+  fromPos: { x: number; y: number; gender: Gender },
+  toPos: { x: number; y: number; gender: Gender },
+  scale: number
+) {
   const isMale = fromPos.gender === 'male';
   const targetIsMale = toPos.gender === 'male';
   const vOffset = (isMale ? 10 : -10) * scale;
@@ -71,7 +78,7 @@ export function calculateMessageCoords(fromPos: { x: number, y: number, gender: 
     x1: fromPos.x + hOffsetFrom,
     y1: fromPos.y + vOffset,
     x2: toPos.x + hOffsetTo,
-    y2: toPos.y + vOffset
+    y2: toPos.y + vOffset,
   };
 }
 

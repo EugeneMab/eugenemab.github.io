@@ -1,1 +1,1 @@
-@npx tsx ./tool/tool.ts start %*
+npx tsx ./tool/tool.ts start %*
