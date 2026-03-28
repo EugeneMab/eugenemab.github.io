@@ -4,8 +4,8 @@ import { ChevronDown, Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const NavigationPane: React.FC = () => {
-  const { data, selectedEpisodeId, selectedEventId, setSelectedView, saveData } = useStore();
-  const [openDropdown, setOpenDropdown] = useState<{ type: 'episode' | 'event', id: number | string } | null>(null);
+  const { data, selectedEpisodeId, selectedEventId, setSelectedView, saveData, fullRefresh } = useStore();
+  const [openDropdown, setOpenDropdown] = useState<{ type: 'episode' | 'event', id: number } | null>(null);
 
   const handleAddEpisode = () => {
     let nextUid = data.nextUniqueId;
@@ -71,7 +71,7 @@ const NavigationPane: React.FC = () => {
     setOpenDropdown(null);
   };
 
-  const handleDeleteEvent = (episodeId: number, eventId: string) => {
+  const handleDeleteEvent = (episodeId: number, eventId: number) => {
     if (window.confirm('Are you sure you want to delete this event?')) {
       saveData({
         ...data,
@@ -111,7 +111,7 @@ const NavigationPane: React.FC = () => {
     });
   };
 
-  const updateEventTitle = (episodeId: number, eventId: string, newTitle: string) => {
+  const updateEventTitle = (episodeId: number, eventId: number, newTitle: string) => {
     saveData({
       ...data,
       episodes: data.episodes.map(ep => ep.id === episodeId ? {
@@ -123,7 +123,14 @@ const NavigationPane: React.FC = () => {
 
   return (
     <div className="w-64 bg-gray-800 text-white flex flex-col h-full overflow-y-auto shrink-0 relative z-50">
-      <div className="p-4 text-xl font-bold border-b border-gray-700">Dating Show Notes</div>
+      <button 
+        className="p-4 text-xl font-bold border-b border-gray-700 text-left hover:bg-gray-700 transition-colors"
+        onClick={() => {
+          fullRefresh();
+        }}
+      >
+        Dating Show Notes
+      </button>
       
       <button
         className={clsx(

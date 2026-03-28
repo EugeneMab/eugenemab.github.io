@@ -78,6 +78,42 @@ app.post('/api/data', async (req, res) => {
   }
 });
 
+app.post('/api/save-image', async (req, res) => {
+  try {
+    const { filename, base64 } = req.body;
+    if (!filename || !base64) return res.status(400).json({ error: 'Missing filename or base64' });
+    
+    const filePath = path.join(path.dirname(dataPath), filename);
+    const buffer = Buffer.from(base64.split(',')[1], 'base64');
+    await fsp.writeFile(filePath, buffer);
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Error saving image:', e);
+    res.status(500).json({ error: 'Failed to save image' });
+  }
+});
+
+app.post('/api/cleanup-images', async (req, res) => {
+  try {
+    const { activeFilenames } = req.body;
+    if (!activeFilenames) return res.status(400).json({ error: 'Missing activeFilenames' });
+    
+    const dir = path.dirname(dataPath);
+    const files = await fsp.readdir(dir);
+    const regex = /^\d\d_\d\d\.jpg$/;
+    
+    for (const file of files) {
+      if (regex.test(file) && !activeFilenames.includes(file)) {
+        await fsp.unlink(path.join(dir, file));
+      }
+    }
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Error cleaning up images:', e);
+    res.status(500).json({ error: 'Failed to cleanup images' });
+  }
+});
+
 app.post('/api/shutdown', (req, res) => {
   res.json({ success: true });
   console.log('Shutdown requested, exiting...');

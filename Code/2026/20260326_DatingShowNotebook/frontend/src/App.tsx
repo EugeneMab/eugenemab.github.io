@@ -4,6 +4,7 @@ import NavigationPane from './components/NavigationPane';
 import TopButtonPane from './components/TopButtonPane';
 import MainBody from './components/MainBody';
 import PersonView from './components/PersonView';
+import ProgressModal from './components/ProgressModal';
 
 const App: React.FC = () => {
   const { fetchData, selectedEpisodeId } = useStore();
@@ -25,6 +26,7 @@ const App: React.FC = () => {
           )}
         </div>
       </div>
+      <ProgressModal />
     </div>
   );
 };

@@ -1,23 +1,14 @@
-import React, { useRef, useMemo, useState } from 'react';
+import React, { useRef, useMemo, useState, useEffect } from 'react';
 import { useStore, Person, Message, MessageType, Gender } from '../store/useStore';
 import { clsx } from 'clsx';
-
-const PADDING = 20;
-const ROW_GAP = 40;
-const TITLE_HEIGHT = 60;
-const MALE_TEXT_WIDTH = 300;
-const MALE_IMG_WIDTH = 200;
-const MID_WIDTH = 400;
-const FEMALE_IMG_WIDTH = 200;
-const FEMALE_TEXT_WIDTH = 300;
-const IMG_HEIGHT = 200;
-
-const X_MALE_TEXT = PADDING;
-const X_MALE_IMG = X_MALE_TEXT + MALE_TEXT_WIDTH + PADDING;
-const X_MID = X_MALE_IMG + MALE_IMG_WIDTH + PADDING;
-const X_FEMALE_IMG = X_MID + MID_WIDTH + PADDING;
-const X_FEMALE_TEXT = X_FEMALE_IMG + FEMALE_IMG_WIDTH + PADDING;
-const TOTAL_WIDTH = X_FEMALE_TEXT + FEMALE_TEXT_WIDTH + PADDING;
+import { renderEventToSvgString } from '../utils/svgRenderer';
+import { svgToJpeg, saveEventImage } from '../utils/imageGen';
+import { 
+  PADDING, ROW_GAP, TITLE_HEIGHT, MALE_TEXT_WIDTH, MALE_IMG_WIDTH, 
+  MID_WIDTH, FEMALE_IMG_WIDTH, FEMALE_TEXT_WIDTH, IMG_HEIGHT,
+  X_MALE_TEXT, X_MALE_IMG, X_MID, X_FEMALE_IMG, X_FEMALE_TEXT, TOTAL_WIDTH,
+  getFilteredPeople, calculatePersonPositions, getMessageStyle, calculateMessageCoords, TEAM_COLORS
+} from '../utils/layout';
 
 const MainBody: React.FC = () => {
   const { 
@@ -26,8 +17,6 @@ const MainBody: React.FC = () => {
   } = useStore();
   
   const [firstPersonId, setFirstPersonId] = useState<number | null>(null);
-
-  const teamColors = ['#f97316', '#06b6d4', '#a855f7', '#84cc16', '#eab308'];
 
   const currentEvent = useMemo(() => {
     for (const ep of data.episodes) {
@@ -43,18 +32,8 @@ const MainBody: React.FC = () => {
   }, [data.episodes, selectedEpisodeId]);
 
   const filteredPeople = useMemo(() => {
-    if (episodeIndex <= 0) return data.people;
-    return data.people.filter(p => {
-      const ranges = p.ranges.split(/\s+/).map(Number).filter(n => !isNaN(n));
-      if (ranges.length === 0) return true;
-      for (let i = 0; i < ranges.length; i += 2) {
-        const start = ranges[i];
-        const end = ranges[i + 1] || Infinity;
-        if (episodeIndex >= start && episodeIndex <= end) return true;
-      }
-      return false;
-    });
-  }, [data.people, episodeIndex]);
+    return getFilteredPeople(data, episodeIndex);
+  }, [data, episodeIndex]);
 
   const handleUpdatePerson = (id: number, updates: Partial<Person>) => {
     saveData({
@@ -190,19 +169,33 @@ const MainBody: React.FC = () => {
   const totalHeight = (TITLE_HEIGHT + PADDING + numRows * (IMG_HEIGHT + ROW_GAP)) * scale;
 
   const personPositions = useMemo(() => {
-    const pos: { [id: number]: { x: number, y: number, gender: Gender } } = {};
-    males.forEach((p, i) => {
-      const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP) + IMG_HEIGHT / 2) * scale;
-      const x = (X_MALE_IMG + MALE_IMG_WIDTH) * scale;
-      pos[p.id] = { x, y, gender: 'male' };
-    });
-    females.forEach((p, i) => {
-      const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP) + IMG_HEIGHT / 2) * scale;
-      const x = X_FEMALE_IMG * scale;
-      pos[p.id] = { x, y, gender: 'female' };
-    });
-    return pos;
+    return calculatePersonPositions(males, females, scale);
   }, [males, females, scale]);
+
+  const eventIndex = useMemo(() => {
+    if (selectedEpisodeId === null || selectedEventId === null) return -1;
+    const ep = data.episodes.find(e => e.id === selectedEpisodeId);
+    if (!ep) return -1;
+    return ep.events.findIndex(e => e.id === selectedEventId) + 1;
+  }, [data.episodes, selectedEpisodeId, selectedEventId]);
+
+  useEffect(() => {
+    if (episodeIndex <= 0 || eventIndex <= 0 || !currentEvent) return;
+
+    const timer = setTimeout(async () => {
+      try {
+        const svgString = renderEventToSvgString(currentEvent, data, episodeIndex);
+        const jpegBase64 = await svgToJpeg(svgString);
+        const epIdx = String(episodeIndex).padStart(2, '0');
+        const evIdx = String(eventIndex).padStart(2, '0');
+        await saveEventImage(`${epIdx}_${evIdx}.jpg`, jpegBase64);
+      } catch (e) {
+        console.error('Failed to debounced save image:', e);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [data, episodeIndex, eventIndex, currentEvent]);
 
   if (selectedEpisodeId !== null && !currentEvent) {
     return <div className="flex-1 bg-white" />;
@@ -249,8 +242,21 @@ const MainBody: React.FC = () => {
         {/* Males */}
         {males.map((p, i) => {
           const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP)) * scale;
+          const isSelected = firstPersonId === p.id;
           return (
             <g key={`male-${p.id}`}>
+              {isSelected && (
+                <rect 
+                  x={(X_MALE_IMG - 6) * scale} 
+                  y={y - 6 * scale} 
+                  width={(MALE_IMG_WIDTH + 12) * scale} 
+                  height={(IMG_HEIGHT + 12) * scale} 
+                  fill="none" 
+                  stroke="#ff00ff" 
+                  strokeWidth={4 * scale} 
+                  rx={8 * scale}
+                />
+              )}
               <foreignObject 
                 x={X_MALE_TEXT * scale} 
                 y={y} 
@@ -281,10 +287,7 @@ const MainBody: React.FC = () => {
               >
                 <div 
                   xmlns="http://www.w3.org/1999/xhtml"
-                  className={clsx(
-                    "w-full h-full border-2 rounded overflow-hidden cursor-pointer transition-transform flex items-center justify-center bg-gray-200",
-                    firstPersonId === p.id && "ring-4 ring-blue-500"
-                  )}
+                  className="w-full h-full border-2 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-200"
                   onClick={() => handlePersonClick(p.id)}
                   onPaste={(e) => handlePaste(e, p.id)}
                   tabIndex={0}
@@ -303,8 +306,21 @@ const MainBody: React.FC = () => {
         {/* Females */}
         {females.map((p, i) => {
           const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP)) * scale;
+          const isSelected = firstPersonId === p.id;
           return (
             <g key={`female-${p.id}`}>
+              {isSelected && (
+                <rect 
+                  x={(X_FEMALE_IMG - 6) * scale} 
+                  y={y - 6 * scale} 
+                  width={(FEMALE_IMG_WIDTH + 12) * scale} 
+                  height={(IMG_HEIGHT + 12) * scale} 
+                  fill="none" 
+                  stroke="#ff00ff" 
+                  strokeWidth={4 * scale} 
+                  rx={8 * scale}
+                />
+              )}
               <foreignObject 
                 x={X_FEMALE_IMG * scale} 
                 y={y} 
@@ -313,10 +329,7 @@ const MainBody: React.FC = () => {
               >
                 <div 
                   xmlns="http://www.w3.org/1999/xhtml"
-                  className={clsx(
-                    "w-full h-full border-2 rounded overflow-hidden cursor-pointer transition-transform flex items-center justify-center bg-gray-200",
-                    firstPersonId === p.id && "ring-4 ring-blue-500"
-                  )}
+                  className="w-full h-full border-2 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-200"
                   onClick={() => handlePersonClick(p.id)}
                   onPaste={(e) => handlePaste(e, p.id)}
                   tabIndex={0}
@@ -357,30 +370,14 @@ const MainBody: React.FC = () => {
         {/* Messages */}
         <g className="pointer-events-none">
           {currentEvent?.messages.map((m, i) => {
-            const from = personPositions[m.from];
-            const to = personPositions[m.to];
-            if (!from || !to) return null;
+            const fromPos = personPositions[m.from];
+            const toPos = personPositions[m.to];
+            if (!fromPos || !toPos) return null;
 
-            const isMale = from.gender === 'male';
-            const vOffset = (isMale ? 10 : -10) * scale;
-            const hOffset = (isMale ? 5 : -5) * scale;
-            
-            let color = '';
-            let marker = '';
-            if (m.type === 'strong') {
-              color = isMale ? '#2563eb' : '#dc2626';
-              marker = isMale ? 'arrowhead-blue' : 'arrowhead-red';
-            } else {
-              color = isMale ? '#93c5fd' : '#fca5a5';
-              marker = isMale ? 'arrowhead-lightblue' : 'arrowhead-lightred';
-            }
+            const { color, marker } = getMessageStyle(m.type, fromPos.gender);
+            const { x1, y1, x2, y2 } = calculateMessageCoords(fromPos, toPos, scale);
 
-            const x1 = from.x + hOffset;
-            const y1 = from.y + vOffset;
-            const x2 = to.x - hOffset;
-            const y2 = to.y + vOffset;
-
-            if (from.gender === to.gender) {
+            if (fromPos.gender === toPos.gender) {
               const centerX = (X_MID + MID_WIDTH / 2) * scale;
 
               return (
@@ -420,13 +417,13 @@ const MainBody: React.FC = () => {
 
               return (
                 <g key={`team-${idx}`}>
-                  <circle cx={teamX} cy={teamY} r={6 * scale} fill={teamColors[Number(idx)]} />
+                  <circle cx={teamX} cy={teamY} r={6 * scale} fill={TEAM_COLORS[Number(idx)]} />
                   {validMembers.map((p, i) => (
                     <line
                       key={`team-${idx}-mem-${i}`}
                       x1={p.x} y1={p.y}
                       x2={teamX} y2={teamY}
-                      stroke={teamColors[Number(idx)]}
+                      stroke={TEAM_COLORS[Number(idx)]}
                       strokeWidth={1.5 * scale}
                       strokeDasharray={4 * scale}
                     />
