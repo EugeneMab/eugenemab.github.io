@@ -242,8 +242,21 @@ const MainBody: React.FC = () => {
         {/* Males */}
         {males.map((p, i) => {
           const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP)) * scale;
+          const isSelected = firstPersonId === p.id;
           return (
             <g key={`male-${p.id}`}>
+              {isSelected && (
+                <rect 
+                  x={(X_MALE_IMG - 6) * scale} 
+                  y={y - 6 * scale} 
+                  width={(MALE_IMG_WIDTH + 12) * scale} 
+                  height={(IMG_HEIGHT + 12) * scale} 
+                  fill="none" 
+                  stroke="#ff00ff" 
+                  strokeWidth={4 * scale} 
+                  rx={8 * scale}
+                />
+              )}
               <foreignObject 
                 x={X_MALE_TEXT * scale} 
                 y={y} 
@@ -274,10 +287,7 @@ const MainBody: React.FC = () => {
               >
                 <div 
                   xmlns="http://www.w3.org/1999/xhtml"
-                  className={clsx(
-                    "w-full h-full border-2 rounded overflow-hidden cursor-pointer transition-transform flex items-center justify-center bg-gray-200",
-                    firstPersonId === p.id && "ring-4 ring-blue-500"
-                  )}
+                  className="w-full h-full border-2 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-200"
                   onClick={() => handlePersonClick(p.id)}
                   onPaste={(e) => handlePaste(e, p.id)}
                   tabIndex={0}
@@ -296,8 +306,21 @@ const MainBody: React.FC = () => {
         {/* Females */}
         {females.map((p, i) => {
           const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP)) * scale;
+          const isSelected = firstPersonId === p.id;
           return (
             <g key={`female-${p.id}`}>
+              {isSelected && (
+                <rect 
+                  x={(X_FEMALE_IMG - 6) * scale} 
+                  y={y - 6 * scale} 
+                  width={(FEMALE_IMG_WIDTH + 12) * scale} 
+                  height={(IMG_HEIGHT + 12) * scale} 
+                  fill="none" 
+                  stroke="#ff00ff" 
+                  strokeWidth={4 * scale} 
+                  rx={8 * scale}
+                />
+              )}
               <foreignObject 
                 x={X_FEMALE_IMG * scale} 
                 y={y} 
@@ -306,10 +329,7 @@ const MainBody: React.FC = () => {
               >
                 <div 
                   xmlns="http://www.w3.org/1999/xhtml"
-                  className={clsx(
-                    "w-full h-full border-2 rounded overflow-hidden cursor-pointer transition-transform flex items-center justify-center bg-gray-200",
-                    firstPersonId === p.id && "ring-4 ring-blue-500"
-                  )}
+                  className="w-full h-full border-2 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-200"
                   onClick={() => handlePersonClick(p.id)}
                   onPaste={(e) => handlePaste(e, p.id)}
                   tabIndex={0}
