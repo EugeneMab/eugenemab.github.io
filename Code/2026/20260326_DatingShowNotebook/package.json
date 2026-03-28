@@ -2,25 +2,49 @@
   "name": "dating-show-notebook",
   "version": "1.0.0",
   "private": true,
+  "type": "module",
   "scripts": {
     "start": "concurrently \"cd backend && tsx index.ts\" \"cd frontend && vite\"",
     "dev:backend": "cd backend && tsx watch index.ts",
     "dev:frontend": "cd frontend && vite",
-    "lint": "npm run lint --prefix frontend",
-    "format": "npm run format --prefix frontend"
+    "build": "cd frontend && tsc && vite build",
+    "preview": "cd frontend && vite preview",
+    "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
+    "format": "prettier --write \"frontend/src/**/*.{ts,tsx,css,md}\" \"backend/**/*.ts\" \"tool/**/*.ts\""
   },
   "dependencies": {
+    "axios": "^1.6.7",
+    "clsx": "^2.1.0",
     "concurrently": "^8.2.2",
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "tsx": "^4.7.1"
+    "lucide-react": "^0.344.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "tailwind-merge": "^2.2.1",
+    "tsx": "^4.7.1",
+    "zustand": "^4.5.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
     "@types/node": "^20.11.24",
+    "@types/react": "^18.2.56",
+    "@types/react-dom": "^18.2.19",
+    "@vitejs/plugin-react": "^6.0.1",
+    "autoprefixer": "^10.4.17",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.4.0",
+    "postcss": "^8.4.35",
+    "prettier": "^3.8.1",
+    "tailwindcss": "^3.4.1",
     "typescript": "^5.3.3",
-    "vite": "^5.1.4",
-    "@vitejs/plugin-react": "^4.2.1"
+    "typescript-eslint": "^8.57.2",
+    "vite": "^8.0.3"
   }
 }

@@ -85,13 +85,13 @@ async function handleStart() {
 
 async function handleKill() {
   console.log('~~ Initiating shutdown sequence...');
-  
+
   // Call Backend shutdown
   try {
     console.log('~~ Requesting Backend graceful shutdown (POST :13762/api/shutdown)...');
     await httpRequest('http://localhost:13762/api/shutdown', 'POST');
     console.log('~~ Backend shutdown request sent.');
-  } catch (e) {
+  } catch (_e) {
     console.log('~~ Backend unreachable or already stopped.');
   }
 
@@ -100,7 +100,7 @@ async function handleKill() {
     console.log('~~ Requesting Frontend termination (GET :3762/quit)...');
     await httpRequest('http://localhost:3762/quit', 'GET');
     console.log('~~ Frontend termination request sent.');
-  } catch (e) {
+  } catch (_e) {
     console.log('~~ Frontend unreachable or already stopped.');
   }
 
@@ -130,7 +130,7 @@ async function handleFollow() {
 function runCommand(cmd: string, cwd: string, name: string): Promise<void> {
   const cmdFile = path.join(workFolder, `${name}.cmd`);
   fs.writeFileSync(cmdFile, `cd /d "${cwd}"\r\n${cmd}`);
-  
+
   return new Promise((resolve, reject) => {
     const proc = spawn('cmd.exe', ['/c', cmdFile], { stdio: 'inherit' });
     proc.on('close', (code) => {
@@ -144,7 +144,7 @@ function spawnCommand(cmd: string, cwd: string, name: string) {
   // 1. The actual payload script
   const payloadFile = path.join(workFolder, `${name}_payload.cmd`);
   fs.writeFileSync(payloadFile, `cd /d "${cwd}"\r\n${cmd}`);
-  
+
   // 2. The follow script that manages the window title
   const followFile = path.join(workFolder, `${name}_follow.cmd`);
   const followCmd = `npx tsx "${path.join(baseDir, 'tool', 'tool.ts')}" follow "${name}" "${payloadFile}"`;
@@ -166,7 +166,7 @@ function httpRequest(url: string, method: string): Promise<void> {
       method: method,
       hostname: urlObj.hostname,
       port: urlObj.port,
-      path: urlObj.pathname
+      path: urlObj.pathname,
     };
     const req = http.request(options, (res) => {
       res.on('data', () => {});
@@ -177,7 +177,7 @@ function httpRequest(url: string, method: string): Promise<void> {
   });
 }
 
-main().catch(err => {
+main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
