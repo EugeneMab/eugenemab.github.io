@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import axios from 'axios';
+import { renderEventToSvgString } from '../utils/svgRenderer';
+import { svgToJpeg, saveEventImage, cleanupZombieImages } from '../utils/imageGen';
 
 export type Gender = 'male' | 'female';
 export type MessageType = 'strong' | 'weak';
@@ -48,6 +50,10 @@ interface AppState {
   selectedEpisodeId: number | null; // null means Person View
   selectedEventId: number | null;
   undoStack: AppData[];
+  
+  isRefreshing: boolean;
+  refreshProgress: { current: number, total: number };
+  cancelRefresh: boolean;
 
   fetchData: () => Promise<void>;
   saveData: (newData: AppData) => Promise<void>;
@@ -56,6 +62,9 @@ interface AppState {
   setBodyScale: (scale: number) => void;
   setDescriptionScale: (scale: number) => void;
   undo: () => void;
+  setRefreshState: (isRefreshing: boolean, current?: number, total?: number) => void;
+  setCancelRefresh: (cancel: boolean) => void;
+  fullRefresh: () => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -70,6 +79,9 @@ export const useStore = create<AppState>((set, get) => ({
   selectedEpisodeId: null,
   selectedEventId: null,
   undoStack: [],
+  isRefreshing: false,
+  refreshProgress: { current: 0, total: 0 },
+  cancelRefresh: false,
 
   fetchData: async () => {
     const res = await axios.get('/api/data');
@@ -131,5 +143,67 @@ export const useStore = create<AppState>((set, get) => ({
       undoStack: remainingStack
     });
     axios.post('/api/data', prevData);
+  },
+
+  setRefreshState: (isRefreshing, current, total) => {
+    set((state) => ({
+      isRefreshing,
+      refreshProgress: {
+        current: current !== undefined ? current : state.refreshProgress.current,
+        total: total !== undefined ? total : state.refreshProgress.total
+      }
+    }));
+  },
+
+  setCancelRefresh: (cancelRefresh) => set({ cancelRefresh }),
+
+  fullRefresh: async () => {
+    const { data, setRefreshState, setCancelRefresh } = get();
+    const episodes = data.episodes;
+    const eventCount = episodes.reduce((acc, ep) => acc + ep.events.length, 0);
+    const totalSteps = eventCount + 1; // +1 for cleanup step
+    
+    setRefreshState(true, 0, totalSteps);
+    setCancelRefresh(false);
+
+    const activeFilenames: string[] = [];
+    let currentStep = 0;
+
+    for (let i = 0; i < episodes.length; i++) {
+      const episode = episodes[i];
+      for (let j = 0; j < episode.events.length; j++) {
+        if (get().cancelRefresh) {
+          setRefreshState(false);
+          return;
+        }
+
+        const event = episode.events[j];
+        const epIdx = String(i + 1).padStart(2, '0');
+        const evIdx = String(j + 1).padStart(2, '0');
+        const filename = `${epIdx}_${evIdx}.jpg`;
+        activeFilenames.push(filename);
+
+        try {
+          const svgString = renderEventToSvgString(event, data, i + 1);
+          const jpegBase64 = await svgToJpeg(svgString);
+          await saveEventImage(filename, jpegBase64);
+        } catch (e) {
+          console.error(`Failed to generate image for ${filename}:`, e);
+        }
+
+        currentStep++;
+        setRefreshState(true, currentStep, totalSteps);
+      }
+    }
+
+    if (!get().cancelRefresh) {
+      await cleanupZombieImages(activeFilenames);
+      currentStep++;
+      setRefreshState(true, currentStep, totalSteps);
+    }
+
+    // Small delay to let user see 100%
+    await new Promise(r => setTimeout(r, 300));
+    setRefreshState(false);
   }
 }));
