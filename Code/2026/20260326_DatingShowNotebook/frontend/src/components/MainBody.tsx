@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useMemo } from 'react';
+import React, { useRef, useEffect, useState, useMemo, useLayoutEffect } from 'react';
 import { useStore, Person, Message, MessageType } from '../store/useStore';
 import MalePerson from './MalePerson';
 import FemalePerson from './FemalePerson';
@@ -7,7 +7,7 @@ import { clsx } from 'clsx';
 const MainBody: React.FC = () => {
   const { 
     data, selectedEpisodeId, selectedEventId, activeMode, 
-    bodyScale, descriptionScale, saveData 
+    saveData 
   } = useStore();
   
   const containerRef = useRef<HTMLDivElement>(null);
@@ -40,39 +40,79 @@ const MainBody: React.FC = () => {
   }, [data.people, selectedEpisodeId]);
 
   const updatePositions = () => {
-    if (!containerRef.current) return;
+    if (!containerRef.current) {
+      console.log('~~ updatePositions: No container ref');
+      return;
+    }
     const containerRect = containerRef.current.getBoundingClientRect();
     const newPositions: typeof positions = {};
+    const scale = data.bodyScale || 1;
     
+    console.log(`~~ updatePositions: scale=${scale}, containerRect=`, { w: containerRect.width, h: containerRect.height });
+
+    let foundAny = false;
     filteredPeople.forEach(p => {
       const el = imageRefs.current[p.id];
       if (el) {
         const rect = el.getBoundingClientRect();
-        // Calculate point relative to container and account for zoom
-        const x = (p.gender === 'male' ? rect.right : rect.left) - containerRect.left;
-        const y = rect.top - containerRect.top * 2 + rect.height / 2;
+        if (rect.width === 0 || rect.height === 0) {
+          console.log(`~~ updatePositions: Person ${p.id} has 0-size rect`);
+          return;
+        }
+        // rect values are in viewport pixels (scaled). 
+        // We divide by scale because the SVG is inside the transformed container.
+        const x = ((p.gender === 'male' ? rect.right + 10 * scale : rect.left - 10 * scale) - containerRect.left) / scale;
+        const y = (rect.top - containerRect.top + rect.height / 2) / scale;
         
         newPositions[p.id] = { x, y, gender: p.gender };
+        foundAny = true;
+      } else {
+        console.log(`~~ updatePositions: No ref for Person ${p.id}`);
       }
     });
-    setPositions(newPositions);
+
+    if (foundAny) {
+      console.log(`~~ updatePositions: Updating state with ${Object.keys(newPositions).length} positions`);
+      setPositions(newPositions);
+    } else {
+      console.log('~~ updatePositions: No positions found to update');
+    }
   };
 
-  useEffect(() => {
-    const timer = setTimeout(updatePositions, 100);
-    window.addEventListener('resize', updatePositions);
-    return () => {
-      clearTimeout(timer);
-      window.removeEventListener('resize', updatePositions);
-    };
-  }, [filteredPeople, bodyScale]);
+  useLayoutEffect(() => {
+    console.log('~~ useLayoutEffect triggered (deps change)');
+    updatePositions();
+  }, [filteredPeople, data.bodyScale, data.descriptionScale]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
-    const observer = new MutationObserver(updatePositions);
-    observer.observe(containerRef.current, { childList: true, subtree: true });
-    return () => observer.disconnect();
+    console.log('~~ useEffect: setting up listeners');
+    const handleResize = () => {
+      console.log('~~ Resize event');
+      updatePositions();
+    };
+    window.addEventListener('resize', handleResize);
+    
+    const observer = new MutationObserver((mutations) => {
+      console.log(`~~ MutationObserver: ${mutations.length} mutations`);
+      updatePositions();
+    });
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current, { childList: true, subtree: true, attributes: true });
+    }
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      observer.disconnect();
+    };
   }, []);
+
+  const handleUpdatePerson = (id: number, updates: Partial<Person>) => {
+    saveData({
+      ...data,
+      people: data.people.map(p => p.id === id ? { ...p, ...updates } : p)
+    });
+  };
 
   const handlePersonClick = (personId: number) => {
     if (!currentEvent) return;
@@ -145,7 +185,7 @@ const MainBody: React.FC = () => {
         </div>
       )}
       
-      <div className="flex-1 relative" style={{ transform: `scale(${bodyScale})`, transformOrigin: 'top center' }}>
+      <div className="flex-1 relative" style={{ transform: `scale(${data.bodyScale})`, transformOrigin: 'top center' }}>
         <svg className="absolute inset-0 pointer-events-none z-0 w-full h-full">
           <defs>
             <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
@@ -192,48 +232,54 @@ const MainBody: React.FC = () => {
             );
           })}
 
-          {currentEvent && Object.entries(currentEvent.teams).map(([idx, members]) => {
-            if (members.length === 0) return null;
-            const validMembers = members.map(id => positions[id]).filter(Boolean);
-            if (validMembers.length === 0) return null;
-
-            const avgY = validMembers.reduce((sum, p) => sum + p.y, 0) / validMembers.length;
+          {/* Teams */}
+          {(() => {
+            if (!currentEvent) return null;
             
-            // X coordinate between male right and female left
-            let maxMaleX = -Infinity;
-            let minFemaleX = Infinity;
+            // Calculate global bounds for middle area
+            let globalMaxMaleX = -Infinity;
+            let globalMinFemaleX = Infinity;
             
-            validMembers.forEach(p => {
-              if (p.gender === 'male') {
-                maxMaleX = Math.max(maxMaleX, p.x);
-              } else {
-                minFemaleX = Math.min(minFemaleX, p.x);
+            filteredPeople.forEach(p => {
+              const pos = positions[p.id];
+              if (pos) {
+                if (p.gender === 'male') {
+                  globalMaxMaleX = Math.max(globalMaxMaleX, pos.x);
+                } else {
+                  globalMinFemaleX = Math.min(globalMinFemaleX, pos.x);
+                }
               }
             });
-            
-            // If one side is missing
-            if (!(maxMaleX !== -Infinity && minFemaleX !== Infinity)) return null; 
 
-            const teamX = maxMaleX + (minFemaleX - maxMaleX) * ((Number(idx) + 1) / (5 + 1));
-              
-            const teamY = avgY;
+            // Skip team points if one side is completely missing
+            if (globalMaxMaleX === -Infinity || globalMinFemaleX === Infinity) return null;
 
-            return (
-              <g key={`team-${idx}`}>
-                <circle cx={teamX} cy={teamY} r="6" fill={teamColors[Number(idx)]} />
-                {validMembers.map((p, i) => (
-                  <line
-                    key={`team-${idx}-mem-${i}`}
-                    x1={p.x} y1={p.y}
-                    x2={teamX} y2={teamY}
-                    stroke={teamColors[Number(idx)]}
-                    strokeWidth="1.5"
-                    strokeDasharray="4"
-                  />
-                ))}
-              </g>
-            );
-          })}
+            return Object.entries(currentEvent.teams).map(([idx, members]) => {
+              if (members.length === 0) return null;
+              const validMembers = members.map(id => positions[id]).filter(Boolean);
+              if (validMembers.length === 0) return null;
+
+              const avgY = validMembers.reduce((sum, p) => sum + p.y, 0) / validMembers.length;
+              const teamX = globalMaxMaleX + (globalMinFemaleX - globalMaxMaleX) * ((Number(idx) + 1) / (5 + 1));
+              const teamY = avgY;
+
+              return (
+                <g key={`team-${idx}`}>
+                  <circle cx={teamX} cy={teamY} r="6" fill={teamColors[Number(idx)]} />
+                  {validMembers.map((p, i) => (
+                    <line
+                      key={`team-${idx}-mem-${i}`}
+                      x1={p.x} y1={p.y}
+                      x2={teamX} y2={teamY}
+                      stroke={teamColors[Number(idx)]}
+                      strokeWidth="1.5"
+                      strokeDasharray="4"
+                    />
+                  ))}
+                </g>
+              );
+            });
+          })()}
         </svg>
 
         <div className="flex justify-between px-8 py-4 z-10 relative">
@@ -242,9 +288,10 @@ const MainBody: React.FC = () => {
               <MalePerson
                 key={person.id}
                 person={person}
-                descriptionScale={descriptionScale}
+                descriptionScale={data.descriptionScale}
                 isFirstSelected={firstPersonId === person.id}
                 onClick={handlePersonClick}
+                onUpdate={handleUpdatePerson}
                 innerRef={el => imageRefs.current[person.id] = el}
               />
             ))}
@@ -255,9 +302,10 @@ const MainBody: React.FC = () => {
               <FemalePerson
                 key={person.id}
                 person={person}
-                descriptionScale={descriptionScale}
+                descriptionScale={data.descriptionScale}
                 isFirstSelected={firstPersonId === person.id}
                 onClick={handlePersonClick}
+                onUpdate={handleUpdatePerson}
                 innerRef={el => imageRefs.current[person.id] = el}
               />
             ))}

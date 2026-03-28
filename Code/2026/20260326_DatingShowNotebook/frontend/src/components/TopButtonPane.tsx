@@ -6,10 +6,13 @@ import { clsx } from 'clsx';
 const TopButtonPane: React.FC = () => {
   const { 
     activeMode, setActiveMode, 
-    bodyScale, setBodyScale, 
-    descriptionScale, setDescriptionScale, 
+    data, 
+    setBodyScale, 
+    setDescriptionScale, 
     undo, selectedEpisodeId 
   } = useStore();
+
+  const { bodyScale = 1, descriptionScale = 1 } = data;
 
   const teamColors = ['#f97316', '#06b6d4', '#a855f7', '#84cc16', '#eab308']; // Orange, Cyan, Purple, LimeGreen, Gold
 

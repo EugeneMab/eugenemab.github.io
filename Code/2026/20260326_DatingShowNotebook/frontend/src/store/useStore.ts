@@ -35,6 +35,8 @@ export interface AppData {
   people: Person[];
   episodes: Episode[];
   nextPersonId: number;
+  bodyScale: number;
+  descriptionScale: number;
 }
 
 export type ActiveMode = 'select' | 'message' | 'weak-message' | 'team-0' | 'team-1' | 'team-2' | 'team-3' | 'team-4';
@@ -44,8 +46,6 @@ interface AppState {
   activeMode: ActiveMode;
   selectedEpisodeId: number | null; // null means Person View
   selectedEventId: string | null;
-  bodyScale: number;
-  descriptionScale: number;
   undoStack: AppData[];
 
   fetchData: () => Promise<void>;
@@ -61,13 +61,13 @@ export const useStore = create<AppState>((set, get) => ({
   data: {
     people: [],
     episodes: [],
-    nextPersonId: 1
+    nextPersonId: 1,
+    bodyScale: 1,
+    descriptionScale: 1
   },
   activeMode: 'select',
   selectedEpisodeId: 1,
   selectedEventId: '1-1',
-  bodyScale: 1,
-  descriptionScale: 1,
   undoStack: [],
 
   fetchData: async () => {
@@ -93,8 +93,15 @@ export const useStore = create<AppState>((set, get) => ({
     activeMode: 'select'
   }),
 
-  setBodyScale: (scale) => set({ bodyScale: scale }),
-  setDescriptionScale: (scale) => set({ descriptionScale: scale }),
+  setBodyScale: (scale) => {
+    const newData = { ...get().data, bodyScale: scale };
+    get().saveData(newData);
+  },
+  
+  setDescriptionScale: (scale) => {
+    const newData = { ...get().data, descriptionScale: scale };
+    get().saveData(newData);
+  },
 
   undo: () => {
     const stack = get().undoStack;

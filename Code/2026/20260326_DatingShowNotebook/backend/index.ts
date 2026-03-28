@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import fs from 'fs';
+import { promises as fsp } from 'fs';
 import path from 'path';
 
 const app = express();
@@ -31,7 +32,9 @@ const defaultData = {
       ]
     }
   ],
-  nextPersonId: 1
+  nextPersonId: 1,
+  bodyScale: 1,
+  descriptionScale: 1
 };
 
 // Ensure folder exists
@@ -40,10 +43,10 @@ if (!fs.existsSync(path.dirname(dataPath))) {
 }
 
 // Load or create data.json
-function loadData() {
+async function loadData() {
   if (fs.existsSync(dataPath)) {
     try {
-      const content = fs.readFileSync(dataPath, 'utf-8');
+      const content = await fsp.readFile(dataPath, 'utf-8');
       if (!content.trim()) return defaultData;
       return JSON.parse(content);
     } catch (e) {
@@ -51,9 +54,8 @@ function loadData() {
       return defaultData;
     }
   } else {
-    // Create default file immediately
     try {
-      fs.writeFileSync(dataPath, JSON.stringify(defaultData, null, 2), 'utf-8');
+      await fsp.writeFile(dataPath, JSON.stringify(defaultData, null, 2), 'utf-8');
     } catch (e) {
       console.error('Failed to create default data.json', e);
     }
@@ -61,14 +63,14 @@ function loadData() {
   }
 }
 
-app.get('/api/data', (req, res) => {
-  const data = loadData();
+app.get('/api/data', async (req, res) => {
+  const data = await loadData();
   res.json(data);
 });
 
-app.post('/api/data', (req, res) => {
+app.post('/api/data', async (req, res) => {
   try {
-    fs.writeFileSync(dataPath, JSON.stringify(req.body, null, 2), 'utf-8');
+    await fsp.writeFile(dataPath, JSON.stringify(req.body, null, 2), 'utf-8');
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ error: 'Failed to save data' });

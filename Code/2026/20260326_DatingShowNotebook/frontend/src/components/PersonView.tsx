@@ -4,7 +4,8 @@ import { Plus, Trash2, Hash } from 'lucide-react';
 import { clsx } from 'clsx';
 
 const PersonView: React.FC = () => {
-  const { data, saveData, bodyScale, descriptionScale } = useStore();
+  const { data, saveData } = useStore();
+  const { bodyScale = 1, descriptionScale = 1 } = data;
   const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null);
 
   const handleAddPerson = (gender: Gender) => {
