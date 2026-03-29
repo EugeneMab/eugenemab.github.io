@@ -91,46 +91,48 @@ const TopButtonPane: React.FC = () => {
       )}
 
       {currentFolderPath && (
-        <div
-          title={currentFolderPath === '.' ? '/' : currentFolderPath}
-          className="flex-1 px-3 py-1 bg-gray-50 rounded-md text-xs font-mono text-gray-400 truncate border border-gray-100 shadow-inner"
-        >
-          {currentFolderPath === '.' ? '/' : currentFolderPath}
-        </div>
+        <>
+          <div
+            title={currentFolderPath === '.' ? '/' : currentFolderPath}
+            className="flex-1 px-3 py-1 bg-gray-50 rounded-md text-xs font-mono text-gray-400 truncate border border-gray-100 shadow-inner"
+          >
+            {currentFolderPath === '.' ? '/' : currentFolderPath}
+          </div>
+
+          {/* Global Scaling Sliders */}
+          <div className="flex items-center gap-6 shrink-0">
+            <div className="flex items-center gap-2">
+              <ZoomIn size={18} className="text-gray-500 shrink-0" />
+              <input
+                type="range"
+                min="0.02"
+                max="1.25"
+                step="0.02"
+                value={bodyScale}
+                onChange={(e) => setBodyScale(parseFloat(e.target.value))}
+                className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Type size={18} className="text-gray-500 shrink-0" />
+              <input
+                type="range"
+                min="0.25"
+                max="4"
+                step="0.02"
+                value={descriptionScale}
+                onChange={(e) => setDescriptionScale(parseFloat(e.target.value))}
+                className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              />
+            </div>
+          </div>
+
+          {/* Undo Last Action */}
+          <button title="Undo" className="p-2 hover:bg-gray-100 rounded text-gray-700" onClick={undo}>
+            <Undo size={24} />
+          </button>
+        </>
       )}
-
-      {/* Global Scaling Sliders */}
-      <div className="flex items-center gap-6 shrink-0">
-        <div className="flex items-center gap-2">
-          <ZoomIn size={18} className="text-gray-500 shrink-0" />
-          <input
-            type="range"
-            min="0.02"
-            max="1.25"
-            step="0.02"
-            value={bodyScale}
-            onChange={(e) => setBodyScale(parseFloat(e.target.value))}
-            className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Type size={18} className="text-gray-500 shrink-0" />
-          <input
-            type="range"
-            min="0.25"
-            max="4"
-            step="0.02"
-            value={descriptionScale}
-            onChange={(e) => setDescriptionScale(parseFloat(e.target.value))}
-            className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-          />
-        </div>
-      </div>
-
-      {/* Undo Last Action */}
-      <button title="Undo" className="p-2 hover:bg-gray-100 rounded text-gray-700" onClick={undo}>
-        <Undo size={24} />
-      </button>
 
       {/* Open Button */}
       <button
