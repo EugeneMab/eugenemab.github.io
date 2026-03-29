@@ -76,7 +76,7 @@ interface AppState {
   isInterrupted: boolean;
 
   openFolder: (path: string) => Promise<void>;
-  saveData: (update: AppData | ((prev: AppData) => AppData)) => Promise<void>;
+  saveData: (update: (prev: AppData) => AppData) => Promise<void>;
   setActiveMode: (mode: ActiveMode) => void;
   // ... (rest of the interface)
   setInterrupted: (interrupted: boolean) => void;
@@ -233,7 +233,7 @@ export const useStore = create<AppState>((set, get) => ({
 
     set((state) => {
       const currentData = state.data;
-      const newData = typeof update === 'function' ? update(currentData) : update;
+      const newData = update(currentData);
 
       // Debounce logic moved outside or handled via a shared variable
       if (globalSaveTimeout) clearTimeout(globalSaveTimeout);
