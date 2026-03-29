@@ -595,8 +595,8 @@ const MainBody: React.FC = () => {
                       x2={teamX}
                       y2={teamY}
                       stroke={TEAM_COLORS[Number(originalIndex)]}
-                      strokeWidth={1.5 * scale}
-                      strokeDasharray={4 * scale}
+                      strokeWidth={3 * scale}
+                      strokeDasharray={`${6 * scale} ${4 * scale}`}
                     />
                   ))}
                 </g>

@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosRequestConfig } from 'axios';
 
 export async function svgToJpeg(svgString: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -35,10 +35,10 @@ export async function svgToJpeg(svgString: string): Promise<string> {
   });
 }
 
-export async function saveEventImage(filename: string, base64: string) {
-  await axios.post('/api/save-image', { filename, base64 });
+export async function saveEventImage(filename: string, base64: string, config?: AxiosRequestConfig) {
+  await axios.post('/api/save-image', { filename, base64 }, config);
 }
 
-export async function cleanupZombieImages(activeFilenames: string[]) {
-  await axios.post('/api/cleanup-images', { activeFilenames });
+export async function cleanupZombieImages(activeFilenames: string[], config?: AxiosRequestConfig) {
+  await axios.post('/api/cleanup-images', { activeFilenames }, config);
 }

@@ -133,16 +133,16 @@ export function calculatTeamMemberCoords(
 }
 
 export const TEAM_COLORS = [
-  '#f97316', // Orange
-  '#06b6d4', // Cyan
-  '#a855f7', // Purple
-  '#84cc16', // Lime
-  '#eab308', // Yellow
-  '#6366f1', // Indigo
-  '#10b981', // Emerald
-  '#d946ef', // Fuchsia
-  '#14b8a6', // Teal
-  '#64748b', // Slate
+  '#10B981', // Emerald
+  '#22D3EE', // Soft Cyan
+  '#FB923C', // Tangerine
+  '#A855F7', // Deep Violet
+  '#A3E635', // Fresh Lime
+  '#7FE7D1', // Seafoam
+  '#FACC15', // Golden Yellow
+  '#C084FC', // Orchid Purple
+  '#C6F61A', // Chartreuse Green
+  '#E6B422', // Honey Gold
 ];
 
 /**

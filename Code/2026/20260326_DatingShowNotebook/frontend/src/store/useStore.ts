@@ -61,7 +61,7 @@ export type ActiveMode =
 interface AppState {
   data: AppData;
   activeMode: ActiveMode;
-  selectedEpisodeId: number | null; // null means Person View
+  selectedEpisodeId: number | null;
   selectedEventId: number | null;
   undoStack: AppData[];
 
@@ -69,7 +69,12 @@ interface AppState {
   refreshProgress: { current: number; total: number };
   cancelRefresh: boolean;
 
-  fetchData: () => Promise<void>;
+  clientId: string;
+  currentFolderPath: string | null;
+  recentFolders: string[];
+  isInterrupted: boolean;
+
+  openFolder: (path: string) => Promise<void>;
   saveData: (newData: AppData) => Promise<void>;
   setActiveMode: (mode: ActiveMode) => void;
   setSelectedView: (episodeId: number | null, eventId: number | null) => void;
@@ -79,7 +84,19 @@ interface AppState {
   setRefreshState: (isRefreshing: boolean, current?: number, total?: number) => void;
   setCancelRefresh: (cancel: boolean) => void;
   fullRefresh: () => Promise<void>;
+  setInterrupted: (interrupted: boolean) => void;
 }
+
+const generateId = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+};
+const CLIENT_ID = generateId();
+
+const savedRecent = localStorage.getItem('dsn_recent_folders');
+const initialRecent = savedRecent ? JSON.parse(savedRecent) : [];
 
 export const useStore = create<AppState>((set, get) => ({
   data: {
@@ -97,26 +114,26 @@ export const useStore = create<AppState>((set, get) => ({
   refreshProgress: { current: 0, total: 0 },
   cancelRefresh: false,
 
-  /**
-   * Fetches application data from the server and performs initialization tasks
-   * like ID compaction, data cleaning, and setting the initial view.
-   */
-  fetchData: async () => {
-    const res = await axios.get('/api/data');
+  clientId: CLIENT_ID,
+  currentFolderPath: null,
+  recentFolders: initialRecent,
+  isInterrupted: false,
+
+  openFolder: async (folderPath) => {
+    const clientId = get().clientId;
+    const res = await axios.post('/api/open', { path: folderPath, clientId });
     let data: AppData = res.data;
 
-    // --- Round 1: Build ID Mapping & Determine nextUniqueId ---
+    // --- ID Compaction & Data Cleaning Logic ---
     const personMap = new Map<number, number>();
     const episodeMap = new Map<number, number>();
     const eventMap = new Map<number, number>();
     let nextId = 1;
 
-    // Map Person IDs
     data.people.forEach((p) => {
       personMap.set(p.id, nextId++);
     });
 
-    // Map Episode and Event IDs
     data.episodes.forEach((ep) => {
       episodeMap.set(ep.id, nextId++);
       ep.events.forEach((ev) => {
@@ -124,25 +141,18 @@ export const useStore = create<AppState>((set, get) => ({
       });
     });
 
-    // Set the next global unique ID
     data.nextUniqueId = nextId;
 
-    // --- Round 2: Apply Mappings & Clean Up Data ---
     const validPersonIds = new Set(personMap.values());
 
-    // Update People
     data.people.forEach((p) => {
       p.id = personMap.get(p.id)!;
     });
 
-    // Update Episodes, Events, and Clean References
     data.episodes.forEach((ep) => {
       ep.id = episodeMap.get(ep.id)!;
-
       ep.events.forEach((ev) => {
         ev.id = eventMap.get(ev.id)!;
-
-        // Clean messages: Update IDs, remove dangling/invalid, remove duplicates
         const seenMessages = new Set<string>();
         ev.messages = ev.messages
           .map((m) => ({
@@ -160,13 +170,11 @@ export const useStore = create<AppState>((set, get) => ({
             return true;
           });
 
-        // Clean teams: Update IDs, remove dangling, remove duplicates, remove empty teams
         const cleanedTeams: { [teamIndex: string]: number[] } = {};
         Object.entries(ev.teams).forEach(([idx, members]) => {
           const validMembers = members
             .map((id) => personMap.get(id)!)
             .filter((id) => id && validPersonIds.has(id));
-          
           const uniqueMembers = Array.from(new Set(validMembers));
           if (uniqueMembers.length > 0) {
             cleanedTeams[idx] = uniqueMembers;
@@ -176,7 +184,6 @@ export const useStore = create<AppState>((set, get) => ({
       });
     });
 
-    // Default view: last event of last episode
     let lastEpisodeId = null;
     let lastEventId = null;
     if (data.episodes.length > 0) {
@@ -187,25 +194,46 @@ export const useStore = create<AppState>((set, get) => ({
       }
     }
 
+    const newRecent = [folderPath, ...get().recentFolders.filter((p) => p !== folderPath)].slice(0, 10);
+    localStorage.setItem('dsn_recent_folders', JSON.stringify(newRecent));
+
+    await new Promise((r) => setTimeout(r, 1000));
+
     set({
       data,
+      currentFolderPath: folderPath,
       selectedEpisodeId: lastEpisodeId,
       selectedEventId: lastEventId,
       activeMode: 'message',
+      recentFolders: newRecent,
+      undoStack: [],
+    });
+
+    await axios.post('/api/data', data, {
+      headers: {
+        'x-folder-path': folderPath,
+        'x-client-id': clientId
+      }
     });
   },
 
-  /**
-   * Persists application data to the server and updates the local state.
-   * Maintains an undo stack for quick recovery of previous states.
-   */
   saveData: async (newData) => {
+    const folderPath = get().currentFolderPath;
+    const clientId = get().clientId;
+    if (!folderPath) return;
+
     const currentData = get().data;
     set({
       undoStack: [JSON.parse(JSON.stringify(currentData)), ...get().undoStack].slice(0, 50),
       data: newData,
     });
-    await axios.post('/api/data', newData);
+    
+    await axios.post('/api/data', newData, {
+      headers: {
+        'x-folder-path': folderPath,
+        'x-client-id': clientId
+      }
+    });
   },
 
   setActiveMode: (mode) => set({ activeMode: mode }),
@@ -227,10 +255,11 @@ export const useStore = create<AppState>((set, get) => ({
     get().saveData(newData);
   },
 
-  /**
-   * Reverts the application data to the most recent state in the undo stack.
-   */
   undo: () => {
+    const folderPath = get().currentFolderPath;
+    const clientId = get().clientId;
+    if (!folderPath) return;
+
     const stack = get().undoStack;
     if (stack.length === 0) return;
     const [prevData, ...remainingStack] = stack;
@@ -238,7 +267,13 @@ export const useStore = create<AppState>((set, get) => ({
       data: prevData,
       undoStack: remainingStack,
     });
-    axios.post('/api/data', prevData);
+    
+    axios.post('/api/data', prevData, {
+      headers: {
+        'x-folder-path': folderPath,
+        'x-client-id': clientId
+      }
+    });
   },
 
   setRefreshState: (isRefreshing, current, total) => {
@@ -254,16 +289,25 @@ export const useStore = create<AppState>((set, get) => ({
   setCancelRefresh: (cancelRefresh) => set({ cancelRefresh }),
 
   fullRefresh: async () => {
-    const { data, setRefreshState, setCancelRefresh } = get();
+    const { data, setRefreshState, setCancelRefresh, currentFolderPath, clientId } = get();
+    if (!currentFolderPath) return;
+
     const episodes = data.episodes;
     const eventCount = episodes.reduce((acc, ep) => acc + ep.events.length, 0);
-    const totalSteps = eventCount + 1; // +1 for cleanup step
+    const totalSteps = eventCount + 1;
 
     setRefreshState(true, 0, totalSteps);
     setCancelRefresh(false);
 
     const activeFilenames: string[] = [];
     let currentStep = 0;
+
+    const config = {
+      headers: {
+        'x-folder-path': currentFolderPath,
+        'x-client-id': clientId
+      }
+    };
 
     for (let i = 0; i < episodes.length; i++) {
       const episode = episodes[i];
@@ -282,9 +326,9 @@ export const useStore = create<AppState>((set, get) => ({
         try {
           const svgString = renderEventToSvgString(event, data, i + 1);
           const jpegBase64 = await svgToJpeg(svgString);
-          await saveEventImage(filename, jpegBase64);
+          await saveEventImage(filename, jpegBase64, config);
         } catch (e) {
-          console.error(`Failed to generate image for ${filename}:`, e);
+          // Error logged via backend
         }
 
         currentStep++;
@@ -293,13 +337,37 @@ export const useStore = create<AppState>((set, get) => ({
     }
 
     if (!get().cancelRefresh) {
-      await cleanupZombieImages(activeFilenames);
+      await cleanupZombieImages(activeFilenames, config);
       currentStep++;
       setRefreshState(true, currentStep, totalSteps);
     }
 
-    // Small delay to let user see 100%
     await new Promise((r) => setTimeout(r, 300));
     setRefreshState(false);
   },
+
+  setInterrupted: (interrupted) => set({ isInterrupted: interrupted }),
 }));
+
+axios.interceptors.request.use((config) => {
+  const state = useStore.getState();
+  if (state.currentFolderPath !== null && state.clientId) {
+    if (!config.headers['x-folder-path']) {
+      config.headers['x-folder-path'] = state.currentFolderPath;
+    }
+    if (!config.headers['x-client-id']) {
+      config.headers['x-client-id'] = state.clientId;
+    }
+  }
+  return config;
+});
+
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 409) {
+      useStore.getState().setInterrupted(true);
+    }
+    return Promise.reject(error);
+  }
+);

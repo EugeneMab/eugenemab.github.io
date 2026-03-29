@@ -263,7 +263,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
                 .map((p) => {
                   const { x1, y1 } = calculatTeamMemberCoords(p, scale);
                   return `
-                    <line x1="${x1}" y1="${y1}" x2="${teamX}" y2="${teamY}" stroke="${teamColor}" stroke-width="${1.5 * scale}" stroke-dasharray="${4 * scale}" />
+                    <line x1="${x1}" y1="${y1}" x2="${teamX}" y2="${teamY}" stroke="${teamColor}" stroke-width="${3 * scale}" stroke-dasharray="${6 * scale} ${4 * scale}" />
                   `;
                 })
                 .join('')}
