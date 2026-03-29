@@ -72,14 +72,6 @@ async function handleStart() {
     console.log('~~ Root node_modules found. Skipping install.');
   }
 
-  if (!fs.existsSync(path.join(baseDir, 'frontend', 'node_modules'))) {
-    console.log('~~ Frontend dependencies missing. Installing...');
-    await runCommand('npm install', path.join(baseDir, 'frontend'), 'install_frontend');
-    console.log('~~ Frontend dependencies installed successfully.');
-  } else {
-    console.log('~~ Frontend node_modules found. Skipping install.');
-  }
-
   // Start Backend
   console.log('~~ Spawning Backend process (Port 13762)...');
   spawnCommand(
