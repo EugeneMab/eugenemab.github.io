@@ -18,7 +18,9 @@ import {
   calculatePersonPositions,
   getMessageStyle,
   calculateMessageCoords,
+  calculatTeamMemberCoords,
   TEAM_COLORS,
+  wrapText,
 } from './layout';
 
 export function renderEventToSvgString(event: Event, data: AppData, episodeIndex: number): string {
@@ -29,6 +31,12 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
   const scale = data.bodyScale || 1;
   const descScale = data.descriptionScale || 1;
   const numRows = Math.max(males.length, females.length);
+  
+  /**
+   * Layout Dimensions:
+   * Dynamically calculated based on participant count and user-defined scaling.
+   * Total height ensures all participant rows fit on the canvas.
+   */
   const totalWidth = (X_FEMALE_TEXT + FEMALE_TEXT_WIDTH + PADDING) * scale;
   const totalHeight = (TITLE_HEIGHT + PADDING + numRows * (IMG_HEIGHT + ROW_GAP)) * scale;
 
@@ -53,7 +61,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
 
       <rect width="100%" height="100%" fill="white" />
 
-      <!-- Title -->
+      <!-- Title Section -->
       <rect x="0" y="0" width="${totalWidth}" height="${TITLE_HEIGHT * scale}" fill="#f9fafb" />
       <line x1="0" y1="${TITLE_HEIGHT * scale}" x2="${totalWidth}" y2="${TITLE_HEIGHT * scale}" stroke="#f3f4f6" stroke-width="1" />
       <text 
@@ -64,38 +72,28 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
         style="font-family: sans-serif; font-weight: bold; font-size: ${2 * scale}rem;"
       >${event.title}</text>
 
-      <!-- Males -->
+      <!-- Male Participants -->
       ${males
         .map((p, i) => {
           const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP)) * scale;
-          const descLines = p.description.split('\n');
           const descFontSize = 0.875 * scale * descScale;
 
           return `
           <g>
-            <!-- Name -->
-            <text 
-              x="${(X_MALE_TEXT + MALE_TEXT_WIDTH) * scale}" 
-              y="${y + 20 * scale}" 
-              text-anchor="end" 
-              style="font-family: sans-serif; font-weight: bold; font-size: ${1.125 * scale}rem; fill: #1e3a8a;"
-            >${p.name}</text>
-            
-            <!-- Description -->
-            ${descLines
-              .map(
-                (line, lineIdx) => `
-              <text 
-                x="${(X_MALE_TEXT + MALE_TEXT_WIDTH) * scale}" 
-                y="${y + 45 * scale + lineIdx * descFontSize * 1.2 * 16}" 
-                text-anchor="end" 
-                style="font-family: sans-serif; font-size: ${descFontSize}rem; fill: #1e40af;"
-              >${line}</text>
-            `
-              )
-              .join('')}
+            <!-- Name & Description (HTML-like wrapping) -->
+            <foreignObject
+              x="${X_MALE_TEXT * scale}"
+              y="${y}"
+              width="${MALE_TEXT_WIDTH * scale}"
+              height="${IMG_HEIGHT * scale}"
+            >
+              <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; text-align: right; padding-right: 8px; height: 100%; justify-content: flex-start; padding-top: 8px; width: 100%; font-family: sans-serif;">
+                <div style="font-weight: bold; font-size: ${1.125 * scale}rem; color: #1e3a8a; margin-bottom: 4px;">${p.name}</div>
+                <div style="font-size: ${descFontSize}rem; color: #1e40af; white-space: pre-wrap; word-wrap: break-word;">${p.description}</div>
+              </div>
+            </foreignObject>
 
-            <!-- Image Area -->
+            <!-- Image Container -->
             <rect 
               x="${X_MALE_IMG * scale}" 
               y="${y}" 
@@ -140,16 +138,15 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
         })
         .join('')}
 
-      <!-- Females -->
+      <!-- Female Participants -->
       ${females
         .map((p, i) => {
           const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP)) * scale;
-          const descLines = p.description.split('\n');
           const descFontSize = 0.875 * scale * descScale;
 
           return `
           <g>
-            <!-- Image Area -->
+            <!-- Image Container -->
             <rect 
               x="${X_FEMALE_IMG * scale}" 
               y="${y}" 
@@ -190,33 +187,24 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
               rx="${4 * scale}"
             />
 
-            <!-- Name -->
-            <text 
-              x="${X_FEMALE_TEXT * scale}" 
-              y="${y + 20 * scale}" 
-              text-anchor="start" 
-              style="font-family: sans-serif; font-weight: bold; font-size: ${1.125 * scale}rem; fill: #7f1d1d;"
-            >${p.name}</text>
-            
-            <!-- Description -->
-            ${descLines
-              .map(
-                (line, lineIdx) => `
-              <text 
-                x="${X_FEMALE_TEXT * scale}" 
-                y="${y + 45 * scale + lineIdx * descFontSize * 1.2 * 16}" 
-                text-anchor="start" 
-                style="font-family: sans-serif; font-size: ${descFontSize}rem; fill: #991b1b;"
-              >${line}</text>
-            `
-              )
-              .join('')}
+            <!-- Name & Description (HTML-like wrapping) -->
+            <foreignObject
+              x="${X_FEMALE_TEXT * scale}"
+              y="${y}"
+              width="${FEMALE_TEXT_WIDTH * scale}"
+              height="${IMG_HEIGHT * scale}"
+            >
+              <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; text-align: left; padding-left: 8px; height: 100%; justify-content: flex-start; padding-top: 8px; width: 100%; font-family: sans-serif;">
+                <div style="font-weight: bold; font-size: ${1.125 * scale}rem; color: #7f1d1d; margin-bottom: 4px;">${p.name}</div>
+                <div style="font-size: ${descFontSize}rem; color: #991b1b; white-space: pre-wrap; word-wrap: break-word;">${p.description}</div>
+              </div>
+            </foreignObject>
           </g>
         `;
         })
         .join('')}
 
-      <!-- Messages -->
+      <!-- Relationship Messages: Lines and arrows representing interactions -->
       <g>
         ${event.messages
           .map((m) => {
@@ -227,6 +215,10 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
             const { color, marker } = getMessageStyle(m.type, fromPos.gender);
             const { x1, y1, x2, y2 } = calculateMessageCoords(fromPos, toPos, scale);
 
+            /**
+             * Special Routing for Same-gender Messages:
+             * Redirects through the horizontal center of the middle column to prevent overlapping profile images.
+             */
             if (fromPos.gender === toPos.gender) {
               const centerX = (X_MID + MID_WIDTH / 2) * scale;
               return `
@@ -237,37 +229,48 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
             `;
             }
 
+            // Normal straight-line arrows for cross-gender messages
             return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${2 * scale}" marker-end="url(#${marker})" />`;
           })
           .join('')}
       </g>
 
-      <!-- Teams -->
+      <!-- Team Memberships: Group connections with dynamic horizontal spacing -->
       <g>
-        ${Object.entries(event.teams)
-          .map(([idx, members]) => {
-            if (members.length === 0) return '';
-            const validMembers = members.map((id) => personPositions[id]).filter(Boolean);
-            if (validMembers.length === 0) return '';
+        ${(() => {
+          // Filter to only include teams that have at least one valid member visible
+          const concreteTeams = Object.entries(event.teams)
+            .map(([originalIndex, members]) => {
+              const validMembers = members.map((id) => personPositions[id]).filter(Boolean);
+              return validMembers.length > 0 ? { originalIndex, validMembers } : null;
+            })
+            .filter((t): t is { originalIndex: string; validMembers: any[] } => t !== null);
 
+          return concreteTeams.map(({ originalIndex, validMembers }, concreteIndex) => {
+            /**
+             * teamY: Vertical center point (average height of members).
+             * teamX: Dynamically distributed across the MID_WIDTH area based on active team count.
+             */
             const avgY = validMembers.reduce((sum, p) => sum + p.y, 0) / validMembers.length;
-            const teamX = (X_MID + MID_WIDTH * ((Number(idx) + 1) / (5 + 1))) * scale;
+            const teamX = (X_MID + MID_WIDTH * ((concreteIndex + 1) / (concreteTeams.length + 1))) * scale;
             const teamY = avgY;
+            const teamColor = TEAM_COLORS[Number(originalIndex)];
 
             return `
             <g>
-              <circle cx="${teamX}" cy="${teamY}" r="${6 * scale}" fill="${TEAM_COLORS[Number(idx)]}" />
+              <circle cx="${teamX}" cy="${teamY}" r="${6 * scale}" fill="${teamColor}" />
               ${validMembers
-                .map(
-                  (p) => `
-                <line x1="${p.x}" y1="${p.y}" x2="${teamX}" y2="${teamY}" stroke="${TEAM_COLORS[Number(idx)]}" stroke-width="${1.5 * scale}" stroke-dasharray="${4 * scale}" />
-              `
-                )
+                .map((p) => {
+                  const { x1, y1 } = calculatTeamMemberCoords(p, scale);
+                  return `
+                    <line x1="${x1}" y1="${y1}" x2="${teamX}" y2="${teamY}" stroke="${teamColor}" stroke-width="${1.5 * scale}" stroke-dasharray="${4 * scale}" />
+                  `;
+                })
                 .join('')}
             </g>
           `;
-          })
-          .join('')}
+          }).join('');
+        })()}
       </g>
     </svg>
   `;

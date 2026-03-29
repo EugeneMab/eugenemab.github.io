@@ -2,6 +2,7 @@ import React from 'react';
 import { useStore, ActiveMode } from '../store/useStore';
 import { Undo, ZoomIn, Type, Eraser } from 'lucide-react';
 import { clsx } from 'clsx';
+import { TEAM_COLORS } from '../utils/layout';
 
 const TopButtonPane: React.FC = () => {
   const {
@@ -16,15 +17,13 @@ const TopButtonPane: React.FC = () => {
 
   const { bodyScale = 1, descriptionScale = 1 } = data;
 
-  const teamColors = ['#f97316', '#06b6d4', '#a855f7', '#84cc16', '#eab308']; // Orange, Cyan, Purple, LimeGreen, Gold
-
   return (
     <div className="h-16 bg-white border-b border-gray-200 flex items-center px-4 gap-4 shadow-sm z-10">
       {selectedEpisodeId !== null && (
         <>
-          {/* Message Buttons */}
+          {/* Relationship Buttons: Strong and Weak messages between persons */}
           <button
-            title="Send Message"
+            title="Send Message (Strong)"
             className={clsx(
               'w-10 h-10 border-2 rounded flex overflow-hidden hover:opacity-80 transition-opacity',
               activeMode === 'message' ? 'border-black scale-110' : 'border-gray-300'
@@ -36,7 +35,7 @@ const TopButtonPane: React.FC = () => {
           </button>
 
           <button
-            title="Send Weak Message"
+            title="Send Message (Weak)"
             className={clsx(
               'w-10 h-10 border-2 rounded flex overflow-hidden hover:opacity-80 transition-opacity',
               activeMode === 'weak-message' ? 'border-black scale-110' : 'border-gray-300'
@@ -49,16 +48,16 @@ const TopButtonPane: React.FC = () => {
 
           <div className="h-8 w-px bg-gray-300 mx-2" />
 
-          {/* Team Buttons */}
-          <div className="flex gap-2">
-            {teamColors.map((color, idx) => {
+          {/* Team Assignment Buttons: Assign persons to colored teams */}
+          <div className="flex gap-1">
+            {TEAM_COLORS.map((color, idx) => {
               const mode = `team-${idx}` as ActiveMode;
               return (
                 <button
                   key={idx}
                   title={`Team ${idx + 1}`}
                   className={clsx(
-                    'w-8 h-8 rounded-full border-2 transition-all hover:scale-110',
+                    'w-7 h-7 rounded-full border-2 transition-all hover:scale-110',
                     activeMode === mode ? 'border-black scale-125' : 'border-gray-200'
                   )}
                   style={{ backgroundColor: color }}
@@ -70,7 +69,7 @@ const TopButtonPane: React.FC = () => {
 
           <div className="h-8 w-px bg-gray-300 mx-2" />
 
-          {/* Eraser Button */}
+          {/* Eraser Button: Remove messages or team memberships by clicking on persons */}
           <button
             title="Eraser Mode"
             className={clsx(
@@ -89,15 +88,15 @@ const TopButtonPane: React.FC = () => {
 
       <div className="flex-1" />
 
-      {/* Sliders */}
+      {/* Global Scaling Sliders */}
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2">
           <ZoomIn size={18} className="text-gray-500 shrink-0" />
           <input
             type="range"
-            min="0.5"
-            max="2"
-            step="0.1"
+            min="0.25"
+            max="4"
+            step="0.02"
             value={bodyScale}
             onChange={(e) => setBodyScale(parseFloat(e.target.value))}
             className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
@@ -107,9 +106,9 @@ const TopButtonPane: React.FC = () => {
           <Type size={18} className="text-gray-500 shrink-0" />
           <input
             type="range"
-            min="0.5"
-            max="2"
-            step="0.1"
+            min="0.25"
+            max="4"
+            step="0.02"
             value={descriptionScale}
             onChange={(e) => setDescriptionScale(parseFloat(e.target.value))}
             className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
@@ -117,7 +116,7 @@ const TopButtonPane: React.FC = () => {
         </div>
       </div>
 
-      {/* Undo */}
+      {/* Undo Last Action */}
       <button title="Undo" className="p-2 hover:bg-gray-100 rounded text-gray-700" onClick={undo}>
         <Undo size={24} />
       </button>

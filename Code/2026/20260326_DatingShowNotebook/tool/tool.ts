@@ -16,7 +16,13 @@ async function main() {
     return;
   }
 
-  const workFolderInput = process.argv[3];
+  const workFolderInput =
+    process.argv[3] ||
+    process.env.TEMP ||
+    process.env.TMPDIR ||
+    process.env.TMP ||
+    os.tmpdir() ||
+    '';
   const dataFolderInput = process.argv[4];
 
   if (!action || !workFolderInput) {
@@ -39,6 +45,9 @@ async function main() {
   }
 
   if (action === 'start') {
+    console.log(`~~ Killing previous services`);
+    await handleKill();
+    console.log(`~~ Starting new services`);
     await handleStart();
   } else if (action === 'kill') {
     await handleKill();

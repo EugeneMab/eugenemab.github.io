@@ -22,14 +22,19 @@ import {
   calculatePersonPositions,
   getMessageStyle,
   calculateMessageCoords,
+  calculatTeamMemberCoords,
   TEAM_COLORS,
 } from '../utils/layout';
 
 const MainBody: React.FC = () => {
   const { data, selectedEpisodeId, selectedEventId, activeMode, saveData } = useStore();
 
+  // State to track the first person clicked when creating a message (from -> to)
   const [firstPersonId, setFirstPersonId] = useState<number | null>(null);
 
+  /**
+   * Retrieves the currently selected event from the data store.
+   */
   const currentEvent = useMemo(() => {
     for (const ep of data.episodes) {
       const ev = ep.events.find((e) => e.id === selectedEventId);
@@ -38,15 +43,24 @@ const MainBody: React.FC = () => {
     return null;
   }, [data.episodes, selectedEventId]);
 
+  /**
+   * Calculates the 1-based index of the selected episode.
+   */
   const episodeIndex = useMemo(() => {
     if (selectedEpisodeId === null) return -1;
     return data.episodes.findIndex((ep) => ep.id === selectedEpisodeId) + 1;
   }, [data.episodes, selectedEpisodeId]);
 
+  /**
+   * Filters people based on their visibility ranges for the current episode.
+   */
   const filteredPeople = useMemo(() => {
     return getFilteredPeople(data, episodeIndex);
   }, [data, episodeIndex]);
 
+  /**
+   * Updates a person's details in the global store.
+   */
   const handleUpdatePerson = (id: number, updates: Partial<Person>) => {
     saveData({
       ...data,
@@ -54,12 +68,16 @@ const MainBody: React.FC = () => {
     });
   };
 
+  /**
+   * Handles person clicks based on the current active mode (message, team, eraser).
+   */
   const handlePersonClick = (personId: number) => {
     if (!currentEvent) return;
 
+    // Handle Relationship Message Creation
     if (activeMode === 'message' || activeMode === 'weak-message') {
       if (firstPersonId === null) {
-        setFirstPersonId(personId);
+        setFirstPersonId(personId); // First person selected
       } else {
         if (firstPersonId !== personId) {
           const person1 = data.people.find((p) => p.id === firstPersonId);
@@ -69,6 +87,16 @@ const MainBody: React.FC = () => {
             const isSameGender = person1.gender === person2.gender;
             const isStrong = activeMode === 'message';
 
+            // Prevent duplicate identical messages
+            const existing = currentEvent.messages.some(
+              (m) => m.from === firstPersonId && m.to === personId
+            );
+            if (existing) {
+              setFirstPersonId(null);
+              return;
+            }
+
+            // Relationship constraints: strong messages only between opposite genders
             if (!isStrong || !isSameGender) {
               const type: MessageType = isStrong ? 'strong' : 'weak';
               const newMessage: Message = { from: firstPersonId, to: personId, type };
@@ -92,7 +120,9 @@ const MainBody: React.FC = () => {
         }
         setFirstPersonId(null);
       }
-    } else if (activeMode === 'eraser') {
+    } 
+    // Handle Eraser Mode: Remove all relationships and team memberships for the person
+    else if (activeMode === 'eraser') {
       saveData({
         ...data,
         episodes: data.episodes.map((ep) => ({
@@ -101,7 +131,7 @@ const MainBody: React.FC = () => {
             ev.id === selectedEventId
               ? {
                   ...ev,
-                  messages: ev.messages.filter((m) => m.from !== personId && m.to !== personId),
+                  messages: ev.messages.filter((m) => m.from !== personId),
                   teams: Object.fromEntries(
                     Object.entries(ev.teams).map(([idx, members]) => [
                       idx,
@@ -113,14 +143,19 @@ const MainBody: React.FC = () => {
           ),
         })),
       });
-    } else if (activeMode.startsWith('team-')) {
+    } 
+    // Handle Team Assignment Mode
+    else if (activeMode.startsWith('team-')) {
       const teamIdx = activeMode.split('-')[1];
       const currentTeam = currentEvent.teams[teamIdx] || [];
       const isMember = currentTeam.includes(personId);
 
-      const newTeam = isMember
-        ? currentTeam.filter((id) => id !== personId)
-        : [...currentTeam, personId];
+      // Toggle team membership: if already member, do nothing (or we could remove, but here we just return)
+      if (isMember) {
+        return;
+      }
+
+      const newTeam = [...currentTeam, personId];
 
       saveData({
         ...data,
@@ -139,6 +174,9 @@ const MainBody: React.FC = () => {
     }
   };
 
+  /**
+   * Updates the event title.
+   */
   const updateTitle = (newTitle: string) => {
     saveData({
       ...data,
@@ -151,6 +189,9 @@ const MainBody: React.FC = () => {
     });
   };
 
+  /**
+   * Handles pasting images directly onto person profile areas.
+   */
   const handlePaste = async (e: React.ClipboardEvent, personId: number) => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -165,7 +206,7 @@ const MainBody: React.FC = () => {
           const img = new Image();
           img.onload = () => {
             const canvas = document.createElement('canvas');
-            const size = 200;
+            const size = 200; // Profile image size
             canvas.width = size;
             canvas.height = size;
             const ctx = canvas.getContext('2d');
@@ -194,9 +235,18 @@ const MainBody: React.FC = () => {
   const scale = data.bodyScale || 1;
   const descScale = data.descriptionScale || 1;
   const numRows = Math.max(males.length, females.length);
+
+  /**
+   * Layout Sizing Logic
+   * totalWidth and totalHeight: Derived from base constants and current participant count, then scaled.
+   */
   const totalWidth = TOTAL_WIDTH * scale;
   const totalHeight = (TITLE_HEIGHT + PADDING + numRows * (IMG_HEIGHT + ROW_GAP)) * scale;
 
+  /**
+   * Position Caching
+   * Pre-calculates center points for all visible persons to anchor relationship lines and team connectors.
+   */
   const personPositions = useMemo(() => {
     return calculatePersonPositions(males, females, scale);
   }, [males, females, scale]);
@@ -208,6 +258,9 @@ const MainBody: React.FC = () => {
     return ep.events.findIndex((e) => e.id === selectedEventId) + 1;
   }, [data.episodes, selectedEpisodeId, selectedEventId]);
 
+  /**
+   * Side effect to auto-save the event as a JPG image after changes.
+   */
   useEffect(() => {
     if (episodeIndex <= 0 || eventIndex <= 0 || !currentEvent) return;
 
@@ -443,7 +496,7 @@ const MainBody: React.FC = () => {
           );
         })}
 
-        {/* Messages */}
+        {/* Messages Rendering: Relationship lines between participants */}
         <g className="pointer-events-none">
           {currentEvent?.messages.map((m, i) => {
             const fromPos = personPositions[m.from];
@@ -453,6 +506,10 @@ const MainBody: React.FC = () => {
             const { color, marker } = getMessageStyle(m.type, fromPos.gender);
             const { x1, y1, x2, y2 } = calculateMessageCoords(fromPos, toPos, scale);
 
+            /**
+             * Special Case: Intra-gender messages (Same gender)
+             * Draws a two-segment line via the center of the MID_WIDTH area to avoid overlapping profile images.
+             */
             if (fromPos.gender === toPos.gender) {
               const centerX = (X_MID + MID_WIDTH / 2) * scale;
 
@@ -479,6 +536,7 @@ const MainBody: React.FC = () => {
               );
             }
 
+            // Normal Case: Cross-gender messages (Straight line)
             return (
               <line
                 key={`msg-${i}`}
@@ -494,31 +552,49 @@ const MainBody: React.FC = () => {
           })}
         </g>
 
-        {/* Teams */}
+        {/* Teams Rendering: Collective hubs for group memberships */}
         <g className="pointer-events-none">
           {(() => {
             if (!currentEvent) return null;
 
-            return Object.entries(currentEvent.teams).map(([idx, members]) => {
-              if (members.length === 0) return null;
-              const validMembers = members.map((id) => personPositions[id]).filter(Boolean);
-              if (validMembers.length === 0) return null;
+            // Identify teams that actually have members visible in this episode
+            const concreteTeams = Object.entries(currentEvent.teams)
+              .map(([originalIndex, members]) => {
+                const validMembers = members.map((id) => personPositions[id]).filter(Boolean);
+                return validMembers.length > 0 ? { originalIndex, validMembers } : null;
+              })
+              .filter(Boolean);
 
+            return concreteTeams.map(({ originalIndex, validMembers }, concreteIndex) => {
+              /**
+               * Coordinate Calculation:
+               * teamY: Calculated as the average vertical center of all its members.
+               * teamX: Distributed evenly within the MID_WIDTH column based on the active team count.
+               */
               const avgY = validMembers.reduce((sum, p) => sum + p.y, 0) / validMembers.length;
-              const teamX = (X_MID + MID_WIDTH * ((Number(idx) + 1) / (5 + 1))) * scale;
+              const teamX =
+                (X_MID + MID_WIDTH * ((Number(concreteIndex) + 1) / (concreteTeams.length + 1))) *
+                scale;
               const teamY = avgY;
 
               return (
-                <g key={`team-${idx}`}>
-                  <circle cx={teamX} cy={teamY} r={6 * scale} fill={TEAM_COLORS[Number(idx)]} />
+                <g key={`team-${originalIndex}`}>
+                  {/* The central hub point for the team */}
+                  <circle
+                    cx={teamX}
+                    cy={teamY}
+                    r={6 * scale}
+                    fill={TEAM_COLORS[Number(originalIndex)]}
+                  />
+                  {/* Dotted lines connecting each member to the hub */}
                   {validMembers.map((p, i) => (
                     <line
-                      key={`team-${idx}-mem-${i}`}
-                      x1={p.x}
-                      y1={p.y}
+                      key={`team-${originalIndex}-mem-${i}`}
+                      x1={calculatTeamMemberCoords(p, scale).x1}
+                      y1={calculatTeamMemberCoords(p, scale).y1}
                       x2={teamX}
                       y2={teamY}
-                      stroke={TEAM_COLORS[Number(idx)]}
+                      stroke={TEAM_COLORS[Number(originalIndex)]}
                       strokeWidth={1.5 * scale}
                       strokeDasharray={4 * scale}
                     />

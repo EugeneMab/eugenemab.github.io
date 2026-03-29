@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import { useStore, Person, Gender } from '../store/useStore';
-import { Plus, Trash2, Hash } from 'lucide-react';
+import { Plus, Trash2, Hash, ArrowUp, ArrowDown } from 'lucide-react';
 import { clsx } from 'clsx';
 
+// Constants for layout dimensions (Base values before scaling)
 const PADDING = 20;
 const COL_GAP = 40;
 const HEADER_HEIGHT = 60;
@@ -12,9 +13,10 @@ const ITEM_HEIGHT = 200;
 const ROW_GAP = 20;
 const BTN_HEIGHT = 60;
 
+// Derived layout constants for horizontal positioning
 const COL_WIDTH = IMG_WIDTH + TEXT_WIDTH + PADDING;
-const X_MALE_COL = PADDING;
-const X_FEMALE_COL = X_MALE_COL + COL_WIDTH + COL_GAP;
+const X_MALE_COL = PADDING; // Start of male column
+const X_FEMALE_COL = X_MALE_COL + COL_WIDTH + COL_GAP; // Start of female column
 const TOTAL_WIDTH = X_FEMALE_COL + COL_WIDTH + PADDING;
 
 const PersonView: React.FC = () => {
@@ -22,6 +24,9 @@ const PersonView: React.FC = () => {
   const { bodyScale = 1, descriptionScale = 1 } = data;
   const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null);
 
+  /**
+   * Adds a new person to the store with default values.
+   */
   const handleAddPerson = (gender: Gender) => {
     const id = data.nextUniqueId;
     const currentCount = data.people.filter((p) => p.gender === gender).length;
@@ -42,13 +47,34 @@ const PersonView: React.FC = () => {
     });
   };
 
+  /**
+   * Deletes a person and all their associated messages and team memberships.
+   */
   const handleDeletePerson = (id: number) => {
+    if (!confirm('Are you sure you want to delete this person?')) return;
+    
     saveData({
       ...data,
       people: data.people.filter((p) => p.id !== id),
+      episodes: data.episodes.map(ep => ({
+        ...ep,
+        events: ep.events.map(ev => ({
+          ...ev,
+          messages: ev.messages.filter(m => m.from !== id && m.to !== id),
+          teams: Object.fromEntries(
+            Object.entries(ev.teams).map(([idx, members]) => [
+              idx,
+              members.filter(memId => memId !== id)
+            ])
+          )
+        }))
+      }))
     });
   };
 
+  /**
+   * Updates person details in the store.
+   */
   const handleUpdatePerson = (id: number, updates: Partial<Person>) => {
     saveData({
       ...data,
@@ -56,6 +82,36 @@ const PersonView: React.FC = () => {
     });
   };
 
+  /**
+   * Reorders a person in the list by moving them up or down.
+   */
+  const handleMovePerson = (id: number, direction: 'up' | 'down') => {
+    const person = data.people.find(p => p.id === id);
+    if (!person) return;
+
+    const sameGenderPeople = data.people.filter(p => p.gender === person.gender);
+    const index = sameGenderPeople.findIndex(p => p.id === id);
+
+    if (direction === 'up' && index > 0) {
+      const other = sameGenderPeople[index - 1];
+      const newPeople = [...data.people];
+      const idx1 = newPeople.findIndex(p => p.id === id);
+      const idx2 = newPeople.findIndex(p => p.id === other.id);
+      [newPeople[idx1], newPeople[idx2]] = [newPeople[idx2], newPeople[idx1]];
+      saveData({ ...data, people: newPeople });
+    } else if (direction === 'down' && index < sameGenderPeople.length - 1) {
+      const other = sameGenderPeople[index + 1];
+      const newPeople = [...data.people];
+      const idx1 = newPeople.findIndex(p => p.id === id);
+      const idx2 = newPeople.findIndex(p => p.id === other.id);
+      [newPeople[idx1], newPeople[idx2]] = [newPeople[idx2], newPeople[idx1]];
+      saveData({ ...data, people: newPeople });
+    }
+  };
+
+  /**
+   * Handles image paste into a person's image area.
+   */
   const handlePaste = async (e: React.ClipboardEvent, personId: number) => {
     const items = e.clipboardData?.items;
     if (!items) return;
@@ -96,6 +152,11 @@ const PersonView: React.FC = () => {
   const scale = bodyScale;
   const descScale = descriptionScale;
 
+  /**
+   * Layout Height Logic:
+   * Calculates the required height for both columns including headers, items, gaps, and buttons.
+   * Uses the maximum of the two to ensure the SVG canvas covers both lists completely.
+   */
   const maleTotalHeight =
     HEADER_HEIGHT + males.length * (ITEM_HEIGHT + ROW_GAP) + BTN_HEIGHT + PADDING;
   const femaleTotalHeight =
@@ -103,12 +164,17 @@ const PersonView: React.FC = () => {
   const totalHeight = Math.max(maleTotalHeight, femaleTotalHeight) * scale;
   const totalWidth = TOTAL_WIDTH * scale;
 
-  const renderPerson = (person: Person, index: number, xOffset: number) => {
+  /**
+   * Individual Person Rendering:
+   * Calculates 'y' based on the item index and fixed heights/gaps.
+   */
+  const renderPerson = (person: Person, index: number, xOffset: number, isLast: boolean) => {
     const y = (HEADER_HEIGHT + index * (ITEM_HEIGHT + ROW_GAP)) * scale;
     const isSelected = selectedPersonId === person.id;
 
     return (
       <g key={person.id}>
+        {/* Profile Image */}
         <foreignObject
           x={xOffset * scale}
           y={y}
@@ -137,6 +203,8 @@ const PersonView: React.FC = () => {
             )}
           </div>
         </foreignObject>
+
+        {/* Person Info & Controls */}
         <foreignObject
           x={(xOffset + IMG_WIDTH + PADDING) * scale}
           y={y}
@@ -159,7 +227,8 @@ const PersonView: React.FC = () => {
               value={person.description}
               onChange={(e) => handleUpdatePerson(person.id, { description: e.target.value })}
             />
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-center">
+              {/* Range Editor */}
               <button
                 className="flex items-center gap-1 bg-gray-100 hover:bg-gray-200 px-2 py-1 rounded whitespace-nowrap"
                 style={{ fontSize: `${0.75 * scale}rem` }}
@@ -170,8 +239,34 @@ const PersonView: React.FC = () => {
               >
                 <Hash size={14 * scale} /> Range: {person.ranges}
               </button>
+
+              {/* Move Controls */}
               <button
-                className="flex items-center gap-1 bg-red-50 text-red-600 hover:bg-red-100 px-2 py-1 rounded"
+                className={clsx(
+                  "p-1 rounded hover:bg-gray-200 bg-gray-100",
+                  index === 0 && "opacity-20 cursor-not-allowed"
+                )}
+                disabled={index === 0}
+                onClick={() => handleMovePerson(person.id, 'up')}
+                title="Move Up"
+              >
+                <ArrowUp size={16 * scale} />
+              </button>
+              <button
+                className={clsx(
+                  "p-1 rounded hover:bg-gray-200 bg-gray-100",
+                  isLast && "opacity-20 cursor-not-allowed"
+                )}
+                disabled={isLast}
+                onClick={() => handleMovePerson(person.id, 'down')}
+                title="Move Down"
+              >
+                <ArrowDown size={16 * scale} />
+              </button>
+
+              {/* Delete Button */}
+              <button
+                className="flex items-center gap-1 bg-red-50 text-red-600 hover:bg-red-100 px-2 py-1 rounded ml-auto"
                 style={{ fontSize: `${0.75 * scale}rem` }}
                 onClick={() => handleDeletePerson(person.id)}
               >
@@ -193,7 +288,7 @@ const PersonView: React.FC = () => {
         className="bg-white shadow-lg block mx-auto"
         style={{ minWidth: totalWidth, minHeight: totalHeight }}
       >
-        {/* Headers */}
+        {/* Column Headers */}
         <foreignObject
           x={X_MALE_COL * scale}
           y={0}
@@ -223,8 +318,8 @@ const PersonView: React.FC = () => {
           </div>
         </foreignObject>
 
-        {/* Male List */}
-        {males.map((p, i) => renderPerson(p, i, X_MALE_COL))}
+        {/* Male Participants List */}
+        {males.map((p, i) => renderPerson(p, i, X_MALE_COL, i === males.length - 1))}
         <foreignObject
           x={X_MALE_COL * scale}
           y={(HEADER_HEIGHT + males.length * (ITEM_HEIGHT + ROW_GAP)) * scale}
@@ -242,8 +337,8 @@ const PersonView: React.FC = () => {
           </div>
         </foreignObject>
 
-        {/* Female List */}
-        {females.map((p, i) => renderPerson(p, i, X_FEMALE_COL))}
+        {/* Female Participants List */}
+        {females.map((p, i) => renderPerson(p, i, X_FEMALE_COL, i === females.length - 1))}
         <foreignObject
           x={X_FEMALE_COL * scale}
           y={(HEADER_HEIGHT + females.length * (ITEM_HEIGHT + ROW_GAP)) * scale}

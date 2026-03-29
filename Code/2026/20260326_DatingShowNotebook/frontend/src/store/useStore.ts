@@ -51,6 +51,11 @@ export type ActiveMode =
   | 'team-2'
   | 'team-3'
   | 'team-4'
+  | 'team-5'
+  | 'team-6'
+  | 'team-7'
+  | 'team-8'
+  | 'team-9'
   | 'eraser';
 
 interface AppState {
@@ -92,11 +97,86 @@ export const useStore = create<AppState>((set, get) => ({
   refreshProgress: { current: 0, total: 0 },
   cancelRefresh: false,
 
+  /**
+   * Fetches application data from the server and performs initialization tasks
+   * like ID compaction, data cleaning, and setting the initial view.
+   */
   fetchData: async () => {
     const res = await axios.get('/api/data');
-    const data: AppData = res.data;
+    let data: AppData = res.data;
 
-    // Focus on the last event of the last episode
+    // --- Round 1: Build ID Mapping & Determine nextUniqueId ---
+    const personMap = new Map<number, number>();
+    const episodeMap = new Map<number, number>();
+    const eventMap = new Map<number, number>();
+    let nextId = 1;
+
+    // Map Person IDs
+    data.people.forEach((p) => {
+      personMap.set(p.id, nextId++);
+    });
+
+    // Map Episode and Event IDs
+    data.episodes.forEach((ep) => {
+      episodeMap.set(ep.id, nextId++);
+      ep.events.forEach((ev) => {
+        eventMap.set(ev.id, nextId++);
+      });
+    });
+
+    // Set the next global unique ID
+    data.nextUniqueId = nextId;
+
+    // --- Round 2: Apply Mappings & Clean Up Data ---
+    const validPersonIds = new Set(personMap.values());
+
+    // Update People
+    data.people.forEach((p) => {
+      p.id = personMap.get(p.id)!;
+    });
+
+    // Update Episodes, Events, and Clean References
+    data.episodes.forEach((ep) => {
+      ep.id = episodeMap.get(ep.id)!;
+
+      ep.events.forEach((ev) => {
+        ev.id = eventMap.get(ev.id)!;
+
+        // Clean messages: Update IDs, remove dangling/invalid, remove duplicates
+        const seenMessages = new Set<string>();
+        ev.messages = ev.messages
+          .map((m) => ({
+            ...m,
+            from: personMap.get(m.from)!,
+            to: personMap.get(m.to)!,
+          }))
+          .filter((m) => {
+            if (!m.from || !m.to || !validPersonIds.has(m.from) || !validPersonIds.has(m.to)) {
+              return false;
+            }
+            const key = `${m.from}-${m.to}-${m.type}`;
+            if (seenMessages.has(key)) return false;
+            seenMessages.add(key);
+            return true;
+          });
+
+        // Clean teams: Update IDs, remove dangling, remove duplicates, remove empty teams
+        const cleanedTeams: { [teamIndex: string]: number[] } = {};
+        Object.entries(ev.teams).forEach(([idx, members]) => {
+          const validMembers = members
+            .map((id) => personMap.get(id)!)
+            .filter((id) => id && validPersonIds.has(id));
+          
+          const uniqueMembers = Array.from(new Set(validMembers));
+          if (uniqueMembers.length > 0) {
+            cleanedTeams[idx] = uniqueMembers;
+          }
+        });
+        ev.teams = cleanedTeams;
+      });
+    });
+
+    // Default view: last event of last episode
     let lastEpisodeId = null;
     let lastEventId = null;
     if (data.episodes.length > 0) {
@@ -115,8 +195,11 @@ export const useStore = create<AppState>((set, get) => ({
     });
   },
 
+  /**
+   * Persists application data to the server and updates the local state.
+   * Maintains an undo stack for quick recovery of previous states.
+   */
   saveData: async (newData) => {
-    // Save to undo stack before updating
     const currentData = get().data;
     set({
       undoStack: [JSON.parse(JSON.stringify(currentData)), ...get().undoStack].slice(0, 50),
@@ -144,6 +227,9 @@ export const useStore = create<AppState>((set, get) => ({
     get().saveData(newData);
   },
 
+  /**
+   * Reverts the application data to the most recent state in the undo stack.
+   */
   undo: () => {
     const stack = get().undoStack;
     if (stack.length === 0) return;
