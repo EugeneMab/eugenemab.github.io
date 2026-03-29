@@ -105,8 +105,8 @@ const TopButtonPane: React.FC = () => {
           <ZoomIn size={18} className="text-gray-500 shrink-0" />
           <input
             type="range"
-            min="0.25"
-            max="4"
+            min="0.02"
+            max="1.25"
             step="0.02"
             value={bodyScale}
             onChange={(e) => setBodyScale(parseFloat(e.target.value))}
