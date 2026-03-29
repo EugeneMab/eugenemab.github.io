@@ -32,6 +32,12 @@ A specialized tool for tracking interactions, messages, and team formations in d
 - **Frontend**: `3762`
 - **Backend**: `13762`
 
+## AI Assistance Acknowledgment
+
+This project and its source code were developed with the assistance of Large Language Models (LLMs) and AI-powered coding tools.
+
+Tools Used: Gemini, GitHub Copilot
+
 ## Getting Started
 
 ### Prerequisites
