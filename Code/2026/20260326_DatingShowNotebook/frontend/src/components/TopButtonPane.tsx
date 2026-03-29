@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useStore, ActiveMode } from '../store/useStore';
-import { Undo, ZoomIn, Type, Eraser } from 'lucide-react';
+import { Undo, ZoomIn, Type, Eraser, FolderOpen } from 'lucide-react';
 import { clsx } from 'clsx';
 import { TEAM_COLORS } from '../utils/layout';
+import OpenFolderModal from './OpenFolderModal';
 
 const TopButtonPane: React.FC = () => {
   const {
@@ -14,6 +15,8 @@ const TopButtonPane: React.FC = () => {
     undo,
     selectedEpisodeId,
   } = useStore();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const { bodyScale = 1, descriptionScale = 1 } = data;
 
@@ -120,6 +123,17 @@ const TopButtonPane: React.FC = () => {
       <button title="Undo" className="p-2 hover:bg-gray-100 rounded text-gray-700" onClick={undo}>
         <Undo size={24} />
       </button>
+
+      {/* Open Button */}
+      <button
+        title="Open Folder"
+        className="p-2 hover:bg-gray-100 rounded text-blue-600 transition-colors"
+        onClick={() => setIsModalOpen(true)}
+      >
+        <FolderOpen size={24} />
+      </button>
+
+      {isModalOpen && <OpenFolderModal onClose={() => setIsModalOpen(false)} />}
     </div>
   );
 };

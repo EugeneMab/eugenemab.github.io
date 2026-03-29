@@ -10,12 +10,17 @@ const port = 13762;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-// Get folder from CLI args
-const folderArg = process.argv[2] || '.';
-const dataPath = path.resolve(folderArg, 'data.json');
+const restrictedRoot = path.resolve(process.argv[2] || '.');
+const workFolder = process.argv[3] ? path.resolve(process.argv[3]) : null;
+const folderToClient = new Map<string, string>();
 
-console.log(`Using data folder: ${path.resolve(folderArg)}`);
-console.log(`Data file: ${dataPath}`);
+function log(msg: string) {
+  const now = new Date().toISOString();
+  console.log(`[${now}] ${msg}`);
+}
+
+log(`Restricted root: ${restrictedRoot}`);
+if (workFolder) log(`Work folder: ${workFolder}`);
 
 const defaultData = {
   people: [],
@@ -38,88 +43,194 @@ const defaultData = {
   descriptionScale: 1,
 };
 
-// Ensure folder exists
-if (!fs.existsSync(path.dirname(dataPath))) {
-  fs.mkdirSync(path.dirname(dataPath), { recursive: true });
+function getFullPath(relPath: string) {
+  const fullPath = path.resolve(restrictedRoot, relPath);
+  if (!fullPath.startsWith(restrictedRoot)) {
+    return restrictedRoot;
+  }
+  return fullPath;
 }
 
-// Load or create data.json
-async function loadData() {
-  if (fs.existsSync(dataPath)) {
-    try {
-      const content = await fsp.readFile(dataPath, 'utf-8');
-      if (!content.trim()) return defaultData;
-      return JSON.parse(content);
-    } catch (e) {
-      console.error('Error reading data.json, using default', e);
-      return defaultData;
+function getRelativePath(fullPath: string) {
+  const rel = path.relative(restrictedRoot, fullPath);
+  return rel === '' ? '.' : rel;
+}
+
+async function backupData(data: any) {
+  if (!workFolder) return;
+  try {
+    const backupDir = path.join(workFolder, 'DSN');
+    if (!fs.existsSync(backupDir)) {
+      await fsp.mkdir(backupDir, { recursive: true });
+      log(`Disk: Created backup directory ${backupDir}`);
     }
-  } else {
-    try {
-      await fsp.writeFile(dataPath, JSON.stringify(defaultData, null, 2), 'utf-8');
-    } catch (e) {
-      console.error('Failed to create default data.json', e);
-    }
-    return defaultData;
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupPath = path.join(backupDir, `${timestamp}.json`);
+    await fsp.writeFile(backupPath, JSON.stringify(data, null, 2), 'utf-8');
+    log(`Disk: Written backup to ${backupPath}`);
+  } catch (e) {
+    log(`Error: Backup failed: ${e}`);
   }
 }
 
-app.get('/api/data', async (req, res) => {
-  const data = await loadData();
-  res.json(data);
+app.get('/api/browse', async (req, res) => {
+  try {
+    const relPath = (req.query.path as string) || '';
+    let fullPath = getFullPath(relPath);
+    
+    if (!fullPath.startsWith(restrictedRoot)) {
+      fullPath = restrictedRoot;
+    }
+
+    const entries = await fsp.readdir(fullPath, { withFileTypes: true });
+    log(`Disk: Read directory ${fullPath}`);
+    
+    const folders = await Promise.all(
+      entries
+        .filter(e => e.isDirectory())
+        .map(async (e) => {
+          const folderPath = path.join(fullPath, e.name);
+          const hasDataJson = fs.existsSync(path.join(folderPath, 'data.json'));
+          return {
+            name: e.name,
+            path: getRelativePath(folderPath),
+            hasDataJson
+          };
+        })
+    );
+
+    res.json({
+      currentPath: getRelativePath(fullPath),
+      parentPath: fullPath === restrictedRoot ? null : getRelativePath(path.dirname(fullPath)),
+      folders: folders.sort((a, b) => a.name.localeCompare(b.name))
+    });
+  } catch (e) {
+    log(`Error: Browse failed: ${e}`);
+    res.status(500).json({ error: 'Failed to browse' });
+  }
 });
 
+app.post('/api/open', async (req, res) => {
+  const { path: relPath, clientId } = req.body;
+  if (relPath === undefined || !clientId) return res.status(400).json({ error: 'Missing path or clientId' });
+
+  const fullPath = getFullPath(relPath);
+  const dataPath = path.join(fullPath, 'data.json');
+  
+  const oldClient = folderToClient.get(relPath);
+  if (oldClient && oldClient !== clientId) {
+    log(`Session: Client ${oldClient} evicted from folder ${relPath} by ${clientId}`);
+  }
+  folderToClient.set(relPath, clientId);
+
+  if (fs.existsSync(dataPath)) {
+    try {
+      const content = await fsp.readFile(dataPath, 'utf-8');
+      log(`Disk: Read ${dataPath}`);
+      res.json(content.trim() ? JSON.parse(content) : defaultData);
+    } catch (e) {
+      log(`Error: Failed to read ${dataPath}, using default`);
+      res.json(defaultData);
+    }
+  } else {
+    log(`Info: ${dataPath} not found, using default`);
+    res.json(defaultData);
+  }
+});
+
+function checkSession(req: express.Request, res: express.Response) {
+  const folderPath = req.headers['x-folder-path'] as string;
+  const clientId = req.headers['x-client-id'] as string;
+  
+  if (folderPath === undefined || !clientId) {
+    log(`Error: Missing headers - Folder: ${folderPath}, Client: ${clientId}`);
+    res.status(400).json({ error: 'Missing x-folder-path or x-client-id' });
+    return null;
+  }
+
+  const activeClient = folderToClient.get(folderPath);
+  if (activeClient && activeClient !== clientId) {
+    log(`Conflict: Folder ${folderPath} active=${activeClient}, request=${clientId}`);
+    res.status(409).json({ error: 'Interrupted by another client' });
+    return null;
+  }
+  
+  folderToClient.set(folderPath, clientId);
+  return getFullPath(folderPath);
+}
+
 app.post('/api/data', async (req, res) => {
+  const fullPath = checkSession(req, res);
+  if (!fullPath) return;
+
   try {
+    const dataPath = path.join(fullPath, 'data.json');
+    if (!fs.existsSync(fullPath)) {
+      await fsp.mkdir(fullPath, { recursive: true });
+      log(`Disk: Created directory ${fullPath}`);
+    }
     await fsp.writeFile(dataPath, JSON.stringify(req.body, null, 2), 'utf-8');
+    log(`Disk: Written ${dataPath}`);
+    
+    await backupData(req.body);
+    
     res.json({ success: true });
-  } catch (_err) {
+  } catch (err) {
+    log(`Error: Failed to write data: ${err}`);
     res.status(500).json({ error: 'Failed to save data' });
   }
 });
 
 app.post('/api/save-image', async (req, res) => {
+  const fullPath = checkSession(req, res);
+  if (!fullPath) return;
+
   try {
     const { filename, base64 } = req.body;
     if (!filename || !base64) return res.status(400).json({ error: 'Missing filename or base64' });
 
-    const filePath = path.join(path.dirname(dataPath), filename);
+    const filePath = path.join(fullPath, filename);
     const buffer = Buffer.from(base64.split(',')[1], 'base64');
     await fsp.writeFile(filePath, buffer);
+    log(`Disk: Written image ${filePath}`);
     res.json({ success: true });
   } catch (e) {
-    console.error('Error saving image:', e);
+    log(`Error: Failed to save image: ${e}`);
     res.status(500).json({ error: 'Failed to save image' });
   }
 });
 
 app.post('/api/cleanup-images', async (req, res) => {
+  const fullPath = checkSession(req, res);
+  if (!fullPath) return;
+
   try {
     const { activeFilenames } = req.body;
     if (!activeFilenames) return res.status(400).json({ error: 'Missing activeFilenames' });
 
-    const dir = path.dirname(dataPath);
-    const files = await fsp.readdir(dir);
+    const files = await fsp.readdir(fullPath);
     const regex = /^\d\d_\d\d\.jpg$/;
 
     for (const file of files) {
       if (regex.test(file) && !activeFilenames.includes(file)) {
-        await fsp.unlink(path.join(dir, file));
+        const filePath = path.join(fullPath, file);
+        await fsp.unlink(filePath);
+        log(`Disk: Deleted image ${filePath}`);
       }
     }
     res.json({ success: true });
   } catch (e) {
-    console.error('Error cleaning up images:', e);
+    log(`Error: Failed to cleanup images: ${e}`);
     res.status(500).json({ error: 'Failed to cleanup images' });
   }
 });
 
 app.post('/api/shutdown', (req, res) => {
+  log('System: Shutdown requested');
   res.json({ success: true });
-  console.log('Shutdown requested, exiting...');
   setTimeout(() => process.exit(0), 100);
 });
 
 app.listen(port, () => {
-  console.log(`Backend listening at http://localhost:${port}`);
+  log(`Backend listening at http://localhost:${port}`);
 });
