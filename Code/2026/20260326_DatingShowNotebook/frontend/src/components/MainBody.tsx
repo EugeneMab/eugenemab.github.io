@@ -62,17 +62,17 @@ const MainBody: React.FC = () => {
    * Updates a person's details in the global store.
    */
   const handleUpdatePerson = (id: number, updates: Partial<Person>) => {
-    saveData({
-      ...data,
-      people: data.people.map((p) => (p.id === id ? { ...p, ...updates } : p)),
-    });
+    saveData((prev) => ({
+      ...prev,
+      people: prev.people.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    }));
   };
 
   /**
    * Handles person clicks based on the current active mode (message, team, eraser).
    */
   const handlePersonClick = (personId: number) => {
-    if (!currentEvent) return;
+    if (!selectedEventId) return;
 
     // Handle Relationship Message Creation
     if (activeMode === 'message' || activeMode === 'weak-message') {
@@ -80,52 +80,71 @@ const MainBody: React.FC = () => {
         setFirstPersonId(personId); // First person selected
       } else {
         if (firstPersonId !== personId) {
-          const person1 = data.people.find((p) => p.id === firstPersonId);
-          const person2 = data.people.find((p) => p.id === personId);
+          saveData((prev) => {
+            const person1 = prev.people.find((p) => p.id === firstPersonId);
+            const person2 = prev.people.find((p) => p.id === personId);
 
-          if (person1 && person2) {
+            if (!person1 || !person2) return prev;
+
             const isSameGender = person1.gender === person2.gender;
             const isStrong = activeMode === 'message';
 
+            // Find the current event in the latest data
+            let targetEpIdx = -1;
+            let targetEvIdx = -1;
+            for (let i = 0; i < prev.episodes.length; i++) {
+              const j = prev.episodes[i].events.findIndex((e) => e.id === selectedEventId);
+              if (j !== -1) {
+                targetEpIdx = i;
+                targetEvIdx = j;
+                break;
+              }
+            }
+
+            if (targetEpIdx === -1) return prev;
+            const event = prev.episodes[targetEpIdx].events[targetEvIdx];
+
             // Prevent duplicate identical messages
-            const existing = currentEvent.messages.some(
+            const existing = event.messages.some(
               (m) => m.from === firstPersonId && m.to === personId
             );
-            if (existing) {
-              setFirstPersonId(null);
-              return;
-            }
+            if (existing) return prev;
 
             // Relationship constraints: strong messages only between opposite genders
             if (!isStrong || !isSameGender) {
               const type: MessageType = isStrong ? 'strong' : 'weak';
               const newMessage: Message = { from: firstPersonId, to: personId, type };
 
-              saveData({
-                ...data,
-                episodes: data.episodes.map((ep) => ({
-                  ...ep,
-                  events: ep.events.map((ev) =>
-                    ev.id === selectedEventId
-                      ? {
-                          ...ev,
-                          messages: [...ev.messages, newMessage],
-                        }
-                      : ev
-                  ),
-                })),
-              });
+              return {
+                ...prev,
+                episodes: prev.episodes.map((ep, i) =>
+                  i === targetEpIdx
+                    ? {
+                        ...ep,
+                        events: ep.events.map((ev, j) =>
+                          j === targetEvIdx
+                            ? {
+                                ...ev,
+                                messages: [...ev.messages, newMessage],
+                              }
+                            : ev
+                        ),
+                      }
+                    : ep
+                ),
+              };
             }
-          }
+            return prev;
+          });
         }
         setFirstPersonId(null);
       }
-    } 
+    }
     // Handle Eraser Mode: Remove all relationships and team memberships for the person
     else if (activeMode === 'eraser') {
-      saveData({
-        ...data,
-        episodes: data.episodes.map((ep) => ({
+      saveData((prev) => ({
+        ...prev,
+        episodes: prev.episodes.map((ep) => ({
           ...ep,
           events: ep.events.map((ev) =>
             ev.id === selectedEventId
@@ -142,34 +161,42 @@ const MainBody: React.FC = () => {
               : ev
           ),
         })),
-      });
-    } 
+      }));
+    }
     // Handle Team Assignment Mode
     else if (activeMode.startsWith('team-')) {
       const teamIdx = activeMode.split('-')[1];
-      const currentTeam = currentEvent.teams[teamIdx] || [];
-      const isMember = currentTeam.includes(personId);
+      saveData((prev) => {
+        // Find the event to check membership
+        let currentEventInPrev = null;
+        for (const ep of prev.episodes) {
+          const ev = ep.events.find((e) => e.id === selectedEventId);
+          if (ev) {
+            currentEventInPrev = ev;
+            break;
+          }
+        }
+        if (!currentEventInPrev) return prev;
 
-      // Toggle team membership: if already member, do nothing (or we could remove, but here we just return)
-      if (isMember) {
-        return;
-      }
+        const currentTeam = currentEventInPrev.teams[teamIdx] || [];
+        if (currentTeam.includes(personId)) return prev;
 
-      const newTeam = [...currentTeam, personId];
+        const newTeam = [...currentTeam, personId];
 
-      saveData({
-        ...data,
-        episodes: data.episodes.map((ep) => ({
-          ...ep,
-          events: ep.events.map((ev) =>
-            ev.id === selectedEventId
-              ? {
-                  ...ev,
-                  teams: { ...ev.teams, [teamIdx]: newTeam },
-                }
-              : ev
-          ),
-        })),
+        return {
+          ...prev,
+          episodes: prev.episodes.map((ep) => ({
+            ...ep,
+            events: ep.events.map((ev) =>
+              ev.id === selectedEventId
+                ? {
+                    ...ev,
+                    teams: { ...ev.teams, [teamIdx]: newTeam },
+                  }
+                : ev
+            ),
+          })),
+        };
       });
     }
   };
@@ -178,15 +205,15 @@ const MainBody: React.FC = () => {
    * Updates the event title.
    */
   const updateTitle = (newTitle: string) => {
-    saveData({
-      ...data,
-      episodes: data.episodes.map((ep) => ({
+    saveData((prev) => ({
+      ...prev,
+      episodes: prev.episodes.map((ep) => ({
         ...ep,
         events: ep.events.map((ev) =>
           ev.id === selectedEventId ? { ...ev, title: newTitle } : ev
         ),
       })),
-    });
+    }));
   };
 
   /**

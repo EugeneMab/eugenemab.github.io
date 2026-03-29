@@ -74,8 +74,13 @@ const OpenFolderModal: React.FC<OpenFolderModalProps> = ({ onClose }) => {
                     onClick={() => handleSelect(path)}
                     className="flex items-center gap-3 p-3 text-left hover:bg-blue-50 rounded-lg border border-gray-100 group transition-all"
                   >
-                    <Folder className="text-blue-400 group-hover:text-blue-600 shrink-0" size={20} />
-                    <span className="truncate flex-1 font-medium">{path === '.' ? '(Root)' : path}</span>
+                    <Folder
+                      className="text-blue-400 group-hover:text-blue-600 shrink-0"
+                      size={20}
+                    />
+                    <span className="truncate flex-1 font-medium">
+                      {path === '.' ? '(Root)' : path}
+                    </span>
                     <ChevronRight className="text-gray-300 group-hover:text-blue-400" size={18} />
                   </button>
                 ))}
@@ -88,14 +93,14 @@ const OpenFolderModal: React.FC<OpenFolderModalProps> = ({ onClose }) => {
               <Folder size={16} />
               Browse System
             </h3>
-            
+
             <div className="mb-4 flex items-center gap-2 text-sm text-gray-600 bg-gray-100 p-2 rounded truncate">
               <span className="font-semibold shrink-0">Current:</span>
               <span className="truncate">{currentPath === '.' ? '/' : `/${currentPath}`}</span>
             </div>
 
             <div className="space-y-1">
-              {(data?.parentPath !== null && data?.parentPath !== undefined) && (
+              {data?.parentPath !== null && data?.parentPath !== undefined && (
                 <button
                   onClick={() => browse(data!.parentPath!)}
                   className="flex items-center gap-3 p-2 w-full text-left hover:bg-gray-100 rounded group"
@@ -109,10 +114,7 @@ const OpenFolderModal: React.FC<OpenFolderModalProps> = ({ onClose }) => {
                 <div className="p-8 text-center text-gray-500">Loading...</div>
               ) : (
                 data?.folders.map((f) => (
-                  <div
-                    key={f.path}
-                    className="flex items-center gap-2 group p-1"
-                  >
+                  <div key={f.path} className="flex items-center gap-2 group p-1">
                     <button
                       onClick={() => browse(f.path)}
                       className="flex items-center gap-3 p-2 flex-1 text-left hover:bg-gray-100 rounded transition-colors"
@@ -135,7 +137,7 @@ const OpenFolderModal: React.FC<OpenFolderModalProps> = ({ onClose }) => {
                   </div>
                 ))
               )}
-              
+
               {!loading && data?.folders.length === 0 && (
                 <div className="p-8 text-center text-gray-400 italic">No subfolders found</div>
               )}
@@ -144,9 +146,7 @@ const OpenFolderModal: React.FC<OpenFolderModalProps> = ({ onClose }) => {
         </div>
 
         <div className="p-4 bg-gray-50 border-t flex justify-between items-center">
-          <p className="text-xs text-gray-500 italic">
-            Select a folder to manage its data.
-          </p>
+          <p className="text-xs text-gray-500 italic">Select a folder to manage its data.</p>
           <button
             onClick={() => handleSelect(currentPath)}
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow-sm transition-colors"

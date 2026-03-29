@@ -12,54 +12,58 @@ const NavigationPane: React.FC = () => {
   } | null>(null);
 
   const handleAddEpisode = () => {
-    let nextUid = data.nextUniqueId;
-    const epId = nextUid++;
-    const evId = nextUid++;
+    saveData((prev) => {
+      let nextUid = prev.nextUniqueId;
+      const epId = nextUid++;
+      const evId = nextUid++;
 
-    const title = `Episode ${data.episodes.length + 1}`;
-    const newEpisode: Episode = {
-      id: epId,
-      title: title,
-      events: [{ id: evId, title: `${title}-1`, messages: [], teams: {} }],
-    };
-    saveData({
-      ...data,
-      episodes: [...data.episodes, newEpisode],
-      nextUniqueId: nextUid,
+      const title = `Episode ${prev.episodes.length + 1}`;
+      const newEpisode: Episode = {
+        id: epId,
+        title: title,
+        events: [{ id: evId, title: `${title}-1`, messages: [], teams: {} }],
+      };
+      return {
+        ...prev,
+        episodes: [...prev.episodes, newEpisode],
+        nextUniqueId: nextUid,
+      };
     });
     setOpenDropdown(null);
   };
 
   const handleAddEvent = (episodeId: number) => {
-    const episode = data.episodes.find((e) => e.id === episodeId);
-    if (!episode) return;
+    saveData((prev) => {
+      const episode = prev.episodes.find((e) => e.id === episodeId);
+      if (!episode) return prev;
 
-    let nextUid = data.nextUniqueId;
-    const evId = nextUid++;
+      let nextUid = prev.nextUniqueId;
+      const evId = nextUid++;
 
-    const nextEventIndex = episode.events.length + 1;
-    const newEvent: Event = {
-      id: evId,
-      title: `${episode.title}-${nextEventIndex}`,
-      messages: [],
-      teams: {},
-    };
-    saveData({
-      ...data,
-      episodes: data.episodes.map((e) =>
-        e.id === episodeId ? { ...e, events: [...e.events, newEvent] } : e
-      ),
-      nextUniqueId: nextUid,
+      const nextEventIndex = episode.events.length + 1;
+      const newEvent: Event = {
+        id: evId,
+        title: `${episode.title}-${nextEventIndex}`,
+        messages: [],
+        teams: {},
+      };
+      return {
+        ...prev,
+        episodes: prev.episodes.map((e) =>
+          e.id === episodeId ? { ...e, events: [...e.events, newEvent] } : e
+        ),
+        nextUniqueId: nextUid,
+      };
     });
     setOpenDropdown(null);
   };
 
   const handleDeleteEpisode = (episodeId: number) => {
     if (window.confirm('Are you sure you want to delete this episode and all its events?')) {
-      saveData({
-        ...data,
-        episodes: data.episodes.filter((e) => e.id !== episodeId),
-      });
+      saveData((prev) => ({
+        ...prev,
+        episodes: prev.episodes.filter((e) => e.id !== episodeId),
+      }));
       if (selectedEpisodeId === episodeId) {
         setSelectedView(null, null);
       }
@@ -68,31 +72,43 @@ const NavigationPane: React.FC = () => {
   };
 
   const handleMoveEpisode = (index: number, direction: 'up' | 'down') => {
-    const newEpisodes = [...data.episodes];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex >= 0 && targetIndex < newEpisodes.length) {
-      [newEpisodes[index], newEpisodes[targetIndex]] = [
-        newEpisodes[targetIndex],
-        newEpisodes[index],
-      ];
-      saveData({ ...data, episodes: newEpisodes });
-    }
+    saveData((prev) => {
+      const newEpisodes = [...prev.episodes];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex >= 0 && targetIndex < newEpisodes.length) {
+        [newEpisodes[index], newEpisodes[targetIndex]] = [
+          newEpisodes[targetIndex],
+          newEpisodes[index],
+        ];
+        return { ...prev, episodes: newEpisodes };
+      }
+      return prev;
+    });
     setOpenDropdown(null);
   };
 
   const handleDeleteEvent = (episodeId: number, eventId: number) => {
     if (window.confirm('Are you sure you want to delete this event?')) {
-      saveData({
-        ...data,
-        episodes: data.episodes.map((ep) =>
-          ep.id === episodeId
+      saveData((prev) => {
+        const ep = prev.episodes.find((e) => e.id === episodeId);
+        if (!ep) return prev;
+
+        const updatedEpisodes = prev.episodes.map((episode) =>
+          episode.id === episodeId
             ? {
-                ...ep,
-                events: ep.events.filter((ev) => ev.id !== eventId),
+                ...episode,
+                events: episode.events.filter((ev) => ev.id !== eventId),
               }
-            : ep
-        ),
+            : episode
+        );
+
+        return {
+          ...prev,
+          episodes: updatedEpisodes,
+        };
       });
+
+      // Selection logic remains outside as it doesn't affect the data saved
       if (selectedEventId === eventId) {
         const ep = data.episodes.find((e) => e.id === episodeId);
         const remainingEvents = ep?.events.filter((ev) => ev.id !== eventId) || [];
@@ -103,36 +119,39 @@ const NavigationPane: React.FC = () => {
   };
 
   const handleMoveEvent = (episodeId: number, eventIndex: number, direction: 'up' | 'down') => {
-    const episode = data.episodes.find((e) => e.id === episodeId);
-    if (!episode) return;
-    const newEvents = [...episode.events];
-    const targetIndex = direction === 'up' ? eventIndex - 1 : eventIndex + 1;
-    if (targetIndex >= 0 && targetIndex < newEvents.length) {
-      [newEvents[eventIndex], newEvents[targetIndex]] = [
-        newEvents[targetIndex],
-        newEvents[eventIndex],
-      ];
-      saveData({
-        ...data,
-        episodes: data.episodes.map((ep) =>
-          ep.id === episodeId ? { ...ep, events: newEvents } : ep
-        ),
-      });
-    }
+    saveData((prev) => {
+      const episode = prev.episodes.find((e) => e.id === episodeId);
+      if (!episode) return prev;
+      const newEvents = [...episode.events];
+      const targetIndex = direction === 'up' ? eventIndex - 1 : eventIndex + 1;
+      if (targetIndex >= 0 && targetIndex < newEvents.length) {
+        [newEvents[eventIndex], newEvents[targetIndex]] = [
+          newEvents[targetIndex],
+          newEvents[eventIndex],
+        ];
+        return {
+          ...prev,
+          episodes: prev.episodes.map((ep) =>
+            ep.id === episodeId ? { ...ep, events: newEvents } : ep
+          ),
+        };
+      }
+      return prev;
+    });
     setOpenDropdown(null);
   };
 
   const updateEpisodeTitle = (episodeId: number, newTitle: string) => {
-    saveData({
-      ...data,
-      episodes: data.episodes.map((e) => (e.id === episodeId ? { ...e, title: newTitle } : e)),
-    });
+    saveData((prev) => ({
+      ...prev,
+      episodes: prev.episodes.map((e) => (e.id === episodeId ? { ...e, title: newTitle } : e)),
+    }));
   };
 
   const updateEventTitle = (episodeId: number, eventId: number, newTitle: string) => {
-    saveData({
-      ...data,
-      episodes: data.episodes.map((ep) =>
+    saveData((prev) => ({
+      ...prev,
+      episodes: prev.episodes.map((ep) =>
         ep.id === episodeId
           ? {
               ...ep,
@@ -140,7 +159,7 @@ const NavigationPane: React.FC = () => {
             }
           : ep
       ),
-    });
+    }));
   };
 
   return (

@@ -28,22 +28,24 @@ const PersonView: React.FC = () => {
    * Adds a new person to the store with default values.
    */
   const handleAddPerson = (gender: Gender) => {
-    const id = data.nextUniqueId;
-    const currentCount = data.people.filter((p) => p.gender === gender).length;
-    const countLabel = currentCount + 1;
+    saveData((prev) => {
+      const id = prev.nextUniqueId;
+      const currentCount = prev.people.filter((p) => p.gender === gender).length;
+      const countLabel = currentCount + 1;
 
-    const newPerson: Person = {
-      id,
-      gender,
-      name: `${gender === 'male' ? 'Male' : 'Female'} ${countLabel}`,
-      image: '',
-      description: 'Add description...',
-      ranges: '1',
-    };
-    saveData({
-      ...data,
-      people: [...data.people, newPerson],
-      nextUniqueId: id + 1,
+      const newPerson: Person = {
+        id,
+        gender,
+        name: `${gender === 'male' ? 'Male' : 'Female'} ${countLabel}`,
+        image: '',
+        description: 'Add description...',
+        ranges: '1',
+      };
+      return {
+        ...prev,
+        people: [...prev.people, newPerson],
+        nextUniqueId: id + 1,
+      };
     });
   };
 
@@ -52,61 +54,64 @@ const PersonView: React.FC = () => {
    */
   const handleDeletePerson = (id: number) => {
     if (!confirm('Are you sure you want to delete this person?')) return;
-    
-    saveData({
-      ...data,
-      people: data.people.filter((p) => p.id !== id),
-      episodes: data.episodes.map(ep => ({
+
+    saveData((prev) => ({
+      ...prev,
+      people: prev.people.filter((p) => p.id !== id),
+      episodes: prev.episodes.map((ep) => ({
         ...ep,
-        events: ep.events.map(ev => ({
+        events: ep.events.map((ev) => ({
           ...ev,
-          messages: ev.messages.filter(m => m.from !== id && m.to !== id),
+          messages: ev.messages.filter((m) => m.from !== id && m.to !== id),
           teams: Object.fromEntries(
             Object.entries(ev.teams).map(([idx, members]) => [
               idx,
-              members.filter(memId => memId !== id)
+              members.filter((memId) => memId !== id),
             ])
-          )
-        }))
-      }))
-    });
+          ),
+        })),
+      })),
+    }));
   };
 
   /**
    * Updates person details in the store.
    */
   const handleUpdatePerson = (id: number, updates: Partial<Person>) => {
-    saveData({
-      ...data,
-      people: data.people.map((p) => (p.id === id ? { ...p, ...updates } : p)),
-    });
+    saveData((prev) => ({
+      ...prev,
+      people: prev.people.map((p) => (p.id === id ? { ...p, ...updates } : p)),
+    }));
   };
 
   /**
    * Reorders a person in the list by moving them up or down.
    */
   const handleMovePerson = (id: number, direction: 'up' | 'down') => {
-    const person = data.people.find(p => p.id === id);
-    if (!person) return;
+    saveData((prev) => {
+      const person = prev.people.find((p) => p.id === id);
+      if (!person) return prev;
 
-    const sameGenderPeople = data.people.filter(p => p.gender === person.gender);
-    const index = sameGenderPeople.findIndex(p => p.id === id);
+      const sameGenderPeople = prev.people.filter((p) => p.gender === person.gender);
+      const index = sameGenderPeople.findIndex((p) => p.id === id);
 
-    if (direction === 'up' && index > 0) {
-      const other = sameGenderPeople[index - 1];
-      const newPeople = [...data.people];
-      const idx1 = newPeople.findIndex(p => p.id === id);
-      const idx2 = newPeople.findIndex(p => p.id === other.id);
-      [newPeople[idx1], newPeople[idx2]] = [newPeople[idx2], newPeople[idx1]];
-      saveData({ ...data, people: newPeople });
-    } else if (direction === 'down' && index < sameGenderPeople.length - 1) {
-      const other = sameGenderPeople[index + 1];
-      const newPeople = [...data.people];
-      const idx1 = newPeople.findIndex(p => p.id === id);
-      const idx2 = newPeople.findIndex(p => p.id === other.id);
-      [newPeople[idx1], newPeople[idx2]] = [newPeople[idx2], newPeople[idx1]];
-      saveData({ ...data, people: newPeople });
-    }
+      if (direction === 'up' && index > 0) {
+        const other = sameGenderPeople[index - 1];
+        const newPeople = [...prev.people];
+        const idx1 = newPeople.findIndex((p) => p.id === id);
+        const idx2 = newPeople.findIndex((p) => p.id === other.id);
+        [newPeople[idx1], newPeople[idx2]] = [newPeople[idx2], newPeople[idx1]];
+        return { ...prev, people: newPeople };
+      } else if (direction === 'down' && index < sameGenderPeople.length - 1) {
+        const other = sameGenderPeople[index + 1];
+        const newPeople = [...prev.people];
+        const idx1 = newPeople.findIndex((p) => p.id === id);
+        const idx2 = newPeople.findIndex((p) => p.id === other.id);
+        [newPeople[idx1], newPeople[idx2]] = [newPeople[idx2], newPeople[idx1]];
+        return { ...prev, people: newPeople };
+      }
+      return prev;
+    });
   };
 
   /**
@@ -243,8 +248,8 @@ const PersonView: React.FC = () => {
               {/* Move Controls */}
               <button
                 className={clsx(
-                  "p-1 rounded hover:bg-gray-200 bg-gray-100",
-                  index === 0 && "opacity-20 cursor-not-allowed"
+                  'p-1 rounded hover:bg-gray-200 bg-gray-100',
+                  index === 0 && 'opacity-20 cursor-not-allowed'
                 )}
                 disabled={index === 0}
                 onClick={() => handleMovePerson(person.id, 'up')}
@@ -254,8 +259,8 @@ const PersonView: React.FC = () => {
               </button>
               <button
                 className={clsx(
-                  "p-1 rounded hover:bg-gray-200 bg-gray-100",
-                  isLast && "opacity-20 cursor-not-allowed"
+                  'p-1 rounded hover:bg-gray-200 bg-gray-100',
+                  isLast && 'opacity-20 cursor-not-allowed'
                 )}
                 disabled={isLast}
                 onClick={() => handleMovePerson(person.id, 'down')}

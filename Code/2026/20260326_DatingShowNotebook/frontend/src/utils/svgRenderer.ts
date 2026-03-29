@@ -20,7 +20,6 @@ import {
   calculateMessageCoords,
   calculatTeamMemberCoords,
   TEAM_COLORS,
-  wrapText,
 } from './layout';
 
 export function renderEventToSvgString(event: Event, data: AppData, episodeIndex: number): string {
@@ -31,7 +30,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
   const scale = data.bodyScale || 1;
   const descScale = data.descriptionScale || 1;
   const numRows = Math.max(males.length, females.length);
-  
+
   /**
    * Layout Dimensions:
    * Dynamically calculated based on participant count and user-defined scaling.
@@ -244,19 +243,24 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
               const validMembers = members.map((id) => personPositions[id]).filter(Boolean);
               return validMembers.length > 0 ? { originalIndex, validMembers } : null;
             })
-            .filter((t): t is { originalIndex: string; validMembers: any[] } => t !== null);
+            .filter(
+              (t): t is { originalIndex: string; validMembers: { x: number; y: number }[] } =>
+                t !== null
+            );
 
-          return concreteTeams.map(({ originalIndex, validMembers }, concreteIndex) => {
-            /**
-             * teamY: Vertical center point (average height of members).
-             * teamX: Dynamically distributed across the MID_WIDTH area based on active team count.
-             */
-            const avgY = validMembers.reduce((sum, p) => sum + p.y, 0) / validMembers.length;
-            const teamX = (X_MID + MID_WIDTH * ((concreteIndex + 1) / (concreteTeams.length + 1))) * scale;
-            const teamY = avgY;
-            const teamColor = TEAM_COLORS[Number(originalIndex)];
+          return concreteTeams
+            .map(({ originalIndex, validMembers }, concreteIndex) => {
+              /**
+               * teamY: Vertical center point (average height of members).
+               * teamX: Dynamically distributed across the MID_WIDTH area based on active team count.
+               */
+              const avgY = validMembers.reduce((sum, p) => sum + p.y, 0) / validMembers.length;
+              const teamX =
+                (X_MID + MID_WIDTH * ((concreteIndex + 1) / (concreteTeams.length + 1))) * scale;
+              const teamY = avgY;
+              const teamColor = TEAM_COLORS[Number(originalIndex)];
 
-            return `
+              return `
             <g>
               <circle cx="${teamX}" cy="${teamY}" r="${6 * scale}" fill="${teamColor}" />
               ${validMembers
@@ -269,7 +273,8 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
                 .join('')}
             </g>
           `;
-          }).join('');
+            })
+            .join('');
         })()}
       </g>
     </svg>

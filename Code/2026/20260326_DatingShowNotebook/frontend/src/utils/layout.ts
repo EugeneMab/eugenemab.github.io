@@ -54,7 +54,7 @@ export function getFilteredPeople(data: AppData, episodeIndex: number) {
  */
 export function calculatePersonPositions(males: Person[], females: Person[], scale: number) {
   const pos: { [id: number]: { x: number; y: number; gender: Gender } } = {};
-  
+
   // Males: Anchored to the right edge of their image
   males.forEach((p, i) => {
     const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP) + IMG_HEIGHT / 2) * scale;
@@ -68,7 +68,7 @@ export function calculatePersonPositions(males: Person[], females: Person[], sca
     const x = X_FEMALE_IMG * scale;
     pos[p.id] = { x, y, gender: 'female' };
   });
-  
+
   return pos;
 }
 
@@ -100,10 +100,10 @@ export function calculateMessageCoords(
 ) {
   const isMale = fromPos.gender === 'male';
   const targetIsMale = toPos.gender === 'male';
-  
+
   // Offset Y: Males shift down, Females shift up to prevent overlap on same row
   const vOffset = (isMale ? LINE_OFFSET_Y : -LINE_OFFSET_Y) * scale;
-  
+
   // Offset X: Move away from the image boundary slightly
   const hOffsetFrom = (isMale ? LINE_OFFSET_X : -LINE_OFFSET_X) * scale;
   const hOffsetTo = (targetIsMale ? LINE_OFFSET_X : -LINE_OFFSET_X) * scale;

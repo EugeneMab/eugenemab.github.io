@@ -35,7 +35,11 @@ export async function svgToJpeg(svgString: string): Promise<string> {
   });
 }
 
-export async function saveEventImage(filename: string, base64: string, config?: AxiosRequestConfig) {
+export async function saveEventImage(
+  filename: string,
+  base64: string,
+  config?: AxiosRequestConfig
+) {
   await axios.post('/api/save-image', { filename, base64 }, config);
 }
 

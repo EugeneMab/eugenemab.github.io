@@ -82,7 +82,11 @@ async function handleStart() {
 
   // Start Backend
   console.log('~~ Spawning Backend process (Port 13762)...');
-  spawnCommand(`npx tsx index.ts "${dataFolder}" "${workFolder}"`, path.join(baseDir, 'backend'), 'DSN_Backend');
+  spawnCommand(
+    `npx tsx index.ts "${dataFolder}" "${workFolder}"`,
+    path.join(baseDir, 'backend'),
+    'DSN_Backend'
+  );
 
   // Start Frontend
   console.log('~~ Spawning Frontend process (Port 3762)...');

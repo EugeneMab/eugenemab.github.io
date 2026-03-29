@@ -11,7 +11,8 @@ const InterruptionModal: React.FC = () => {
       <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center border-4 border-red-500">
         <h2 className="text-2xl font-bold text-red-600 mb-4">Interrupted</h2>
         <p className="text-gray-700 mb-6">
-          Another client has taken control of this folder. Your session has been terminated to prevent data conflicts.
+          Another client has taken control of this folder. Your session has been terminated to
+          prevent data conflicts.
         </p>
         <button
           onClick={() => window.location.reload()}
