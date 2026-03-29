@@ -14,6 +14,7 @@ const TopButtonPane: React.FC = () => {
     setDescriptionScale,
     undo,
     selectedEpisodeId,
+    currentFolderPath,
   } = useStore();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -89,10 +90,17 @@ const TopButtonPane: React.FC = () => {
         </>
       )}
 
-      <div className="flex-1" />
+      {currentFolderPath && (
+        <div
+          title={currentFolderPath === '.' ? '/' : currentFolderPath}
+          className="flex-1 px-3 py-1 bg-gray-50 rounded-md text-xs font-mono text-gray-400 truncate border border-gray-100 shadow-inner"
+        >
+          {currentFolderPath === '.' ? '/' : currentFolderPath}
+        </div>
+      )}
 
       {/* Global Scaling Sliders */}
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-6 shrink-0">
         <div className="flex items-center gap-2">
           <ZoomIn size={18} className="text-gray-500 shrink-0" />
           <input

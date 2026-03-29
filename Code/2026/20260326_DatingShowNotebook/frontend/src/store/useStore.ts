@@ -66,6 +66,7 @@ interface AppState {
   undoStack: AppData[];
 
   isRefreshing: boolean;
+  isOpening: boolean;
   refreshProgress: { current: number; total: number };
   cancelRefresh: boolean;
 
@@ -75,15 +76,9 @@ interface AppState {
   isInterrupted: boolean;
 
   openFolder: (path: string) => Promise<void>;
-  saveData: (newData: AppData) => Promise<void>;
+  saveData: (update: AppData | ((prev: AppData) => AppData)) => Promise<void>;
   setActiveMode: (mode: ActiveMode) => void;
-  setSelectedView: (episodeId: number | null, eventId: number | null) => void;
-  setBodyScale: (scale: number) => void;
-  setDescriptionScale: (scale: number) => void;
-  undo: () => void;
-  setRefreshState: (isRefreshing: boolean, current?: number, total?: number) => void;
-  setCancelRefresh: (cancel: boolean) => void;
-  fullRefresh: () => Promise<void>;
+  // ... (rest of the interface)
   setInterrupted: (interrupted: boolean) => void;
 }
 
@@ -98,6 +93,8 @@ const CLIENT_ID = generateId();
 const savedRecent = localStorage.getItem('dsn_recent_folders');
 const initialRecent = savedRecent ? JSON.parse(savedRecent) : [];
 
+let globalSaveTimeout: ReturnType<typeof setTimeout> | null = null;
+
 export const useStore = create<AppState>((set, get) => ({
   data: {
     people: [],
@@ -111,6 +108,7 @@ export const useStore = create<AppState>((set, get) => ({
   selectedEventId: null,
   undoStack: [],
   isRefreshing: false,
+  isOpening: false,
   refreshProgress: { current: 0, total: 0 },
   cancelRefresh: false,
 
@@ -120,119 +118,145 @@ export const useStore = create<AppState>((set, get) => ({
   isInterrupted: false,
 
   openFolder: async (folderPath) => {
-    const clientId = get().clientId;
-    const res = await axios.post('/api/open', { path: folderPath, clientId });
-    let data: AppData = res.data;
+    if (get().isOpening) return;
+    set({ isOpening: true });
 
-    // --- ID Compaction & Data Cleaning Logic ---
-    const personMap = new Map<number, number>();
-    const episodeMap = new Map<number, number>();
-    const eventMap = new Map<number, number>();
-    let nextId = 1;
+    try {
+      const clientId = get().clientId;
+      const res = await axios.post('/api/open', { path: folderPath, clientId });
+      const data: AppData = res.data;
 
-    data.people.forEach((p) => {
-      personMap.set(p.id, nextId++);
-    });
+      // --- ID Compaction & Data Cleaning Logic ---
+      const personMap = new Map<number, number>();
+      const episodeMap = new Map<number, number>();
+      const eventMap = new Map<number, number>();
+      let nextId = 1;
 
-    data.episodes.forEach((ep) => {
-      episodeMap.set(ep.id, nextId++);
-      ep.events.forEach((ev) => {
-        eventMap.set(ev.id, nextId++);
+      data.people.forEach((p) => {
+        personMap.set(p.id, nextId++);
       });
-    });
 
-    data.nextUniqueId = nextId;
-
-    const validPersonIds = new Set(personMap.values());
-
-    data.people.forEach((p) => {
-      p.id = personMap.get(p.id)!;
-    });
-
-    data.episodes.forEach((ep) => {
-      ep.id = episodeMap.get(ep.id)!;
-      ep.events.forEach((ev) => {
-        ev.id = eventMap.get(ev.id)!;
-        const seenMessages = new Set<string>();
-        ev.messages = ev.messages
-          .map((m) => ({
-            ...m,
-            from: personMap.get(m.from)!,
-            to: personMap.get(m.to)!,
-          }))
-          .filter((m) => {
-            if (!m.from || !m.to || !validPersonIds.has(m.from) || !validPersonIds.has(m.to)) {
-              return false;
-            }
-            const key = `${m.from}-${m.to}-${m.type}`;
-            if (seenMessages.has(key)) return false;
-            seenMessages.add(key);
-            return true;
-          });
-
-        const cleanedTeams: { [teamIndex: string]: number[] } = {};
-        Object.entries(ev.teams).forEach(([idx, members]) => {
-          const validMembers = members
-            .map((id) => personMap.get(id)!)
-            .filter((id) => id && validPersonIds.has(id));
-          const uniqueMembers = Array.from(new Set(validMembers));
-          if (uniqueMembers.length > 0) {
-            cleanedTeams[idx] = uniqueMembers;
-          }
+      data.episodes.forEach((ep) => {
+        episodeMap.set(ep.id, nextId++);
+        ep.events.forEach((ev) => {
+          eventMap.set(ev.id, nextId++);
         });
-        ev.teams = cleanedTeams;
       });
-    });
 
-    let lastEpisodeId = null;
-    let lastEventId = null;
-    if (data.episodes.length > 0) {
-      const lastEpisode = data.episodes[data.episodes.length - 1];
-      lastEpisodeId = lastEpisode.id;
-      if (lastEpisode.events.length > 0) {
-        lastEventId = lastEpisode.events[lastEpisode.events.length - 1].id;
+      data.nextUniqueId = nextId;
+
+      const validPersonIds = new Set(personMap.values());
+
+      data.people.forEach((p) => {
+        p.id = personMap.get(p.id)!;
+      });
+
+      data.episodes.forEach((ep) => {
+        ep.id = episodeMap.get(ep.id)!;
+        ep.events.forEach((ev) => {
+          ev.id = eventMap.get(ev.id)!;
+          const seenMessages = new Set<string>();
+          ev.messages = ev.messages
+            .map((m) => ({
+              ...m,
+              from: personMap.get(m.from)!,
+              to: personMap.get(m.to)!,
+            }))
+            .filter((m) => {
+              if (!m.from || !m.to || !validPersonIds.has(m.from) || !validPersonIds.has(m.to)) {
+                return false;
+              }
+              const key = `${m.from}-${m.to}-${m.type}`;
+              if (seenMessages.has(key)) return false;
+              seenMessages.add(key);
+              return true;
+            });
+
+          const cleanedTeams: { [teamIndex: string]: number[] } = {};
+          Object.entries(ev.teams).forEach(([idx, members]) => {
+            const validMembers = members
+              .map((id) => personMap.get(id)!)
+              .filter((id) => id && validPersonIds.has(id));
+            const uniqueMembers = Array.from(new Set(validMembers));
+            if (uniqueMembers.length > 0) {
+              cleanedTeams[idx] = uniqueMembers;
+            }
+          });
+          ev.teams = cleanedTeams;
+        });
+      });
+
+      let lastEpisodeId = null;
+      let lastEventId = null;
+      if (data.episodes.length > 0) {
+        const lastEpisode = data.episodes[data.episodes.length - 1];
+        lastEpisodeId = lastEpisode.id;
+        if (lastEpisode.events.length > 0) {
+          lastEventId = lastEpisode.events[lastEpisode.events.length - 1].id;
+        }
       }
+
+      const newRecent = [folderPath, ...get().recentFolders.filter((p) => p !== folderPath)].slice(
+        0,
+        10
+      );
+      localStorage.setItem('dsn_recent_folders', JSON.stringify(newRecent));
+
+      set({
+        data,
+        currentFolderPath: folderPath,
+        selectedEpisodeId: lastEpisodeId,
+        selectedEventId: lastEventId,
+        activeMode: 'message',
+        recentFolders: newRecent,
+        undoStack: [],
+        isOpening: false,
+        isInterrupted: false,
+      });
+
+      await axios.post('/api/data', data, {
+        headers: {
+          'x-folder-path': folderPath,
+          'x-client-id': clientId,
+        },
+      });
+    } catch (e) {
+      console.error('Failed to open folder', e);
+      set({ isOpening: false });
+      throw e;
     }
-
-    const newRecent = [folderPath, ...get().recentFolders.filter((p) => p !== folderPath)].slice(0, 10);
-    localStorage.setItem('dsn_recent_folders', JSON.stringify(newRecent));
-
-    await new Promise((r) => setTimeout(r, 1000));
-
-    set({
-      data,
-      currentFolderPath: folderPath,
-      selectedEpisodeId: lastEpisodeId,
-      selectedEventId: lastEventId,
-      activeMode: 'message',
-      recentFolders: newRecent,
-      undoStack: [],
-    });
-
-    await axios.post('/api/data', data, {
-      headers: {
-        'x-folder-path': folderPath,
-        'x-client-id': clientId
-      }
-    });
   },
 
-  saveData: async (newData) => {
+  saveData: async (update) => {
     const folderPath = get().currentFolderPath;
-    const clientId = get().clientId;
     if (!folderPath) return;
 
-    const currentData = get().data;
-    set({
-      undoStack: [JSON.parse(JSON.stringify(currentData)), ...get().undoStack].slice(0, 50),
-      data: newData,
-    });
-    
-    await axios.post('/api/data', newData, {
-      headers: {
-        'x-folder-path': folderPath,
-        'x-client-id': clientId
-      }
+    set((state) => {
+      const currentData = state.data;
+      const newData = typeof update === 'function' ? update(currentData) : update;
+
+      // Debounce logic moved outside or handled via a shared variable
+      if (globalSaveTimeout) clearTimeout(globalSaveTimeout);
+      globalSaveTimeout = setTimeout(async () => {
+        const latestState = useStore.getState();
+        if (!latestState.currentFolderPath) return;
+
+        try {
+          await axios.post('/api/data', latestState.data, {
+            headers: {
+              'x-folder-path': latestState.currentFolderPath,
+              'x-client-id': latestState.clientId,
+            },
+          });
+        } catch (_e) {
+          console.error('Failed to save data to backend', _e);
+        }
+      }, 500);
+
+      return {
+        undoStack: [JSON.parse(JSON.stringify(currentData)), ...state.undoStack].slice(0, 50),
+        data: newData,
+      };
     });
   },
 
@@ -246,13 +270,11 @@ export const useStore = create<AppState>((set, get) => ({
     }),
 
   setBodyScale: (scale) => {
-    const newData = { ...get().data, bodyScale: scale };
-    get().saveData(newData);
+    get().saveData((prev) => ({ ...prev, bodyScale: scale }));
   },
 
   setDescriptionScale: (scale) => {
-    const newData = { ...get().data, descriptionScale: scale };
-    get().saveData(newData);
+    get().saveData((prev) => ({ ...prev, descriptionScale: scale }));
   },
 
   undo: () => {
@@ -267,12 +289,12 @@ export const useStore = create<AppState>((set, get) => ({
       data: prevData,
       undoStack: remainingStack,
     });
-    
+
     axios.post('/api/data', prevData, {
       headers: {
         'x-folder-path': folderPath,
-        'x-client-id': clientId
-      }
+        'x-client-id': clientId,
+      },
     });
   },
 
@@ -305,8 +327,8 @@ export const useStore = create<AppState>((set, get) => ({
     const config = {
       headers: {
         'x-folder-path': currentFolderPath,
-        'x-client-id': clientId
-      }
+        'x-client-id': clientId,
+      },
     };
 
     for (let i = 0; i < episodes.length; i++) {
@@ -327,7 +349,7 @@ export const useStore = create<AppState>((set, get) => ({
           const svgString = renderEventToSvgString(event, data, i + 1);
           const jpegBase64 = await svgToJpeg(svgString);
           await saveEventImage(filename, jpegBase64, config);
-        } catch (e) {
+        } catch (_e) {
           // Error logged via backend
         }
 

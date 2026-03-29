@@ -44,7 +44,9 @@ const defaultData = {
 };
 
 function getFullPath(relPath: string) {
-  const fullPath = path.resolve(restrictedRoot, relPath);
+  if (typeof relPath !== 'string') return restrictedRoot;
+  const normalizedPath = path.normalize(relPath).replace(/^(\.\.(\/|\\|$))+/, '');
+  const fullPath = path.resolve(restrictedRoot, normalizedPath);
   if (!fullPath.startsWith(restrictedRoot)) {
     return restrictedRoot;
   }
@@ -56,7 +58,7 @@ function getRelativePath(fullPath: string) {
   return rel === '' ? '.' : rel;
 }
 
-async function backupData(data: any) {
+async function backupData(data: unknown) {
   if (!workFolder) return;
   try {
     const backupDir = path.join(workFolder, 'DSN');
@@ -68,6 +70,16 @@ async function backupData(data: any) {
     const backupPath = path.join(backupDir, `${timestamp}.json`);
     await fsp.writeFile(backupPath, JSON.stringify(data, null, 2), 'utf-8');
     log(`Disk: Written backup to ${backupPath}`);
+
+    // Limit backups to last 10240
+    const files = await fsp.readdir(backupDir);
+    const jsonFiles = files.filter((f) => f.endsWith('.json')).sort();
+    if (jsonFiles.length > 10240) {
+      for (const file of jsonFiles.slice(0, jsonFiles.length - 10240)) {
+        await fsp.unlink(path.join(backupDir, file));
+        log(`Disk: Deleted old backup ${file}`);
+      }
+    }
   } catch (e) {
     log(`Error: Backup failed: ${e}`);
   }
@@ -76,25 +88,21 @@ async function backupData(data: any) {
 app.get('/api/browse', async (req, res) => {
   try {
     const relPath = (req.query.path as string) || '';
-    let fullPath = getFullPath(relPath);
-    
-    if (!fullPath.startsWith(restrictedRoot)) {
-      fullPath = restrictedRoot;
-    }
+    const fullPath = getFullPath(relPath);
 
     const entries = await fsp.readdir(fullPath, { withFileTypes: true });
     log(`Disk: Read directory ${fullPath}`);
-    
+
     const folders = await Promise.all(
       entries
-        .filter(e => e.isDirectory())
+        .filter((e) => e.isDirectory() && !e.name.startsWith('.'))
         .map(async (e) => {
           const folderPath = path.join(fullPath, e.name);
           const hasDataJson = fs.existsSync(path.join(folderPath, 'data.json'));
           return {
             name: e.name,
             path: getRelativePath(folderPath),
-            hasDataJson
+            hasDataJson,
           };
         })
     );
@@ -102,7 +110,7 @@ app.get('/api/browse', async (req, res) => {
     res.json({
       currentPath: getRelativePath(fullPath),
       parentPath: fullPath === restrictedRoot ? null : getRelativePath(path.dirname(fullPath)),
-      folders: folders.sort((a, b) => a.name.localeCompare(b.name))
+      folders: folders.sort((a, b) => a.name.localeCompare(b.name)),
     });
   } catch (e) {
     log(`Error: Browse failed: ${e}`);
@@ -112,11 +120,14 @@ app.get('/api/browse', async (req, res) => {
 
 app.post('/api/open', async (req, res) => {
   const { path: relPath, clientId } = req.body;
-  if (relPath === undefined || !clientId) return res.status(400).json({ error: 'Missing path or clientId' });
+  if (relPath === undefined || !clientId)
+    return res.status(400).json({ error: 'Missing path or clientId' });
 
   const fullPath = getFullPath(relPath);
+  if (!fs.existsSync(fullPath)) return res.status(404).json({ error: 'Folder not found' });
+
   const dataPath = path.join(fullPath, 'data.json');
-  
+
   const oldClient = folderToClient.get(relPath);
   if (oldClient && oldClient !== clientId) {
     log(`Session: Client ${oldClient} evicted from folder ${relPath} by ${clientId}`);
@@ -128,7 +139,7 @@ app.post('/api/open', async (req, res) => {
       const content = await fsp.readFile(dataPath, 'utf-8');
       log(`Disk: Read ${dataPath}`);
       res.json(content.trim() ? JSON.parse(content) : defaultData);
-    } catch (e) {
+    } catch (_e) {
       log(`Error: Failed to read ${dataPath}, using default`);
       res.json(defaultData);
     }
@@ -141,8 +152,8 @@ app.post('/api/open', async (req, res) => {
 function checkSession(req: express.Request, res: express.Response) {
   const folderPath = req.headers['x-folder-path'] as string;
   const clientId = req.headers['x-client-id'] as string;
-  
-  if (folderPath === undefined || !clientId) {
+
+  if (!folderPath || !clientId) {
     log(`Error: Missing headers - Folder: ${folderPath}, Client: ${clientId}`);
     res.status(400).json({ error: 'Missing x-folder-path or x-client-id' });
     return null;
@@ -154,7 +165,7 @@ function checkSession(req: express.Request, res: express.Response) {
     res.status(409).json({ error: 'Interrupted by another client' });
     return null;
   }
-  
+
   folderToClient.set(folderPath, clientId);
   return getFullPath(folderPath);
 }
@@ -165,15 +176,19 @@ app.post('/api/data', async (req, res) => {
 
   try {
     const dataPath = path.join(fullPath, 'data.json');
+    const tempPath = path.join(fullPath, `data.${Date.now()}.tmp`);
+
     if (!fs.existsSync(fullPath)) {
       await fsp.mkdir(fullPath, { recursive: true });
       log(`Disk: Created directory ${fullPath}`);
     }
-    await fsp.writeFile(dataPath, JSON.stringify(req.body, null, 2), 'utf-8');
-    log(`Disk: Written ${dataPath}`);
-    
+
+    await fsp.writeFile(tempPath, JSON.stringify(req.body, null, 2), 'utf-8');
+    await fsp.rename(tempPath, dataPath);
+    log(`Disk: Written ${dataPath} atomically`);
+
     await backupData(req.body);
-    
+
     res.json({ success: true });
   } catch (err) {
     log(`Error: Failed to write data: ${err}`);
@@ -189,7 +204,14 @@ app.post('/api/save-image', async (req, res) => {
     const { filename, base64 } = req.body;
     if (!filename || !base64) return res.status(400).json({ error: 'Missing filename or base64' });
 
-    const filePath = path.join(fullPath, filename);
+    // Sanitize filename: only allow a-z, A-Z, 0-9, _, ., -
+    const sanitizedFilename = filename.replace(/[^a-zA-Z0-9_.-]/g, '');
+    if (sanitizedFilename !== filename || sanitizedFilename.includes('..')) {
+      log(`Security: Rejected invalid filename: ${filename}`);
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+
+    const filePath = path.join(fullPath, sanitizedFilename);
     const buffer = Buffer.from(base64.split(',')[1], 'base64');
     await fsp.writeFile(filePath, buffer);
     log(`Disk: Written image ${filePath}`);
@@ -206,7 +228,8 @@ app.post('/api/cleanup-images', async (req, res) => {
 
   try {
     const { activeFilenames } = req.body;
-    if (!activeFilenames) return res.status(400).json({ error: 'Missing activeFilenames' });
+    if (!activeFilenames || !Array.isArray(activeFilenames))
+      return res.status(400).json({ error: 'Missing or invalid activeFilenames' });
 
     const files = await fsp.readdir(fullPath);
     const regex = /^\d\d_\d\d\.jpg$/;

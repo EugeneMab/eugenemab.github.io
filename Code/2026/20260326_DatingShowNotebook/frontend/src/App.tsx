@@ -29,8 +29,10 @@ const App: React.FC = () => {
                 </p>
               </div>
             </div>
+          ) : selectedEpisodeId === null ? (
+            <PersonView />
           ) : (
-            selectedEpisodeId === null ? <PersonView /> : <MainBody />
+            <MainBody />
           )}
         </div>
       </div>
