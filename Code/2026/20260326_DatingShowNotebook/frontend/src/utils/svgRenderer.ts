@@ -87,7 +87,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
               height="${IMG_HEIGHT * scale}"
             >
               <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; text-align: right; padding-right: 8px; height: 100%; justify-content: flex-start; padding-top: 8px; width: 100%; font-family: sans-serif;">
-                <div style="font-weight: bold; font-size: ${1.125 * scale}rem; color: #1e3a8a; margin-bottom: 4px;">${p.name}</div>
+                <div style="font-weight: bold; font-size: ${1.8 * scale}rem; color: #1e3a8a; margin-bottom: 4px;">${p.name}</div>
                 <div style="font-size: ${descFontSize}rem; color: #1e40af; white-space: pre-wrap; word-wrap: break-word;">${p.description}</div>
               </div>
             </foreignObject>
@@ -194,7 +194,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
               height="${IMG_HEIGHT * scale}"
             >
               <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; text-align: left; padding-left: 8px; height: 100%; justify-content: flex-start; padding-top: 8px; width: 100%; font-family: sans-serif;">
-                <div style="font-weight: bold; font-size: ${1.125 * scale}rem; color: #7f1d1d; margin-bottom: 4px;">${p.name}</div>
+                <div style="font-weight: bold; font-size: ${1.8 * scale}rem; color: #7f1d1d; margin-bottom: 4px;">${p.name}</div>
                 <div style="font-size: ${descFontSize}rem; color: #991b1b; white-space: pre-wrap; word-wrap: break-word;">${p.description}</div>
               </div>
             </foreignObject>

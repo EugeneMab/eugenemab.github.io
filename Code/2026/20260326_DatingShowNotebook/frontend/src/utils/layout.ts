@@ -1,7 +1,7 @@
 /**
  * Layout Constants (Base dimensions in pixels before scaling)
  */
-export const PADDING = 20; // Standard padding from the edges of the SVG
+export const PADDING = 10; // Standard padding from the edges of the SVG
 export const ROW_GAP = 10; // Vertical gap between participant rows
 export const TITLE_HEIGHT = 60; // Height of the event title header
 export const MALE_TEXT_WIDTH = 300; // Width of the male name/description column

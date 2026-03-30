@@ -409,7 +409,7 @@ const MainBody: React.FC = () => {
                 >
                   <input
                     className="font-bold bg-transparent border-none text-right focus:ring-0 p-0 text-blue-900 w-full"
-                    style={{ fontSize: `${1.125 * scale}rem` }}
+                    style={{ fontSize: `${1.8 * scale}rem` }}
                     value={p.name}
                     onChange={(e) => handleUpdatePerson(p.id, { name: e.target.value })}
                   />
@@ -506,7 +506,7 @@ const MainBody: React.FC = () => {
                 >
                   <input
                     className="font-bold bg-transparent border-none text-left focus:ring-0 p-0 text-red-900 w-full"
-                    style={{ fontSize: `${1.125 * scale}rem` }}
+                    style={{ fontSize: `${1.8 * scale}rem` }}
                     value={p.name}
                     onChange={(e) => handleUpdatePerson(p.id, { name: e.target.value })}
                   />
