@@ -1,13 +1,18 @@
 import React from 'react';
 import { useStore } from '../store/useStore';
 
+const PERCENT_100 = 100;
+
 const ProgressModal: React.FC = () => {
   const { isRefreshing, refreshProgress, setCancelRefresh } = useStore();
 
-  if (!isRefreshing) return null;
+  if (!isRefreshing) {
+    return null;
+  }
 
   const { current, total } = refreshProgress;
-  const percentage = total > 0 ? Math.min(100, Math.round((current / total) * 100)) : 0;
+  const percentage =
+    total > 0 ? Math.min(PERCENT_100, Math.round((current / total) * PERCENT_100)) : 0;
 
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-[9999] backdrop-blur-sm">
@@ -35,7 +40,9 @@ const ProgressModal: React.FC = () => {
         <div className="flex justify-center">
           <button
             className="px-8 py-3 bg-white text-red-600 border-2 border-red-100 rounded-lg hover:bg-red-50 hover:border-red-200 transition-all font-bold shadow-sm"
-            onClick={() => setCancelRefresh(true)}
+            onClick={() => {
+              return setCancelRefresh(true);
+            }}
           >
             Cancel Refresh
           </button>

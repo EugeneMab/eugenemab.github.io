@@ -4,7 +4,9 @@ import { useStore } from '../store/useStore';
 const InterruptionModal: React.FC = () => {
   const { isInterrupted } = useStore();
 
-  if (!isInterrupted) return null;
+  if (!isInterrupted) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
@@ -15,7 +17,9 @@ const InterruptionModal: React.FC = () => {
           prevent data conflicts.
         </p>
         <button
-          onClick={() => window.location.reload()}
+          onClick={() => {
+            return window.location.reload();
+          }}
           className="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-8 rounded-full transition-colors shadow-lg"
         >
           Refresh Page

@@ -24,10 +24,32 @@ import {
   calculateMessageCoords,
   calculatTeamMemberCoords,
   TEAM_COLORS,
+  SELECTION_PADDING,
+  SELECTION_STROKE_WIDTH,
+  SELECTION_CORNER_RADIUS,
+  MESSAGE_STROKE_WIDTH,
+  TEAM_HUB_RADIUS,
+  TEAM_LINE_STROKE_WIDTH,
+  TITLE_FONT_SIZE,
+  NAME_FONT_SIZE,
+  DESC_FONT_SIZE,
+  SMALL_FONT_SIZE,
 } from '../utils/layout';
 
+const DEBOUNCE_DELAY_MS = 1000;
+const MIN_DESC_ROWS = 2;
+const MSG_CENTER_DIVIDER = 2;
+
 const MainBody: React.FC = () => {
-  const { data, selectedEpisodeId, selectedEventId, activeMode, saveData } = useStore();
+  const {
+    data,
+    selectedEpisodeId,
+    selectedEventId,
+    activeMode,
+    saveData,
+    currentFolderPath,
+    clientId,
+  } = useStore();
 
   // State to track the first person clicked when creating a message (from -> to)
   const [firstPersonId, setFirstPersonId] = useState<number | null>(null);
@@ -37,8 +59,12 @@ const MainBody: React.FC = () => {
    */
   const currentEvent = useMemo(() => {
     for (const ep of data.episodes) {
-      const ev = ep.events.find((e) => e.id === selectedEventId);
-      if (ev) return ev;
+      const ev = ep.events.find((e) => {
+        return e.id === selectedEventId;
+      });
+      if (ev) {
+        return ev;
+      }
     }
     return null;
   }, [data.episodes, selectedEventId]);
@@ -47,8 +73,14 @@ const MainBody: React.FC = () => {
    * Calculates the 1-based index of the selected episode.
    */
   const episodeIndex = useMemo(() => {
-    if (selectedEpisodeId === null) return -1;
-    return data.episodes.findIndex((ep) => ep.id === selectedEpisodeId) + 1;
+    if (selectedEpisodeId === null) {
+      return -1;
+    }
+    return (
+      data.episodes.findIndex((ep) => {
+        return ep.id === selectedEpisodeId;
+      }) + 1
+    );
   }, [data.episodes, selectedEpisodeId]);
 
   /**
@@ -62,17 +94,23 @@ const MainBody: React.FC = () => {
    * Updates a person's details in the global store.
    */
   const handleUpdatePerson = (id: number, updates: Partial<Person>) => {
-    saveData((prev) => ({
-      ...prev,
-      people: prev.people.map((p) => (p.id === id ? { ...p, ...updates } : p)),
-    }));
+    saveData((prev) => {
+      return {
+        ...prev,
+        people: prev.people.map((p) => {
+          return p.id === id ? { ...p, ...updates } : p;
+        }),
+      };
+    });
   };
 
   /**
    * Handles person clicks based on the current active mode (message, team, eraser).
    */
   const handlePersonClick = (personId: number) => {
-    if (!selectedEventId) return;
+    if (!selectedEventId) {
+      return;
+    }
 
     // Handle Relationship Message Creation
     if (activeMode === 'message' || activeMode === 'weak-message') {
@@ -81,10 +119,16 @@ const MainBody: React.FC = () => {
       } else {
         if (firstPersonId !== personId) {
           saveData((prev) => {
-            const person1 = prev.people.find((p) => p.id === firstPersonId);
-            const person2 = prev.people.find((p) => p.id === personId);
+            const person1 = prev.people.find((p) => {
+              return p.id === firstPersonId;
+            });
+            const person2 = prev.people.find((p) => {
+              return p.id === personId;
+            });
 
-            if (!person1 || !person2) return prev;
+            if (!person1 || !person2) {
+              return prev;
+            }
 
             const isSameGender = person1.gender === person2.gender;
             const isStrong = activeMode === 'message';
@@ -93,7 +137,9 @@ const MainBody: React.FC = () => {
             let targetEpIdx = -1;
             let targetEvIdx = -1;
             for (let i = 0; i < prev.episodes.length; i++) {
-              const j = prev.episodes[i].events.findIndex((e) => e.id === selectedEventId);
+              const j = prev.episodes[i].events.findIndex((e) => {
+                return e.id === selectedEventId;
+              });
               if (j !== -1) {
                 targetEpIdx = i;
                 targetEvIdx = j;
@@ -101,14 +147,18 @@ const MainBody: React.FC = () => {
               }
             }
 
-            if (targetEpIdx === -1) return prev;
+            if (targetEpIdx === -1) {
+              return prev;
+            }
             const event = prev.episodes[targetEpIdx].events[targetEvIdx];
 
             // Prevent duplicate identical messages
-            const existing = event.messages.some(
-              (m) => m.from === firstPersonId && m.to === personId
-            );
-            if (existing) return prev;
+            const existing = event.messages.some((m) => {
+              return m.from === firstPersonId && m.to === personId;
+            });
+            if (existing) {
+              return prev;
+            }
 
             // Relationship constraints: strong messages only between opposite genders
             if (!isStrong || !isSameGender) {
@@ -117,21 +167,21 @@ const MainBody: React.FC = () => {
 
               return {
                 ...prev,
-                episodes: prev.episodes.map((ep, i) =>
-                  i === targetEpIdx
+                episodes: prev.episodes.map((ep, i) => {
+                  return i === targetEpIdx
                     ? {
                         ...ep,
-                        events: ep.events.map((ev, j) =>
-                          j === targetEvIdx
+                        events: ep.events.map((ev, j) => {
+                          return j === targetEvIdx
                             ? {
                                 ...ev,
                                 messages: [...ev.messages, newMessage],
                               }
-                            : ev
-                        ),
+                            : ev;
+                        }),
                       }
-                    : ep
-                ),
+                    : ep;
+                }),
               };
             }
             return prev;
@@ -142,26 +192,36 @@ const MainBody: React.FC = () => {
     }
     // Handle Eraser Mode: Remove all relationships and team memberships for the person
     else if (activeMode === 'eraser') {
-      saveData((prev) => ({
-        ...prev,
-        episodes: prev.episodes.map((ep) => ({
-          ...ep,
-          events: ep.events.map((ev) =>
-            ev.id === selectedEventId
-              ? {
-                  ...ev,
-                  messages: ev.messages.filter((m) => m.from !== personId),
-                  teams: Object.fromEntries(
-                    Object.entries(ev.teams).map(([idx, members]) => [
-                      idx,
-                      members.filter((id) => id !== personId),
-                    ])
-                  ),
-                }
-              : ev
-          ),
-        })),
-      }));
+      saveData((prev) => {
+        return {
+          ...prev,
+          episodes: prev.episodes.map((ep) => {
+            return {
+              ...ep,
+              events: ep.events.map((ev) => {
+                return ev.id === selectedEventId
+                  ? {
+                      ...ev,
+                      messages: ev.messages.filter((m) => {
+                        return m.from !== personId;
+                      }),
+                      teams: Object.fromEntries(
+                        Object.entries(ev.teams).map(([idx, members]) => {
+                          return [
+                            idx,
+                            members.filter((id) => {
+                              return id !== personId;
+                            }),
+                          ];
+                        })
+                      ),
+                    }
+                  : ev;
+              }),
+            };
+          }),
+        };
+      });
     }
     // Handle Team Assignment Mode
     else if (activeMode.startsWith('team-')) {
@@ -170,32 +230,40 @@ const MainBody: React.FC = () => {
         // Find the event to check membership
         let currentEventInPrev = null;
         for (const ep of prev.episodes) {
-          const ev = ep.events.find((e) => e.id === selectedEventId);
+          const ev = ep.events.find((e) => {
+            return e.id === selectedEventId;
+          });
           if (ev) {
             currentEventInPrev = ev;
             break;
           }
         }
-        if (!currentEventInPrev) return prev;
+        if (!currentEventInPrev) {
+          return prev;
+        }
 
         const currentTeam = currentEventInPrev.teams[teamIdx] || [];
-        if (currentTeam.includes(personId)) return prev;
+        if (currentTeam.includes(personId)) {
+          return prev;
+        }
 
         const newTeam = [...currentTeam, personId];
 
         return {
           ...prev,
-          episodes: prev.episodes.map((ep) => ({
-            ...ep,
-            events: ep.events.map((ev) =>
-              ev.id === selectedEventId
-                ? {
-                    ...ev,
-                    teams: { ...ev.teams, [teamIdx]: newTeam },
-                  }
-                : ev
-            ),
-          })),
+          episodes: prev.episodes.map((ep) => {
+            return {
+              ...ep,
+              events: ep.events.map((ev) => {
+                return ev.id === selectedEventId
+                  ? {
+                      ...ev,
+                      teams: { ...ev.teams, [teamIdx]: newTeam },
+                    }
+                  : ev;
+              }),
+            };
+          }),
         };
       });
     }
@@ -205,15 +273,19 @@ const MainBody: React.FC = () => {
    * Updates the event title.
    */
   const updateTitle = (newTitle: string) => {
-    saveData((prev) => ({
-      ...prev,
-      episodes: prev.episodes.map((ep) => ({
-        ...ep,
-        events: ep.events.map((ev) =>
-          ev.id === selectedEventId ? { ...ev, title: newTitle } : ev
-        ),
-      })),
-    }));
+    saveData((prev) => {
+      return {
+        ...prev,
+        episodes: prev.episodes.map((ep) => {
+          return {
+            ...ep,
+            events: ep.events.map((ev) => {
+              return ev.id === selectedEventId ? { ...ev, title: newTitle } : ev;
+            }),
+          };
+        }),
+      };
+    });
   };
 
   /**
@@ -221,19 +293,23 @@ const MainBody: React.FC = () => {
    */
   const handlePaste = async (e: React.ClipboardEvent, personId: number) => {
     const items = e.clipboardData?.items;
-    if (!items) return;
+    if (!items) {
+      return;
+    }
 
     for (const item of Array.from(items)) {
       if (item.type.indexOf('image') !== -1) {
         const blob = item.getAsFile();
-        if (!blob) continue;
+        if (!blob) {
+          continue;
+        }
 
         const reader = new FileReader();
         reader.onload = (event) => {
           const img = new Image();
           img.onload = () => {
             const canvas = document.createElement('canvas');
-            const size = 200; // Profile image size
+            const size = IMG_HEIGHT; // Profile image size
             canvas.width = size;
             canvas.height = size;
             const ctx = canvas.getContext('2d');
@@ -253,11 +329,16 @@ const MainBody: React.FC = () => {
     }
   };
 
-  const males = useMemo(() => filteredPeople.filter((p) => p.gender === 'male'), [filteredPeople]);
-  const females = useMemo(
-    () => filteredPeople.filter((p) => p.gender === 'female'),
-    [filteredPeople]
-  );
+  const males = useMemo(() => {
+    return filteredPeople.filter((p) => {
+      return p.gender === 'male';
+    });
+  }, [filteredPeople]);
+  const females = useMemo(() => {
+    return filteredPeople.filter((p) => {
+      return p.gender === 'female';
+    });
+  }, [filteredPeople]);
 
   const scale = data.bodyScale || 1;
   const descScale = data.descriptionScale || 1;
@@ -279,17 +360,29 @@ const MainBody: React.FC = () => {
   }, [males, females, scale]);
 
   const eventIndex = useMemo(() => {
-    if (selectedEpisodeId === null || selectedEventId === null) return -1;
-    const ep = data.episodes.find((e) => e.id === selectedEpisodeId);
-    if (!ep) return -1;
-    return ep.events.findIndex((e) => e.id === selectedEventId) + 1;
+    if (selectedEpisodeId === null || selectedEventId === null) {
+      return -1;
+    }
+    const ep = data.episodes.find((e) => {
+      return e.id === selectedEpisodeId;
+    });
+    if (!ep) {
+      return -1;
+    }
+    return (
+      ep.events.findIndex((e) => {
+        return e.id === selectedEventId;
+      }) + 1
+    );
   }, [data.episodes, selectedEpisodeId, selectedEventId]);
 
   /**
    * Side effect to auto-save the event as a JPG image after changes.
    */
   useEffect(() => {
-    if (episodeIndex <= 0 || eventIndex <= 0 || !currentEvent) return;
+    if (episodeIndex <= 0 || eventIndex <= 0 || !currentEvent) {
+      return;
+    }
 
     const timer = setTimeout(async () => {
       try {
@@ -297,14 +390,16 @@ const MainBody: React.FC = () => {
         const jpegBase64 = await svgToJpeg(svgString);
         const epIdx = String(episodeIndex).padStart(2, '0');
         const evIdx = String(eventIndex).padStart(2, '0');
-        await saveEventImage(`${epIdx}_${evIdx}.jpg`, jpegBase64);
+        await saveEventImage(`${epIdx}_${evIdx}.jpg`, jpegBase64, currentFolderPath, clientId);
       } catch (e) {
         console.error('Failed to debounced save image:', e);
       }
-    }, 1000);
+    }, DEBOUNCE_DELAY_MS);
 
-    return () => clearTimeout(timer);
-  }, [data, episodeIndex, eventIndex, currentEvent]);
+    return () => {
+      return clearTimeout(timer);
+    };
+  }, [data, episodeIndex, eventIndex, currentEvent, currentFolderPath, clientId]);
 
   if (selectedEpisodeId !== null && !currentEvent) {
     return <div className="flex-1 bg-white" />;
@@ -312,326 +407,368 @@ const MainBody: React.FC = () => {
 
   return (
     <div className="flex-1 overflow-auto bg-gray-50 relative">
-      <svg
-        width={totalWidth}
-        height={totalHeight}
-        viewBox={`0 0 ${totalWidth} ${totalHeight}`}
-        className="bg-white shadow-lg block"
-        style={{ minWidth: totalWidth, minHeight: totalHeight }}
-      >
-        <defs>
-          <marker
-            id="arrowhead-blue"
-            markerWidth="10"
-            markerHeight="7"
-            refX="9"
-            refY="3.5"
-            orient="auto"
-          >
-            <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb" />
-          </marker>
-          <marker
-            id="arrowhead-red"
-            markerWidth="10"
-            markerHeight="7"
-            refX="9"
-            refY="3.5"
-            orient="auto"
-          >
-            <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626" />
-          </marker>
-          <marker
-            id="arrowhead-lightblue"
-            markerWidth="10"
-            markerHeight="7"
-            refX="9"
-            refY="3.5"
-            orient="auto"
-          >
-            <polygon points="0 0, 10 3.5, 0 7" fill="#93c5fd" />
-          </marker>
-          <marker
-            id="arrowhead-lightred"
-            markerWidth="10"
-            markerHeight="7"
-            refX="9"
-            refY="3.5"
-            orient="auto"
-          >
-            <polygon points="0 0, 10 3.5, 0 7" fill="#fca5a5" />
-          </marker>
-        </defs>
-
-        {/* Title */}
-        {currentEvent && (
-          <foreignObject x={0} y={0} width={totalWidth} height={TITLE_HEIGHT * scale}>
-            <div
-              xmlns="http://www.w3.org/1999/xhtml"
-              className="w-full h-full flex justify-center items-center border-b border-gray-100 bg-gray-50"
+      <div className="min-w-max">
+        <svg
+          width={totalWidth}
+          height={totalHeight}
+          viewBox={`0 0 ${totalWidth} ${totalHeight}`}
+          className="bg-white shadow-lg block"
+          style={{ minWidth: totalWidth, minHeight: totalHeight }}
+        >
+          <defs>
+            <marker
+              id="arrowhead-blue"
+              markerWidth="10"
+              markerHeight="7"
+              refX="9"
+              refY="3.5"
+              orient="auto"
             >
-              <input
-                className="font-bold bg-transparent border-none text-center focus:ring-0 w-full"
-                style={{ fontSize: `${2 * scale}rem` }}
-                value={currentEvent.title}
-                onChange={(e) => updateTitle(e.target.value)}
-              />
-            </div>
-          </foreignObject>
-        )}
+              <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb" />
+            </marker>
+            <marker
+              id="arrowhead-red"
+              markerWidth="10"
+              markerHeight="7"
+              refX="9"
+              refY="3.5"
+              orient="auto"
+            >
+              <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626" />
+            </marker>
+            <marker
+              id="arrowhead-lightblue"
+              markerWidth="10"
+              markerHeight="7"
+              refX="9"
+              refY="3.5"
+              orient="auto"
+            >
+              <polygon points="0 0, 10 3.5, 0 7" fill="#93c5fd" />
+            </marker>
+            <marker
+              id="arrowhead-lightred"
+              markerWidth="10"
+              markerHeight="7"
+              refX="9"
+              refY="3.5"
+              orient="auto"
+            >
+              <polygon points="0 0, 10 3.5, 0 7" fill="#fca5a5" />
+            </marker>
+          </defs>
 
-        {/* Males */}
-        {males.map((p, i) => {
-          const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP)) * scale;
-          const isSelected = firstPersonId === p.id;
-          return (
-            <g key={`male-${p.id}`}>
-              {isSelected && (
-                <rect
-                  x={(X_MALE_IMG - 6) * scale}
-                  y={y - 6 * scale}
-                  width={(MALE_IMG_WIDTH + 12) * scale}
-                  height={(IMG_HEIGHT + 12) * scale}
-                  fill="none"
-                  stroke="#ff00ff"
-                  strokeWidth={4 * scale}
-                  rx={8 * scale}
+          {/* Title */}
+          {currentEvent && (
+            <foreignObject x={0} y={0} width={totalWidth} height={TITLE_HEIGHT * scale}>
+              <div
+                xmlns="http://www.w3.org/1999/xhtml"
+                className="w-full h-full flex justify-center items-center border-b border-gray-100 bg-gray-50"
+              >
+                <input
+                  className="font-bold bg-transparent border-none text-center focus:ring-0 w-full"
+                  style={{ fontSize: `${TITLE_FONT_SIZE * scale}rem` }}
+                  value={currentEvent.title}
+                  onChange={(e) => {
+                    return updateTitle(e.target.value);
+                  }}
                 />
-              )}
-              <foreignObject
-                x={X_MALE_TEXT * scale}
-                y={y}
-                width={MALE_TEXT_WIDTH * scale}
-                height={IMG_HEIGHT * scale}
-              >
-                <div
-                  xmlns="http://www.w3.org/1999/xhtml"
-                  className="flex flex-col text-right pr-2 h-full justify-start pt-2 w-full"
-                >
-                  <input
-                    className="font-bold bg-transparent border-none text-right focus:ring-0 p-0 text-blue-900 w-full"
-                    style={{ fontSize: `${1.8 * scale}rem` }}
-                    value={p.name}
-                    onChange={(e) => handleUpdatePerson(p.id, { name: e.target.value })}
-                  />
-                  <textarea
-                    className="overflow-hidden bg-transparent border-none text-right focus:ring-0 p-0 resize-none text-blue-800 w-full"
-                    style={{ fontSize: `${0.875 * scale * descScale}rem`, height: 'auto' }}
-                    value={p.description}
-                    rows={Math.max(2, p.description.split('\n').length)}
-                    onChange={(e) => handleUpdatePerson(p.id, { description: e.target.value })}
-                  />
-                </div>
-              </foreignObject>
-              <foreignObject
-                x={X_MALE_IMG * scale}
-                y={y}
-                width={MALE_IMG_WIDTH * scale}
-                height={IMG_HEIGHT * scale}
-              >
-                <div
-                  xmlns="http://www.w3.org/1999/xhtml"
-                  className="w-full h-full border-2 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-200"
-                  onClick={() => handlePersonClick(p.id)}
-                  onPaste={(e) => handlePaste(e, p.id)}
-                  tabIndex={0}
-                >
-                  {p.image ? (
-                    <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div
-                      className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 px-2 text-center"
-                      style={{ fontSize: `${0.75 * scale}rem` }}
-                    >
-                      No Image (Paste Here)
-                    </div>
-                  )}
-                </div>
-              </foreignObject>
-            </g>
-          );
-        })}
+              </div>
+            </foreignObject>
+          )}
 
-        {/* Females */}
-        {females.map((p, i) => {
-          const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP)) * scale;
-          const isSelected = firstPersonId === p.id;
-          return (
-            <g key={`female-${p.id}`}>
-              {isSelected && (
-                <rect
-                  x={(X_FEMALE_IMG - 6) * scale}
-                  y={y - 6 * scale}
-                  width={(FEMALE_IMG_WIDTH + 12) * scale}
-                  height={(IMG_HEIGHT + 12) * scale}
-                  fill="none"
-                  stroke="#ff00ff"
-                  strokeWidth={4 * scale}
-                  rx={8 * scale}
-                />
-              )}
-              <foreignObject
-                x={X_FEMALE_IMG * scale}
-                y={y}
-                width={FEMALE_IMG_WIDTH * scale}
-                height={IMG_HEIGHT * scale}
-              >
-                <div
-                  xmlns="http://www.w3.org/1999/xhtml"
-                  className="w-full h-full border-2 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-200"
-                  onClick={() => handlePersonClick(p.id)}
-                  onPaste={(e) => handlePaste(e, p.id)}
-                  tabIndex={0}
-                >
-                  {p.image ? (
-                    <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div
-                      className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 px-2 text-center"
-                      style={{ fontSize: `${0.75 * scale}rem` }}
-                    >
-                      No Image (Paste Here)
-                    </div>
-                  )}
-                </div>
-              </foreignObject>
-              <foreignObject
-                x={X_FEMALE_TEXT * scale}
-                y={y}
-                width={FEMALE_TEXT_WIDTH * scale}
-                height={IMG_HEIGHT * scale}
-              >
-                <div
-                  xmlns="http://www.w3.org/1999/xhtml"
-                  className="flex flex-col text-left pl-2 h-full justify-start pt-2 w-full"
-                >
-                  <input
-                    className="font-bold bg-transparent border-none text-left focus:ring-0 p-0 text-red-900 w-full"
-                    style={{ fontSize: `${1.8 * scale}rem` }}
-                    value={p.name}
-                    onChange={(e) => handleUpdatePerson(p.id, { name: e.target.value })}
-                  />
-                  <textarea
-                    className="overflow-hidden bg-transparent border-none text-left focus:ring-0 p-0 resize-none text-red-800 w-full"
-                    style={{ fontSize: `${0.875 * scale * descScale}rem`, height: 'auto' }}
-                    value={p.description}
-                    rows={Math.max(2, p.description.split('\n').length)}
-                    onChange={(e) => handleUpdatePerson(p.id, { description: e.target.value })}
-                  />
-                </div>
-              </foreignObject>
-            </g>
-          );
-        })}
-
-        {/* Messages Rendering: Relationship lines between participants */}
-        <g className="pointer-events-none">
-          {currentEvent?.messages.map((m, i) => {
-            const fromPos = personPositions[m.from];
-            const toPos = personPositions[m.to];
-            if (!fromPos || !toPos) return null;
-
-            const { color, marker } = getMessageStyle(m.type, fromPos.gender);
-            const { x1, y1, x2, y2 } = calculateMessageCoords(fromPos, toPos, scale);
-
-            /**
-             * Special Case: Intra-gender messages (Same gender)
-             * Draws a two-segment line via the center of the MID_WIDTH area to avoid overlapping profile images.
-             */
-            if (fromPos.gender === toPos.gender) {
-              const centerX = (X_MID + MID_WIDTH / 2) * scale;
-
-              return (
-                <g key={`msg-${i}`}>
-                  <line
-                    x1={x1}
-                    y1={y1}
-                    x2={centerX}
-                    y2={y2}
-                    stroke={color}
-                    strokeWidth={2 * scale}
-                  />
-                  <line
-                    x1={centerX}
-                    y1={y2}
-                    x2={x2}
-                    y2={y2}
-                    stroke={color}
-                    strokeWidth={2 * scale}
-                    markerEnd={`url(#${marker})`}
-                  />
-                </g>
-              );
-            }
-
-            // Normal Case: Cross-gender messages (Straight line)
+          {/* Males */}
+          {males.map((p, i) => {
+            const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP)) * scale;
+            const isSelected = firstPersonId === p.id;
             return (
-              <line
-                key={`msg-${i}`}
-                x1={x1}
-                y1={y1}
-                x2={x2}
-                y2={y2}
-                stroke={color}
-                strokeWidth={2 * scale}
-                markerEnd={`url(#${marker})`}
-              />
+              <g key={`male-${p.id}`}>
+                {isSelected && (
+                  <rect
+                    x={(X_MALE_IMG - SELECTION_PADDING) * scale}
+                    y={y - SELECTION_PADDING * scale}
+                    width={(MALE_IMG_WIDTH + SELECTION_PADDING * 2) * scale}
+                    height={(IMG_HEIGHT + SELECTION_PADDING * 2) * scale}
+                    fill="none"
+                    stroke="#ff00ff"
+                    strokeWidth={SELECTION_STROKE_WIDTH * scale}
+                    rx={SELECTION_CORNER_RADIUS * scale}
+                  />
+                )}
+                <foreignObject
+                  x={X_MALE_TEXT * scale}
+                  y={y}
+                  width={MALE_TEXT_WIDTH * scale}
+                  height={IMG_HEIGHT * scale}
+                >
+                  <div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    className="flex flex-col text-right pr-2 h-full justify-start pt-2 w-full"
+                  >
+                    <input
+                      className="font-bold bg-transparent border-none text-right focus:ring-0 p-0 text-blue-900 w-full"
+                      style={{ fontSize: `${NAME_FONT_SIZE * scale}rem` }}
+                      value={p.name}
+                      onChange={(e) => {
+                        return handleUpdatePerson(p.id, { name: e.target.value });
+                      }}
+                    />
+                    <textarea
+                      className="overflow-hidden bg-transparent border-none text-right focus:ring-0 p-0 resize-none text-blue-800 w-full"
+                      style={{
+                        fontSize: `${DESC_FONT_SIZE * scale * descScale}rem`,
+                        height: 'auto',
+                      }}
+                      value={p.description}
+                      rows={Math.max(MIN_DESC_ROWS, p.description.split('\n').length)}
+                      onChange={(e) => {
+                        return handleUpdatePerson(p.id, { description: e.target.value });
+                      }}
+                    />
+                  </div>
+                </foreignObject>
+                <foreignObject
+                  x={X_MALE_IMG * scale}
+                  y={y}
+                  width={MALE_IMG_WIDTH * scale}
+                  height={IMG_HEIGHT * scale}
+                >
+                  <div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    className="w-full h-full border-2 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-200"
+                    onClick={() => {
+                      return handlePersonClick(p.id);
+                    }}
+                    onPaste={(e) => {
+                      return handlePaste(e, p.id);
+                    }}
+                    tabIndex={0}
+                  >
+                    {p.image ? (
+                      <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div
+                        className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 px-2 text-center"
+                        style={{ fontSize: `${SMALL_FONT_SIZE * scale}rem` }}
+                      >
+                        No Image (Paste Here)
+                      </div>
+                    )}
+                  </div>
+                </foreignObject>
+              </g>
             );
           })}
-        </g>
 
-        {/* Teams Rendering: Collective hubs for group memberships */}
-        <g className="pointer-events-none">
-          {(() => {
-            if (!currentEvent) return null;
-
-            // Identify teams that actually have members visible in this episode
-            const concreteTeams = Object.entries(currentEvent.teams)
-              .map(([originalIndex, members]) => {
-                const validMembers = members.map((id) => personPositions[id]).filter(Boolean);
-                return validMembers.length > 0 ? { originalIndex, validMembers } : null;
-              })
-              .filter(Boolean);
-
-            return concreteTeams.map(({ originalIndex, validMembers }, concreteIndex) => {
-              /**
-               * Coordinate Calculation:
-               * teamY: Calculated as the average vertical center of all its members.
-               * teamX: Distributed evenly within the MID_WIDTH column based on the active team count.
-               */
-              const avgY = validMembers.reduce((sum, p) => sum + p.y, 0) / validMembers.length;
-              const teamX =
-                (X_MID + MID_WIDTH * ((Number(concreteIndex) + 1) / (concreteTeams.length + 1))) *
-                scale;
-              const teamY = avgY;
-
-              return (
-                <g key={`team-${originalIndex}`}>
-                  {/* The central hub point for the team */}
-                  <circle
-                    cx={teamX}
-                    cy={teamY}
-                    r={6 * scale}
-                    fill={TEAM_COLORS[Number(originalIndex)]}
+          {/* Females */}
+          {females.map((p, i) => {
+            const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP)) * scale;
+            const isSelected = firstPersonId === p.id;
+            return (
+              <g key={`female-${p.id}`}>
+                {isSelected && (
+                  <rect
+                    x={(X_FEMALE_IMG - SELECTION_PADDING) * scale}
+                    y={y - SELECTION_PADDING * scale}
+                    width={(FEMALE_IMG_WIDTH + SELECTION_PADDING * 2) * scale}
+                    height={(IMG_HEIGHT + SELECTION_PADDING * 2) * scale}
+                    fill="none"
+                    stroke="#ff00ff"
+                    strokeWidth={SELECTION_STROKE_WIDTH * scale}
+                    rx={SELECTION_CORNER_RADIUS * scale}
                   />
-                  {/* Dotted lines connecting each member to the hub */}
-                  {validMembers.map((p, i) => (
-                    <line
-                      key={`team-${originalIndex}-mem-${i}`}
-                      x1={calculatTeamMemberCoords(p, scale).x1}
-                      y1={calculatTeamMemberCoords(p, scale).y1}
-                      x2={teamX}
-                      y2={teamY}
-                      stroke={TEAM_COLORS[Number(originalIndex)]}
-                      strokeWidth={3 * scale}
-                      strokeDasharray={`${6 * scale} ${4 * scale}`}
+                )}
+                <foreignObject
+                  x={X_FEMALE_IMG * scale}
+                  y={y}
+                  width={FEMALE_IMG_WIDTH * scale}
+                  height={IMG_HEIGHT * scale}
+                >
+                  <div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    className="w-full h-full border-2 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-200"
+                    onClick={() => {
+                      return handlePersonClick(p.id);
+                    }}
+                    onPaste={(e) => {
+                      return handlePaste(e, p.id);
+                    }}
+                    tabIndex={0}
+                  >
+                    {p.image ? (
+                      <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <div
+                        className="w-full h-full bg-gray-300 flex items-center justify-center text-gray-500 px-2 text-center"
+                        style={{ fontSize: `${SMALL_FONT_SIZE * scale}rem` }}
+                      >
+                        No Image (Paste Here)
+                      </div>
+                    )}
+                  </div>
+                </foreignObject>
+                <foreignObject
+                  x={X_FEMALE_TEXT * scale}
+                  y={y}
+                  width={FEMALE_TEXT_WIDTH * scale}
+                  height={IMG_HEIGHT * scale}
+                >
+                  <div
+                    xmlns="http://www.w3.org/1999/xhtml"
+                    className="flex flex-col text-left pl-2 h-full justify-start pt-2 w-full"
+                  >
+                    <input
+                      className="font-bold bg-transparent border-none text-left focus:ring-0 p-0 text-red-900 w-full"
+                      style={{ fontSize: `${NAME_FONT_SIZE * scale}rem` }}
+                      value={p.name}
+                      onChange={(e) => {
+                        return handleUpdatePerson(p.id, { name: e.target.value });
+                      }}
                     />
-                  ))}
-                </g>
+                    <textarea
+                      className="overflow-hidden bg-transparent border-none text-left focus:ring-0 p-0 resize-none text-red-800 w-full"
+                      style={{
+                        fontSize: `${DESC_FONT_SIZE * scale * descScale}rem`,
+                        height: 'auto',
+                      }}
+                      value={p.description}
+                      rows={Math.max(MIN_DESC_ROWS, p.description.split('\n').length)}
+                      onChange={(e) => {
+                        return handleUpdatePerson(p.id, { description: e.target.value });
+                      }}
+                    />
+                  </div>
+                </foreignObject>
+              </g>
+            );
+          })}
+
+          {/* Messages Rendering: Relationship lines between participants */}
+          <g className="pointer-events-none">
+            {currentEvent?.messages.map((m, i) => {
+              const fromPos = personPositions[m.from];
+              const toPos = personPositions[m.to];
+              if (!fromPos || !toPos) {
+                return null;
+              }
+
+              const { color, marker } = getMessageStyle(m.type, fromPos.gender);
+              const { x1, y1, x2, y2 } = calculateMessageCoords(fromPos, toPos, scale);
+
+              /**
+               * Special Case: Intra-gender messages (Same gender)
+               * Draws a two-segment line via the center of the MID_WIDTH area to avoid overlapping profile images.
+               */
+              if (fromPos.gender === toPos.gender) {
+                const centerX = (X_MID + MID_WIDTH / MSG_CENTER_DIVIDER) * scale;
+
+                return (
+                  <g key={`msg-${i}`}>
+                    <line
+                      x1={x1}
+                      y1={y1}
+                      x2={centerX}
+                      y2={y2}
+                      stroke={color}
+                      strokeWidth={MESSAGE_STROKE_WIDTH * scale}
+                    />
+                    <line
+                      x1={centerX}
+                      y1={y2}
+                      x2={x2}
+                      y2={y2}
+                      stroke={color}
+                      strokeWidth={MESSAGE_STROKE_WIDTH * scale}
+                      markerEnd={`url(#${marker})`}
+                    />
+                  </g>
+                );
+              }
+
+              // Normal Case: Cross-gender messages (Straight line)
+              return (
+                <line
+                  key={`msg-${i}`}
+                  x1={x1}
+                  y1={y1}
+                  x2={x2}
+                  y2={y2}
+                  stroke={color}
+                  strokeWidth={MESSAGE_STROKE_WIDTH * scale}
+                  markerEnd={`url(#${marker})`}
+                />
               );
-            });
-          })()}
-        </g>
-      </svg>
+            })}
+          </g>
+
+          {/* Teams Rendering: Collective hubs for group memberships */}
+          <g className="pointer-events-none">
+            {(() => {
+              if (!currentEvent) {
+                return null;
+              }
+
+              // Identify teams that actually have members visible in this episode
+              const concreteTeams = Object.entries(currentEvent.teams)
+                .map(([originalIndex, members]) => {
+                  const validMembers = members
+                    .map((id) => {
+                      return personPositions[id];
+                    })
+                    .filter(Boolean);
+                  return validMembers.length > 0 ? { originalIndex, validMembers } : null;
+                })
+                .filter(Boolean) as {
+                originalIndex: string;
+                validMembers: { x: number; y: number }[];
+              }[];
+
+              return concreteTeams.map(({ originalIndex, validMembers }, concreteIndex) => {
+                /**
+                 * Coordinate Calculation:
+                 * teamY: Calculated as the average vertical center of all its members.
+                 * teamX: Distributed evenly within the MID_WIDTH column based on the active team count.
+                 */
+                const avgY =
+                  validMembers.reduce((sum, p) => {
+                    return sum + p.y;
+                  }, 0) / validMembers.length;
+                const teamX =
+                  (X_MID + MID_WIDTH * ((Number(concreteIndex) + 1) / (concreteTeams.length + 1))) *
+                  scale;
+                const teamY = avgY;
+
+                return (
+                  <g key={`team-${originalIndex}`}>
+                    {/* The central hub point for the team */}
+                    <circle
+                      cx={teamX}
+                      cy={teamY}
+                      r={TEAM_HUB_RADIUS * scale}
+                      fill={TEAM_COLORS[Number(originalIndex)]}
+                    />
+                    {/* Dotted lines connecting each member to the hub */}
+                    {validMembers.map((p, i) => {
+                      return (
+                        <line
+                          key={`team-${originalIndex}-mem-${i}`}
+                          x1={calculatTeamMemberCoords(p, scale).x1}
+                          y1={calculatTeamMemberCoords(p, scale).y1}
+                          x2={teamX}
+                          y2={teamY}
+                          stroke={TEAM_COLORS[Number(originalIndex)]}
+                          strokeWidth={TEAM_LINE_STROKE_WIDTH * scale}
+                          strokeDasharray={`${6 * scale} ${4 * scale}`}
+                        />
+                      );
+                    })}
+                  </g>
+                );
+              });
+            })()}
+          </g>
+        </svg>
+      </div>
     </div>
   );
 };

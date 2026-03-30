@@ -1,3 +1,6 @@
+const RANGE_STEP = 2;
+const AVG_CHAR_WIDTH_FACTOR = 0.55;
+
 /**
  * Layout Constants (Base dimensions in pixels before scaling)
  */
@@ -10,6 +13,24 @@ export const MID_WIDTH = 400; // Width of the central area for messages and team
 export const FEMALE_IMG_WIDTH = 200; // Width of the female profile image
 export const FEMALE_TEXT_WIDTH = 300; // Width of the female name/description column
 export const IMG_HEIGHT = 200; // Fixed height for all profile images
+
+/**
+ * Visual Styles
+ */
+export const SELECTION_PADDING = 6;
+export const SELECTION_STROKE_WIDTH = 4;
+export const SELECTION_CORNER_RADIUS = 8;
+export const MESSAGE_STROKE_WIDTH = 2;
+export const TEAM_HUB_RADIUS = 6;
+export const TEAM_LINE_STROKE_WIDTH = 3;
+
+/**
+ * Font Sizes (in rem units)
+ */
+export const TITLE_FONT_SIZE = 2;
+export const NAME_FONT_SIZE = 1.8;
+export const DESC_FONT_SIZE = 0.875;
+export const SMALL_FONT_SIZE = 0.75;
 
 /**
  * X-Coordinate Offsets (Horizontal positioning)
@@ -32,17 +53,27 @@ export const LINE_OFFSET_Y = 10;
  * Filters the people list based on whether the current episode index falls within their 'ranges'.
  */
 export function getFilteredPeople(data: AppData, episodeIndex: number) {
-  if (episodeIndex <= 0) return data.people;
+  if (episodeIndex <= 0) {
+    return data.people;
+  }
   return data.people.filter((p) => {
     const ranges = p.ranges
       .split(/\s+/)
-      .map(Number)
-      .filter((n) => !isNaN(n));
-    if (ranges.length === 0) return true; // Default to visible if no range specified
-    for (let i = 0; i < ranges.length; i += 2) {
+      .map((s) => {
+        return Number(s);
+      })
+      .filter((n) => {
+        return !isNaN(n);
+      });
+    if (ranges.length === 0) {
+      return true; // Default to visible if no range specified
+    }
+    for (let i = 0; i < ranges.length; i += RANGE_STEP) {
       const start = ranges[i];
       const end = ranges[i + 1] || Infinity;
-      if (episodeIndex >= start && episodeIndex <= end) return true;
+      if (episodeIndex >= start && episodeIndex <= end) {
+        return true;
+      }
     }
     return false;
   });
@@ -155,18 +186,22 @@ export function wrapText(text: string, maxWidth: number, fontSize: number): stri
   let currentLine = '';
 
   // Approximate character width (0.6 * fontSize is a decent guess for sans-serif)
-  const avgCharWidth = fontSize * 0.55;
+  const avgCharWidth = fontSize * AVG_CHAR_WIDTH_FACTOR;
 
   words.forEach((word) => {
     const testLine = currentLine ? `${currentLine} ${word}` : word;
     if (testLine.length * avgCharWidth > maxWidth) {
-      if (currentLine) lines.push(currentLine);
+      if (currentLine) {
+        lines.push(currentLine);
+      }
       currentLine = word;
     } else {
       currentLine = testLine;
     }
   });
 
-  if (currentLine) lines.push(currentLine);
+  if (currentLine) {
+    lines.push(currentLine);
+  }
   return lines;
 }

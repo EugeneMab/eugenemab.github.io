@@ -1,9 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useStore, ActiveMode } from '../store/useStore';
-import { Undo, ZoomIn, Type, Eraser, FolderOpen } from 'lucide-react';
+import { Undo, ZoomIn, Type, Eraser, FolderOpen, AlertCircle } from 'lucide-react';
 import { clsx } from 'clsx';
-import { TEAM_COLORS } from '../utils/layout';
+import {
+  TEAM_COLORS,
+  TITLE_HEIGHT,
+  PADDING,
+  IMG_HEIGHT,
+  ROW_GAP,
+  getFilteredPeople,
+} from '../utils/layout';
 import OpenFolderModal from './OpenFolderModal';
+
+const MAX_IMAGE_HEIGHT = 10240;
+
+const ICON_SIZE_18 = 18;
+const ICON_SIZE_20 = 20;
+const ICON_SIZE_24 = 24;
+const RANGE_STEP = 0.02;
+const BODY_SCALE_MIN = 0.02;
+const BODY_SCALE_MAX = 1.25;
+const DESC_SCALE_MIN = 0.25;
+const DESC_SCALE_MAX = 4;
 
 const TopButtonPane: React.FC = () => {
   const {
@@ -21,6 +39,27 @@ const TopButtonPane: React.FC = () => {
 
   const { bodyScale = 1, descriptionScale = 1 } = data;
 
+  const totalHeight = useMemo(() => {
+    if (selectedEpisodeId === null) {
+      return 0;
+    }
+    const episodeIndex =
+      data.episodes.findIndex((ep) => {
+        return ep.id === selectedEpisodeId;
+      }) + 1;
+    const filteredPeople = getFilteredPeople(data, episodeIndex);
+    const males = filteredPeople.filter((p) => {
+      return p.gender === 'male';
+    });
+    const females = filteredPeople.filter((p) => {
+      return p.gender === 'female';
+    });
+    const numRows = Math.max(males.length, females.length);
+    return TITLE_HEIGHT + PADDING + numRows * (IMG_HEIGHT + ROW_GAP);
+  }, [data, selectedEpisodeId]);
+
+  const showWarning = totalHeight > MAX_IMAGE_HEIGHT;
+
   return (
     <div className="h-16 bg-white border-b border-gray-200 flex items-center px-4 gap-4 shadow-sm z-10">
       {selectedEpisodeId !== null && (
@@ -32,7 +71,9 @@ const TopButtonPane: React.FC = () => {
               'w-10 h-10 border-2 rounded flex overflow-hidden hover:opacity-80 transition-opacity',
               activeMode === 'message' ? 'border-black scale-110' : 'border-gray-300'
             )}
-            onClick={() => setActiveMode(activeMode === 'message' ? 'select' : 'message')}
+            onClick={() => {
+              return setActiveMode(activeMode === 'message' ? 'select' : 'message');
+            }}
           >
             <div className="w-1/2 h-full bg-blue-600" />
             <div className="w-1/2 h-full bg-red-600" />
@@ -44,7 +85,9 @@ const TopButtonPane: React.FC = () => {
               'w-10 h-10 border-2 rounded flex overflow-hidden hover:opacity-80 transition-opacity',
               activeMode === 'weak-message' ? 'border-black scale-110' : 'border-gray-300'
             )}
-            onClick={() => setActiveMode(activeMode === 'weak-message' ? 'select' : 'weak-message')}
+            onClick={() => {
+              return setActiveMode(activeMode === 'weak-message' ? 'select' : 'weak-message');
+            }}
           >
             <div className="w-1/2 h-full bg-blue-300" />
             <div className="w-1/2 h-full bg-red-300" />
@@ -65,7 +108,9 @@ const TopButtonPane: React.FC = () => {
                     activeMode === mode ? 'border-black scale-125' : 'border-gray-200'
                   )}
                   style={{ backgroundColor: color }}
-                  onClick={() => setActiveMode(activeMode === mode ? 'select' : mode)}
+                  onClick={() => {
+                    return setActiveMode(activeMode === mode ? 'select' : mode);
+                  }}
                 />
               );
             })}
@@ -80,14 +125,26 @@ const TopButtonPane: React.FC = () => {
               'w-10 h-10 border-2 rounded flex items-center justify-center hover:opacity-80 transition-opacity',
               activeMode === 'eraser' ? 'border-black scale-110 bg-gray-200' : 'border-gray-300'
             )}
-            onClick={() => setActiveMode(activeMode === 'eraser' ? 'select' : 'eraser')}
+            onClick={() => {
+              return setActiveMode(activeMode === 'eraser' ? 'select' : 'eraser');
+            }}
           >
             <Eraser
-              size={24}
+              size={ICON_SIZE_24}
               className={clsx(activeMode === 'eraser' ? 'text-red-600' : 'text-gray-500')}
             />
           </button>
         </>
+      )}
+
+      {showWarning && (
+        <div
+          className="flex items-center gap-1 text-red-600 animate-pulse"
+          title={`Exported image height exceeds ${MAX_IMAGE_HEIGHT}px!`}
+        >
+          <AlertCircle size={ICON_SIZE_20} />
+          <span className="text-xs font-bold whitespace-nowrap">Too Tall!</span>
+        </div>
       )}
 
       {currentFolderPath && (
@@ -102,48 +159,68 @@ const TopButtonPane: React.FC = () => {
           {/* Global Scaling Sliders */}
           <div className="flex items-center gap-6 shrink-0">
             <div className="flex items-center gap-2">
-              <ZoomIn size={18} className="text-gray-500 shrink-0" />
+              <ZoomIn size={ICON_SIZE_18} className="text-gray-500 shrink-0" />
               <input
                 type="range"
-                min="0.02"
-                max="1.25"
-                step="0.02"
+                min={BODY_SCALE_MIN}
+                max={BODY_SCALE_MAX}
+                step={RANGE_STEP}
                 value={bodyScale}
-                onChange={(e) => setBodyScale(parseFloat(e.target.value))}
+                onChange={(e) => {
+                  return setBodyScale(parseFloat(e.target.value));
+                }}
                 className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
               />
             </div>
             <div className="flex items-center gap-2">
-              <Type size={18} className="text-gray-500 shrink-0" />
+              <Type size={ICON_SIZE_18} className="text-gray-500 shrink-0" />
               <input
                 type="range"
-                min="0.25"
-                max="4"
-                step="0.02"
+                min={DESC_SCALE_MIN}
+                max={DESC_SCALE_MAX}
+                step={RANGE_STEP}
                 value={descriptionScale}
-                onChange={(e) => setDescriptionScale(parseFloat(e.target.value))}
+                onChange={(e) => {
+                  return setDescriptionScale(parseFloat(e.target.value));
+                }}
                 className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
               />
             </div>
           </div>
 
           {/* Undo Last Action */}
-          <button title="Undo" className="p-2 hover:bg-gray-100 rounded text-gray-700" onClick={undo}>
-            <Undo size={24} />
+          <button
+            title="Undo"
+            className="p-2 hover:bg-gray-100 rounded text-gray-700"
+            onClick={() => {
+              return undo();
+            }}
+          >
+            <Undo size={ICON_SIZE_24} />
           </button>
         </>
       )}
+
+      {!currentFolderPath && <div className="flex-1" />}
 
       {/* Open Button */}
       <button
         title="Open Folder"
         className="p-2 hover:bg-gray-100 rounded text-blue-600 transition-colors"
-        onClick={() => setIsModalOpen(true)}
+        onClick={() => {
+          return setIsModalOpen(true);
+        }}
       >
-        <FolderOpen size={24} />
+        <FolderOpen size={ICON_SIZE_24} />
       </button>
 
-      {isModalOpen && <OpenFolderModal onClose={() => setIsModalOpen(false)} />}
+      {isModalOpen && (
+        <OpenFolderModal
+          onClose={() => {
+            return setIsModalOpen(false);
+          }}
+        />
+      )}
     </div>
   );
 };

@@ -1,4 +1,20 @@
-import axios, { AxiosRequestConfig } from 'axios';
+import axios from 'axios';
+import { toSafeBase64 } from '../store/useStore';
+
+const JPEG_QUALITY = 0.8;
+
+/**
+ * Builds a URL with folder and client-id parameters.
+ */
+function buildUrl(baseUrl: string, folderPath: string | null, clientId: string): string {
+  if (!folderPath) {
+    return baseUrl;
+  }
+  const url = new URL(baseUrl, window.location.origin);
+  url.searchParams.set('folder', toSafeBase64(folderPath));
+  url.searchParams.set('client-id', clientId);
+  return url.pathname + url.search;
+}
 
 export async function svgToJpeg(svgString: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -14,8 +30,7 @@ export async function svgToJpeg(svgString: string): Promise<string> {
       canvas.height = img.height;
       const ctx = canvas.getContext('2d');
       if (!ctx) {
-        reject(new Error('Failed to get canvas context'));
-        return;
+        return reject(new Error('Failed to get canvas context'));
       }
 
       // JPEG background must be solid (SVG is transparent by default)
@@ -23,12 +38,12 @@ export async function svgToJpeg(svgString: string): Promise<string> {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(img, 0, 0);
 
-      const jpegBase64 = canvas.toDataURL('image/jpeg', 0.8);
-      resolve(jpegBase64);
+      const jpegBase64 = canvas.toDataURL('image/jpeg', JPEG_QUALITY);
+      return resolve(jpegBase64);
     };
 
     img.onerror = (e) => {
-      reject(e);
+      return reject(e);
     };
 
     img.src = url;
@@ -38,11 +53,16 @@ export async function svgToJpeg(svgString: string): Promise<string> {
 export async function saveEventImage(
   filename: string,
   base64: string,
-  config?: AxiosRequestConfig
+  folderPath: string | null,
+  clientId: string
 ) {
-  await axios.post('/api/save-image', { filename, base64 }, config);
+  await axios.post(buildUrl('/api/save-image', folderPath, clientId), { filename, base64 });
 }
 
-export async function cleanupZombieImages(activeFilenames: string[], config?: AxiosRequestConfig) {
-  await axios.post('/api/cleanup-images', { activeFilenames }, config);
+export async function cleanupZombieImages(
+  activeFilenames: string[],
+  folderPath: string | null,
+  clientId: string
+) {
+  await axios.post(buildUrl('/api/cleanup-images', folderPath, clientId), { activeFilenames });
 }
