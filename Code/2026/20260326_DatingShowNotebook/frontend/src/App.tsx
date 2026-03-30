@@ -8,6 +8,8 @@ import ProgressModal from './components/ProgressModal';
 import InterruptionModal from './components/InterruptionModal';
 import { FolderOpen } from 'lucide-react';
 
+const ICON_SIZE_40 = 40;
+
 const App: React.FC = () => {
   const { selectedEpisodeId, currentFolderPath } = useStore();
 
@@ -21,7 +23,7 @@ const App: React.FC = () => {
             <div className="flex-1 flex flex-col items-center justify-center h-full bg-gray-50">
               <div className="bg-white p-12 rounded-2xl shadow-xl text-center max-w-lg border border-gray-100">
                 <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <FolderOpen size={40} />
+                  <FolderOpen size={ICON_SIZE_40} />
                 </div>
                 <h1 className="text-3xl font-bold text-gray-800 mb-2">Dating Show Notebook</h1>
                 <p className="text-gray-600 mb-0 leading-relaxed">

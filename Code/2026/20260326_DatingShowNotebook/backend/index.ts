@@ -20,7 +20,9 @@ function log(msg: string) {
 }
 
 log(`Restricted root: ${restrictedRoot}`);
-if (workFolder) log(`Work folder: ${workFolder}`);
+if (workFolder) {
+  log(`Work folder: ${workFolder}`);
+}
 
 const defaultData = {
   people: [],
@@ -44,7 +46,9 @@ const defaultData = {
 };
 
 function getFullPath(relPath: string) {
-  if (typeof relPath !== 'string') return restrictedRoot;
+  if (typeof relPath !== 'string') {
+    return restrictedRoot;
+  }
   const normalizedPath = path.normalize(relPath).replace(/^(\.\.(\/|\\|$))+/, '');
   const fullPath = path.resolve(restrictedRoot, normalizedPath);
   if (!fullPath.startsWith(restrictedRoot)) {
@@ -59,7 +63,9 @@ function getRelativePath(fullPath: string) {
 }
 
 async function backupData(data: unknown) {
-  if (!workFolder) return;
+  if (!workFolder) {
+    return;
+  }
   try {
     const backupDir = path.join(workFolder, 'DSN');
     if (!fs.existsSync(backupDir)) {
@@ -112,19 +118,22 @@ app.get('/api/browse', async (req, res) => {
       parentPath: fullPath === restrictedRoot ? null : getRelativePath(path.dirname(fullPath)),
       folders: folders.sort((a, b) => a.name.localeCompare(b.name)),
     });
-  } catch (e) {
-    log(`Error: Browse failed: ${e}`);
+  } catch (_e) {
+    log(`Error: Browse failed: ${_e}`);
     res.status(500).json({ error: 'Failed to browse' });
   }
 });
 
 app.post('/api/open', async (req, res) => {
   const { path: relPath, clientId } = req.body;
-  if (relPath === undefined || !clientId)
+  if (relPath === undefined || !clientId) {
     return res.status(400).json({ error: 'Missing path or clientId' });
+  }
 
   const fullPath = getFullPath(relPath);
-  if (!fs.existsSync(fullPath)) return res.status(404).json({ error: 'Folder not found' });
+  if (!fs.existsSync(fullPath)) {
+    return res.status(404).json({ error: 'Folder not found' });
+  }
 
   const dataPath = path.join(fullPath, 'data.json');
 
@@ -149,13 +158,32 @@ app.post('/api/open', async (req, res) => {
   }
 });
 
-function checkSession(req: express.Request, res: express.Response) {
-  const folderPath = req.headers['x-folder-path'] as string;
-  const clientId = req.headers['x-client-id'] as string;
+function fromSafeBase64(safeBase64: string): string {
+  let base64 = safeBase64.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  try {
+    return Buffer.from(base64, 'base64').toString('utf-8');
+  } catch (_e) {
+    return '';
+  }
+}
 
-  if (!folderPath || !clientId) {
-    log(`Error: Missing headers - Folder: ${folderPath}, Client: ${clientId}`);
-    res.status(400).json({ error: 'Missing x-folder-path or x-client-id' });
+function checkSession(req: express.Request, res: express.Response) {
+  const safeFolder = req.query.folder as string;
+  const clientId = req.query['client-id'] as string;
+
+  if (!safeFolder || !clientId) {
+    log(`Error: Missing query params - Folder: ${safeFolder}, Client: ${clientId}`);
+    res.status(400).json({ error: 'Missing folder or client-id' });
+    return null;
+  }
+
+  const folderPath = fromSafeBase64(safeFolder);
+  if (!folderPath) {
+    log(`Error: Invalid folder path encoding: ${safeFolder}`);
+    res.status(400).json({ error: 'Invalid folder encoding' });
     return null;
   }
 
@@ -172,7 +200,9 @@ function checkSession(req: express.Request, res: express.Response) {
 
 app.post('/api/data', async (req, res) => {
   const fullPath = checkSession(req, res);
-  if (!fullPath) return;
+  if (!fullPath) {
+    return;
+  }
 
   try {
     const dataPath = path.join(fullPath, 'data.json');
@@ -198,11 +228,15 @@ app.post('/api/data', async (req, res) => {
 
 app.post('/api/save-image', async (req, res) => {
   const fullPath = checkSession(req, res);
-  if (!fullPath) return;
+  if (!fullPath) {
+    return;
+  }
 
   try {
     const { filename, base64 } = req.body;
-    if (!filename || !base64) return res.status(400).json({ error: 'Missing filename or base64' });
+    if (!filename || !base64) {
+      return res.status(400).json({ error: 'Missing filename or base64' });
+    }
 
     // Sanitize filename: only allow a-z, A-Z, 0-9, _, ., -
     const sanitizedFilename = filename.replace(/[^a-zA-Z0-9_.-]/g, '');
@@ -224,12 +258,15 @@ app.post('/api/save-image', async (req, res) => {
 
 app.post('/api/cleanup-images', async (req, res) => {
   const fullPath = checkSession(req, res);
-  if (!fullPath) return;
+  if (!fullPath) {
+    return;
+  }
 
   try {
     const { activeFilenames } = req.body;
-    if (!activeFilenames || !Array.isArray(activeFilenames))
+    if (!activeFilenames || !Array.isArray(activeFilenames)) {
       return res.status(400).json({ error: 'Missing or invalid activeFilenames' });
+    }
 
     const files = await fsp.readdir(fullPath);
     const regex = /^\d\d_\d\d\.jpg$/;
@@ -251,7 +288,9 @@ app.post('/api/cleanup-images', async (req, res) => {
 app.post('/api/shutdown', (req, res) => {
   log('System: Shutdown requested');
   res.json({ success: true });
-  setTimeout(() => process.exit(0), 100);
+  setTimeout(() => {
+    process.exit(0);
+  }, 100);
 });
 
 app.listen(port, () => {
