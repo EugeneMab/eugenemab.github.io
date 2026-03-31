@@ -66,6 +66,259 @@
           return;
         }
       }
+
+      // Interactive Converter Logic
+      var VOWEL_COMBINATIONS = [
+        'iai', 'iei', 'ioi',
+        'iau', 'ieu', 'iou',
+        'uai', 'uei', 'uoi',
+        'uau', 'ueu', 'uou',
+        'ai', 'ei', 'oi',
+        'au', 'eu', 'ou',
+        'ia', 'ie', 'io',
+        'ua', 'ue', 'uo',
+        'a', 'e', 'i', 'o', 'u',
+      ];
+
+      // Output an array of consonant, wherein "ts" and "dz" are treated a one consonant
+      function tokenizeConsonants(str) {
+        var res = [];
+        var i = 0;
+        while (i < str.length) {
+          if (str.startsWith("ts", i) || str.startsWith("dz", i)) {
+            res.push(str.substring(i, i+2));
+            i += 2;
+          }
+          else { res.push(str[i]); i++; }
+        }
+        return res;
+      }
+
+      function syllabify(text) {
+        var positions = [];
+        var i = 0;
+        while (i < text.length) {
+          var matched = false;
+          for (var vc of VOWEL_COMBINATIONS) {
+            if (text.startsWith(vc, i)) {
+              positions.push({ start: i, end: i + vc.length, vc: vc });
+              i += vc.length;
+              matched = true;
+              break;
+            }
+          }
+          if (!matched) {
+            i++;
+          }
+        }
+        if (positions.length === 0) {
+          // If no vowel, no change
+          return [text];
+        }
+        
+        var syllables = positions.map(function(p) { 
+          return { vc: p.vc, start: p.start, end: p.end, pre: [], post: [] }; 
+        });
+        
+        for (var idx = 1; idx < syllables.length; idx++) {
+          var prevEnd = syllables[idx - 1].end;
+          var currStart = syllables[idx].start;
+          var mid = text.substring(prevEnd, currStart);
+          var units = tokenizeConsonants(mid);
+          
+          var claimed = [];
+          var k = units.length - 1;
+          var stop = false;
+          while (k >= 0 && !stop) {
+            var u = units[k];
+            if (u === 'w') {
+              // w
+              claimed.unshift(u);
+              k--;
+              if (k >= 0) {
+                if ('ptk'.indexOf(units[k]) !== -1) {
+                  // pw tw kw
+                  claimed.unshift(units[k]);
+                  k--;
+                  if (k >= 0 && units[k] === 's') {
+                    // spw stw skw
+                    claimed.unshift(units[k]);
+                    k--;
+                  }
+                } else if ('bdg'.indexOf(units[k]) !== -1) {
+                  // bw dw gw
+                  claimed.unshift(units[k]); k--;
+                }
+              }
+              stop = true;
+            } else if (u === 'l') {
+              // l
+              claimed.unshift(u);
+              k--;
+              if (k >= 0) {
+                if ('pk'.indexOf(units[k]) !== -1) {
+                  // pw kw
+                  claimed.unshift(units[k]);
+                  k--;
+                  if (k >= 0 && units[k] === 's') {
+                    // spw skw
+                    claimed.unshift(units[k]);
+                    k--;
+                  }
+                } else if ('bg'.indexOf(units[k]) !== -1) {
+                  // bw gw
+                  claimed.unshift(units[k]); k--;
+                }
+              }
+              stop = true;
+            } else if ('ptk'.indexOf(u) !== -1) {
+              // p t k
+              claimed.unshift(u);
+              k--;
+              if (k >= 0 && units[k] === 's') {
+                // sp st sk
+                claimed.unshift(units[k]);
+                k--;
+              }
+              stop = true;
+            } else {
+              // standalone onset consonant
+              claimed.unshift(u);
+              k--;
+              stop = true;
+            }
+          }
+          syllables[idx].pre = claimed;
+          syllables[idx-1].post = units.slice(0, k + 1);
+        }
+        
+        syllables[0].pre = tokenizeConsonants(text.substring(0, syllables[0].start));
+        syllables[syllables.length-1].post = tokenizeConsonants(text.substring(syllables[syllables.length-1].end));
+        
+        return syllables.map(function(s) {
+          return s.pre.join("") + s.vc + s.post.join("");
+        });
+      }
+
+      function convertSyllable(s) {
+        var vMatch = null;
+        for (var vc of VOWEL_COMBINATIONS) {
+          var idx = s.indexOf(vc);
+          if (idx !== -1) {
+            vMatch = { vc: vc, start: idx, end: idx + vc.length };
+            break;
+          }
+        }
+        if (!vMatch) {
+          return s;
+        }
+
+        var pre = tokenizeConsonants(s.substring(0, vMatch.start));
+        var post = tokenizeConsonants(s.substring(vMatch.end));
+        var vc = vMatch.vc;
+        var fv = vc[0];
+        var lv = vc[vc.length - 1];
+        
+        var pc = pre.length > 0 ? pre[0] : "";
+        var bsc = pre.slice(1);
+        
+        var pn = "";
+        var asc = [];
+        for (var i = 0; i < post.length; i++) {
+          if ((post[i] === 'm' || post[i] === 'n') && pn === "") {
+            pn = post[i];
+          }
+          else {
+            asc.push(post[i]);
+          }
+        }
+        
+        var sc = bsc.concat(asc);
+        var res = pc;
+        
+        function getX(c, v) {
+          if ("bpfv".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "uf" : (v==='i'?"uf":"iuf");
+          if ("dt".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "ih" : (v==='i'?"uih":"ij");
+          if ("s".indexOf(c) !== -1 || c==="ts" || c==="dz") return "aeo".indexOf(v) !== -1 ? "ij" : (v==='i'?"uij":"ij");
+          if ("gk".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "uh" : (v==='i'?"uh":"iuh");
+          if (c === "w") return "aeo".indexOf(v) !== -1 ? "uw" : (v==='i'?"uw":"iuw");
+          if (c === "l") return "aeo".indexOf(v) !== -1 ? "uv" : (v==='i'?"uv":"iuv");
+          if (c === "m") return "aeo".indexOf(v) !== -1 ? "uf" : (v==='i'?"uf":"iuf");
+          if (c === "n") return "aeo".indexOf(v) !== -1 ? "ih" : (v==='i'?"uih":"ihu");
+          return "";
+        }
+        function getY(c, v) {
+          if ("bpfv".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "fu" : (v==='i'?"fu":"fui");
+          if ("dt".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "hi" : (v==='i'?"hiu":"ji");
+          if ("s".indexOf(c) !== -1 || c==="ts" || c==="dz") return "aeo".indexOf(v) !== -1 ? "ji" : (v==='i'?"jiu":"ji");
+          if ("gk".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "hu" : (v==='i'?"hu":"hui");
+          if (c === "w") return "aeo".indexOf(v) !== -1 ? "wu" : (v==='i'?"wu":"wui");
+          if (c === "l") return "aeo".indexOf(v) !== -1 ? "vu" : (v==='i'?"vu":"vui");
+          return "";
+        }
+        function getZ(c) {
+          if ("bpfv".indexOf(c) !== -1) return "m";
+          if ("dtgk".indexOf(c) !== -1) return "n";
+          return "";
+        }
+
+        if (pn !== "") {
+          if (sc.length === 0) res += vc + pn;
+          else if (sc.length === 1 && bsc.length === 1) res += getX(bsc[0], fv) + vc + pn;
+          else if (sc.length === 1 && asc.length === 1) res += vc + getY(asc[0], lv) + pn;
+          else if (sc.length >= 2) res += getX(sc[0], fv) + vc + getY(sc[1], lv) + pn;
+        } else {
+          if (sc.length === 0) res += vc;
+          else if (sc.length === 1 && bsc.length === 1) res += getX(bsc[0], fv) + vc;
+          else if (sc.length === 1 && asc.length === 1) res += vc + getY(asc[0], lv);
+          else if (sc.length === 2) res += getX(sc[0], fv) + vc + getY(sc[1], lv);
+          else if (sc.length >= 3) res += getX(sc[0], fv) + vc + getY(sc[1], lv) + getZ(sc[2]);
+        }
+        return res;
+      }
+
+      function doConvert() {
+        var input = document.getElementById("convInput").value.toLowerCase();
+        var error = document.getElementById("convError");
+        var step3Out = document.getElementById("convStep3");
+        var step4Out = document.getElementById("convStep4");
+        error.innerHTML = "";
+        step3Out.value = "";
+        step4Out.value = "";
+        if (!input) {
+          return;
+        }
+        // Split words
+        var interleaving = input.split(/([a-z]+)/).filter(s => s !== '');
+        var results3 = [], results4 = [];
+        for (let index = 0; index < interleaving.length; index++) {
+          const item = interleaving[index];
+          if (index % 2 == 1) {
+            results3.push(item);
+            results4.push(item);
+            continue;
+          }
+          const word = item;
+          // Valid alphabet
+          var invalid = word.match(/[^abdefghijklmnopstuvwz]/g);
+          if (invalid) {
+            error.innerHTML = "Invalid characters found (Step 1/2 missed): " + Array.from(new Set(invalid)).join(", ") + " for word " + word;
+            return;
+          }
+          // 'z' must be preceded by 'd' (forming 'dz')
+          // Look for any 'z' that does NOT have a 'd' before it, or is at the very start
+          if (/(^|[^d])z/.test(word)) {
+            error.innerHTML = "Invalid sequence: 'z' must always be preceded by 'd' (to form 'dz') for word " + word;
+            return;
+          }
+          var syls = syllabify(word);
+          results3.push(syls.join("-"));
+          results4.push(syls.map(convertSyllable).join(""));
+        }
+        step3Out.value = results3.join("");
+        step4Out.value = results4.join("");
+      }
+
     </script>
   </head>
   <body bgcolor="#f0fff0" text="#1f3f7d" onload="onLoad()">
@@ -119,9 +372,9 @@
       </h2>
     </center>
     <h3><span class="t"
-      c="基本原则: 把拉丁词汇转换为{辅音-软音-元音-软音-鼻音}{C-S-V-S-N}结构"
-      d="Le puwintsipuve: a konvuwehi le vuwefu de Latin entewu la sijuhuintuwui de {Konsonahin-Sufohi-Vovevu-Sufohi-Nasavu} {K-S-V-S-N}"
-      >Principles: convert Latin words into {Consonant-Soft-Vowel-Soft-Nasal} {C-S-V-S-N} structure</span>
+      c="基本原则: 把拉丁或者英语词汇转换为{辅音-软音-元音-软音-鼻音}{C-S-V-S-N}结构"
+      d="Le puwintsipuve: a konvuwehi le vuwefu de Latin o Anguveji entewu la sijuhuintuwui de {Konsonahin-Sufohi-Vovevu-Sufohi-Nasavu} {K-S-V-S-N}"
+      >Principles: convert Latin words or English words into {Consonant-Soft-Vowel-Soft-Nasal} {C-S-V-S-N} structure</span>
     </h3>
     <h3><span class="t"
       c="第一步:简化辅音和辅音组合"
@@ -170,9 +423,92 @@
         >Convert vowel {y} to {i}.</span>
     </p>
     <h3><span class="t"
-      c="第三步:转换辅音"
-      d="La sihefu tuwi mo: a konvuwehi le konsonahin"
-      >Step 3: Convert the consonants</span></h3>
+      c="第三步:划分音节"
+      d="La sihefu tuwi mo: a sepawahi a le sivulabuve"
+      >Step 3: Break down to syllables</span></h3>
+    <p>
+      <span class="t"
+        c="按照如下规则划分音节."
+        d="Sepawahi u vuwefu a le sivulabuve pe le weguvui infuwa."
+        >Break down a word to syllables according to the rules as below.</span>
+    </p>
+    <p>
+      <ul>
+        <li class="t"
+          c="每个元音组合(如 {a}, {ai}, {iai})是一个音节的起点."
+          d="Pewi kombinatsion de vovevu (ko {a}, {ai}, {iai}) eji la owidzin de u sivulabuve."
+          >Each vowel combination (such as {a}, {ai}, {iai}) is a syllable starting point.</li>
+      </ul>
+      <ul>
+        <li class="t"
+          c="最左边的元音组合向左延伸至最左边."
+          d="La vovevu la fo sinsihewu ehusihehin la sivulabuve a la fo sinsihewu."
+          >The leftmost vowel combination extends the syllable to the leftmost.</li>
+      </ul>
+      <ul>
+        <li class="t"
+          c="最右边的元音组合向左延伸至最右边."
+          d="La vovevu la fo dehusihewu ehusihehin la sivulabuve a la fo duhusihewu."
+          >The rightmost vowel combination extends the syllable to the rightmost.</li>
+      </ul>
+      <ul>
+        <li class="t"
+          c="词中的元音组合向左延伸，匹配有效的起始辅音组合(如 {spl}, {tp}, {br})：."
+          d="La vovevu intewumediahi ehusihehin la sivulabuve a la sinsihewu a enkontewu u kombinatsion de konsonahin po onsehi valihiu (ko {spl}, {st}, {br})."
+          >The middle vowel combination extends the syllable to the left to match a valid onset consonant combination (such as {spl}, {st}, {br}).</li>
+      </ul>
+      <ul>
+        <li class="t"
+          c="剩余的辅音归入其左侧的音节."
+          d="Le konsonahin wemandewu ahitaji a la sivulabuve su lo lahi sinsihewu."
+          >The remaing consonants attaches to the syllbables on their left side.</li>
+      </ul>
+    </p>
+    <p>
+      <span class="t"
+        c="有效的元音组合:"
+        d="Kombinatsion de vovewu valihiu:"
+        >Table of valid vowel combinations:</span>
+    </p>
+    <center>
+      <table>
+        <tr><td>  a  </td><td>  e  </td><td>  i  </td><td>  o  </td><td>  u  </td></tr>
+        <tr><td>  ai </td><td>  ei </td><td>     </td><td>  oi </td><td>     </td></tr>
+        <tr><td>  au </td><td>  eu </td><td>     </td><td>  ou </td><td>     </td></tr>
+        <tr><td> ia  </td><td> ie  </td><td>     </td><td> io  </td><td>     </td></tr>
+        <tr><td> iai </td><td> iei </td><td>     </td><td> ioi </td><td>     </td></tr>
+        <tr><td> iau </td><td> ieu </td><td>     </td><td> iou </td><td>     </td></tr>
+        <tr><td> ua  </td><td> ue  </td><td>     </td><td> uo  </td><td>     </td></tr>
+        <tr><td> uai </td><td> uei </td><td>     </td><td> uoi </td><td>     </td></tr>
+        <tr><td> uau </td><td> ueu </td><td>     </td><td> uou </td><td>     </td></tr>
+      </table>
+    </center>
+    <p>
+      <span class="t"
+        c="有效的起始辅音组合:"
+        d="Kombinatsion de konsonahin po onsehi valihiu:"
+        >Table of valid onset consonant combinations:</span>
+    </p>
+    <center>
+      <table>
+        <tr><td>{m}</td><td>{f}</td><td>{v}</td><td>    </td><td>    </td></tr>
+        <tr><td>{n}</td><td>{s}</td><td>{j}</td><td>{ts}</td><td>{dz}</td></tr>
+        <tr><td>{h}</td><td>{w}</td><td>{l}</td><td>    </td><td>    </td></tr>
+      </table>
+    </center>
+    <p>
+    </p>
+    <center>
+      <table>
+        <tr><td>  b  </td><td>  d  </td><td>  g  </td><td>  p  </td><td>  t  </td><td>  k  </td><td> sp  </td><td> st  </td><td> sk  </td></tr>
+        <tr><td>  bw </td><td>  dw </td><td>  gw </td><td>  pw </td><td>  tw </td><td>  kw </td><td> spw </td><td> stw </td><td> skw </td></tr>
+        <tr><td>  bl </td><td>     </td><td>  gl </td><td>  pl </td><td>     </td><td>  kl </td><td> spl </td><td>     </td><td> skl </td></tr>
+      </table>
+    </center>
+    <h3><span class="t"
+      c="第四步:转换辅音"
+      d="La sihefu kihawu mo: a konvuwehi le konsonahin"
+      >Step 4: Convert the consonants</span></h3>
     <p>
       <span class="t"
         c="把音节的结构做如下的分类."
@@ -244,14 +580,20 @@
         <tr><td>n      </td><td>ih        </td><td>uih   </td><td>ihu   </td><td>-         </td><td>-     </td><td>-     </td><td>-    </td></tr>
       </table>
     </center>
+    <p>
+      <span class="t"
+        c=" 如果单词以元音开头，主辅音(PC) 视为空。这允许单词以“软音”或纯元音直接开头."
+        d="Si u vuwefu owidzinahi kon u vovewu, la PC eji weguwahi ti ko nuvui. Pewumihiu ivu la vuwefu a owidzinahi kon u son sufohi o u vovewu."
+        >If a word starts with a vowel, the PC is treated as empty. It allows the word to start with a "soft" sound or a raw vowel).</span>
+    </p>
     <pre style="display:none">
       18*7*5*7*3=13,230
       SC       X                             Y                           Z
       .        FV= a|e|o FV=i FV=u           LV=a|e|o FV=i FV=u
       b p f v  uf        uf   iuf            fu       fu   fui           m
-      d t      ih        uih  ihu            hi       hiu  uhi           n
-      s ts dz  ij        uij  ij             ji       jiu  ji            -
-      g k      uh        uhi  iuh            hu       ihu  hui           n
+      d t      ih        uih  ij   *         hi       hiu  ji  *         n
+      s ts dz  ij        uij  ij   *         ji       jiu  ji  *         -
+      g k      uh        uh   iuh            hu       hu   hui           n
       w(r)     uw        uw   iuw            wu       wu   wui           -
       l        uv        uv   iuv            vu       vu   vui           -
       m        uf        uf   iuf            -        -    -             -
@@ -266,8 +608,8 @@
     <p>
       <span class="t"
         c="第一列是拉丁语单词."
-        d="La kolum un mo eji la vuwefu de Latin."
-        >The first column is Latin word.</span>
+        d="La kolum un mo eji la vuwefu de Latin or Anguveji."
+        >The first column is Latin or English word.</span>
       <span class="t"
         c="第二列是使用转化表之前的形式.大写字母是主辅音."
         d="La kolum duji mo eji la fowum ante utilijiu la konvewusion tabuve. Le lehitewu kapitavu eji le puwimawi konsonahin."
@@ -279,7 +621,7 @@
     </p>
     <center>
       <table>
-        <tr><td> Latin         </td><td> Before Table </td><td> Doudouling         </td></tr>
+        <tr><td> Latin/English </td><td> Before Table </td><td> Doudouling         </td></tr>
         <tr><td> state         </td><td> Stat         </td><td> sihahi             </td></tr>
         <tr><td> sper          </td><td> Spew         </td><td> sufewu             </td></tr>
         <tr><td> sport         </td><td> Spowt        </td><td> sufowun            </td></tr>
@@ -296,18 +638,18 @@
         <tr><td> chocolate     </td><td> TsoKoLat     </td><td> tsokolahi          </td></tr>
         <tr><td> just          </td><td> DZsut        </td><td> dzijuji            </td></tr>
         <tr><td> adoption      </td><td> aDopTSion    </td><td> adofutsion         </td></tr>
-        <tr><td> train         </td><td> Train        </td><td> tuwain             </td></tr>
-        <tr><td> tract         </td><td> Trakt        </td><td> tuwahun            </td></tr>
+        <tr><td> train         </td><td> Twain        </td><td> tuwain             </td></tr>
+        <tr><td> tract         </td><td> Twakt        </td><td> tuwahun            </td></tr>
         <tr><td> create        </td><td> Kwe-at       </td><td> kuweahi            </td></tr>
         <tr><td> class         </td><td> Klass        </td><td> kuvaji             </td></tr>
         <tr><td> cause         </td><td> Kaus         </td><td> kauji              </td></tr>
         <tr><td> daemon        </td><td> Daemon       </td><td> daemon             </td></tr>
         <tr><td> coffee        </td><td> KofFee       </td><td> kofufee            </td></tr>
-        <tr><td> moustache     </td><td> MousTats     </td><td> moujitaji          </td></tr>
+        <tr><td> moustache     </td><td> MouStats     </td><td> mousihaji          </td></tr>
         <tr><td> phoenix       </td><td> FoeNkis      </td><td> foenuhijiu         </td></tr>
         <tr><td> phoenician    </td><td> FoeNiTSian   </td><td> foenitsian         </td></tr>
         <tr><td> europe        </td><td> euWop        </td><td> euwofu             </td></tr>
-        <tr><td> return        </td><td> WeTurn       </td><td> wetuwuin           </td></tr>
+        <tr><td> return        </td><td> WeTuwn       </td><td> wetuwuin           </td></tr>
         <tr><td> depart        </td><td> DePwat       </td><td> depuwahi           </td></tr>
         <tr><td> alt           </td><td> lat          </td><td> uvahi              </td></tr>
         <tr><td> art           </td><td> wat          </td><td> uwahi              </td></tr>
@@ -320,27 +662,28 @@
         <tr><td> autumn        </td><td> auTunm       </td><td> autum              </td></tr>
         <tr><td> environment   </td><td> enViWonMetn  </td><td> enviwonmehin       </td></tr>
         <tr><td> fact          </td><td> Fkat         </td><td> fuhahi             </td></tr>
-        <tr><td> experiment    </td><td> kesPeWiMetn  </td><td> uhejipewimehin     </td></tr>
-        <tr><td> expresss      </td><td> kesPress     </td><td> uhejipuweji        </td></tr>
+        <tr><td> experiment    </td><td> ekSpeWiMetn  </td><td> ehusufewimehin     </td></tr>
+        <tr><td> expresss      </td><td> ekSpwess     </td><td> ehusufewu          </td></tr>
         <tr><td> sign          </td><td> Sign         </td><td> sihun              </td></tr>
         <tr><td> sing          </td><td> Sign         </td><td> sihun              </td></tr>
         <tr><td> skin          </td><td> Skin         </td><td> suhin              </td></tr>
         <tr><td> dogmatic      </td><td> DogMaTik     </td><td> dohumatihu         </td></tr>
-        <tr><td> construct     </td><td> KonSturk     </td><td> konsijuhuin        </td></tr>
+        <tr><td> construct     </td><td> KonStuwk     </td><td> konsijuwuin        </td></tr>
         <tr><td> verb          </td><td> Vweb         </td><td> vuwefu             </td></tr>
         <tr><td> partner       </td><td> PwatNew      </td><td> puwahinewu         </td></tr>
         <tr><td> investment    </td><td> inVsetMetn   </td><td> invijehimehin      </td></tr>
         <tr><td> continue      </td><td> KonTiNu      </td><td> kontinu            </td></tr>
         <tr><td> Doudouling    </td><td> DouDouLign   </td><td> doudoulihun        </td></tr>
         <tr><td> data          </td><td> DaTa         </td><td> data               </td></tr>
-        <tr><td> exact         </td><td> ekSkat       </td><td> ehusijahi          </td></tr>
+        <tr><td> exact         </td><td> ekSkat       </td><td> ehusuhahi          </td></tr>
         <tr><td> slave         </td><td> Slav         </td><td> suvafu             </td></tr>
         <tr><td> salv          </td><td> Slav         </td><td> suvafu             </td></tr>
         <tr><td> next          </td><td> Nkest        </td><td> nuhejin            </td></tr>
         <tr><td> stunt         </td><td> Stutn        </td><td> sijujin            </td></tr>
         <tr><td> complex       </td><td> KomPleks     </td><td> kompuvehu          </td></tr>
-        <tr><td> start         </td><td> Start        </td><td> sihawun            </td></tr>
-        <tr><td> strate        </td><td> Start        </td><td> sihawun            </td></tr>
+        <tr><td> start         </td><td> Stawt        </td><td> sihawun            </td></tr>
+        <tr><td> strate        </td><td> Stawt        </td><td> sihawun            </td></tr>
+        <tr><td> transfer      </td><td> TwasnFew     </td><td> tuwajinfewu        </td></tr>
         <!--
         <tr><td>               </td><td>              </td><td>                    </td></tr>
         -->
@@ -372,9 +715,9 @@
         d="Po pewi giuwufui, la lin un mo eji la Doudoulihun;"
         >For each group, the first line is Doudouling;</span>
       <span class="t"
-        c="第二行是拉丁词根;"
-        d="la lin duji mo eji le waduhijiu de Latin;"
-        >the second line is Latin roots;</span>
+        c="第二行是拉丁或英语词根;"
+        d="la lin duji mo eji le waduhijiu de Latin o Anguveji;"
+        >the second line is Latin or English roots;</span>
       <span class="t"
         c="第三行是英语原文."
         d="e la lin tuwi mo eji la semahin in Anguveji."
@@ -395,9 +738,9 @@
       --------- --------- --------- --------- --------- --------- --------- ---------
       11:2
 
-      Du  vojaji he  lu  a  la   owientavu, ohukuwui he  ivu ke   dijiukovewu ha  lu  un
-      dur voyage hab lor ad illa oriental , occur    hab il  que  discover    hab lor un
-      As  they journeyed east             , it happened,     that they have found     a
+      Du  vojaji he  lu  a  la   owientavu, ohukuwui he  ivu ke   disuhovewu ha  lu  un
+      dur voyage hab lor ad illa oriental , occur    hab il  que  discover   hab lor un
+      As  they journeyed east             , it happened,     that they have found    a
 
       puvan in la   tewu de la   Tsinawu; e   vifu  he  lu  ihiu .
       plan  in illa terr de illa Shinar ; et  viv   hab lor id   .
@@ -417,7 +760,7 @@
       --------- --------- --------- --------- --------- --------- --------- ---------
       11:4
 
-      Dihu lu  , "Ven , ni    luhaji konsijuhuin po  ni    un iuwufui, e   un tuwuiwehi,
+      Dihu lu  , "Ven , ni    luhaji konsijuwuin po  ni    un iuwufui, e   un tuwuiwehi,
       dikt lor , "ven , nostr lax    construct   pro nostr un urb    , et  un turret   ,
       They said, "Come, let's        build       us        a  city   , and a  tower    ,
 
@@ -436,7 +779,7 @@
       Jehowa  descend    ad mir  illa urb     et  la  turret   , que   illa infant   de ill hom
       Yahweh  came down  to see  the  city    and the tower    , which the  children of     men
 
-      konsijuhuin ha .
+      konsijuwuin ha .
       construct   hab.
       had built      .
 
@@ -473,7 +816,7 @@
       ad  Jehowa  lor divid      ad ulter    de   id    ad illa surface   de tot  illa mund .
       So  Yahweh  scattered them abroad      from there on the  surface   of all  the  earth.
 
-      Wijehi lu  a  konsijuhuin la   iuwufui.
+      Wijehi lu  a  konsijuwuin la   iuwufui.
       Rest   lor ad construct   illa urb    .
       They stopped building     the  city   .
 
@@ -545,7 +888,7 @@
       et  tu  neg nostr duc   entr   ill temptation  ,
       and you not us    lead  into       temptation  ,
 
-      ofu ni    libewahi tu uhejitweu de le  malihun.
+      ofu ni    libewahi tu ehusihewu de le  malihun.
       ob  nostr liberat  tu exter     de ill malign .
       but you us liberate   out       of     malign .
 
@@ -650,12 +993,44 @@
       <tr>
         <td>
           <span class="t"
-            c="重音落在最后一个非重复元音."
+            c="重音落在最后一个元音."
             d="La ahutsehin eji i la vovevu finavu."
             >The stress is at the last vowel.</span>
         </td>
       </tr>
     </table>
+    <center>
+      <h2>
+        <span class="t"
+          c="互动转换工具"
+          d="Le konvewutewu intewahutifu"
+          >Interactive Converter</span>
+        </h2>
+    </center>
+    <div style="margin: 20px; padding: 20px; border: 1px solid #777; background: #e0f0e0;">
+      <p>
+        <span class="t"
+          c="输入 (第二步简化后):"
+          d="La puwimawi (pijohi la sihefu du):"
+          >Input (after Step 2):</span>
+        <input type="text" id="convInput" style="width: 100%; font-size: 20px;" oninput="doConvert()" placeholder="e.g. la ekspewiment" />
+      </p>
+      <p id="convError" style="color: red;"></p>
+      <p>
+        <span class="t"
+          c="音节划分:"
+          d="Le sivulavue pijohi la sepawation:"
+          >Syllables after break down:</span>
+        <textarea id="convStep3" readonly style="width: 100%; height: 40px; font-size: 20px;"></textarea>
+      </p>
+      <p>
+        <span class="t"
+          c="转换结果:"
+          d="La wesiuvuhi de konvewusion:"
+          >Conversion result:</span>
+        <textarea id="convStep4" readonly style="width: 100%; height: 40px; font-size: 20px;"></textarea>
+      </p>
+    </div>
     <center>
       <h2>Change Log</h2>
     </center>
@@ -742,6 +1117,17 @@
         <li>Change {d t: Y: LV=u} from {uhi} to {ji}</li>
         <li>Change {g k: X: FV=i} from {uhi} to {uh}</li>
         <li>Change {g k: Y: LV=i} from {ihu} to {hu}</li>
+        <li>Change from Latin only vocabulary to Latin-preferred English-backup vocabulary</li>
+      </ul>
+    </p>
+    <p>
+      2026 Document changes
+      <ul>
+        <li>Formalized Syllabification (Step 3): Introduced a rigorous syllable-breaking step using a 25-vowel combination table and specific onset cluster extension logic (e.g., "spr-", "stw-", "bl-").</li>
+        <li>Integrated Interactive Converter: Added a JavaScript-based tool that automatically syllabifies and converts text (post-Step 2 simplification) into Doudouling.</li>
+        <li>Refined Consonant Conversion (Step 4): Updated the transformation rules to explicitly support "empty" Primary Consonants (PC) for words starting with vowels or soft sounds.</li>
+        <li>Standardized Stress Rule: Corrected all instances of the stress rule to consistently target the "last vowel" across English, Chinese, and Doudouling descriptions.</li>
+        <li>Corrected Lexicon Examples: Updated the example table (e.g., "experiment", "express", "return") to align with the new 2026 syllabification and conversion mathematical results.</li>
       </ul>
     </p>
   </body>
