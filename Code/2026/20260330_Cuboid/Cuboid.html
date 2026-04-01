@@ -152,6 +152,7 @@
                 <button class="btn mode-btn" data-mode="roll">Roll</button>
                 <div style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px;"></div>
                 <select id="cam-presets" class="btn">
+                    <option value="above">Above</option>
                     <option value="front">Front</option>
                     <option value="left">Left</option>
                     <option value="right">Right</option>
@@ -447,6 +448,7 @@
             State.cameraPreset = preset;
             State.camera.x = State.camera.y = State.camera.roll = 0; State.camera.z = State.viewDistance;
             switch(preset) {
+                case 'above': State.camera.span = 0; State.camera.tilt = Math.PI/2; break;
                 case 'front': State.camera.span = 0; State.camera.tilt = 0; break;
                 case 'left': State.camera.span = Math.PI/2; State.camera.tilt = 0; break;
                 case 'right': State.camera.span = -Math.PI/2; State.camera.tilt = 0; break;
