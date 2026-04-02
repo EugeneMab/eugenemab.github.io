@@ -370,7 +370,7 @@
           </label>
           <label style="width: auto; display: flex; align-items: center; gap: 4px; font-size: 11px">
             Margin:
-            <input type="range" id="range-margin" value="0.05" step="0.001" min="0.001" max="0.1" style="width: 60px" />
+            <input type="range" id="range-margin" value="0.05" step="0.001" min="0.01" max="0.5" style="width: 60px" />
             <span id="val-margin">0.05</span>
           </label>
           <div style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"></div>
@@ -411,6 +411,32 @@
 
     <script>
       // --- Global Math Library ---
+      class Vec3 {
+        constructor(x, y, z) {
+          this.x = x;
+          this.y = y;
+          this.z = z;
+        }
+        sub(v) {
+          return new Vec3(this.x - v.x, this.y - v.y, this.z - v.z);
+        }
+        add(v) {
+          return new Vec3(this.x + v.x, this.y + v.y, this.z + v.z);
+        }
+        mul(s) {
+          return new Vec3(this.x * s, this.y * s, this.z * s);
+        }
+        dot(v) {
+          return this.x * v.x + this.y * v.y + this.z * v.z;
+        }
+        cross(v) {
+          return new Vec3(this.y * v.z - this.z * v.y, this.z * v.x - this.x * v.z, this.x * v.y - this.y * v.x);
+        }
+        normalize() {
+          const mag = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+          return mag === 0 ? new Vec3(0, 0, 0) : new Vec3(this.x / mag, this.y / mag, this.z / mag);
+        }
+      }
       const Mat4 = {
         create: () => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]),
         multiply: (out, a, b) => {
@@ -574,7 +600,13 @@
           },
         },
         selection: new Set(),
-        camera: { x: 0, y: 0, z: 15, span: 0, tilt: Math.PI / 4, roll: 0, zoom: 45 },
+        camera: {
+          pos: new Vec3(0, 5, 15),
+          longitude: -Math.PI / 2,
+          latitude: 0.3,
+          roll: 0,
+          zoom: 45,
+        },
         cameraPreset: "frontAbove",
         viewDistance: 15,
         mode: "select",
@@ -591,6 +623,22 @@
       };
 
       // --- Utility Functions ---
+      function getCameraVectors() {
+        const lon = State.camera.longitude;
+        const lat = State.camera.latitude;
+        // Flip sin(lat) so positive latitude = Above (looking down)
+        const forward = new Vec3(Math.cos(lat) * Math.cos(lon), -Math.sin(lat), Math.cos(lat) * Math.sin(lon)).normalize();
+        const right = forward.cross(new Vec3(0, 1, 0)).normalize();
+        // If forward is vertical, use a fallback right vector
+        if (right.x === 0 && right.y === 0 && right.z === 0) {
+          const fallbackRight = new Vec3(Math.cos(lon), 0, Math.sin(lon)).cross(new Vec3(0, 1, 0)).normalize();
+          const up = fallbackRight.cross(forward).normalize();
+          return { forward, right: fallbackRight, up };
+        }
+        const up = right.cross(forward).normalize();
+        return { forward, right, up };
+      }
+
       function findNode(root, id) {
         if (root.id === id) return root;
         if (root.children) {
@@ -649,6 +697,12 @@
           if (node.children) node.children.forEach(walk);
         }
         walk(root);
+      }
+
+      function getExportFileName() {
+        const rootName = State.scene.root.name || "root";
+        const filtered = rootName.replace(/[^A-Za-z0-9\-_\.]/g, "");
+        return filtered || "root";
       }
 
       // --- UI Logic ---
@@ -876,46 +930,50 @@
       // --- Camera Logic ---
       window.applyCameraPreset = (preset, skipUpdate) => {
         State.cameraPreset = preset;
-        State.camera.x = State.camera.y = State.camera.roll = 0;
-        State.camera.z = State.viewDistance;
+        State.camera.pos = new Vec3(0, 0, State.viewDistance);
+        State.camera.roll = 0;
         switch (preset) {
           case "above":
-            State.camera.span = 0;
-            State.camera.tilt = Math.PI / 2;
+            State.camera.longitude = -Math.PI / 2;
+            State.camera.latitude = Math.PI / 2 - 0.01;
             break;
           case "front":
-            State.camera.span = 0;
-            State.camera.tilt = 0;
+            State.camera.longitude = -Math.PI / 2;
+            State.camera.latitude = 0;
             break;
           case "left":
-            State.camera.span = Math.PI / 2;
-            State.camera.tilt = 0;
+            State.camera.longitude = 0;
+            State.camera.latitude = 0;
             break;
           case "right":
-            State.camera.span = -Math.PI / 2;
-            State.camera.tilt = 0;
+            State.camera.longitude = Math.PI;
+            State.camera.latitude = 0;
             break;
           case "back":
-            State.camera.span = Math.PI;
-            State.camera.tilt = 0;
+            State.camera.longitude = Math.PI / 2;
+            State.camera.latitude = 0;
             break;
           case "frontAbove":
-            State.camera.span = 0;
-            State.camera.tilt = Math.PI / 4;
+            State.camera.longitude = -Math.PI / 2;
+            State.camera.latitude = Math.PI / 4;
             break;
           case "leftAbove":
-            State.camera.span = Math.PI / 2;
-            State.camera.tilt = Math.PI / 4;
+            State.camera.longitude = 0;
+            State.camera.latitude = Math.PI / 4;
             break;
           case "rightAbove":
-            State.camera.span = -Math.PI / 2;
-            State.camera.tilt = Math.PI / 4;
+            State.camera.longitude = Math.PI;
+            State.camera.latitude = Math.PI / 4;
             break;
           case "backAbove":
-            State.camera.span = Math.PI;
-            State.camera.tilt = Math.PI / 4;
+            State.camera.longitude = Math.PI / 2;
+            State.camera.latitude = Math.PI / 4;
             break;
         }
+        // Reposition camera pos to look at origin (0,0,0) from distance
+        const { forward } = getCameraVectors();
+        State.camera.pos = forward.mul(-State.viewDistance);
+
         document.getElementById("cam-presets").value = preset;
         if (!skipUpdate) updateLocalStorage();
       };
@@ -1208,12 +1266,37 @@
         const aspect = gl.canvas.clientWidth / (gl.canvas.clientHeight || 1);
         const proj = Mat4.create();
         Mat4.perspective(proj, (State.camera.zoom * Math.PI) / 180, aspect, 0.1, 1000.0);
+
+        // --- View Matrix Construction (Teapot style) ---
         const mv = Mat4.create();
-        Mat4.translate(mv, mv, [0, 0, -State.camera.z]);
-        Mat4.rotateX(mv, mv, State.camera.tilt);
-        Mat4.rotateY(mv, mv, State.camera.span);
-        Mat4.rotateZ(mv, mv, State.camera.roll);
-        Mat4.translate(mv, mv, [-State.camera.x, -State.camera.y, 0]);
+        const { forward, right, up } = getCameraVectors();
+        const camPos = State.camera.pos;
+
+        // Apply Roll manually to the View Matrix
+        const cosR = Math.cos(State.camera.roll);
+        const sinR = Math.sin(State.camera.roll);
+
+        // Combine rotation vectors into the matrix
+        // Row 0: right (rolled)
+        mv[0] = right.x * cosR + up.x * sinR;
+        mv[4] = right.y * cosR + up.y * sinR;
+        mv[8] = right.z * cosR + up.z * sinR;
+        // Row 1: up (rolled)
+        mv[1] = -right.x * sinR + up.x * cosR;
+        mv[5] = -right.y * sinR + up.y * cosR;
+        mv[9] = -right.z * sinR + up.z * cosR;
+        // Row 2: -forward
+        mv[2] = -forward.x;
+        mv[6] = -forward.y;
+        mv[10] = -forward.z;
+
+        // Translation part: -dot(pos, axis)
+        const rolledRight = new Vec3(mv[0], mv[4], mv[8]);
+        const rolledUp = new Vec3(mv[1], mv[5], mv[9]);
+        mv[12] = -camPos.dot(rolledRight);
+        mv[13] = -camPos.dot(rolledUp);
+        mv[14] = camPos.dot(forward);
+
         const pickMap = new Map();
         function walk(node, parentSelected = false) {
           if (node.hidden) return;
@@ -1325,33 +1408,26 @@
         renderTree();
         updateInfo();
       };
-      window.doCopy = (id) => {
-        let o = findNode(State.scene.root, id);
-        if (!o) return;
-        let parent = findParent(State.scene.root, id) || State.scene.root;
-        let dir = document.querySelector('input[name="ax"]:checked').value;
-        let sign = dir.startsWith("-") ? -1 : 1;
-        let ax = dir.endsWith("x") ? "x" : dir.endsWith("y") ? "y" : "z";
-        let gap = +document.getElementById("gap").value,
-          count = +document.getElementById("count").value;
-        for (let i = 1; i <= count; i++) {
-          let c = JSON.parse(JSON.stringify(o));
-          const updateNode = (node) => {
+      window.doCopy = (ids) => {
+        ids.forEach((id) => {
+          let o = findNode(State.scene.root, id);
+          if (!o || o.type !== "cuboid") return;
+          let parent = findParent(State.scene.root, id) || State.scene.root;
+          let dir = document.querySelector('input[name="ax"]:checked').value;
+          let sign = dir.startsWith("-") ? -1 : 1;
+          let ax = dir.endsWith("x") ? "x" : dir.endsWith("y") ? "y" : "z";
+          let gap = +document.getElementById("gap").value,
+            count = +document.getElementById("count").value;
+          for (let i = 1; i <= count; i++) {
+            let c = JSON.parse(JSON.stringify(o));
             const subId = State.nextSequenceId++;
-            node.id = (node.type === "group" ? "group-" : "obj-") + subId;
-            node.name = node.name + " " + subId;
-            if (node.children) node.children.forEach(updateNode);
-          };
-          updateNode(c);
-          let step = (o.type === "cuboid" ? (ax === "x" ? o.w : ax === "y" ? o.h : o.d) : 0) + gap;
-          function offset(node, val) {
-            if (node.type === "cuboid") node[ax] += val;
-            if (node.children) node.children.forEach((child) => offset(child, val));
+            c.id = "obj-" + subId;
+            c.name = o.name + " " + subId;
+            let step = (ax === "x" ? o.w : ax === "y" ? o.h : o.d) + gap;
+            c[ax] += step * i * sign;
+            parent.children.push(c);
           }
-          if (o.type === "cuboid") c[ax] += step * i * sign;
-          else offset(c, gap * i * sign);
-          parent.children.push(c);
-        }
+        });
         saveHistory();
         renderTree();
         hideModal();
@@ -1397,7 +1473,7 @@
       };
       window.exportImage = (format) => {
         const link = document.createElement("a");
-        link.download = `scene.${format}`;
+        link.download = `${getExportFileName()}.${format}`;
         link.href = gl.canvas.toDataURL(`image/${format === "jpg" ? "jpeg" : format}`);
         link.click();
       };
@@ -1537,11 +1613,11 @@
                         <label>Direction</label>
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
                             <label style="background:#ffecec; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="+x" checked> +X</label>
-                            <label style="background:#ececff; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="+y"> +Y</label>
-                            <label style="background:#ecffec; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="+z"> +Z</label>
+                            <label style="background:#ecffec; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="+y"> +Y</label>
+                            <label style="background:#ececff; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="+z"> +Z</label>
                             <label style="background:#ffecec; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="-x"> -X</label>
-                            <label style="background:#ececff; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="-y"> -Y</label>
-                            <label style="background:#ecffec; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="-z"> -Z</label>
+                            <label style="background:#ecffec; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="-y"> -Y</label>
+                            <label style="background:#ececff; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="-z"> -Z</label>
                         </div>
                     </div>
                     <div class="input-group"><label>Distance</label><input type="number" id="dist" value="1.0" step="0.1"></div>
@@ -1551,26 +1627,27 @@
                     </div>`);
         };
         document.getElementById("btn-copy").onclick = () => {
-          if (State.selection.size !== 1) return;
-          let id = Array.from(State.selection)[0],
-            o = findNode(State.scene.root, id);
-          if (!o) return;
-          showModal(`<h3>Copy Object</h3>
+          if (State.selection.size < 1) return;
+          const ids = Array.from(State.selection);
+          const nodes = ids.map((id) => findNode(State.scene.root, id));
+          if (nodes.some((n) => !n || n.type !== "cuboid")) return alert("Copy only works for individual cuboids, not groups.");
+
+          showModal(`<h3>Copy Objects</h3>
                     <div class="input-group">
                         <label>Direction</label>
                         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px;">
                             <label style="background:#ffecec; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="+x" checked> +X</label>
-                            <label style="background:#ececff; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="+y"> +Y</label>
-                            <label style="background:#ecffec; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="+z"> +Z</label>
+                            <label style="background:#ecffec; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="+y"> +Y</label>
+                            <label style="background:#ececff; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="+z"> +Z</label>
                             <label style="background:#ffecec; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="-x"> -X</label>
-                            <label style="background:#ececff; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="-y"> -Y</label>
-                            <label style="background:#ecffec; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="-z"> -Z</label>
+                            <label style="background:#ecffec; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="-y"> -Y</label>
+                            <label style="background:#ececff; padding:2px; border-radius:4px;"><input type="radio" name="ax" value="-z"> -Z</label>
                         </div>
                     </div>
-                    <div class="input-group"><label>Gap/Offset</label><input type="number" id="gap" value="0.5"></div>
+                    <div class="input-group"><label>Gap/Offset</label><input type="number" id="gap" value="0"></div>
                     <div class="input-group"><label>Count</label><input type="number" id="count" value="1"></div>
                     <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="btn" style="flex:1; background:var(--accent-color); color:white; border:none;" onclick="doCopy('${id}')">Copy</button>
+                        <button class="btn" style="flex:1; background:var(--accent-color); color:white; border:none;" onclick='doCopy(${JSON.stringify(ids)})'>Copy</button>
                         <button class="btn" style="flex:1;" onclick="hideModal()">Cancel</button>
                     </div>`);
         };
@@ -1600,7 +1677,7 @@
           const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
           const a = document.createElement("a");
           a.href = URL.createObjectURL(blob);
-          a.download = "scene.json";
+          a.download = getExportFileName() + ".json";
           a.click();
           State.lastSaved = true;
           updateLocalStorage();
@@ -1630,10 +1707,12 @@
                 document.getElementById("bg-color-picker").value = State.bgColor;
                 applyUIPanelSizes();
                 if (p.cameraPreset) applyCameraPreset(p.cameraPreset, true);
-                if (p.camera)
-                  ["x", "y", "z", "span", "tilt", "roll", "zoom"].forEach((k) => {
+                if (p.camera) {
+                  ["longitude", "latitude", "roll", "zoom"].forEach((k) => {
                     if (typeof p.camera[k] === "number" && !isNaN(p.camera[k])) State.camera[k] = p.camera[k];
                   });
+                  if (p.camera.pos) State.camera.pos = new Vec3(p.camera.pos.x, p.camera.pos.y, p.camera.pos.z);
+                }
               } else if (p && p.id === "root") State.scene.root = p;
               else return alert("Invalid scene file");
               compactAndReassignIds(State.scene.root);
@@ -1688,7 +1767,7 @@
           const blob = new Blob([v.join("\n") + "\n" + f.join("\n")], { type: "text/plain" });
           const a = document.createElement("a");
           a.href = URL.createObjectURL(blob);
-          a.download = "scene.obj";
+          a.download = getExportFileName() + ".obj";
           a.click();
         };
 
@@ -1741,32 +1820,40 @@
         };
         const handleMove = (x, y) => {
           if (!isDown) return;
-          let dx = x - lx,
-            dy = y - ly;
+          let dx = (x - lx) / canvas.width;
+          let dy = (y - ly) / canvas.height;
           lx = x;
           ly = y;
           let mode = State.mode;
           if (mode === "select" && isFallbackRotate) mode = "rotate";
 
+          const { forward, right, up } = getCameraVectors();
+          const cosR = Math.cos(State.camera.roll);
+          const sinR = Math.sin(State.camera.roll);
+          const rolledRight = right.mul(cosR).add(up.mul(sinR));
+          const rolledUp = right.mul(-sinR).add(up.mul(cosR));
+
           if (mode === "shift") {
-            const s = Math.sin(State.camera.span),
-              c = Math.cos(State.camera.span);
-            State.camera.x -= dx * c * 0.05;
-            State.camera.z += dx * s * 0.05;
-            State.camera.y += dy * 0.05;
+            const mult = 100;
+            State.camera.pos = State.camera.pos.add(rolledUp.mul(dy * mult));
+            State.camera.pos = State.camera.pos.sub(rolledRight.mul(dx * mult));
           } else if (mode === "depth") {
-            const s = Math.sin(State.camera.span),
-              c = Math.cos(State.camera.span),
-              ts = Math.sin(State.camera.tilt),
-              tc = Math.cos(State.camera.tilt);
-            State.camera.x -= s * tc * dy * 0.1;
-            State.camera.y += ts * dy * 0.1;
-            State.camera.z -= c * tc * dy * 0.1;
+            const mult = 100;
+            State.camera.pos = State.camera.pos.add(forward.mul(-dy * mult));
           } else if (mode === "rotate") {
-            State.camera.span += dx * 0.01;
-            State.camera.tilt += dy * 0.01;
-          } else if (mode === "zoom") State.camera.zoom = Math.max(1, Math.min(170, State.camera.zoom + dy * 0.1));
-          else if (mode === "roll") State.camera.roll += dx * 0.01;
+            State.camera.latitude -= dy * 2;
+            State.camera.longitude -= dx * 2;
+            // Normalize angles
+            while (State.camera.longitude > Math.PI) State.camera.longitude -= Math.PI * 2;
+            while (State.camera.longitude < -Math.PI) State.camera.longitude += Math.PI * 2;
+            State.camera.latitude = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, State.camera.latitude));
+          } else if (mode === "zoom") {
+            State.camera.zoom = Math.max(1, Math.min(170, State.camera.zoom + dy * 100));
+          } else if (mode === "roll") {
+            State.camera.roll += dx * 2;
+            while (State.camera.roll > Math.PI) State.camera.roll -= Math.PI * 2;
+            while (State.camera.roll < -Math.PI) State.camera.roll += Math.PI * 2;
+          }
         };
 
         canvas.onmousedown = (e) => handleStart(e.clientX, e.clientY, e.ctrlKey);
@@ -1812,10 +1899,12 @@
               compactAndReassignIds(State.scene.root);
             }
             if (p.cameraPreset) applyCameraPreset(p.cameraPreset, true);
-            if (p.camera)
-              ["x", "y", "z", "span", "tilt", "roll", "zoom"].forEach((k) => {
+            if (p.camera) {
+              ["longitude", "latitude", "roll", "zoom"].forEach((k) => {
                 if (typeof p.camera[k] === "number" && !isNaN(p.camera[k])) State.camera[k] = p.camera[k];
               });
+              if (p.camera.pos) State.camera.pos = new Vec3(p.camera.pos.x, p.camera.pos.y, p.camera.pos.z);
+            }
             if (p.bgColor) {
               State.bgColor = p.bgColor;
               document.getElementById("bg-color-picker").value = p.bgColor;
