@@ -24,7 +24,8 @@
         width: 100%;
         height: 100%;
         overflow: hidden;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
         background-color: var(--bg-color);
         color: var(--text-color);
       }
@@ -32,8 +33,8 @@
       #app {
         display: grid;
         grid-template-areas:
-          "header header"
-          "sidebar main";
+          'header header'
+          'sidebar main';
         grid-template-columns: var(--sidebar-width) 1fr;
         grid-template-rows: calc(var(--toolbar-height) + var(--info-height)) 1fr;
         height: 100vh;
@@ -152,8 +153,8 @@
         padding-left: 2px;
       }
 
-      input[type="number"],
-      input[type="text"],
+      input[type='number'],
+      input[type='text'],
       select {
         background: #ffffff;
         border: 1px solid var(--border-color);
@@ -169,7 +170,7 @@
         -webkit-appearance: none;
         margin: 0;
       }
-      input[type="number"] {
+      input[type='number'] {
         -moz-appearance: textfield;
       }
 
@@ -245,11 +246,11 @@
         font-size: 11px;
         width: 15px;
       }
-      .info-grid input[type="number"] {
+      .info-grid input[type='number'] {
         width: 42px;
         height: 18px;
       }
-      .info-grid input[type="range"] {
+      .info-grid input[type='range'] {
         width: 55px;
         margin: 0;
         cursor: pointer;
@@ -316,17 +317,23 @@
           <button class="btn" id="btn-save">Save</button>
           <button class="btn" id="btn-open">Open</button>
           <button class="btn" id="btn-new">New</button>
-          <div style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"></div>
+          <div
+            style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"
+          ></div>
           <button class="btn" id="btn-undo">Undo</button>
           <button class="btn" id="btn-redo">Redo</button>
-          <div style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"></div>
+          <div
+            style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"
+          ></div>
           <button class="btn mode-btn active" data-mode="select">Select</button>
           <button class="btn mode-btn" data-mode="shift">Shift</button>
           <button class="btn mode-btn" data-mode="depth">Depth</button>
           <button class="btn mode-btn" data-mode="rotate">Rotate</button>
           <button class="btn mode-btn" data-mode="zoom">Zoom</button>
           <button class="btn mode-btn" data-mode="roll">Roll</button>
-          <div style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"></div>
+          <div
+            style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"
+          ></div>
           <select id="cam-presets" class="btn">
             <option value="above">Above</option>
             <option value="front">Front</option>
@@ -340,16 +347,29 @@
           </select>
           <button class="btn" id="btn-reset-cam">Reset Cam</button>
           <label style="width: auto; display: flex; align-items: center; gap: 4px; font-size: 11px">
-            Dist: <input type="range" id="range-view-dist" value="15" step="1" min="1" max="600" style="width: 60px" />
+            Dist:
+            <input
+              type="range"
+              id="range-view-dist"
+              value="15"
+              step="1"
+              min="1"
+              max="600"
+              style="width: 60px"
+            />
             <span id="val-view-dist">15</span>
           </label>
-          <div style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"></div>
+          <div
+            style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"
+          ></div>
           <button class="btn" id="btn-add">Add Cuboid</button>
           <button class="btn" id="btn-split">Divide</button>
           <button class="btn" id="btn-move">Move</button>
           <button class="btn" id="btn-copy">Copy</button>
           <button class="btn" id="btn-delete">Delete</button>
-          <div style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"></div>
+          <div
+            style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"
+          ></div>
           <label style="width: auto; display: flex; align-items: center; gap: 4px; font-size: 11px">
             Scale:
             <select id="sel-scale" style="width: 55px">
@@ -370,23 +390,46 @@
           </label>
           <label style="width: auto; display: flex; align-items: center; gap: 4px; font-size: 11px">
             Margin:
-            <input type="range" id="range-margin" value="0.05" step="0.001" min="0.01" max="0.5" style="width: 60px" />
+            <input
+              type="range"
+              id="range-margin"
+              value="0.05"
+              step="0.001"
+              min="0.01"
+              max="0.5"
+              style="width: 60px"
+            />
             <span id="val-margin">0.05</span>
           </label>
-          <div style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"></div>
+          <div
+            style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"
+          ></div>
           <button class="btn" id="btn-add-group">Add Group</button>
           <button class="btn" id="btn-group">Group Selected</button>
           <button class="btn" id="btn-ungroup">Ungroup</button>
-          <div style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"></div>
+          <div
+            style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"
+          ></div>
           <label style="width: auto; display: flex; align-items: center; gap: 4px; font-size: 11px">
             <input type="checkbox" id="chk-axis" checked /> Axis [RGB=XYZ]
           </label>
           <label style="width: auto; display: flex; align-items: center; gap: 4px; font-size: 11px">
-            Len: <input type="range" id="range-axis-len" value="10" step="1" min="1" max="600" style="width: 60px" />
+            Len:
+            <input
+              type="range"
+              id="range-axis-len"
+              value="10"
+              step="1"
+              min="1"
+              max="600"
+              style="width: 60px"
+            />
             <span id="val-axis-len">10</span>
           </label>
           <input type="color" id="bg-color-picker" value="#ffffff" title="Background Color" />
-          <div style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"></div>
+          <div
+            style="border-left: 1px solid var(--border-color); height: 20px; margin: 0 5px"
+          ></div>
           <button class="btn" id="btn-export">Export OBJ</button>
           <button class="btn" id="btn-export-png">PNG</button>
           <button class="btn" id="btn-export-jpg">JPG</button>
@@ -430,7 +473,11 @@
           return this.x * v.x + this.y * v.y + this.z * v.z;
         }
         cross(v) {
-          return new Vec3(this.y * v.z - this.z * v.y, this.z * v.x - this.x * v.z, this.x * v.y - this.y * v.x);
+          return new Vec3(
+            this.y * v.z - this.z * v.y,
+            this.z * v.x - this.x * v.z,
+            this.x * v.y - this.y * v.x
+          );
         }
         normalize() {
           const mag = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
@@ -590,13 +637,13 @@
       const State = {
         scene: {
           root: {
-            id: "root",
-            name: "Root",
-            type: "group",
+            id: 'root',
+            name: 'Root',
+            type: 'group',
             children: [],
             expanded: true,
             hidden: false,
-            color: "#888888",
+            color: '#888888',
           },
         },
         selection: new Set(),
@@ -607,14 +654,14 @@
           roll: 0,
           zoom: 45,
         },
-        cameraPreset: "frontAbove",
+        cameraPreset: 'frontAbove',
         viewDistance: 15,
-        mode: "select",
+        mode: 'select',
         showAxis: true,
         axisLength: 10,
         shrinkMargin: 0.05,
         nextSequenceId: 1,
-        bgColor: "#ffffff",
+        bgColor: '#ffffff',
         scale: 1,
         ui: { sidebarWidth: 280, toolbarHeight: 70, infoHeight: 100 },
         history: [],
@@ -627,11 +674,17 @@
         const lon = State.camera.longitude;
         const lat = State.camera.latitude;
         // Flip sin(lat) so positive latitude = Above (looking down)
-        const forward = new Vec3(Math.cos(lat) * Math.cos(lon), -Math.sin(lat), Math.cos(lat) * Math.sin(lon)).normalize();
+        const forward = new Vec3(
+          Math.cos(lat) * Math.cos(lon),
+          -Math.sin(lat),
+          Math.cos(lat) * Math.sin(lon)
+        ).normalize();
         const right = forward.cross(new Vec3(0, 1, 0)).normalize();
         // If forward is vertical, use a fallback right vector
         if (right.x === 0 && right.y === 0 && right.z === 0) {
-          const fallbackRight = new Vec3(Math.cos(lon), 0, Math.sin(lon)).cross(new Vec3(0, 1, 0)).normalize();
+          const fallbackRight = new Vec3(Math.cos(lon), 0, Math.sin(lon))
+            .cross(new Vec3(0, 1, 0))
+            .normalize();
           const up = fallbackRight.cross(forward).normalize();
           return { forward, right: fallbackRight, up };
         }
@@ -689,10 +742,10 @@
       function compactAndReassignIds(root) {
         State.nextSequenceId = 1;
         function walk(node) {
-          if (node.id === "root") {
+          if (node.id === 'root') {
             // keep root as root
           } else {
-            node.id = (node.type === "group" ? "group-" : "obj-") + State.nextSequenceId++;
+            node.id = (node.type === 'group' ? 'group-' : 'obj-') + State.nextSequenceId++;
           }
           if (node.children) node.children.forEach(walk);
         }
@@ -700,49 +753,56 @@
       }
 
       function getExportFileName() {
-        const rootName = State.scene.root.name || "root";
-        const filtered = rootName.replace(/[^A-Za-z0-9\-_\.]/g, "");
-        return filtered || "root";
+        const rootName = State.scene.root.name || 'root';
+        const filtered = rootName.replace(/[^A-Za-z0-9\-_\.]/g, '');
+        return filtered || 'root';
       }
 
       // --- UI Logic ---
       function applyUIPanelSizes() {
-        document.documentElement.style.setProperty("--sidebar-width", State.ui.sidebarWidth + "px");
-        document.documentElement.style.setProperty("--toolbar-height", State.ui.toolbarHeight + "px");
-        document.documentElement.style.setProperty("--info-height", State.ui.infoHeight + "px");
+        document.documentElement.style.setProperty('--sidebar-width', State.ui.sidebarWidth + 'px');
+        document.documentElement.style.setProperty(
+          '--toolbar-height',
+          State.ui.toolbarHeight + 'px'
+        );
+        document.documentElement.style.setProperty('--info-height', State.ui.infoHeight + 'px');
       }
 
       function renderTree() {
-        const cont = document.getElementById("tree-container");
+        const cont = document.getElementById('tree-container');
         if (!cont) return;
-        cont.innerHTML = "";
+        cont.innerHTML = '';
         function build(node) {
-          const div = document.createElement("div");
+          const div = document.createElement('div');
           div.className =
             node.type +
-            "-item" +
-            (State.selection.has(node.id) ? " selected" : "") +
-            (node.hidden ? " hidden-node" : "");
-          div.draggable = node.id !== "root";
+            '-item' +
+            (State.selection.has(node.id) ? ' selected' : '') +
+            (node.hidden ? ' hidden-node' : '');
+          div.draggable = node.id !== 'root';
           div.ondragstart = (e) => {
             e.stopPropagation();
-            e.dataTransfer.setData("text/plain", node.id);
+            e.dataTransfer.setData('text/plain', node.id);
           };
           div.ondragover = (e) => {
-            if (node.type === "group") {
+            if (node.type === 'group') {
               e.preventDefault();
-              div.style.backgroundColor = "#e5e5e7";
+              div.style.backgroundColor = '#e5e5e7';
             }
           };
           div.ondragleave = () => {
-            div.style.backgroundColor = "";
+            div.style.backgroundColor = '';
           };
           div.ondrop = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            div.style.backgroundColor = "";
-            const draggedId = e.dataTransfer.getData("text/plain");
-            if (draggedId === node.id || isDescendant(findNode(State.scene.root, draggedId), node.id)) return;
+            div.style.backgroundColor = '';
+            const draggedId = e.dataTransfer.getData('text/plain');
+            if (
+              draggedId === node.id ||
+              isDescendant(findNode(State.scene.root, draggedId), node.id)
+            )
+              return;
             const draggedNode = findAndRemove(State.scene.root, draggedId);
             if (draggedNode) {
               node.children.push(draggedNode);
@@ -751,12 +811,12 @@
               renderTree();
             }
           };
-          const toggleIcon = node.type === "group" ? (node.expanded ? "▼" : "▶") : " ";
-          const typeIcon = node.type === "group" ? (node.expanded ? "📂" : "📁") : "📦";
+          const toggleIcon = node.type === 'group' ? (node.expanded ? '▼' : '▶') : ' ';
+          const typeIcon = node.type === 'group' ? (node.expanded ? '📂' : '📁') : '📦';
           div.innerHTML = `<span class="node-toggle" onclick="event.stopPropagation(); toggleExpand('${node.id}')">${toggleIcon}</span>
                                 <span style="margin-right:4px;">${typeIcon}</span>
-                                <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${node.name || "Object"}</span>
-                                <span class="node-toggle" onclick="event.stopPropagation(); toggleHidden('${node.id}')">${node.hidden ? "👁️‍🗨️" : "👁️"}</span>`;
+                                <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${node.name || 'Object'}</span>
+                                <span class="node-toggle" onclick="event.stopPropagation(); toggleHidden('${node.id}')">${node.hidden ? '👁️‍🗨️' : '👁️'}</span>`;
           div.onclick = (e) => {
             if (!e.ctrlKey) State.selection.clear();
             if (State.selection.has(node.id)) State.selection.delete(node.id);
@@ -764,11 +824,11 @@
             updateInfo();
             renderTree();
           };
-          const wrap = document.createElement("div");
+          const wrap = document.createElement('div');
           wrap.appendChild(div);
-          if (node.type === "group" && node.expanded && node.children) {
-            const cCont = document.createElement("div");
-            cCont.className = "tree-node-children";
+          if (node.type === 'group' && node.expanded && node.children) {
+            const cCont = document.createElement('div');
+            cCont.className = 'tree-node-children';
             node.children.forEach((c) => cCont.appendChild(build(c)));
             wrap.appendChild(cCont);
           }
@@ -785,7 +845,7 @@
 
       window.toggleExpand = (id) => {
         let node = findNode(State.scene.root, id);
-        if (node && node.type === "group") {
+        if (node && node.type === 'group') {
           node.expanded = !node.expanded;
           renderTree();
           updateLocalStorage();
@@ -801,7 +861,7 @@
       };
 
       function updateInfo() {
-        const info = document.getElementById("selection-info");
+        const info = document.getElementById('selection-info');
         if (!info) return;
         if (State.selection.size === 1) {
           const id = Array.from(State.selection)[0],
@@ -810,25 +870,37 @@
             let html = `<div style="display:flex; align-items:center; gap:8px; width:100%; height:100%;">
                         <div style="display:flex; flex-direction:column; gap:2px; min-width:120px;">
                             <div class="info-row">Name: <input type="text" value="${obj.name}" oninput="updateNodeName('${id}', this.value)" style="width:80px;"></div>
-                            <div class="info-row">Color: <input type="color" value="${obj.color || "#888888"}" 
-                                oninput="${obj.type === "group" ? "changeGroupColor('" + id + "', this.value, true)" : "updateCuboidValue('" + id + "', 'color', this.value, true)"}"
-                                onchange="${obj.type === "group" ? "changeGroupColor('" + id + "', this.value)" : "updateCuboidValue('" + id + "', 'color', this.value)"}"></div>
+                            <div class="info-row">Color: <input type="color" value="${obj.color || '#888888'}" 
+                                oninput="${obj.type === 'group' ? "changeGroupColor('" + id + "', this.value, true)" : "updateCuboidValue('" + id + "', 'color', this.value, true)"}"
+                                onchange="${obj.type === 'group' ? "changeGroupColor('" + id + "', this.value)" : "updateCuboidValue('" + id + "', 'color', this.value)"}"></div>
                         </div>`;
-            if (obj.type === "cuboid") {
+            if (obj.type === 'cuboid') {
               const S = State.scale;
               const farX = obj.x + obj.w,
                 farY = obj.y + obj.h,
                 farZ = obj.z + obj.d;
               const renderAxis = (axis, val, width, far, bg) => {
                 const axisUpper = axis.toUpperCase();
-                const wLabel = axis === "x" ? "W" : axis === "y" ? "H" : "D";
+                const wLabel = axis === 'x' ? 'W' : axis === 'y' ? 'H' : 'D';
                 const modes = [
-                  { label: axisUpper + ".move", mode: "move", cur: val, min: -10 * S, max: 10 * S },
-                  { label: axisUpper + ".grow", mode: "grow", cur: val, min: -10 * S, max: 10 * S },
-                  { label: wLabel + ".near", mode: "near", cur: width, min: 0.001, max: 10 * S },
-                  { label: wLabel + ".up", mode: "up", cur: width, min: 0.001, max: 10 * S },
-                  { label: axisUpper + "+" + wLabel + ".grow", mode: "xwGrow", cur: far, min: -10 * S, max: 10 * S },
-                  { label: axisUpper + "+" + wLabel + ".move", mode: "xwMove", cur: far, min: -10 * S, max: 10 * S },
+                  { label: axisUpper + '.move', mode: 'move', cur: val, min: -10 * S, max: 10 * S },
+                  { label: axisUpper + '.grow', mode: 'grow', cur: val, min: -10 * S, max: 10 * S },
+                  { label: wLabel + '.near', mode: 'near', cur: width, min: 0.001, max: 10 * S },
+                  { label: wLabel + '.up', mode: 'up', cur: width, min: 0.001, max: 10 * S },
+                  {
+                    label: axisUpper + '+' + wLabel + '.grow',
+                    mode: 'xwGrow',
+                    cur: far,
+                    min: -10 * S,
+                    max: 10 * S,
+                  },
+                  {
+                    label: axisUpper + '+' + wLabel + '.move',
+                    mode: 'xwMove',
+                    cur: far,
+                    min: -10 * S,
+                    max: 10 * S,
+                  },
                 ];
                 return `<div class="info-grid-row" style="background:${bg};">
                                 <span class="axis-label">${axisUpper}</span>
@@ -839,21 +911,23 @@
                                         <label>${m.label}</label>
                                         <input type="number" step="0.1" value="${m.cur.toFixed(2)}" onchange="tweakCuboid('${id}', '${axis}', '${m.mode}', this.value); saveHistory()">
                                         <input type="range" step="0.1" min="${m.min}" max="${m.max}" value="${m.cur}" oninput="tweakCuboid('${id}', '${axis}', '${m.mode}', this.value)" onchange="saveHistory()">
-                                    </div>`,
+                                    </div>`
                                   )
-                                  .join("")}
+                                  .join('')}
                             </div>`;
               };
               html += `<div class="info-grid">
-                            ${renderAxis("x", obj.x, obj.w, farX, "#ffecec")}
-                            ${renderAxis("y", obj.y, obj.h, farY, "#ecffec")}
-                            ${renderAxis("z", obj.z, obj.d, farZ, "#ececff")}
+                            ${renderAxis('x', obj.x, obj.w, farX, '#ffecec')}
+                            ${renderAxis('y', obj.y, obj.h, farY, '#ecffec')}
+                            ${renderAxis('z', obj.z, obj.d, farZ, '#ececff')}
                         </div>`;
             }
             html += `</div>`;
             info.innerHTML = html;
           }
-        } else info.textContent = State.selection.size > 1 ? `${State.selection.size} selected` : "No selection";
+        } else
+          info.textContent =
+            State.selection.size > 1 ? `${State.selection.size} selected` : 'No selection';
       }
 
       window.tweakCuboid = (id, axis, mode, val) => {
@@ -861,32 +935,32 @@
         if (!node) return;
         val = +val;
         const xKey = axis,
-          wKey = axis === "x" ? "w" : axis === "y" ? "h" : "d";
+          wKey = axis === 'x' ? 'w' : axis === 'y' ? 'h' : 'd';
         const oldFar = node[xKey] + node[wKey];
-        if (mode === "move") {
+        if (mode === 'move') {
           node[xKey] = val;
-        } else if (mode === "grow") {
+        } else if (mode === 'grow') {
           node[xKey] = val;
           node[wKey] = Math.max(0.001, oldFar - val);
-        } else if (mode === "near") {
+        } else if (mode === 'near') {
           node[wKey] = Math.max(0.001, val);
-        } else if (mode === "up") {
+        } else if (mode === 'up') {
           node[wKey] = Math.max(0.001, val);
           node[xKey] = oldFar - node[wKey];
-        } else if (mode === "xwGrow") {
+        } else if (mode === 'xwGrow') {
           node[wKey] = Math.max(0.001, val - node[xKey]);
-        } else if (mode === "xwMove") {
+        } else if (mode === 'xwMove') {
           node[xKey] = val - node[wKey];
         }
 
         // Real-time synchronization of UI without full re-render
         const far = node[xKey] + node[wKey];
         const row = document.querySelector(
-          `.info-grid-row[style*="${axis === "x" ? "#ffecec" : axis === "y" ? "#ecffec" : "#ececff"}"]`,
+          `.info-grid-row[style*="${axis === 'x' ? '#ffecec' : axis === 'y' ? '#ecffec' : '#ececff'}"]`
         );
         if (row) {
           const vals = [node[xKey], node[xKey], node[wKey], node[wKey], far, far];
-          row.querySelectorAll(".info-grid-col").forEach((col, i) => {
+          row.querySelectorAll('.info-grid-col').forEach((col, i) => {
             col.querySelector('input[type="number"]').value = vals[i].toFixed(2);
             col.querySelector('input[type="range"]').value = vals[i];
           });
@@ -904,7 +978,7 @@
       window.updateCuboidValue = (id, key, val, skipHistory) => {
         let node = findNode(State.scene.root, id);
         if (node) {
-          node[key] = key === "color" ? val : +val;
+          node[key] = key === 'color' ? val : +val;
           if (!skipHistory) saveHistory();
         }
       };
@@ -917,14 +991,14 @@
       };
 
       function showModal(html) {
-        const overlay = document.getElementById("modal-overlay");
-        const content = document.getElementById("modal-content");
+        const overlay = document.getElementById('modal-overlay');
+        const content = document.getElementById('modal-content');
         if (!overlay || !content) return;
         content.innerHTML = html;
-        overlay.style.display = "flex";
+        overlay.style.display = 'flex';
       }
       function hideModal() {
-        document.getElementById("modal-overlay").style.display = "none";
+        document.getElementById('modal-overlay').style.display = 'none';
       }
 
       // --- Camera Logic ---
@@ -933,39 +1007,39 @@
         State.camera.pos = new Vec3(0, 0, State.viewDistance);
         State.camera.roll = 0;
         switch (preset) {
-          case "above":
+          case 'above':
             State.camera.longitude = -Math.PI / 2;
             State.camera.latitude = Math.PI / 2 - 0.01;
             break;
-          case "front":
+          case 'front':
             State.camera.longitude = -Math.PI / 2;
             State.camera.latitude = 0;
             break;
-          case "left":
+          case 'left':
             State.camera.longitude = 0;
             State.camera.latitude = 0;
             break;
-          case "right":
+          case 'right':
             State.camera.longitude = Math.PI;
             State.camera.latitude = 0;
             break;
-          case "back":
+          case 'back':
             State.camera.longitude = Math.PI / 2;
             State.camera.latitude = 0;
             break;
-          case "frontAbove":
+          case 'frontAbove':
             State.camera.longitude = -Math.PI / 2;
             State.camera.latitude = Math.PI / 4;
             break;
-          case "leftAbove":
+          case 'leftAbove':
             State.camera.longitude = 0;
             State.camera.latitude = Math.PI / 4;
             break;
-          case "rightAbove":
+          case 'rightAbove':
             State.camera.longitude = Math.PI;
             State.camera.latitude = Math.PI / 4;
             break;
-          case "backAbove":
+          case 'backAbove':
             State.camera.longitude = Math.PI / 2;
             State.camera.latitude = Math.PI / 4;
             break;
@@ -974,7 +1048,7 @@
         const { forward } = getCameraVectors();
         State.camera.pos = forward.mul(-State.viewDistance);
 
-        document.getElementById("cam-presets").value = preset;
+        document.getElementById('cam-presets').value = preset;
         if (!skipUpdate) updateLocalStorage();
       };
 
@@ -1007,7 +1081,7 @@
       }
       function updateLocalStorage() {
         localStorage.setItem(
-          "cuboid_state",
+          'cuboid_state',
           JSON.stringify({
             scene: State.scene.root,
             camera: State.camera,
@@ -1016,10 +1090,11 @@
             margin: State.shrinkMargin,
             viewDistance: State.viewDistance,
             axisLength: State.axisLength,
+            showAxis: State.showAxis,
             scale: State.scale,
             ui: State.ui,
             lastSaved: State.lastSaved,
-          }),
+          })
         );
       }
 
@@ -1301,18 +1376,26 @@
         function walk(node, parentSelected = false) {
           if (node.hidden) return;
           const isSelected = parentSelected || State.selection.has(node.id);
-          if (node.type === "cuboid") {
+          if (node.type === 'cuboid') {
             if (isPicking) {
               const pickIdx = pickMap.size + 1;
               pickMap.set(pickIdx, node.id);
               const r = (pickIdx & 0xff) / 255,
                 g = ((pickIdx >> 8) & 0xff) / 255,
                 b = ((pickIdx >> 16) & 0xff) / 255;
-              const { positions } = getCuboidVertices(node.x, node.y, node.z, node.w, node.h, node.d, "#000000");
+              const { positions } = getCuboidVertices(
+                node.x,
+                node.y,
+                node.z,
+                node.w,
+                node.h,
+                node.d,
+                '#000000'
+              );
               const pCols = new Float32Array(
                 Array((positions.length / 3) * 4)
                   .fill(0)
-                  .map((_, i) => (i % 4 === 0 ? r : i % 4 === 1 ? g : i % 4 === 2 ? b : 1)),
+                  .map((_, i) => (i % 4 === 0 ? r : i % 4 === 1 ? g : i % 4 === 2 ? b : 1))
               );
               drawObject(gl, positions, pCols, gl.TRIANGLES, proj, mv);
             } else {
@@ -1323,11 +1406,20 @@
                 node.w,
                 node.h,
                 node.d,
-                node.color,
+                node.color
               );
               drawObject(gl, positions, colors, gl.TRIANGLES, proj, mv);
               if (isSelected) {
-                const wire = getCuboidVertices(node.x, node.y, node.z, node.w, node.h, node.d, "#ffffff", true);
+                const wire = getCuboidVertices(
+                  node.x,
+                  node.y,
+                  node.z,
+                  node.w,
+                  node.h,
+                  node.d,
+                  '#ffffff',
+                  true
+                );
                 drawObject(gl, wire.positions, wire.colors, gl.LINES, proj, mv);
               }
             }
@@ -1343,7 +1435,9 @@
         if (State.showAxis) {
           const L = State.axisLength;
           const axisPos = new Float32Array([0, 0, 0, L, 0, 0, 0, 0, 0, 0, L, 0, 0, 0, 0, 0, 0, L]);
-          const axisCol = new Float32Array([1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1]);
+          const axisCol = new Float32Array([
+            1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1,
+          ]);
           drawObject(gl, axisPos, axisCol, gl.LINES, proj, mv);
         }
         requestAnimationFrame(() => drawScene());
@@ -1356,14 +1450,14 @@
           const sid = Array.from(State.selection)[0],
             snode = findNode(State.scene.root, sid);
           if (snode) {
-            if (snode.type === "group") targetGroup = snode;
+            if (snode.type === 'group') targetGroup = snode;
             else targetGroup = findParent(State.scene.root, sid) || State.scene.root;
           }
         }
         const idNum = State.nextSequenceId++;
         const newObj = {
-          id: "obj-" + idNum,
-          type: "cuboid",
+          id: 'obj-' + idNum,
+          type: 'cuboid',
           name: `cuboid ${idNum}`,
           x: 0,
           y: 0,
@@ -1371,7 +1465,7 @@
           w: 1,
           h: 1,
           d: 1,
-          color: targetGroup.color || "#4a90e2",
+          color: targetGroup.color || '#4a90e2',
           hidden: false,
         };
         targetGroup.children.push(newObj);
@@ -1387,19 +1481,19 @@
           const sid = Array.from(State.selection)[0],
             snode = findNode(State.scene.root, sid);
           if (snode) {
-            if (snode.type === "group") targetGroup = snode;
+            if (snode.type === 'group') targetGroup = snode;
             else targetGroup = findParent(State.scene.root, sid) || State.scene.root;
           }
         }
         const idNum = State.nextSequenceId++;
         const newGrp = {
-          id: "group-" + idNum,
-          type: "group",
+          id: 'group-' + idNum,
+          type: 'group',
           name: `group ${idNum}`,
           children: [],
           expanded: true,
           hidden: false,
-          color: targetGroup.color || "#888888",
+          color: targetGroup.color || '#888888',
         };
         targetGroup.children.push(newGrp);
         State.selection.clear();
@@ -1411,19 +1505,19 @@
       window.doCopy = (ids) => {
         ids.forEach((id) => {
           let o = findNode(State.scene.root, id);
-          if (!o || o.type !== "cuboid") return;
+          if (!o || o.type !== 'cuboid') return;
           let parent = findParent(State.scene.root, id) || State.scene.root;
           let dir = document.querySelector('input[name="ax"]:checked').value;
-          let sign = dir.startsWith("-") ? -1 : 1;
-          let ax = dir.endsWith("x") ? "x" : dir.endsWith("y") ? "y" : "z";
-          let gap = +document.getElementById("gap").value,
-            count = +document.getElementById("count").value;
+          let sign = dir.startsWith('-') ? -1 : 1;
+          let ax = dir.endsWith('x') ? 'x' : dir.endsWith('y') ? 'y' : 'z';
+          let gap = +document.getElementById('gap').value,
+            count = +document.getElementById('count').value;
           for (let i = 1; i <= count; i++) {
             let c = JSON.parse(JSON.stringify(o));
             const subId = State.nextSequenceId++;
-            c.id = "obj-" + subId;
-            c.name = o.name + " " + subId;
-            let step = (ax === "x" ? o.w : ax === "y" ? o.h : o.d) + gap;
+            c.id = 'obj-' + subId;
+            c.name = o.name + ' ' + subId;
+            let step = (ax === 'x' ? o.w : ax === 'y' ? o.h : o.d) + gap;
             c[ax] += step * i * sign;
             parent.children.push(c);
           }
@@ -1433,35 +1527,35 @@
         hideModal();
       };
       window.doNew = () => {
-        if (!State.lastSaved && !confirm("Discard unsaved changes?")) return;
+        if (!State.lastSaved && !confirm('Discard unsaved changes?')) return;
         State.scene.root = {
-          id: "root",
-          name: "Root",
-          type: "group",
+          id: 'root',
+          name: 'Root',
+          type: 'group',
           children: [],
           expanded: true,
           hidden: false,
-          color: "#888888",
+          color: '#888888',
         };
         State.selection.clear();
         State.nextSequenceId = 1;
         State.history = [];
         State.historyIndex = -1;
-        applyCameraPreset("frontAbove");
+        applyCameraPreset('frontAbove');
         saveHistory();
         renderTree();
         updateInfo();
       };
       window.doMove = (ids) => {
         let dir = document.querySelector('input[name="ax"]:checked').value;
-        let sign = dir.startsWith("-") ? -1 : 1;
-        let ax = dir.endsWith("x") ? "x" : dir.endsWith("y") ? "y" : "z";
-        let dist = +document.getElementById("dist").value * sign;
+        let sign = dir.startsWith('-') ? -1 : 1;
+        let ax = dir.endsWith('x') ? 'x' : dir.endsWith('y') ? 'y' : 'z';
+        let dist = +document.getElementById('dist').value * sign;
         ids.forEach((id) => {
           let node = findNode(State.scene.root, id);
           if (!node) return;
           function apply(n) {
-            if (n.type === "cuboid") n[ax] += dist;
+            if (n.type === 'cuboid') n[ax] += dist;
             if (n.children) n.children.forEach(apply);
           }
           apply(node);
@@ -1472,32 +1566,32 @@
         updateInfo();
       };
       window.exportImage = (format) => {
-        const link = document.createElement("a");
+        const link = document.createElement('a');
         link.download = `${getExportFileName()}.${format}`;
-        link.href = gl.canvas.toDataURL(`image/${format === "jpg" ? "jpeg" : format}`);
+        link.href = gl.canvas.toDataURL(`image/${format === 'jpg' ? 'jpeg' : format}`);
         link.click();
       };
       window.doSplit = (id) => {
         let o = findNode(State.scene.root, id);
-        if (!o || o.type !== "cuboid") return;
-        let ax = document.getElementById("ax").value,
-          cut = +document.getElementById("cut").value;
-        let max = ax === "x" ? o.w : ax === "y" ? o.h : o.d;
-        if (cut <= 0 || cut >= max) return alert("Invalid cut");
+        if (!o || o.type !== 'cuboid') return;
+        let ax = document.getElementById('ax').value,
+          cut = +document.getElementById('cut').value;
+        let max = ax === 'x' ? o.w : ax === 'y' ? o.h : o.d;
+        if (cut <= 0 || cut >= max) return alert('Invalid cut');
         let p1 = JSON.parse(JSON.stringify(o)),
           p2 = JSON.parse(JSON.stringify(o));
         const id1 = State.nextSequenceId++,
           id2 = State.nextSequenceId++;
         let parent = findParent(State.scene.root, id) || State.scene.root;
-        p1.id = "obj-" + id1;
-        p1.name = o.name + " " + id1;
-        p2.id = "obj-" + id2;
-        p2.name = o.name + " " + id2;
-        if (ax === "x") {
+        p1.id = 'obj-' + id1;
+        p1.name = o.name + ' ' + id1;
+        p2.id = 'obj-' + id2;
+        p2.name = o.name + ' ' + id2;
+        if (ax === 'x') {
           p1.w = cut;
           p2.x += cut;
           p2.w = o.w - cut;
-        } else if (ax === "y") {
+        } else if (ax === 'y') {
           p1.h = cut;
           p2.y += cut;
           p2.h = o.h - cut;
@@ -1516,44 +1610,49 @@
 
       // --- Main Initialization ---
       window.onload = () => {
-        const canvas = document.getElementById("glCanvas");
-        document.getElementById("btn-undo").onclick = undo;
-        document.getElementById("btn-redo").onclick = redo;
-        document.getElementById("btn-new").onclick = doNew;
-        document.getElementById("btn-reset-cam").onclick = () => applyCameraPreset(State.cameraPreset);
+        const canvas = document.getElementById('glCanvas');
+        document.getElementById('btn-undo').onclick = undo;
+        document.getElementById('btn-redo').onclick = redo;
+        document.getElementById('btn-new').onclick = doNew;
+        document.getElementById('btn-reset-cam').onclick = () =>
+          applyCameraPreset(State.cameraPreset);
         const updateRange = (id, stateKey, labelId) => {
           const el = document.getElementById(id),
             lbl = document.getElementById(labelId);
           el.oninput = (e) => {
             State[stateKey] = +e.target.value;
             if (lbl) lbl.textContent = e.target.value;
-            if (stateKey === "scale") updateInfo();
+            if (stateKey === 'scale') updateInfo();
           };
         };
-        updateRange("range-view-dist", "viewDistance", "val-view-dist");
-        updateRange("range-margin", "shrinkMargin", "val-margin");
-        updateRange("range-axis-len", "axisLength", "val-axis-len");
-        document.getElementById("chk-axis").onchange = (e) => (State.showAxis = e.target.checked);
-        document.getElementById("bg-color-picker").oninput = (e) => (State.bgColor = e.target.value);
-        document.getElementById("sel-scale").onchange = (e) => {
+        updateRange('range-view-dist', 'viewDistance', 'val-view-dist');
+        updateRange('range-margin', 'shrinkMargin', 'val-margin');
+        updateRange('range-axis-len', 'axisLength', 'val-axis-len');
+        document.getElementById('chk-axis').onchange = (e) => {
+          State.showAxis = e.target.checked;
+          updateLocalStorage();
+        };
+        document.getElementById('bg-color-picker').oninput = (e) =>
+          (State.bgColor = e.target.value);
+        document.getElementById('sel-scale').onchange = (e) => {
           State.scale = +e.target.value;
           updateInfo();
           updateLocalStorage();
         };
-        document.querySelectorAll(".mode-btn").forEach(
+        document.querySelectorAll('.mode-btn').forEach(
           (b) =>
             (b.onclick = () => {
-              document.querySelectorAll(".mode-btn").forEach((x) => x.classList.remove("active"));
-              b.classList.add("active");
+              document.querySelectorAll('.mode-btn').forEach((x) => x.classList.remove('active'));
+              b.classList.add('active');
               State.mode = b.dataset.mode;
-            }),
+            })
         );
-        document.getElementById("cam-presets").onchange = (e) => applyCameraPreset(e.target.value);
-        document.getElementById("btn-add").onclick = addCuboid;
-        document.getElementById("btn-add-group").onclick = addGroup;
-        document.getElementById("btn-group").onclick = () => {
+        document.getElementById('cam-presets').onchange = (e) => applyCameraPreset(e.target.value);
+        document.getElementById('btn-add').onclick = addCuboid;
+        document.getElementById('btn-add-group').onclick = addGroup;
+        document.getElementById('btn-group').onclick = () => {
           if (State.selection.size < 1) return;
-          let ids = Array.from(State.selection).filter((id) => id !== "root");
+          let ids = Array.from(State.selection).filter((id) => id !== 'root');
           if (ids.length === 0) return;
           let parent = findParent(State.scene.root, ids[0]) || State.scene.root;
           let nodes = [];
@@ -1563,11 +1662,11 @@
           });
           const idNum = State.nextSequenceId++;
           let colors = new Set(nodes.map((n) => n.color).filter((c) => c));
-          let gColor = colors.size === 1 ? Array.from(colors)[0] : "#888888";
+          let gColor = colors.size === 1 ? Array.from(colors)[0] : '#888888';
           let g = {
-            id: "group-" + idNum,
+            id: 'group-' + idNum,
             name: `group ${idNum}`,
-            type: "group",
+            type: 'group',
             children: nodes,
             color: gColor,
             expanded: true,
@@ -1580,12 +1679,12 @@
           renderTree();
           updateInfo();
         };
-        document.getElementById("btn-ungroup").onclick = () => {
+        document.getElementById('btn-ungroup').onclick = () => {
           if (State.selection.size !== 1) return;
           let id = Array.from(State.selection)[0];
-          if (id === "root") return;
+          if (id === 'root') return;
           let g = findNode(State.scene.root, id);
-          if (!g || g.type !== "group") return;
+          if (!g || g.type !== 'group') return;
           let parent = findParent(State.scene.root, id);
           if (!parent) return;
           let idx = parent.children.indexOf(g);
@@ -1595,8 +1694,8 @@
           renderTree();
           updateInfo();
         };
-        document.getElementById("btn-delete").onclick = () => {
-          if (State.selection.has("root")) return;
+        document.getElementById('btn-delete').onclick = () => {
+          if (State.selection.has('root')) return;
           Array.from(State.selection).forEach((id) => {
             findAndRemove(State.scene.root, id);
           });
@@ -1605,7 +1704,7 @@
           renderTree();
           updateInfo();
         };
-        document.getElementById("btn-move").onclick = () => {
+        document.getElementById('btn-move').onclick = () => {
           if (State.selection.size < 1) return;
           const ids = Array.from(State.selection);
           showModal(`<h3>Move Selection</h3>
@@ -1622,15 +1721,16 @@
                     </div>
                     <div class="input-group"><label>Distance</label><input type="number" id="dist" value="1.0" step="0.1"></div>
                     <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="btn" style="flex:1; background:var(--accent-color); color:white; border:none;" onclick="doMove([${ids.map((id) => `'${id}'`).join(",")}])">Move</button>
+                        <button class="btn" style="flex:1; background:var(--accent-color); color:white; border:none;" onclick="doMove([${ids.map((id) => `'${id}'`).join(',')}])">Move</button>
                         <button class="btn" style="flex:1;" onclick="hideModal()">Cancel</button>
                     </div>`);
         };
-        document.getElementById("btn-copy").onclick = () => {
+        document.getElementById('btn-copy').onclick = () => {
           if (State.selection.size < 1) return;
           const ids = Array.from(State.selection);
           const nodes = ids.map((id) => findNode(State.scene.root, id));
-          if (nodes.some((n) => !n || n.type !== "cuboid")) return alert("Copy only works for individual cuboids, not groups.");
+          if (nodes.some((n) => !n || n.type !== 'cuboid'))
+            return alert('Copy only works for individual cuboids, not groups.');
 
           showModal(`<h3>Copy Objects</h3>
                     <div class="input-group">
@@ -1651,22 +1751,23 @@
                         <button class="btn" style="flex:1;" onclick="hideModal()">Cancel</button>
                     </div>`);
         };
-        document.getElementById("btn-split").onclick = () => {
+        document.getElementById('btn-split').onclick = () => {
           if (State.selection.size !== 1) return;
           let id = Array.from(State.selection)[0],
             o = findNode(State.scene.root, id);
-          if (!o || o.type !== "cuboid") return;
+          if (!o || o.type !== 'cuboid') return;
           showModal(
-            `<h3>Split Cuboid</h3><div class="input-group"><label>Axis</label><select id="ax" onchange="document.getElementById('cut').value = (this.value==='x'?${o.w}:this.value==='y'?${o.h}:${o.d})/2"><option value="x">X</option><option value="y">Y</option><option value="z">Z</option></select></div><div class="input-group"><label>Cut Point</label><input type="number" id="cut" value="${o.w / 2}" step="0.1"></div><div style="display:flex; gap:10px; margin-top:10px;"><button class="btn" style="flex:1; background:var(--accent-color); color:white; border:none;" onclick="doSplit('${id}')">Split</button><button class="btn" style="flex:1;" onclick="hideModal()">Cancel</button></div>`,
+            `<h3>Split Cuboid</h3><div class="input-group"><label>Axis</label><select id="ax" onchange="document.getElementById('cut').value = (this.value==='x'?${o.w}:this.value==='y'?${o.h}:${o.d})/2"><option value="x">X</option><option value="y">Y</option><option value="z">Z</option></select></div><div class="input-group"><label>Cut Point</label><input type="number" id="cut" value="${o.w / 2}" step="0.1"></div><div style="display:flex; gap:10px; margin-top:10px;"><button class="btn" style="flex:1; background:var(--accent-color); color:white; border:none;" onclick="doSplit('${id}')">Split</button><button class="btn" style="flex:1;" onclick="hideModal()">Cancel</button></div>`
           );
         };
-        document.getElementById("btn-save").onclick = () => {
+        document.getElementById('btn-save').onclick = () => {
           const data = {
-            type: "cuboid-3d-scene",
+            type: 'cuboid-3d-scene',
             version: 1,
             margin: State.shrinkMargin,
             viewDistance: State.viewDistance,
             axisLength: State.axisLength,
+            showAxis: State.showAxis,
             scale: State.scale,
             ui: State.ui,
             bgColor: State.bgColor,
@@ -1674,64 +1775,69 @@
             cameraPreset: State.cameraPreset,
             camera: State.camera,
           };
-          const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-          const a = document.createElement("a");
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          const a = document.createElement('a');
           a.href = URL.createObjectURL(blob);
-          a.download = getExportFileName() + ".json";
+          a.download = getExportFileName() + '.json';
           a.click();
           State.lastSaved = true;
           updateLocalStorage();
         };
-        document.getElementById("btn-export-png").onclick = () => exportImage("png");
-        document.getElementById("btn-export-jpg").onclick = () => exportImage("jpg");
-        document.getElementById("btn-open").onclick = () => document.getElementById("file-input").click();
-        document.getElementById("file-input").onchange = (e) => {
+        document.getElementById('btn-export-png').onclick = () => exportImage('png');
+        document.getElementById('btn-export-jpg').onclick = () => exportImage('jpg');
+        document.getElementById('btn-open').onclick = () =>
+          document.getElementById('file-input').click();
+        document.getElementById('file-input').onchange = (e) => {
           let f = e.target.files[0];
           if (!f) return;
           let r = new FileReader();
           r.onload = (ev) => {
             try {
               let p = JSON.parse(ev.target.result);
-              if (p.type === "cuboid-3d-scene") {
+              if (p.type === 'cuboid-3d-scene') {
                 State.scene.root = p.root;
                 State.shrinkMargin = p.margin || 0.05;
                 State.viewDistance = p.viewDistance || 15;
                 State.axisLength = p.axisLength || 10;
+                State.showAxis = p.showAxis !== undefined ? p.showAxis : true;
                 State.scale = p.scale || 1;
                 State.ui = p.ui || State.ui;
-                State.bgColor = p.bgColor || "#ffffff";
-                document.getElementById("range-margin").value = State.shrinkMargin;
-                document.getElementById("range-view-dist").value = State.viewDistance;
-                document.getElementById("range-axis-len").value = State.axisLength;
-                document.getElementById("sel-scale").value = State.scale;
-                document.getElementById("bg-color-picker").value = State.bgColor;
+                State.bgColor = p.bgColor || '#ffffff';
+                document.getElementById('range-margin').value = State.shrinkMargin;
+                document.getElementById('range-view-dist').value = State.viewDistance;
+                document.getElementById('range-axis-len').value = State.axisLength;
+                document.getElementById('chk-axis').checked = State.showAxis;
+                document.getElementById('sel-scale').value = State.scale;
+                document.getElementById('bg-color-picker').value = State.bgColor;
                 applyUIPanelSizes();
                 if (p.cameraPreset) applyCameraPreset(p.cameraPreset, true);
                 if (p.camera) {
-                  ["longitude", "latitude", "roll", "zoom"].forEach((k) => {
-                    if (typeof p.camera[k] === "number" && !isNaN(p.camera[k])) State.camera[k] = p.camera[k];
+                  ['longitude', 'latitude', 'roll', 'zoom'].forEach((k) => {
+                    if (typeof p.camera[k] === 'number' && !isNaN(p.camera[k]))
+                      State.camera[k] = p.camera[k];
                   });
-                  if (p.camera.pos) State.camera.pos = new Vec3(p.camera.pos.x, p.camera.pos.y, p.camera.pos.z);
+                  if (p.camera.pos)
+                    State.camera.pos = new Vec3(p.camera.pos.x, p.camera.pos.y, p.camera.pos.z);
                 }
-              } else if (p && p.id === "root") State.scene.root = p;
-              else return alert("Invalid scene file");
+              } else if (p && p.id === 'root') State.scene.root = p;
+              else return alert('Invalid scene file');
               compactAndReassignIds(State.scene.root);
               saveHistory();
               renderTree();
               updateInfo();
             } catch (err) {
-              alert("Error parsing JSON");
+              alert('Error parsing JSON');
             }
           };
           r.readAsText(f);
         };
-        document.getElementById("btn-export").onclick = () => {
+        document.getElementById('btn-export').onclick = () => {
           let v = [],
             f = [],
             count = 0;
           function walk(node) {
             if (node.hidden) return;
-            if (node.type === "cuboid") {
+            if (node.type === 'cuboid') {
               const m = State.shrinkMargin,
                 x1 = node.x + m,
                 x2 = node.x + node.w - m,
@@ -1749,7 +1855,7 @@
                 `v ${x1} ${y1} ${z2}${c}`,
                 `v ${x2} ${y1} ${z2}${c}`,
                 `v ${x2} ${y2} ${z2}${c}`,
-                `v ${x1} ${y2} ${z2}${c}`,
+                `v ${x1} ${y2} ${z2}${c}`
               );
               [
                 [1, 2, 3, 4],
@@ -1758,16 +1864,16 @@
                 [2, 6, 7, 3],
                 [3, 7, 8, 4],
                 [4, 8, 5, 1],
-              ].forEach((face) => f.push(`f ${face.map((i) => i + count).join(" ")}`));
+              ].forEach((face) => f.push(`f ${face.map((i) => i + count).join(' ')}`));
               count += 8;
             }
             if (node.children) node.children.forEach(walk);
           }
           walk(State.scene.root);
-          const blob = new Blob([v.join("\n") + "\n" + f.join("\n")], { type: "text/plain" });
-          const a = document.createElement("a");
+          const blob = new Blob([v.join('\n') + '\n' + f.join('\n')], { type: 'text/plain' });
+          const a = document.createElement('a');
           a.href = URL.createObjectURL(blob);
-          a.download = getExportFileName() + ".obj";
+          a.download = getExportFileName() + '.obj';
           a.click();
         };
 
@@ -1781,19 +1887,19 @@
             updateLocalStorage();
           };
           const onEnd = () => {
-            window.removeEventListener("mousemove", onMove);
-            window.removeEventListener("mouseup", onEnd);
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onEnd);
           };
           el.onmousedown = (e) => {
             startSize = State.ui[property];
             startPos = isVertical ? e.clientX : e.clientY;
-            window.addEventListener("mousemove", onMove);
-            window.addEventListener("mouseup", onEnd);
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onEnd);
           };
         };
-        setupResizer("resizer-sidebar", "sidebarWidth", true);
-        setupResizer("resizer-toolbar", "toolbarHeight", false);
-        setupResizer("resizer-info", "infoHeight", false);
+        setupResizer('resizer-sidebar', 'sidebarWidth', true);
+        setupResizer('resizer-toolbar', 'toolbarHeight', false);
+        setupResizer('resizer-info', 'infoHeight', false);
 
         let isDown = false,
           lx = 0,
@@ -1804,7 +1910,7 @@
           lx = x;
           ly = y;
           isFallbackRotate = false;
-          if (State.mode === "select") {
+          if (State.mode === 'select') {
             const rect = canvas.getBoundingClientRect();
             const id = drawScene(true, x - rect.left, rect.bottom - y);
             if (id) {
@@ -1825,7 +1931,7 @@
           lx = x;
           ly = y;
           let mode = State.mode;
-          if (mode === "select" && isFallbackRotate) mode = "rotate";
+          if (mode === 'select' && isFallbackRotate) mode = 'rotate';
 
           const { forward, right, up } = getCameraVectors();
           const cosR = Math.cos(State.camera.roll);
@@ -1833,23 +1939,26 @@
           const rolledRight = right.mul(cosR).add(up.mul(sinR));
           const rolledUp = right.mul(-sinR).add(up.mul(cosR));
 
-          if (mode === "shift") {
+          if (mode === 'shift') {
             const mult = 100;
             State.camera.pos = State.camera.pos.add(rolledUp.mul(dy * mult));
             State.camera.pos = State.camera.pos.sub(rolledRight.mul(dx * mult));
-          } else if (mode === "depth") {
+          } else if (mode === 'depth') {
             const mult = 100;
             State.camera.pos = State.camera.pos.add(forward.mul(-dy * mult));
-          } else if (mode === "rotate") {
+          } else if (mode === 'rotate') {
             State.camera.latitude -= dy * 2;
             State.camera.longitude -= dx * 2;
             // Normalize angles
             while (State.camera.longitude > Math.PI) State.camera.longitude -= Math.PI * 2;
             while (State.camera.longitude < -Math.PI) State.camera.longitude += Math.PI * 2;
-            State.camera.latitude = Math.max(-Math.PI / 2 + 0.01, Math.min(Math.PI / 2 - 0.01, State.camera.latitude));
-          } else if (mode === "zoom") {
+            State.camera.latitude = Math.max(
+              -Math.PI / 2 + 0.01,
+              Math.min(Math.PI / 2 - 0.01, State.camera.latitude)
+            );
+          } else if (mode === 'zoom') {
             State.camera.zoom = Math.max(1, Math.min(170, State.camera.zoom + dy * 100));
-          } else if (mode === "roll") {
+          } else if (mode === 'roll') {
             State.camera.roll += dx * 2;
             while (State.camera.roll > Math.PI) State.camera.roll -= Math.PI * 2;
             while (State.camera.roll < -Math.PI) State.camera.roll += Math.PI * 2;
@@ -1861,74 +1970,81 @@
         window.onmousemove = (e) => handleMove(e.clientX, e.clientY);
 
         canvas.addEventListener(
-          "touchstart",
+          'touchstart',
           (e) => {
             if (e.touches.length === 1) {
               e.preventDefault();
               handleStart(e.touches[0].clientX, e.touches[0].clientY, false);
             }
           },
-          { passive: false },
+          { passive: false }
         );
 
         window.addEventListener(
-          "touchend",
+          'touchend',
           () => {
             isDown = false;
           },
-          { passive: false },
+          { passive: false }
         );
 
         window.addEventListener(
-          "touchmove",
+          'touchmove',
           (e) => {
             if (isDown && e.touches.length === 1) {
               e.preventDefault();
               handleMove(e.touches[0].clientX, e.touches[0].clientY);
             }
           },
-          { passive: false },
+          { passive: false }
         );
 
-        let ls = localStorage.getItem("cuboid_state");
+        let ls = localStorage.getItem('cuboid_state');
         if (ls) {
           try {
             let p = JSON.parse(ls);
-            if (p.scene && p.scene.id === "root") {
+            if (p.scene && p.scene.id === 'root') {
               State.scene.root = p.scene;
               compactAndReassignIds(State.scene.root);
             }
             if (p.cameraPreset) applyCameraPreset(p.cameraPreset, true);
             if (p.camera) {
-              ["longitude", "latitude", "roll", "zoom"].forEach((k) => {
-                if (typeof p.camera[k] === "number" && !isNaN(p.camera[k])) State.camera[k] = p.camera[k];
+              ['longitude', 'latitude', 'roll', 'zoom'].forEach((k) => {
+                if (typeof p.camera[k] === 'number' && !isNaN(p.camera[k]))
+                  State.camera[k] = p.camera[k];
               });
-              if (p.camera.pos) State.camera.pos = new Vec3(p.camera.pos.x, p.camera.pos.y, p.camera.pos.z);
+              if (p.camera.pos)
+                State.camera.pos = new Vec3(p.camera.pos.x, p.camera.pos.y, p.camera.pos.z);
             }
             if (p.bgColor) {
               State.bgColor = p.bgColor;
-              document.getElementById("bg-color-picker").value = p.bgColor;
+              document.getElementById('bg-color-picker').value = p.bgColor;
             }
             if (p.margin !== undefined) {
               State.shrinkMargin = p.margin;
-              document.getElementById("range-margin").value = p.margin;
+              document.getElementById('range-margin').value = p.margin;
             }
             if (p.viewDistance !== undefined) {
               State.viewDistance = p.viewDistance;
-              document.getElementById("range-view-dist").value = p.viewDistance;
+              document.getElementById('range-view-dist').value = p.viewDistance;
             }
             if (p.axisLength !== undefined) {
               State.axisLength = p.axisLength;
-              document.getElementById("range-axis-len").value = p.axisLength;
+              document.getElementById('range-axis-len').value = p.axisLength;
             }
             if (p.scale !== undefined) {
               State.scale = p.scale;
-              document.getElementById("sel-scale").value = p.scale;
+              document.getElementById('sel-scale').value = p.scale;
+            }
+            if (p.showAxis !== undefined) {
+              State.showAxis = p.showAxis;
+              document.getElementById('chk-axis').checked = p.showAxis;
             }
             if (p.ui) State.ui = p.ui;
             if (!p.lastSaved)
               setTimeout(() => {
-                if (confirm("Save unsaved changes from last session?")) document.getElementById("btn-save").click();
+                if (confirm('Save unsaved changes from last session?'))
+                  document.getElementById('btn-save').click();
               }, 500);
           } catch (e) {}
         }
@@ -1938,8 +2054,8 @@
         updateInfo();
         try {
           gl =
-            canvas.getContext("webgl", { preserveDrawingBuffer: true }) ||
-            canvas.getContext("experimental-webgl", { preserveDrawingBuffer: true });
+            canvas.getContext('webgl', { preserveDrawingBuffer: true }) ||
+            canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
           if (gl) {
             const vs = `attribute vec4 aVertexPosition; attribute vec4 aVertexColor; uniform mat4 uModelViewMatrix; uniform mat4 uProjectionMatrix; varying lowp vec4 vColor; void main() { gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition; vColor = aVertexColor; }`;
             const fs = `varying lowp vec4 vColor; void main() { gl_FragColor = vColor; }`;
@@ -1958,12 +2074,12 @@
             programInfo = {
               program: prog,
               attribLocations: {
-                vertexPosition: gl.getAttribLocation(prog, "aVertexPosition"),
-                vertexColor: gl.getAttribLocation(prog, "aVertexColor"),
+                vertexPosition: gl.getAttribLocation(prog, 'aVertexPosition'),
+                vertexColor: gl.getAttribLocation(prog, 'aVertexColor'),
               },
               uniformLocations: {
-                projectionMatrix: gl.getUniformLocation(prog, "uProjectionMatrix"),
-                modelViewMatrix: gl.getUniformLocation(prog, "uModelViewMatrix"),
+                projectionMatrix: gl.getUniformLocation(prog, 'uProjectionMatrix'),
+                modelViewMatrix: gl.getUniformLocation(prog, 'uModelViewMatrix'),
               },
             };
             requestAnimationFrame(() => drawScene());
