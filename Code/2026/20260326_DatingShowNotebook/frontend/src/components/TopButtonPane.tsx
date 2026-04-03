@@ -93,6 +93,21 @@ const TopButtonPane: React.FC = () => {
             <div className="w-1/2 h-full bg-red-300" />
           </button>
 
+          <button
+            title="Send Message (Bidirectional)"
+            className={clsx(
+              'w-10 h-10 border-2 rounded flex overflow-hidden hover:opacity-80 transition-opacity',
+              activeMode === 'bidirectional-message' ? 'border-black scale-110' : 'border-gray-300'
+            )}
+            onClick={() => {
+              return setActiveMode(
+                activeMode === 'bidirectional-message' ? 'select' : 'bidirectional-message'
+              );
+            }}
+          >
+            <div className="w-full h-full bg-[#8B008B]" />
+          </button>
+
           <div className="h-8 w-px bg-gray-300 mx-2" />
 
           {/* Team Assignment Buttons: Assign persons to colored teams */}

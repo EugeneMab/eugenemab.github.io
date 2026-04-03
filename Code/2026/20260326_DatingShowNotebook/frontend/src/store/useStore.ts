@@ -4,7 +4,7 @@ import { renderEventToSvgString } from '../utils/svgRenderer';
 import { svgToJpeg, saveEventImage, cleanupZombieImages } from '../utils/imageGen';
 
 export type Gender = 'male' | 'female';
-export type MessageType = 'strong' | 'weak';
+export type MessageType = 'strong' | 'weak' | 'bidirectional';
 
 export interface Person {
   id: number;
@@ -46,6 +46,7 @@ export type ActiveMode =
   | 'select'
   | 'message'
   | 'weak-message'
+  | 'bidirectional-message'
   | 'team-0'
   | 'team-1'
   | 'team-2'
@@ -200,7 +201,13 @@ export const useStore = create<AppState>((set, get) => {
                 if (!m.from || !m.to || !validPersonIds.has(m.from) || !validPersonIds.has(m.to)) {
                   return false;
                 }
-                const key = `${m.from}-${m.to}-${m.type}`;
+                let key;
+                if (m.type === 'bidirectional') {
+                  const sortedIds = [m.from, m.to].sort((a, b) => a - b);
+                  key = `${sortedIds[0]}-${sortedIds[1]}-${m.type}`;
+                } else {
+                  key = `${m.from}-${m.to}-${m.type}`;
+                }
                 if (seenMessages.has(key)) {
                   return false;
                 }

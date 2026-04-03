@@ -454,39 +454,56 @@
 
     <script>
       // --- Global Math Library ---
+      /* 3D Vector class for basic linear algebra operations */
       class Vec3 {
-        constructor(x, y, z) {
+        /* Initialize vector with x, y, z components */
+        constructor(/* x-coordinate */ x, /* y-coordinate */ y, /* z-coordinate */ z) {
+          /* Assign components to instance */
           this.x = x;
           this.y = y;
           this.z = z;
         }
-        sub(v) {
+        /* Subtract another vector from this one */
+        sub(/* operand vector */ v) {
           return new Vec3(this.x - v.x, this.y - v.y, this.z - v.z);
         }
-        add(v) {
+        /* Add another vector to this one */
+        add(/* operand vector */ v) {
           return new Vec3(this.x + v.x, this.y + v.y, this.z + v.z);
         }
-        mul(s) {
+        /* Scalar multiplication */
+        mul(/* scalar value */ s) {
           return new Vec3(this.x * s, this.y * s, this.z * s);
         }
-        dot(v) {
+        /* Dot product of two vectors */
+        dot(/* operand vector */ v) {
+          /* x1*x2 + y1*y2 + z1*z2 */
           return this.x * v.x + this.y * v.y + this.z * v.z;
         }
-        cross(v) {
+        /* Cross product of two vectors */
+        cross(/* operand vector */ v) {
+          /* standard 3D cross product formula */
           return new Vec3(
             this.y * v.z - this.z * v.y,
             this.z * v.x - this.x * v.z,
             this.x * v.y - this.y * v.x
           );
         }
+        /* Scale vector to unit length */
         normalize() {
+          /* calculate magnitude: sqrt(x^2 + y^2 + z^2) */
           const mag = Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+          /* return zero vector if magnitude is zero, else scale by 1/mag */
           return mag === 0 ? new Vec3(0, 0, 0) : new Vec3(this.x / mag, this.y / mag, this.z / mag);
         }
       }
+      /* 4x4 Matrix operations for 3D transformations */
       const Mat4 = {
+        /* Create an identity matrix */
         create: () => new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]),
-        multiply: (out, a, b) => {
+        /* Multiply two 4x4 matrices (out = a * b) */
+        multiply: (/* output matrix */ out, /* left matrix */ a, /* right matrix */ b) => {
+          /* Cache values from matrix a for efficiency */
           let a00 = a[0],
             a01 = a[1],
             a02 = a[2],
@@ -503,6 +520,7 @@
             a31 = a[13],
             a32 = a[14],
             a33 = a[15];
+          /* Cache values from matrix b for efficiency */
           let b00 = b[0],
             b01 = b[1],
             b02 = b[2],
@@ -519,6 +537,7 @@
             b31 = b[13],
             b32 = b[14],
             b33 = b[15];
+          /* standard matrix multiplication formula: row-column dot products */
           out[0] = b00 * a00 + b01 * a10 + b02 * a20 + b03 * a30;
           out[1] = b00 * a01 + b01 * a11 + b02 * a21 + b03 * a31;
           out[2] = b00 * a02 + b01 * a12 + b02 * a22 + b03 * a32;
@@ -537,9 +556,18 @@
           out[15] = b30 * a03 + b31 * a13 + b32 * a23 + b33 * a33;
           return out;
         },
-        perspective: (out, fovy, aspect, near, far) => {
-          let f = 1.0 / Math.tan(fovy / 2),
-            nf = 1 / (near - far);
+        /* Create a perspective projection matrix */
+        perspective: (
+          /* output matrix */ out,
+          /* field of view y */ fovy,
+          /* aspect ratio */ aspect,
+          /* near plane */ near,
+          /* far plane */ far
+        ) => {
+          /* Calculate field of view scale and depth normalization factor */
+          let f /* field of view scale */ = 1.0 / Math.tan(fovy / 2),
+            nf /* depth normalization factor */ = 1 / (near - far);
+          /* standard perspective matrix construction */
           out[0] = f / aspect;
           out[1] = 0;
           out[2] = 0;
@@ -558,19 +586,25 @@
           out[15] = 0;
           return out;
         },
-        translate: (out, a, v) => {
-          let x = v[0],
-            y = v[1],
-            z = v[2];
+        /* Apply translation to a matrix */
+        translate: (/* output matrix */ out, /* source matrix */ a, /* translation vector */ v) => {
+          /* extract x, y, z from vector */
+          let x /* horizontal pos */ = v[0],
+            y /* vertical pos */ = v[1],
+            z /* depth pos */ = v[2];
+          /* translate the last row of the matrix */
           out[12] = a[0] * x + a[4] * y + a[8] * z + a[12];
           out[13] = a[1] * x + a[5] * y + a[9] * z + a[13];
           out[14] = a[2] * x + a[6] * y + a[10] * z + a[14];
           out[15] = a[3] * x + a[7] * y + a[11] * z + a[15];
           return out;
         },
-        rotateX: (out, a, rad) => {
-          let s = Math.sin(rad),
-            c = Math.cos(rad),
+        /* Rotate matrix around X axis */
+        rotateX: (/* output matrix */ out, /* source matrix */ a, /* radians */ rad) => {
+          /* pre-calculate sine and cosine */
+          let s /* sine of angle */ = Math.sin(rad),
+            c /* cosine of angle */ = Math.cos(rad),
+            /* cache source rows that will be modified */
             a10 = a[4],
             a11 = a[5],
             a12 = a[6],
@@ -579,6 +613,7 @@
             a21 = a[9],
             a22 = a[10],
             a23 = a[11];
+          /* apply rotation formula to relevant rows */
           out[4] = a10 * c + a20 * s;
           out[5] = a11 * c + a21 * s;
           out[6] = a12 * c + a22 * s;
@@ -589,9 +624,12 @@
           out[11] = a23 * c - a13 * s;
           return out;
         },
-        rotateY: (out, a, rad) => {
-          let s = Math.sin(rad),
-            c = Math.cos(rad),
+        /* Rotate matrix around Y axis */
+        rotateY: (/* output matrix */ out, /* source matrix */ a, /* radians */ rad) => {
+          /* pre-calculate sine and cosine */
+          let s /* sine of angle */ = Math.sin(rad),
+            c /* cosine of angle */ = Math.cos(rad),
+            /* cache source rows that will be modified */
             a00 = a[0],
             a01 = a[1],
             a02 = a[2],
@@ -600,6 +638,7 @@
             a21 = a[9],
             a22 = a[10],
             a23 = a[11];
+          /* apply rotation formula to relevant rows */
           out[0] = a00 * c - a20 * s;
           out[1] = a01 * c - a21 * s;
           out[2] = a02 * c - a22 * s;
@@ -610,9 +649,12 @@
           out[11] = a03 * s + a23 * c;
           return out;
         },
-        rotateZ: (out, a, rad) => {
-          let s = Math.sin(rad),
-            c = Math.cos(rad),
+        /* Rotate matrix around Z axis */
+        rotateZ: (/* output matrix */ out, /* source matrix */ a, /* radians */ rad) => {
+          /* pre-calculate sine and cosine */
+          let s /* sine of angle */ = Math.sin(rad),
+            c /* cosine of angle */ = Math.cos(rad),
+            /* cache source rows that will be modified */
             a00 = a[0],
             a01 = a[1],
             a02 = a[2],
@@ -621,6 +663,7 @@
             a11 = a[5],
             a12 = a[6],
             a13 = a[7];
+          /* apply rotation formula to relevant rows */
           out[0] = a00 * c + a10 * s;
           out[1] = a01 * c + a11 * s;
           out[2] = a02 * c + a12 * s;
@@ -636,6 +679,7 @@
       // --- Application State ---
       const State = {
         scene: {
+          /* root of the scene hierarchy */
           root: {
             id: 'root',
             name: 'Root',
@@ -646,105 +690,158 @@
             color: '#888888',
           },
         },
+        /* set of currently selected node IDs */
         selection: new Set(),
         camera: {
+          /* camera position vector */
           pos: new Vec3(0, 5, 15),
+          /* horizontal rotation angle */
           longitude: -Math.PI / 2,
+          /* vertical rotation angle */
           latitude: 0.3,
+          /* camera roll angle */
           roll: 0,
+          /* field of view in degrees */
           zoom: 45,
         },
+        /* name of active camera preset */
         cameraPreset: 'frontAbove',
+        /* orbit distance for camera presets */
         viewDistance: 15,
+        /* active interaction mode (select, shift, etc) */
         mode: 'select',
+        /* world axis visibility flag */
         showAxis: true,
+        /* length of axis lines */
         axisLength: 10,
+        /* small gap between adjacent cuboids */
         shrinkMargin: 0.05,
+        /* counter for generating unique IDs */
         nextSequenceId: 1,
+        /* scene background color */
         bgColor: '#ffffff',
+        /* world unit scale for UI labels */
         scale: 1,
-        ui: { sidebarWidth: 280, toolbarHeight: 70, infoHeight: 100 },
+        /* dimensions for resizable UI panels */
+        ui: {
+          /* sidebar width */ sidebarWidth: 280,
+          /* top toolbar height */ toolbarHeight: 70,
+          /* info panel height */ infoHeight: 100,
+        },
+        /* undo history stack (JSON snapshots) */
         history: [],
+        /* index of current state in history */
         historyIndex: -1,
+        /* persistence flag for current session */
         lastSaved: true,
       };
 
       // --- Utility Functions ---
+      /* Calculate camera orientation vectors based on longitude and latitude */
       function getCameraVectors() {
+        /* longitude angle */
         const lon = State.camera.longitude;
+        /* latitude angle */
         const lat = State.camera.latitude;
         // Flip sin(lat) so positive latitude = Above (looking down)
+        /* Forward vector calculation using spherical to Cartesian coordinates */
         const forward = new Vec3(
           Math.cos(lat) * Math.cos(lon),
           -Math.sin(lat),
           Math.cos(lat) * Math.sin(lon)
         ).normalize();
+        /* Right vector is cross product of forward and world up (0,1,0) */
         const right = forward.cross(new Vec3(0, 1, 0)).normalize();
         // If forward is vertical, use a fallback right vector
         if (right.x === 0 && right.y === 0 && right.z === 0) {
+          /* Fallback when looking straight up/down */
           const fallbackRight = new Vec3(Math.cos(lon), 0, Math.sin(lon))
             .cross(new Vec3(0, 1, 0))
             .normalize();
+          /* Up vector is cross product of right and forward */
           const up = fallbackRight.cross(forward).normalize();
           return { forward, right: fallbackRight, up };
         }
+        /* Standard up vector calculation */
         const up = right.cross(forward).normalize();
         return { forward, right, up };
       }
 
-      function findNode(root, id) {
+      /* Recursively find a node by its ID */
+      function findNode(/* tree root node */ root, /* target ID */ id) {
+        /* Check if root is the target */
         if (root.id === id) return root;
+        /* Search children recursively */
         if (root.children) {
-          for (let c of root.children) {
-            let f = findNode(c, id);
+          for (let c /* iteration child */ of root.children) {
+            let f /* found node result */ = findNode(c, id);
             if (f) return f;
           }
         }
         return null;
       }
-      function findParent(root, id) {
+      /* Recursively find the parent of a node with target ID */
+      function findParent(/* tree root node */ root, /* child ID to find */ id) {
         if (root.children) {
-          if (root.children.some((c) => c.id === id)) return root;
-          for (let c of root.children) {
-            let p = findParent(c, id);
+          /* Check if any immediate child is the target */
+          if (root.children.some((c /* group child */) => c.id === id)) return root;
+          /* Search children's subtrees */
+          for (let c /* tree child */ of root.children) {
+            let p /* parent node found */ = findParent(c, id);
             if (p) return p;
           }
         }
         return null;
       }
-      function findAndRemove(root, id) {
+      /* Find and remove a node from the tree */
+      function findAndRemove(/* tree root node */ root, /* target node ID */ id) {
         if (root.children) {
-          let idx = root.children.findIndex((c) => c.id === id);
+          /* Search immediate children first */
+          let idx /* index of the found child */ = root.children.findIndex(
+            (c /* immediate child */) => c.id === id
+          );
           if (idx !== -1) return root.children.splice(idx, 1)[0];
-          for (let c of root.children) {
-            let f = findAndRemove(c, id);
+          /* Search deeper */
+          for (let c /* tree branch child */ of root.children) {
+            let f /* removed node result */ = findAndRemove(c, id);
             if (f) return f;
           }
         }
         return null;
       }
-      function hexToRgb(hex) {
+      /* Convert hex color string to RGB components (0-1 range) */
+      function hexToRgb(/* color hex string */ hex) {
         return {
+          /* parse 1st hex pair */
           r: parseInt(hex.slice(1, 3), 16) / 255,
+          /* parse 2nd hex pair */
           g: parseInt(hex.slice(3, 5), 16) / 255,
+          /* parse 3rd hex pair */
           b: parseInt(hex.slice(5, 7), 16) / 255,
         };
       }
-      function setNodeColor(node, color) {
+      /* Set color for a node and all its descendants */
+      function setNodeColor(/* target node */ node, /* color value string */ color) {
         node.color = color;
-        if (node.children) node.children.forEach((c) => setNodeColor(c, color));
+        if (node.children)
+          node.children.forEach((c /* hierarchy child */) => setNodeColor(c, color));
       }
-      function setNodeHidden(node, hidden) {
+      /* Set visibility for a node and all its descendants */
+      function setNodeHidden(/* target node */ node, /* hidden state boolean */ hidden) {
         node.hidden = hidden;
-        if (node.children) node.children.forEach((c) => setNodeHidden(c, hidden));
+        if (node.children)
+          node.children.forEach((c /* hierarchy child */) => setNodeHidden(c, hidden));
       }
 
-      function compactAndReassignIds(root) {
+      /* Regenerate unique IDs for all nodes in the tree */
+      function compactAndReassignIds(/* tree root node */ root) {
         State.nextSequenceId = 1;
-        function walk(node) {
+        /* depth-first traversal to walk the tree */
+        function walk(/* current walk node */ node) {
           if (node.id === 'root') {
             // keep root as root
           } else {
+            /* generate new ID based on type and sequence counter */
             node.id = (node.type === 'group' ? 'group-' : 'obj-') + State.nextSequenceId++;
           }
           if (node.children) node.children.forEach(walk);
@@ -752,13 +849,29 @@
         walk(root);
       }
 
+      /* Expand all parent groups of a given node ID */
+      function expandParents(/* target node ID */ id) {
+        let currId /* current node ID in traversal */ = id;
+        /* traverse up until root is reached */
+        while (currId !== 'root') {
+          let p /* parent node object */ = findParent(State.scene.root, currId);
+          if (!p) break;
+          /* ensure parent is expanded to show child in tree */
+          p.expanded = true;
+          currId = p.id;
+        }
+      }
+
+      /* Generate a safe filename for export based on root name */
       function getExportFileName() {
         const rootName = State.scene.root.name || 'root';
+        /* remove special characters */
         const filtered = rootName.replace(/[^A-Za-z0-9\-_\.]/g, '');
         return filtered || 'root';
       }
 
       // --- UI Logic ---
+      /* Update CSS variables for panel sizes */
       function applyUIPanelSizes() {
         document.documentElement.style.setProperty('--sidebar-width', State.ui.sidebarWidth + 'px');
         document.documentElement.style.setProperty(
@@ -768,11 +881,14 @@
         document.documentElement.style.setProperty('--info-height', State.ui.infoHeight + 'px');
       }
 
+      /* Re-render the tree view in the sidebar */
       function renderTree() {
+        /* get tree container element */
         const cont = document.getElementById('tree-container');
         if (!cont) return;
         cont.innerHTML = '';
-        function build(node) {
+        /* recursively build DOM for each node */
+        function build(/* current node */ node) {
           const div = document.createElement('div');
           div.className =
             node.type +
@@ -780,11 +896,12 @@
             (State.selection.has(node.id) ? ' selected' : '') +
             (node.hidden ? ' hidden-node' : '');
           div.draggable = node.id !== 'root';
-          div.ondragstart = (e) => {
+          /* drag and drop handlers */
+          div.ondragstart = (e /* event */) => {
             e.stopPropagation();
             e.dataTransfer.setData('text/plain', node.id);
           };
-          div.ondragover = (e) => {
+          div.ondragover = (e /* event */) => {
             if (node.type === 'group') {
               e.preventDefault();
               div.style.backgroundColor = '#e5e5e7';
@@ -793,7 +910,7 @@
           div.ondragleave = () => {
             div.style.backgroundColor = '';
           };
-          div.ondrop = (e) => {
+          div.ondrop = (e /* event */) => {
             e.preventDefault();
             e.stopPropagation();
             div.style.backgroundColor = '';
@@ -817,7 +934,8 @@
                                 <span style="margin-right:4px;">${typeIcon}</span>
                                 <span style="flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${node.name || 'Object'}</span>
                                 <span class="node-toggle" onclick="event.stopPropagation(); toggleHidden('${node.id}')">${node.hidden ? '👁️‍🗨️' : '👁️'}</span>`;
-          div.onclick = (e) => {
+          /* selection click handler */
+          div.onclick = (e /* event */) => {
             if (!e.ctrlKey) State.selection.clear();
             if (State.selection.has(node.id)) State.selection.delete(node.id);
             else State.selection.add(node.id);
@@ -826,10 +944,11 @@
           };
           const wrap = document.createElement('div');
           wrap.appendChild(div);
+          /* build children recursively if expanded */
           if (node.type === 'group' && node.expanded && node.children) {
-            const cCont = document.createElement('div');
+            const cCont /* children container */ = document.createElement('div');
             cCont.className = 'tree-node-children';
-            node.children.forEach((c) => cCont.appendChild(build(c)));
+            node.children.forEach((c /* child */) => cCont.appendChild(build(c)));
             wrap.appendChild(cCont);
           }
           return wrap;
@@ -837,13 +956,15 @@
         cont.appendChild(build(State.scene.root));
       }
 
-      function isDescendant(parent, childId) {
+      /* Check if a node is a descendant of a potential parent */
+      function isDescendant(/* potential parent node */ parent, /* target child ID */ childId) {
         if (!parent.children) return false;
-        if (parent.children.some((c) => c.id === childId)) return true;
-        return parent.children.some((c) => isDescendant(c, childId));
+        if (parent.children.some((c /* child */) => c.id === childId)) return true;
+        return parent.children.some((c /* child */) => isDescendant(c, childId));
       }
 
-      window.toggleExpand = (id) => {
+      /* Toggle expansion state of a group node */
+      window.toggleExpand = (/* node ID */ id) => {
         let node = findNode(State.scene.root, id);
         if (node && node.type === 'group') {
           node.expanded = !node.expanded;
@@ -851,7 +972,8 @@
           updateLocalStorage();
         }
       };
-      window.toggleHidden = (id) => {
+      /* Toggle hidden state of a node */
+      window.toggleHidden = (/* node ID */ id) => {
         let node = findNode(State.scene.root, id);
         if (node) {
           setNodeHidden(node, !node.hidden);
@@ -860,6 +982,7 @@
         }
       };
 
+      /* Update info panel based on current selection */
       function updateInfo() {
         const info = document.getElementById('selection-info');
         if (!info) return;
@@ -870,16 +993,29 @@
             let html = `<div style="display:flex; align-items:center; gap:8px; width:100%; height:100%;">
                         <div style="display:flex; flex-direction:column; gap:2px; min-width:120px;">
                             <div class="info-row">Name: <input type="text" value="${obj.name}" oninput="updateNodeName('${id}', this.value)" style="width:80px;"></div>
-                            <div class="info-row">Color: <input type="color" value="${obj.color || '#888888'}" 
-                                oninput="${obj.type === 'group' ? "changeGroupColor('" + id + "', this.value, true)" : "updateCuboidValue('" + id + "', 'color', this.value, true)"}"
-                                onchange="${obj.type === 'group' ? "changeGroupColor('" + id + "', this.value)" : "updateCuboidValue('" + id + "', 'color', this.value)"}"></div>
+                            <div class="info-row">Color: 
+                                <input type="color" value="${obj.color || '#888888'}" id="info-color-picker"
+                                    oninput="syncColorInput('${id}', '${obj.type}', this.value, 'text', true)"
+                                    onchange="syncColorInput('${id}', '${obj.type}', this.value, 'text', false)">
+                                <input type="text" value="${obj.color || '#888888'}" id="info-color-hex" style="width:60px; font-family:monospace;"
+                                    oninput="syncColorInput('${id}', '${obj.type}', this.value, 'picker', true)"
+                                    onchange="syncColorInput('${id}', '${obj.type}', this.value, 'picker', false)">
+                            </div>
                         </div>`;
             if (obj.type === 'cuboid') {
-              const S = State.scale;
+              const S /* scale */ = State.scale;
+              /* Calculate coordinates of far corners */
               const farX = obj.x + obj.w,
                 farY = obj.y + obj.h,
                 farZ = obj.z + obj.d;
-              const renderAxis = (axis, val, width, far, bg) => {
+              /* Helper to render axis controls */
+              const renderAxis = (
+                /* axis label */ axis,
+                /* position */ val,
+                /* dimension */ width,
+                /* far point */ far,
+                /* background color */ bg
+              ) => {
                 const axisUpper = axis.toUpperCase();
                 const wLabel = axis === 'x' ? 'W' : axis === 'y' ? 'H' : 'D';
                 const modes = [
@@ -906,7 +1042,7 @@
                                 <span class="axis-label">${axisUpper}</span>
                                 ${modes
                                   .map(
-                                    (m) => `
+                                    (m /* mode config */) => `
                                     <div class="info-grid-col">
                                         <label>${m.label}</label>
                                         <input type="number" step="0.1" value="${m.cur.toFixed(2)}" onchange="tweakCuboid('${id}', '${axis}', '${m.mode}', this.value); saveHistory()">
@@ -930,13 +1066,20 @@
             State.selection.size > 1 ? `${State.selection.size} selected` : 'No selection';
       }
 
-      window.tweakCuboid = (id, axis, mode, val) => {
+      /* Adjust cuboid dimensions and position from UI sliders */
+      window.tweakCuboid = (
+        /* cuboid ID */ id,
+        /* target axis */ axis,
+        /* tweak mode */ mode,
+        /* new value */ val
+      ) => {
         let node = findNode(State.scene.root, id);
         if (!node) return;
         val = +val;
         const xKey = axis,
           wKey = axis === 'x' ? 'w' : axis === 'y' ? 'h' : 'd';
         const oldFar = node[xKey] + node[wKey];
+        /* Apply logic based on which handle is being dragged */
         if (mode === 'move') {
           node[xKey] = val;
         } else if (mode === 'grow') {
@@ -960,14 +1103,17 @@
         );
         if (row) {
           const vals = [node[xKey], node[xKey], node[wKey], node[wKey], far, far];
-          row.querySelectorAll('.info-grid-col').forEach((col, i) => {
-            col.querySelector('input[type="number"]').value = vals[i].toFixed(2);
-            col.querySelector('input[type="range"]').value = vals[i];
-          });
+          row
+            .querySelectorAll('.info-grid-col')
+            .forEach((col /* column element */, i /* index */) => {
+              col.querySelector('input[type="number"]').value = vals[i].toFixed(2);
+              col.querySelector('input[type="range"]').value = vals[i];
+            });
         }
       };
 
-      window.updateNodeName = (id, name) => {
+      /* Update the name of a node */
+      window.updateNodeName = (/* node ID */ id, /* new name */ name) => {
         let node = findNode(State.scene.root, id);
         if (node) {
           node.name = name;
@@ -975,14 +1121,25 @@
           updateLocalStorage();
         }
       };
-      window.updateCuboidValue = (id, key, val, skipHistory) => {
+      /* Update a specific property of a cuboid */
+      window.updateCuboidValue = (
+        /* cuboid ID */ id,
+        /* property key */ key,
+        /* new value */ val,
+        /* skip history flag */ skipHistory
+      ) => {
         let node = findNode(State.scene.root, id);
         if (node) {
           node[key] = key === 'color' ? val : +val;
           if (!skipHistory) saveHistory();
         }
       };
-      window.changeGroupColor = (id, color, skipHistory) => {
+      /* Update the color of a group and its children */
+      window.changeGroupColor = (
+        /* group ID */ id,
+        /* new color */ color,
+        /* skip history flag */ skipHistory
+      ) => {
         let node = findNode(State.scene.root, id);
         if (node) {
           setNodeColor(node, color);
@@ -990,22 +1147,56 @@
         }
       };
 
-      function showModal(html) {
+      /* Synchronize color picker and hex text input, and update node color */
+      window.syncColorInput = (
+        /* target ID */ id,
+        /* node type */ type,
+        /* input value */ val,
+        /* target input to sync */ otherType,
+        /* skip history flag */ skipHistory
+      ) => {
+        /* regex for valid hex color #RRGGBB */
+        const hexRegex = /^#[0-9A-Fa-f]{6}$/;
+        let color = val;
+        /* if input is from text box, only sync if it is a valid hex color */
+        if (otherType === 'picker' && !hexRegex.test(val)) return;
+
+        /* update the paired input element's value */
+        const otherId = otherType === 'text' ? 'info-color-hex' : 'info-color-picker';
+        const otherEl = document.getElementById(otherId);
+        if (otherEl) otherEl.value = color;
+
+        /* apply color change to the node */
+        if (type === 'group') {
+          window.changeGroupColor(id, color, skipHistory);
+        } else {
+          window.updateCuboidValue(id, 'color', color, skipHistory);
+        }
+      };
+
+      /* Display the modal overlay with custom HTML */
+      function showModal(/* content HTML */ html) {
         const overlay = document.getElementById('modal-overlay');
         const content = document.getElementById('modal-content');
         if (!overlay || !content) return;
         content.innerHTML = html;
         overlay.style.display = 'flex';
       }
+      /* Hide the modal overlay */
       function hideModal() {
         document.getElementById('modal-overlay').style.display = 'none';
       }
 
       // --- Camera Logic ---
-      window.applyCameraPreset = (preset, skipUpdate) => {
+      /* Set camera to a predefined viewpoint */
+      window.applyCameraPreset = (
+        /* preset name */ preset,
+        /* skip storage update flag */ skipUpdate
+      ) => {
         State.cameraPreset = preset;
         State.camera.pos = new Vec3(0, 0, State.viewDistance);
         State.camera.roll = 0;
+        /* longitude and latitude for various viewpoints */
         switch (preset) {
           case 'above':
             State.camera.longitude = -Math.PI / 2;
@@ -1053,32 +1244,42 @@
       };
 
       // --- History Logic ---
+      /* Save current scene state to history for undo/redo */
       function saveHistory() {
+        /* serialize root node */
         const snapshot = JSON.stringify(State.scene.root);
+        /* don't save if no changes */
         if (State.historyIndex >= 0 && State.history[State.historyIndex] === snapshot) return;
+        /* discard redo history after new action */
         State.history = State.history.slice(0, State.historyIndex + 1);
         State.history.push(snapshot);
+        /* limit history size */
         if (State.history.length > 100) State.history.shift();
         else State.historyIndex++;
         State.lastSaved = false;
         updateLocalStorage();
       }
+      /* Revert to previous state in history */
       function undo() {
         if (State.historyIndex > 0) {
           State.historyIndex--;
+          /* restore snapshot */
           State.scene.root = JSON.parse(State.history[State.historyIndex]);
           renderTree();
           updateInfo();
         }
       }
+      /* Re-apply previously undone state */
       function redo() {
         if (State.historyIndex < State.history.length - 1) {
           State.historyIndex++;
+          /* restore snapshot */
           State.scene.root = JSON.parse(State.history[State.historyIndex]);
           renderTree();
           updateInfo();
         }
       }
+      /* Persist application state to local storage */
       function updateLocalStorage() {
         localStorage.setItem(
           'cuboid_state',
@@ -1099,9 +1300,21 @@
       }
 
       // --- WebGL Drawing Logic ---
-      let gl, programInfo;
-      function getCuboidVertices(x, y, z, w, h, d, colorHex, isWireframe = false) {
+      let gl /* WebGL context */, programInfo /* Shader program info */;
+      /* Generate vertex and color data for a cuboid */
+      function getCuboidVertices(
+        /* x-coord */ x,
+        /* y-coord */ y,
+        /* z-coord */ z,
+        /* width */ w,
+        /* height */ h,
+        /* depth */ d,
+        /* color string */ colorHex,
+        /* wireframe flag */ isWireframe = false
+      ) {
+        /* apply shrink margin */
         const m = State.shrinkMargin;
+        /* calculate actual corner coordinates */
         const x1 = x + m,
           x2 = x + w - m,
           y1 = y + m,
@@ -1110,7 +1323,8 @@
           z2 = z + d - m;
         const rgb = hexToRgb(colorHex);
         if (isWireframe) {
-          const v = [
+          /* wireframe line segments */
+          const v /* vertices */ = [
             x1,
             y1,
             z1,
@@ -1184,10 +1398,12 @@
             y2,
             z2,
           ];
-          const c = Array((v.length / 3) * 4).fill(1);
+          const c /* colors */ = Array((v.length / 3) * 4).fill(1);
           return { positions: new Float32Array(v), colors: new Float32Array(c) };
         }
+        /* 6 faces, 2 triangles each, 3 vertices each triangle = 36 vertices */
         const positions = [
+          /* front face */
           x1,
           y1,
           z2,
@@ -1206,6 +1422,7 @@
           x1,
           y2,
           z2,
+          /* back face */
           x1,
           y1,
           z1,
@@ -1224,6 +1441,7 @@
           x2,
           y1,
           z1,
+          /* top face */
           x1,
           y2,
           z1,
@@ -1242,6 +1460,7 @@
           x2,
           y2,
           z1,
+          /* bottom face */
           x1,
           y1,
           z1,
@@ -1260,6 +1479,7 @@
           x1,
           y1,
           z2,
+          /* right face */
           x2,
           y1,
           z1,
@@ -1278,6 +1498,7 @@
           x2,
           y1,
           z2,
+          /* left face */
           x1,
           y1,
           z1,
@@ -1298,33 +1519,56 @@
           z1,
         ];
         const colors = [];
+        /* light shading factors for each face */
         const factors = [0.9, 0.7, 1.0, 0.5, 0.8, 0.6];
-        factors.forEach((f) => {
-          for (let i = 0; i < 6; i++) colors.push(rgb.r * f, rgb.g * f, rgb.b * f, 1.0);
+        factors.forEach((f /* factor */) => {
+          /* 6 vertices per face */
+          for (let i /* vertex index */ = 0; i < 6; i++)
+            colors.push(rgb.r * f, rgb.g * f, rgb.b * f, 1.0);
         });
         return { positions: new Float32Array(positions), colors: new Float32Array(colors) };
       }
-      function drawObject(ctx, pos, col, mode, proj, mv, pInfo = programInfo) {
+      /* Lower-level function to draw a single 3D object */
+      function drawObject(
+        /* WebGL context */ ctx,
+        /* position data */ pos,
+        /* color data */ col,
+        /* draw mode */ mode,
+        /* projection matrix */ proj,
+        /* modelview matrix */ mv,
+        /* shader info */ pInfo = programInfo
+      ) {
         if (!pInfo) return;
-        const pBuf = ctx.createBuffer();
+        /* Create and bind position buffer */
+        const pBuf /* position buffer */ = ctx.createBuffer();
         ctx.bindBuffer(ctx.ARRAY_BUFFER, pBuf);
         ctx.bufferData(ctx.ARRAY_BUFFER, pos, ctx.STATIC_DRAW);
         ctx.vertexAttribPointer(pInfo.attribLocations.vertexPosition, 3, ctx.FLOAT, false, 0, 0);
         ctx.enableVertexAttribArray(pInfo.attribLocations.vertexPosition);
-        const cBuf = ctx.createBuffer();
+        /* Create and bind color buffer */
+        const cBuf /* color buffer */ = ctx.createBuffer();
         ctx.bindBuffer(ctx.ARRAY_BUFFER, cBuf);
         ctx.bufferData(ctx.ARRAY_BUFFER, col, ctx.STATIC_DRAW);
         ctx.vertexAttribPointer(pInfo.attribLocations.vertexColor, 4, ctx.FLOAT, false, 0, 0);
         ctx.enableVertexAttribArray(pInfo.attribLocations.vertexColor);
+        /* Use shader and set uniforms */
         ctx.useProgram(pInfo.program);
         ctx.uniformMatrix4fv(pInfo.uniformLocations.projectionMatrix, false, proj);
         ctx.uniformMatrix4fv(pInfo.uniformLocations.modelViewMatrix, false, mv);
+        /* Final draw call */
         ctx.drawArrays(mode, 0, pos.length / 3);
+        /* Clean up */
         ctx.deleteBuffer(pBuf);
         ctx.deleteBuffer(cBuf);
       }
-      function drawScene(isPicking = false, pickX, pickY) {
+      /* Main render loop / scene drawing function */
+      function drawScene(
+        /* pixel picking flag */ isPicking = false,
+        /* pick x coord */ pickX,
+        /* pick y coord */ pickY
+      ) {
         if (!gl || !programInfo) return;
+        /* determine clear color based on mode */
         const currentBg = isPicking
           ? [0, 0, 0, 1]
           : [
@@ -1333,23 +1577,27 @@
               parseInt(State.bgColor.slice(5, 7), 16) / 255,
               1.0,
             ];
-        gl.clearColor(...currentBg.map((v) => (isNaN(v) ? 0 : v)));
+        gl.clearColor(...currentBg.map((v /* color value */) => (isNaN(v) ? 0 : v)));
         gl.clearDepth(1.0);
         gl.enable(gl.DEPTH_TEST);
         gl.depthFunc(gl.LEQUAL);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        const aspect = gl.canvas.clientWidth / (gl.canvas.clientHeight || 1);
-        const proj = Mat4.create();
+        /* Calculate projection matrix */
+        const aspect /* canvas aspect ratio */ =
+          gl.canvas.clientWidth / (gl.canvas.clientHeight || 1);
+        const proj /* projection matrix */ = Mat4.create();
         Mat4.perspective(proj, (State.camera.zoom * Math.PI) / 180, aspect, 0.1, 1000.0);
 
         // --- View Matrix Construction (Teapot style) ---
-        const mv = Mat4.create();
+        /* Construct view matrix from camera state */
+        const mv /* model-view matrix */ = Mat4.create();
         const { forward, right, up } = getCameraVectors();
-        const camPos = State.camera.pos;
+        const camPos /* camera position */ = State.camera.pos;
 
         // Apply Roll manually to the View Matrix
-        const cosR = Math.cos(State.camera.roll);
-        const sinR = Math.sin(State.camera.roll);
+        /* calculate roll sine/cosine */
+        const cosR /* cosine of roll */ = Math.cos(State.camera.roll);
+        const sinR /* sine of roll */ = Math.sin(State.camera.roll);
 
         // Combine rotation vectors into the matrix
         // Row 0: right (rolled)
@@ -1366,23 +1614,31 @@
         mv[10] = -forward.z;
 
         // Translation part: -dot(pos, axis)
-        const rolledRight = new Vec3(mv[0], mv[4], mv[8]);
-        const rolledUp = new Vec3(mv[1], mv[5], mv[9]);
+        /* calculate translation based on rolled camera axes */
+        const rolledRight /* right axis with roll applied */ = new Vec3(mv[0], mv[4], mv[8]);
+        const rolledUp /* up axis with roll applied */ = new Vec3(mv[1], mv[5], mv[9]);
         mv[12] = -camPos.dot(rolledRight);
         mv[13] = -camPos.dot(rolledUp);
         mv[14] = camPos.dot(forward);
 
-        const pickMap = new Map();
-        function walk(node, parentSelected = false) {
+        /* map for GPU picking */
+        const pickMap /* node ID lookup map */ = new Map();
+        /* recursive tree traversal for drawing */
+        function walk(
+          /* node to draw */ node,
+          /* inheritance selected state */ parentSelected = false
+        ) {
           if (node.hidden) return;
           const isSelected = parentSelected || State.selection.has(node.id);
           if (node.type === 'cuboid') {
             if (isPicking) {
-              const pickIdx = pickMap.size + 1;
+              /* draw each object with a unique color for picking */
+              const pickIdx /* object pick index */ = pickMap.size + 1;
               pickMap.set(pickIdx, node.id);
-              const r = (pickIdx & 0xff) / 255,
-                g = ((pickIdx >> 8) & 0xff) / 255,
-                b = ((pickIdx >> 16) & 0xff) / 255;
+              /* decode index into RGB channels */
+              const r /* red component */ = (pickIdx & 0xff) / 255,
+                g /* green component */ = ((pickIdx >> 8) & 0xff) / 255,
+                b /* blue component */ = ((pickIdx >> 16) & 0xff) / 255;
               const { positions } = getCuboidVertices(
                 node.x,
                 node.y,
@@ -1392,13 +1648,16 @@
                 node.d,
                 '#000000'
               );
-              const pCols = new Float32Array(
+              const pCols /* pick index color array */ = new Float32Array(
                 Array((positions.length / 3) * 4)
                   .fill(0)
-                  .map((_, i) => (i % 4 === 0 ? r : i % 4 === 1 ? g : i % 4 === 2 ? b : 1))
+                  .map((_, i /* channel index */) =>
+                    i % 4 === 0 ? r : i % 4 === 1 ? g : i % 4 === 2 ? b : 1
+                  )
               );
               drawObject(gl, positions, pCols, gl.TRIANGLES, proj, mv);
             } else {
+              /* standard shaded drawing */
               const { positions, colors } = getCuboidVertices(
                 node.x,
                 node.y,
@@ -1409,8 +1668,9 @@
                 node.color
               );
               drawObject(gl, positions, colors, gl.TRIANGLES, proj, mv);
+              /* draw wireframe overlay if selected */
               if (isSelected) {
-                const wire = getCuboidVertices(
+                const wire /* wireframe data */ = getCuboidVertices(
                   node.x,
                   node.y,
                   node.z,
@@ -1423,39 +1683,65 @@
                 drawObject(gl, wire.positions, wire.colors, gl.LINES, proj, mv);
               }
             }
-          } else if (node.children) node.children.forEach((c) => walk(c, isSelected));
+          } else if (node.children)
+            node.children.forEach((c /* group child */) => walk(c, isSelected));
         }
         walk(State.scene.root);
+        /* handle pixel picking result */
         if (isPicking) {
-          const data = new Uint8Array(4);
+          const data /* pixel color data */ = new Uint8Array(4);
           gl.readPixels(pickX, pickY, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, data);
-          const id = data[0] + (data[1] << 8) + (data[2] << 16);
+          /* encode channels back to index */
+          const id /* decoded pick index */ = data[0] + (data[1] << 8) + (data[2] << 16);
           return pickMap.get(id);
         }
+        /* draw world axes if enabled */
         if (State.showAxis) {
-          const L = State.axisLength;
-          const axisPos = new Float32Array([0, 0, 0, L, 0, 0, 0, 0, 0, 0, L, 0, 0, 0, 0, 0, 0, L]);
-          const axisCol = new Float32Array([
+          const L /* axis line length */ = State.axisLength;
+          const axisPos /* axis vertex positions */ = new Float32Array([
+            0,
+            0,
+            0,
+            L,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            L,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            L,
+          ]);
+          const axisCol /* axis vertex colors */ = new Float32Array([
             1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1,
           ]);
           drawObject(gl, axisPos, axisCol, gl.LINES, proj, mv);
         }
+        /* Schedule next frame */
         requestAnimationFrame(() => drawScene());
       }
 
       // --- Global Actions ---
+      /* Add a new cuboid to the scene at the origin */
       window.addCuboid = () => {
         let targetGroup = State.scene.root;
+        /* detect target group from selection */
         if (State.selection.size === 1) {
-          const sid = Array.from(State.selection)[0],
-            snode = findNode(State.scene.root, sid);
+          const sid /* target selection ID */ = Array.from(State.selection)[0],
+            snode /* target selection node */ = findNode(State.scene.root, sid);
           if (snode) {
             if (snode.type === 'group') targetGroup = snode;
             else targetGroup = findParent(State.scene.root, sid) || State.scene.root;
           }
         }
-        const idNum = State.nextSequenceId++;
-        const newObj = {
+        const idNum /* sequence ID number */ = State.nextSequenceId++;
+        const newObj /* new cuboid node */ = {
           id: 'obj-' + idNum,
           type: 'cuboid',
           name: `cuboid ${idNum}`,
@@ -1475,18 +1761,20 @@
         renderTree();
         updateInfo();
       };
+      /* Add a new empty group to the scene */
       window.addGroup = () => {
         let targetGroup = State.scene.root;
+        /* determine parent group from selection */
         if (State.selection.size === 1) {
-          const sid = Array.from(State.selection)[0],
-            snode = findNode(State.scene.root, sid);
+          const sid /* parent selection ID */ = Array.from(State.selection)[0],
+            snode /* parent selection node */ = findNode(State.scene.root, sid);
           if (snode) {
             if (snode.type === 'group') targetGroup = snode;
             else targetGroup = findParent(State.scene.root, sid) || State.scene.root;
           }
         }
-        const idNum = State.nextSequenceId++;
-        const newGrp = {
+        const idNum /* sequence ID number */ = State.nextSequenceId++;
+        const newGrp /* new group node */ = {
           id: 'group-' + idNum,
           type: 'group',
           name: `group ${idNum}`,
@@ -1502,22 +1790,31 @@
         renderTree();
         updateInfo();
       };
-      window.doCopy = (ids) => {
-        ids.forEach((id) => {
-          let o = findNode(State.scene.root, id);
+      /* Duplicate selected objects along a specified axis */
+      window.doCopy = (/* list of target IDs */ ids) => {
+        ids.forEach((id /* source node ID */) => {
+          let o /* source node object */ = findNode(State.scene.root, id);
           if (!o || o.type !== 'cuboid') return;
           let parent = findParent(State.scene.root, id) || State.scene.root;
-          let dir = document.querySelector('input[name="ax"]:checked').value;
-          let sign = dir.startsWith('-') ? -1 : 1;
-          let ax = dir.endsWith('x') ? 'x' : dir.endsWith('y') ? 'y' : 'z';
-          let gap = +document.getElementById('gap').value,
-            count = +document.getElementById('count').value;
-          for (let i = 1; i <= count; i++) {
-            let c = JSON.parse(JSON.stringify(o));
-            const subId = State.nextSequenceId++;
+          let dir /* movement direction string */ = document.querySelector(
+            'input[name="ax"]:checked'
+          ).value;
+          let sign /* movement direction multiplier */ = dir.startsWith('-') ? -1 : 1;
+          let ax /* target axis coordinate key */ = dir.endsWith('x')
+            ? 'x'
+            : dir.endsWith('y')
+              ? 'y'
+              : 'z';
+          let gap /* inter-object spacing */ = +document.getElementById('gap').value,
+            count /* repetition count */ = +document.getElementById('count').value;
+          /* loop to create multiple copies */
+          for (let i /* iteration index */ = 1; i <= count; i++) {
+            let c /* clone object */ = JSON.parse(JSON.stringify(o));
+            const subId /* child sequence ID */ = State.nextSequenceId++;
             c.id = 'obj-' + subId;
             c.name = o.name + ' ' + subId;
-            let step = (ax === 'x' ? o.w : ax === 'y' ? o.h : o.d) + gap;
+            /* calculate offset: (dimension + gap) * count */
+            let step /* translation step */ = (ax === 'x' ? o.w : ax === 'y' ? o.h : o.d) + gap;
             c[ax] += step * i * sign;
             parent.children.push(c);
           }
@@ -1526,6 +1823,7 @@
         renderTree();
         hideModal();
       };
+      /* Clear the scene and start over */
       window.doNew = () => {
         if (!State.lastSaved && !confirm('Discard unsaved changes?')) return;
         State.scene.root = {
@@ -1546,15 +1844,19 @@
         renderTree();
         updateInfo();
       };
-      window.doMove = (ids) => {
-        let dir = document.querySelector('input[name="ax"]:checked').value;
-        let sign = dir.startsWith('-') ? -1 : 1;
-        let ax = dir.endsWith('x') ? 'x' : dir.endsWith('y') ? 'y' : 'z';
-        let dist = +document.getElementById('dist').value * sign;
-        ids.forEach((id) => {
+      /* Move selected objects by a specific distance */
+      window.doMove = (/* list of node IDs */ ids) => {
+        let dir /* axis direction string */ = document.querySelector(
+          'input[name="ax"]:checked'
+        ).value;
+        let sign /* distance multiplier */ = dir.startsWith('-') ? -1 : 1;
+        let ax /* coordinate axis key */ = dir.endsWith('x') ? 'x' : dir.endsWith('y') ? 'y' : 'z';
+        let dist /* displacement value */ = +document.getElementById('dist').value * sign;
+        ids.forEach((id /* target node ID */) => {
           let node = findNode(State.scene.root, id);
           if (!node) return;
-          function apply(n) {
+          /* internal recursive function to translate a subtree */
+          function apply(/* current subtree node */ n) {
             if (n.type === 'cuboid') n[ax] += dist;
             if (n.children) n.children.forEach(apply);
           }
@@ -1565,28 +1867,34 @@
         hideModal();
         updateInfo();
       };
-      window.exportImage = (format) => {
+      /* Export canvas content as an image file */
+      window.exportImage = (/* 'png' or 'jpg' format */ format) => {
         const link = document.createElement('a');
         link.download = `${getExportFileName()}.${format}`;
+        /* convert canvas to data URL */
         link.href = gl.canvas.toDataURL(`image/${format === 'jpg' ? 'jpeg' : format}`);
         link.click();
       };
-      window.doSplit = (id) => {
-        let o = findNode(State.scene.root, id);
+      /* Split a cuboid into two separate ones */
+      window.doSplit = (/* target cuboid ID */ id) => {
+        let o /* target node object */ = findNode(State.scene.root, id);
         if (!o || o.type !== 'cuboid') return;
-        let ax = document.getElementById('ax').value,
-          cut = +document.getElementById('cut').value;
-        let max = ax === 'x' ? o.w : ax === 'y' ? o.h : o.d;
+        let ax /* split axis identifier */ = document.getElementById('ax').value,
+          cut /* split coordinate value */ = +document.getElementById('cut').value;
+        let max /* dimension along split axis */ = ax === 'x' ? o.w : ax === 'y' ? o.h : o.d;
+        /* validation: split must be within object bounds */
         if (cut <= 0 || cut >= max) return alert('Invalid cut');
-        let p1 = JSON.parse(JSON.stringify(o)),
-          p2 = JSON.parse(JSON.stringify(o));
-        const id1 = State.nextSequenceId++,
-          id2 = State.nextSequenceId++;
+        /* clone into two parts */
+        let p1 /* first part clone */ = JSON.parse(JSON.stringify(o)),
+          p2 /* second part clone */ = JSON.parse(JSON.stringify(o));
+        const id1 /* first part ID */ = State.nextSequenceId++,
+          id2 /* second part ID */ = State.nextSequenceId++;
         let parent = findParent(State.scene.root, id) || State.scene.root;
         p1.id = 'obj-' + id1;
         p1.name = o.name + ' ' + id1;
         p2.id = 'obj-' + id2;
         p2.name = o.name + ' ' + id2;
+        /* adjust dimensions and positions based on split axis */
         if (ax === 'x') {
           p1.w = cut;
           p2.x += cut;
@@ -1600,7 +1908,10 @@
           p2.z += cut;
           p2.d = o.d - cut;
         }
-        let idx = parent.children.findIndex((c) => c.id === id);
+        /* replace original with the two parts */
+        let idx /* original insertion index */ = parent.children.findIndex(
+          (c /* node child */) => c.id === id
+        );
         parent.children.splice(idx, 1, p1, p2);
         State.selection.clear();
         saveHistory();
@@ -1609,17 +1920,24 @@
       };
 
       // --- Main Initialization ---
+      /* Entry point: bind events and initialize WebGL after DOM loads */
       window.onload = () => {
         const canvas = document.getElementById('glCanvas');
+        /* Bind toolbar buttons */
         document.getElementById('btn-undo').onclick = undo;
         document.getElementById('btn-redo').onclick = redo;
         document.getElementById('btn-new').onclick = doNew;
         document.getElementById('btn-reset-cam').onclick = () =>
           applyCameraPreset(State.cameraPreset);
-        const updateRange = (id, stateKey, labelId) => {
-          const el = document.getElementById(id),
-            lbl = document.getElementById(labelId);
-          el.oninput = (e) => {
+        /* Helper to setup range sliders with labels */
+        const updateRange = (
+          /* input ID */ id,
+          /* state property */ stateKey,
+          /* label ID */ labelId
+        ) => {
+          const el /* input element */ = document.getElementById(id),
+            lbl /* label element */ = document.getElementById(labelId);
+          el.oninput = (e /* event */) => {
             State[stateKey] = +e.target.value;
             if (lbl) lbl.textContent = e.target.value;
             if (stateKey === 'scale') updateInfo();
@@ -1628,42 +1946,55 @@
         updateRange('range-view-dist', 'viewDistance', 'val-view-dist');
         updateRange('range-margin', 'shrinkMargin', 'val-margin');
         updateRange('range-axis-len', 'axisLength', 'val-axis-len');
-        document.getElementById('chk-axis').onchange = (e) => {
+        /* Axis toggle handler */
+        document.getElementById('chk-axis').onchange = (e /* event */) => {
           State.showAxis = e.target.checked;
           updateLocalStorage();
         };
-        document.getElementById('bg-color-picker').oninput = (e) =>
+        /* Background color handler */
+        document.getElementById('bg-color-picker').oninput = (e /* event */) =>
           (State.bgColor = e.target.value);
-        document.getElementById('sel-scale').onchange = (e) => {
+        /* Scale selection handler */
+        document.getElementById('sel-scale').onchange = (e /* event */) => {
           State.scale = +e.target.value;
           updateInfo();
           updateLocalStorage();
         };
+        /* Mode button handlers */
         document.querySelectorAll('.mode-btn').forEach(
-          (b) =>
+          (b /* button */) =>
             (b.onclick = () => {
-              document.querySelectorAll('.mode-btn').forEach((x) => x.classList.remove('active'));
+              document
+                .querySelectorAll('.mode-btn')
+                .forEach((x /* other button */) => x.classList.remove('active'));
               b.classList.add('active');
               State.mode = b.dataset.mode;
             })
         );
-        document.getElementById('cam-presets').onchange = (e) => applyCameraPreset(e.target.value);
+        /* Preset camera handler */
+        document.getElementById('cam-presets').onchange = (e /* event */) =>
+          applyCameraPreset(e.target.value);
         document.getElementById('btn-add').onclick = addCuboid;
         document.getElementById('btn-add-group').onclick = addGroup;
+        /* Grouping logic */
         document.getElementById('btn-group').onclick = () => {
           if (State.selection.size < 1) return;
-          let ids = Array.from(State.selection).filter((id) => id !== 'root');
+          let ids /* selected IDs */ = Array.from(State.selection).filter(
+            (id /* node ID */) => id !== 'root'
+          );
           if (ids.length === 0) return;
           let parent = findParent(State.scene.root, ids[0]) || State.scene.root;
-          let nodes = [];
-          ids.forEach((id) => {
-            let n = findAndRemove(State.scene.root, id);
+          let nodes /* collected nodes */ = [];
+          ids.forEach((id /* node ID */) => {
+            let n /* node object */ = findAndRemove(State.scene.root, id);
             if (n) nodes.push(n);
           });
           const idNum = State.nextSequenceId++;
-          let colors = new Set(nodes.map((n) => n.color).filter((c) => c));
-          let gColor = colors.size === 1 ? Array.from(colors)[0] : '#888888';
-          let g = {
+          /* infer group color from members */
+          let colors = new Set(nodes.map((n /* node */) => n.color).filter((c /* color */) => c));
+          let gColor /* final group color */ =
+            colors.size === 1 ? Array.from(colors)[0] : '#888888';
+          let g /* new group object */ = {
             id: 'group-' + idNum,
             name: `group ${idNum}`,
             type: 'group',
@@ -1679,24 +2010,27 @@
           renderTree();
           updateInfo();
         };
+        /* Ungrouping logic */
         document.getElementById('btn-ungroup').onclick = () => {
           if (State.selection.size !== 1) return;
-          let id = Array.from(State.selection)[0];
+          let id /* group ID */ = Array.from(State.selection)[0];
           if (id === 'root') return;
-          let g = findNode(State.scene.root, id);
+          let g /* group node */ = findNode(State.scene.root, id);
           if (!g || g.type !== 'group') return;
           let parent = findParent(State.scene.root, id);
           if (!parent) return;
-          let idx = parent.children.indexOf(g);
+          let idx /* index in parent */ = parent.children.indexOf(g);
+          /* insert children at group's position */
           parent.children.splice(idx, 1, ...g.children);
           State.selection.clear();
           saveHistory();
           renderTree();
           updateInfo();
         };
+        /* Deletion logic */
         document.getElementById('btn-delete').onclick = () => {
           if (State.selection.has('root')) return;
-          Array.from(State.selection).forEach((id) => {
+          Array.from(State.selection).forEach((id /* node ID */) => {
             findAndRemove(State.scene.root, id);
           });
           State.selection.clear();
@@ -1704,6 +2038,7 @@
           renderTree();
           updateInfo();
         };
+        /* Modal for Move command */
         document.getElementById('btn-move').onclick = () => {
           if (State.selection.size < 1) return;
           const ids = Array.from(State.selection);
@@ -1725,11 +2060,12 @@
                         <button class="btn" style="flex:1;" onclick="hideModal()">Cancel</button>
                     </div>`);
         };
+        /* Modal for Copy command */
         document.getElementById('btn-copy').onclick = () => {
           if (State.selection.size < 1) return;
           const ids = Array.from(State.selection);
           const nodes = ids.map((id) => findNode(State.scene.root, id));
-          if (nodes.some((n) => !n || n.type !== 'cuboid'))
+          if (nodes.some((n /* node */) => !n || n.type !== 'cuboid'))
             return alert('Copy only works for individual cuboids, not groups.');
 
           showModal(`<h3>Copy Objects</h3>
@@ -1751,17 +2087,19 @@
                         <button class="btn" style="flex:1;" onclick="hideModal()">Cancel</button>
                     </div>`);
         };
+        /* Modal for Split command */
         document.getElementById('btn-split').onclick = () => {
           if (State.selection.size !== 1) return;
-          let id = Array.from(State.selection)[0],
-            o = findNode(State.scene.root, id);
+          let id /* cuboid ID */ = Array.from(State.selection)[0],
+            o /* cuboid object */ = findNode(State.scene.root, id);
           if (!o || o.type !== 'cuboid') return;
           showModal(
             `<h3>Split Cuboid</h3><div class="input-group"><label>Axis</label><select id="ax" onchange="document.getElementById('cut').value = (this.value==='x'?${o.w}:this.value==='y'?${o.h}:${o.d})/2"><option value="x">X</option><option value="y">Y</option><option value="z">Z</option></select></div><div class="input-group"><label>Cut Point</label><input type="number" id="cut" value="${o.w / 2}" step="0.1"></div><div style="display:flex; gap:10px; margin-top:10px;"><button class="btn" style="flex:1; background:var(--accent-color); color:white; border:none;" onclick="doSplit('${id}')">Split</button><button class="btn" style="flex:1;" onclick="hideModal()">Cancel</button></div>`
           );
         };
+        /* Save JSON scene file */
         document.getElementById('btn-save').onclick = () => {
-          const data = {
+          const data /* serialized data object */ = {
             type: 'cuboid-3d-scene',
             version: 1,
             margin: State.shrinkMargin,
@@ -1776,7 +2114,7 @@
             camera: State.camera,
           };
           const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-          const a = document.createElement('a');
+          const a /* temporary link */ = document.createElement('a');
           a.href = URL.createObjectURL(blob);
           a.download = getExportFileName() + '.json';
           a.click();
@@ -1785,16 +2123,18 @@
         };
         document.getElementById('btn-export-png').onclick = () => exportImage('png');
         document.getElementById('btn-export-jpg').onclick = () => exportImage('jpg');
+        /* Open JSON scene file */
         document.getElementById('btn-open').onclick = () =>
           document.getElementById('file-input').click();
-        document.getElementById('file-input').onchange = (e) => {
-          let f = e.target.files[0];
+        document.getElementById('file-input').onchange = (e /* event */) => {
+          let f /* file handle */ = e.target.files[0];
           if (!f) return;
-          let r = new FileReader();
-          r.onload = (ev) => {
+          let r /* file reader */ = new FileReader();
+          r.onload = (ev /* reader event */) => {
             try {
-              let p = JSON.parse(ev.target.result);
+              let p /* parsed scene object */ = JSON.parse(ev.target.result);
               if (p.type === 'cuboid-3d-scene') {
+                /* load all properties from file */
                 State.scene.root = p.root;
                 State.shrinkMargin = p.margin || 0.05;
                 State.viewDistance = p.viewDistance || 15;
@@ -1803,6 +2143,7 @@
                 State.scale = p.scale || 1;
                 State.ui = p.ui || State.ui;
                 State.bgColor = p.bgColor || '#ffffff';
+                /* update UI elements to match state */
                 document.getElementById('range-margin').value = State.shrinkMargin;
                 document.getElementById('range-view-dist').value = State.viewDistance;
                 document.getElementById('range-axis-len').value = State.axisLength;
@@ -1812,7 +2153,7 @@
                 applyUIPanelSizes();
                 if (p.cameraPreset) applyCameraPreset(p.cameraPreset, true);
                 if (p.camera) {
-                  ['longitude', 'latitude', 'roll', 'zoom'].forEach((k) => {
+                  ['longitude', 'latitude', 'roll', 'zoom'].forEach((k /* camera key */) => {
                     if (typeof p.camera[k] === 'number' && !isNaN(p.camera[k]))
                       State.camera[k] = p.camera[k];
                   });
@@ -1825,19 +2166,22 @@
               saveHistory();
               renderTree();
               updateInfo();
-            } catch (err) {
+            } catch (err /* parse error */) {
               alert('Error parsing JSON');
             }
           };
           r.readAsText(f);
         };
+        /* Export scene as Wavefront OBJ file */
         document.getElementById('btn-export').onclick = () => {
-          let v = [],
-            f = [],
-            count = 0;
-          function walk(node) {
+          let v /* OBJ vertices */ = [],
+            f /* OBJ faces */ = [],
+            count /* vertex counter */ = 0;
+          /* recursive tree walk to generate geometry */
+          function walk(/* current node */ node) {
             if (node.hidden) return;
             if (node.type === 'cuboid') {
+              /* calculate actual coordinates */
               const m = State.shrinkMargin,
                 x1 = node.x + m,
                 x2 = node.x + node.w - m,
@@ -1845,8 +2189,9 @@
                 y2 = node.y + node.h - m,
                 z1 = node.z + m,
                 z2 = node.z + node.d - m;
+              /* generate vertex lines with vertex colors */
               const rgb = hexToRgb(node.color),
-                c = ` ${rgb.r.toFixed(3)} ${rgb.g.toFixed(3)} ${rgb.b.toFixed(3)}`;
+                c /* color string */ = ` ${rgb.r.toFixed(3)} ${rgb.g.toFixed(3)} ${rgb.b.toFixed(3)}`;
               v.push(
                 `v ${x1} ${y1} ${z1}${c}`,
                 `v ${x2} ${y1} ${z1}${c}`,
@@ -1857,6 +2202,7 @@
                 `v ${x2} ${y2} ${z2}${c}`,
                 `v ${x1} ${y2} ${z2}${c}`
               );
+              /* generate face index lines */
               [
                 [1, 2, 3, 4],
                 [5, 8, 7, 6],
@@ -1864,24 +2210,33 @@
                 [2, 6, 7, 3],
                 [3, 7, 8, 4],
                 [4, 8, 5, 1],
-              ].forEach((face) => f.push(`f ${face.map((i) => i + count).join(' ')}`));
+              ].forEach((face /* face indices */) =>
+                f.push(`f ${face.map((i /* vertex index */) => i + count).join(' ')}`)
+              );
               count += 8;
             }
             if (node.children) node.children.forEach(walk);
           }
           walk(State.scene.root);
           const blob = new Blob([v.join('\n') + '\n' + f.join('\n')], { type: 'text/plain' });
-          const a = document.createElement('a');
+          const a /* temporary link */ = document.createElement('a');
           a.href = URL.createObjectURL(blob);
           a.download = getExportFileName() + '.obj';
           a.click();
         };
 
-        const setupResizer = (id, property, isVertical) => {
-          const el = document.getElementById(id);
-          let startSize, startPos;
-          const onMove = (e) => {
-            const delta = isVertical ? e.clientX - startPos : e.clientY - startPos;
+        /* Setup resizable UI panels */
+        const setupResizer = (
+          /* resizer element ID */ id,
+          /* UI property name */ property,
+          /* direction flag */ isVertical
+        ) => {
+          const el /* resizer handle */ = document.getElementById(id);
+          let startSize /* initial size */, startPos /* mouse down coordinate */;
+          const onMove = (e /* mouse move event */) => {
+            const delta /* drag distance */ = isVertical
+              ? e.clientX - startPos
+              : e.clientY - startPos;
             State.ui[property] = Math.max(isVertical ? 100 : 30, startSize + delta);
             applyUIPanelSizes();
             updateLocalStorage();
@@ -1890,7 +2245,7 @@
             window.removeEventListener('mousemove', onMove);
             window.removeEventListener('mouseup', onEnd);
           };
-          el.onmousedown = (e) => {
+          el.onmousedown = (e /* mouse down event */) => {
             startSize = State.ui[property];
             startPos = isVertical ? e.clientX : e.clientY;
             window.addEventListener('mousemove', onMove);
@@ -1901,21 +2256,35 @@
         setupResizer('resizer-toolbar', 'toolbarHeight', false);
         setupResizer('resizer-info', 'infoHeight', false);
 
-        let isDown = false,
-          lx = 0,
-          ly = 0,
-          isFallbackRotate = false;
-        const handleStart = (x, y, isCtrl) => {
+        /* Input state variables */
+        let isDown /* mouse down flag */ = false,
+          lx /* last mouse x */ = 0,
+          ly /* last mouse y */ = 0,
+          isFallbackRotate /* rotate on empty space flag */ = false;
+        /* Interaction start (Mouse/Touch) */
+        const handleStart = (
+          /* screen x */ x,
+          /* screen y */ y,
+          /* control key pressed */ isCtrl
+        ) => {
           isDown = true;
           lx = x;
           ly = y;
           isFallbackRotate = false;
+          /* handle 3D object selection via pixel picking */
           if (State.mode === 'select') {
             const rect = canvas.getBoundingClientRect();
-            const id = drawScene(true, x - rect.left, rect.bottom - y);
+            /* perform render and sample pixel color */
+            const id /* sampled object identifier */ = drawScene(
+              true,
+              x - rect.left,
+              rect.bottom - y
+            );
             if (id) {
               if (!isCtrl) State.selection.clear();
               State.selection.add(id);
+              /* expand all parent groups so selected item is visible in tree */
+              expandParents(id);
             } else {
               if (!isCtrl) State.selection.clear();
               isFallbackRotate = true;
@@ -1924,54 +2293,67 @@
             renderTree();
           }
         };
-        const handleMove = (x, y) => {
+        /* Interaction movement (Mouse/Touch) */
+        const handleMove = (/* current x */ x, /* current y */ y) => {
           if (!isDown) return;
-          let dx = (x - lx) / canvas.width;
-          let dy = (y - ly) / canvas.height;
+          /* calculate normalized screen delta */
+          let dx /* horizontal screen delta */ = (x - lx) / canvas.width;
+          let dy /* vertical screen delta */ = (y - ly) / canvas.height;
           lx = x;
           ly = y;
-          let mode = State.mode;
+          let mode /* operation mode */ = State.mode;
           if (mode === 'select' && isFallbackRotate) mode = 'rotate';
 
+          /* Calculate coordinate frame for camera relative movement */
           const { forward, right, up } = getCameraVectors();
           const cosR = Math.cos(State.camera.roll);
           const sinR = Math.sin(State.camera.roll);
+          /* Apply camera roll to lateral axes */
           const rolledRight = right.mul(cosR).add(up.mul(sinR));
           const rolledUp = right.mul(-sinR).add(up.mul(cosR));
 
+          /* Camera movement logic per mode */
           if (mode === 'shift') {
-            const mult = 100;
+            /* Panning in camera plane */
+            const mult /* movement sensitivity */ = 100;
             State.camera.pos = State.camera.pos.add(rolledUp.mul(dy * mult));
             State.camera.pos = State.camera.pos.sub(rolledRight.mul(dx * mult));
           } else if (mode === 'depth') {
-            const mult = 100;
+            /* Moving forward/backward */
+            const mult /* depth sensitivity */ = 100;
             State.camera.pos = State.camera.pos.add(forward.mul(-dy * mult));
           } else if (mode === 'rotate') {
+            /* Orbiting/Pitch-Yaw */
             State.camera.latitude -= dy * 2;
             State.camera.longitude -= dx * 2;
             // Normalize angles
             while (State.camera.longitude > Math.PI) State.camera.longitude -= Math.PI * 2;
             while (State.camera.longitude < -Math.PI) State.camera.longitude += Math.PI * 2;
+            /* Clamp latitude to prevent gimbal lock */
             State.camera.latitude = Math.max(
               -Math.PI / 2 + 0.01,
               Math.min(Math.PI / 2 - 0.01, State.camera.latitude)
             );
           } else if (mode === 'zoom') {
+            /* Field of view adjustment */
             State.camera.zoom = Math.max(1, Math.min(170, State.camera.zoom + dy * 100));
           } else if (mode === 'roll') {
+            /* Camera roll rotation */
             State.camera.roll += dx * 2;
             while (State.camera.roll > Math.PI) State.camera.roll -= Math.PI * 2;
             while (State.camera.roll < -Math.PI) State.camera.roll += Math.PI * 2;
           }
         };
 
-        canvas.onmousedown = (e) => handleStart(e.clientX, e.clientY, e.ctrlKey);
+        /* Browser event binding */
+        canvas.onmousedown = (e /* mouse event */) => handleStart(e.clientX, e.clientY, e.ctrlKey);
         window.onmouseup = () => (isDown = false);
-        window.onmousemove = (e) => handleMove(e.clientX, e.clientY);
+        window.onmousemove = (e /* mouse event */) => handleMove(e.clientX, e.clientY);
 
+        /* Touch interaction handling */
         canvas.addEventListener(
           'touchstart',
-          (e) => {
+          (e /* touch event */) => {
             if (e.touches.length === 1) {
               e.preventDefault();
               handleStart(e.touches[0].clientX, e.touches[0].clientY, false);
@@ -1990,7 +2372,7 @@
 
         window.addEventListener(
           'touchmove',
-          (e) => {
+          (e /* touch move event */) => {
             if (isDown && e.touches.length === 1) {
               e.preventDefault();
               handleMove(e.touches[0].clientX, e.touches[0].clientY);
@@ -1999,17 +2381,18 @@
           { passive: false }
         );
 
-        let ls = localStorage.getItem('cuboid_state');
+        /* Load state from LocalStorage on startup */
+        let ls /* localStorage cache */ = localStorage.getItem('cuboid_state');
         if (ls) {
           try {
-            let p = JSON.parse(ls);
+            let p /* parsed data */ = JSON.parse(ls);
             if (p.scene && p.scene.id === 'root') {
               State.scene.root = p.scene;
               compactAndReassignIds(State.scene.root);
             }
             if (p.cameraPreset) applyCameraPreset(p.cameraPreset, true);
             if (p.camera) {
-              ['longitude', 'latitude', 'roll', 'zoom'].forEach((k) => {
+              ['longitude', 'latitude', 'roll', 'zoom'].forEach((k /* camera property */) => {
                 if (typeof p.camera[k] === 'number' && !isNaN(p.camera[k]))
                   State.camera[k] = p.camera[k];
               });
@@ -2041,36 +2424,47 @@
               document.getElementById('chk-axis').checked = p.showAxis;
             }
             if (p.ui) State.ui = p.ui;
+            /* notify user of unsaved changes from previous session */
             if (!p.lastSaved)
               setTimeout(() => {
                 if (confirm('Save unsaved changes from last session?'))
                   document.getElementById('btn-save').click();
               }, 500);
-          } catch (e) {}
+          } catch (e /* load error */) {}
         }
         applyUIPanelSizes();
         saveHistory();
         renderTree();
         updateInfo();
+        /* Initialize WebGL and Shaders */
         try {
           gl =
             canvas.getContext('webgl', { preserveDrawingBuffer: true }) ||
             canvas.getContext('experimental-webgl', { preserveDrawingBuffer: true });
           if (gl) {
-            const vs = `attribute vec4 aVertexPosition; attribute vec4 aVertexColor; uniform mat4 uModelViewMatrix; uniform mat4 uProjectionMatrix; varying lowp vec4 vColor; void main() { gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition; vColor = aVertexColor; }`;
-            const fs = `varying lowp vec4 vColor; void main() { gl_FragColor = vColor; }`;
-            function loadShader(ctx, type, source) {
-              const s = ctx.createShader(type);
+            /* Minimal vertex shader for 3D cuboids */
+            const vs /* vertex shader source */ = `attribute vec4 aVertexPosition; attribute vec4 aVertexColor; uniform mat4 uModelViewMatrix; uniform mat4 uProjectionMatrix; varying lowp vec4 vColor; void main() { gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition; vColor = aVertexColor; }`;
+            /* Minimal fragment shader */
+            const fs /* fragment shader source */ = `varying lowp vec4 vColor; void main() { gl_FragColor = vColor; }`;
+            /* Helper to compile shaders */
+            function loadShader(
+              /* GL context */ ctx,
+              /* shader type */ type,
+              /* GLSL source */ source
+            ) {
+              const s /* shader handle */ = ctx.createShader(type);
               ctx.shaderSource(s, source);
               ctx.compileShader(s);
               return s;
             }
-            const v = loadShader(gl, gl.VERTEX_SHADER, vs),
-              f = loadShader(gl, gl.FRAGMENT_SHADER, fs);
-            const prog = gl.createProgram();
+            const v /* compiled vertex shader */ = loadShader(gl, gl.VERTEX_SHADER, vs),
+              f /* compiled fragment shader */ = loadShader(gl, gl.FRAGMENT_SHADER, fs);
+            /* Create and link shader program */
+            const prog /* WebGL program */ = gl.createProgram();
             gl.attachShader(prog, v);
             gl.attachShader(prog, f);
             gl.linkProgram(prog);
+            /* Store program and attribute locations */
             programInfo = {
               program: prog,
               attribLocations: {
@@ -2082,9 +2476,11 @@
                 modelViewMatrix: gl.getUniformLocation(prog, 'uModelViewMatrix'),
               },
             };
+            /* Start render loop */
             requestAnimationFrame(() => drawScene());
           }
-        } catch (e) {}
+        } catch (e /* WebGL init error */) {}
+        /* Handle window resize to match canvas resolution */
         window.onresize = () => {
           canvas.width = canvas.clientWidth;
           canvas.height = canvas.clientHeight;
