@@ -113,9 +113,13 @@ export function getMessageStyle(type: MessageType, gender: Gender) {
   if (type === 'strong') {
     color = isMale ? '#2563eb' : '#dc2626'; // Bold Blue/Red
     marker = isMale ? 'arrowhead-blue' : 'arrowhead-red';
-  } else {
+  } else if (type === 'weak') {
     color = isMale ? '#93c5fd' : '#fca5a5'; // Light Blue/Red
     marker = isMale ? 'arrowhead-lightblue' : 'arrowhead-lightred';
+  } else {
+    // bidirectional
+    color = '#8B008B'; // Dark Magenta
+    marker = undefined;
   }
   return { color, marker };
 }

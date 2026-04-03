@@ -113,7 +113,11 @@ const MainBody: React.FC = () => {
     }
 
     // Handle Relationship Message Creation
-    if (activeMode === 'message' || activeMode === 'weak-message') {
+    if (
+      activeMode === 'message' ||
+      activeMode === 'weak-message' ||
+      activeMode === 'bidirectional-message'
+    ) {
       if (firstPersonId === null) {
         setFirstPersonId(personId); // First person selected
       } else {
@@ -132,6 +136,8 @@ const MainBody: React.FC = () => {
 
             const isSameGender = person1.gender === person2.gender;
             const isStrong = activeMode === 'message';
+            const isWeak = activeMode === 'weak-message';
+            const isBidirectional = activeMode === 'bidirectional-message';
 
             // Find the current event in the latest data
             let targetEpIdx = -1;
@@ -154,15 +160,34 @@ const MainBody: React.FC = () => {
 
             // Prevent duplicate identical messages
             const existing = event.messages.some((m) => {
-              return m.from === firstPersonId && m.to === personId;
+              if (m.type === 'bidirectional' || isBidirectional) {
+                return (
+                  (m.from === firstPersonId && m.to === personId) ||
+                  (m.from === personId && m.to === firstPersonId)
+                );
+              }
+              return (
+                m.from === firstPersonId &&
+                m.to === personId &&
+                m.type === (isStrong ? 'strong' : 'weak')
+              );
             });
             if (existing) {
               return prev;
             }
 
-            // Relationship constraints: strong messages only between opposite genders
-            if (!isStrong || !isSameGender) {
-              const type: MessageType = isStrong ? 'strong' : 'weak';
+            // Relationship constraints:
+            // - strong: only opposite genders
+            // - bidirectional: only opposite genders
+            // - weak: allows same gender
+            const isAllowed = isWeak || !isSameGender;
+
+            if (isAllowed) {
+              const type: MessageType = isBidirectional
+                ? 'bidirectional'
+                : isStrong
+                  ? 'strong'
+                  : 'weak';
               const newMessage: Message = { from: firstPersonId, to: personId, type };
 
               return {
@@ -203,6 +228,9 @@ const MainBody: React.FC = () => {
                   ? {
                       ...ev,
                       messages: ev.messages.filter((m) => {
+                        if (m.type === 'bidirectional') {
+                          return m.from !== personId && m.to !== personId;
+                        }
                         return m.from !== personId;
                       }),
                       teams: Object.fromEntries(
@@ -679,7 +707,7 @@ const MainBody: React.FC = () => {
                       y2={y2}
                       stroke={color}
                       strokeWidth={MESSAGE_STROKE_WIDTH * scale}
-                      markerEnd={`url(#${marker})`}
+                      markerEnd={marker ? `url(#${marker})` : undefined}
                     />
                   </g>
                 );
@@ -695,7 +723,7 @@ const MainBody: React.FC = () => {
                   y2={y2}
                   stroke={color}
                   strokeWidth={MESSAGE_STROKE_WIDTH * scale}
-                  markerEnd={`url(#${marker})`}
+                  markerEnd={marker ? `url(#${marker})` : undefined}
                 />
               );
             })}
