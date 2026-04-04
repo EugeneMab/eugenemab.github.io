@@ -58,7 +58,11 @@ export function getFilteredPeople(data: AppData, episodeIndex: number) {
   }
   return data.people.filter((p) => {
     const ranges = p.ranges
+      .trim()
       .split(/\s+/)
+      .filter((s) => {
+        return s !== '';
+      })
       .map((s) => {
         return Number(s);
       })
@@ -70,7 +74,7 @@ export function getFilteredPeople(data: AppData, episodeIndex: number) {
     }
     for (let i = 0; i < ranges.length; i += RANGE_STEP) {
       const start = ranges[i];
-      const end = ranges[i + 1] || Infinity;
+      const end = ranges[i + 1] !== undefined ? ranges[i + 1] : start;
       if (episodeIndex >= start && episodeIndex <= end) {
         return true;
       }

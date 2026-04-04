@@ -3,6 +3,7 @@ import cors from 'cors';
 import fs from 'fs';
 import { promises as fsp } from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 const app = express();
 const port = 13762;
@@ -10,11 +11,12 @@ const port = 13762;
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 
-const restrictedRoot = path.resolve(process.argv[2] || '.');
-const workFolder = process.argv[3] ? path.resolve(process.argv[3]) : null;
+const restrictedRoot = path.resolve(process.env.DSN_RESTRICTED_ROOT || process.argv[2] || '.');
+const workFolder = process.env.DSN_WORK_FOLDER || (process.argv[3] ? path.resolve(process.argv[3]) : null);
 const folderToClient = new Map<string, string>();
 
 function log(msg: string) {
+  if (process.env.NODE_ENV === 'test') return;
   const now = new Date().toISOString();
   console.log(`[${now}] ${msg}`);
 }
@@ -293,6 +295,13 @@ app.post('/api/shutdown', (req, res) => {
   }, 100);
 });
 
-app.listen(port, () => {
-  log(`Backend listening at http://localhost:${port}`);
-});
+if (
+  import.meta.url === `file:///${fileURLToPath(import.meta.url).replace(/\\/g, '/')}` &&
+  (process.argv[1].endsWith('index.ts') || process.argv[1].endsWith('backend\\index.ts'))
+) {
+  app.listen(port, () => {
+    log(`Backend listening at http://localhost:${port}`);
+  });
+}
+
+export { app };

@@ -14,6 +14,11 @@ frontend/node_modules/
 # Local data
 data.json
 
+# Tests
+test-data/
+test-work/
+coverage/
+
 # OS files
 .DS_Store
 Thumbs.db
