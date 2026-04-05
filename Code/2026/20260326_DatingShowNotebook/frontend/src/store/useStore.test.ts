@@ -1,8 +1,10 @@
+/* Unit tests for the Zustand application store and global state management. */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useStore, toSafeBase64 } from './useStore';
 import axios from 'axios';
 
 describe('utils', () => {
+    /* Verifies the URL-safe base64 encoding utility. */
     it('toSafeBase64 encodes strings correctly', () => {
         const encoded = toSafeBase64('test-string');
         expect(encoded).toBe(btoa('test-string').replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''));
@@ -42,17 +44,20 @@ describe('useStore', () => {
     });
   });
 
+  /* Checks that the store starts with an empty and valid initial state. */
   it('initializes with default data', () => {
     const state = useStore.getState();
     expect(state.data.people).toEqual([]);
     expect(state.activeMode).toBe('message');
   });
 
+  /* Tests the switching of interaction modes (e.g., message, team, eraser). */
   it('setActiveMode updates state', () => {
     useStore.getState().setActiveMode('eraser');
     expect(useStore.getState().activeMode).toBe('eraser');
   });
 
+  /* Verifies the complete workflow of opening a folder, including data cleaning and ID compaction. */
   it('openFolder fetches data and updates state', async () => {
     const mockData = {
       people: [{ id: 1, name: 'Test' }, { id: 2, name: 'Test 2' }],
@@ -85,12 +90,14 @@ describe('useStore', () => {
     expect(useStore.getState().data.episodes[0].events[0].messages).toHaveLength(1);
   });
 
+  /* Ensures that multiple concurrent folder opening requests are prevented. */
   it('openFolder returns early if isOpening is true', async () => {
       useStore.setState({ isOpening: true });
       await useStore.getState().openFolder('another');
       expect(mockedAxios.post).not.toHaveBeenCalled();
   });
 
+  /* Tests the state update mechanism and the automatic creation of undo points. */
   it('saveData updates state and pushes to undo stack', async () => {
     useStore.setState({ currentFolderPath: 'test' });
     
@@ -103,6 +110,7 @@ describe('useStore', () => {
     expect(useStore.getState().undoStack).toHaveLength(1);
   });
 
+  /* Verifies that the undo functionality correctly reverts the application state. */
   it('undo restores previous state', () => {
       const oldData = useStore.getState().data;
       useStore.setState({ 
@@ -117,6 +125,7 @@ describe('useStore', () => {
       expect(useStore.getState().undoStack).toHaveLength(0);
   });
 
+  /* Tests the batch image generation process for all events in all episodes. */
   it('fullRefresh iterates episodes and events', async () => {
     const mockData = {
         people: [],
@@ -134,6 +143,7 @@ describe('useStore', () => {
     expect(useStore.getState().isRefreshing).toBe(false);
   });
 
+  /* Ensures that the long-running refresh process can be safely interrupted. */
   it('fullRefresh returns early if cancelled', async () => {
       const mockData = {
           people: [],
@@ -149,24 +159,28 @@ describe('useStore', () => {
       expect(useStore.getState().isRefreshing).toBe(false);
   });
 
+  /* Checks the selection logic for navigating between episodes and events. */
   it('setSelectedView updates state', () => {
       useStore.getState().setSelectedView(1, 2);
       expect(useStore.getState().selectedEpisodeId).toBe(1);
       expect(useStore.getState().selectedEventId).toBe(2);
   });
 
+  /* Verifies the persistent update of the global UI scaling factor. */
   it('setBodyScale calls saveData', () => {
       useStore.setState({ currentFolderPath: 'test' });
       useStore.getState().setBodyScale(1.5);
       expect(useStore.getState().data.bodyScale).toBe(1.5);
   });
 
+  /* Verifies the persistent update of the description text scaling factor. */
   it('setDescriptionScale calls saveData', () => {
       useStore.setState({ currentFolderPath: 'test' });
       useStore.getState().setDescriptionScale(1.2);
       expect(useStore.getState().data.descriptionScale).toBe(1.2);
   });
 
+  /* Tests the progress reporting mechanism for long-running operations. */
   it('setRefreshState updates progress', () => {
       useStore.getState().setRefreshState(true, 5, 10);
       expect(useStore.getState().isRefreshing).toBe(true);
@@ -174,11 +188,13 @@ describe('useStore', () => {
       expect(useStore.getState().refreshProgress.total).toBe(10);
   });
 
+  /* Checks the signaling mechanism for canceling background tasks. */
   it('setCancelRefresh updates state', () => {
       useStore.getState().setCancelRefresh(true);
       expect(useStore.getState().cancelRefresh).toBe(true);
   });
 
+  /* Verifies the state change when a session is interrupted by another client. */
   it('setInterrupted updates state', () => {
       useStore.getState().setInterrupted(true);
       expect(useStore.getState().isInterrupted).toBe(true);

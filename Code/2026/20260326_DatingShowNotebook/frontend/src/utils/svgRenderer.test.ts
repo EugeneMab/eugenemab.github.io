@@ -1,3 +1,4 @@
+/* Unit tests for the SVG string generation logic used for exporting event images. */
 import { describe, it, expect } from 'vitest';
 import { renderEventToSvgString } from './svgRenderer';
 import { AppData, Event } from '../store/useStore';
@@ -26,6 +27,7 @@ describe('svgRenderer', () => {
     }
   };
 
+  /* Tests the complex path routing used to prevent overlapping lines for same-gender relationships. */
   it('renders same-gender messages with specialized routing', () => {
       const sameGenderEvent: Event = {
           id: 12, title: 'Same Gender',
@@ -39,6 +41,7 @@ describe('svgRenderer', () => {
       expect(lines?.length).toBeGreaterThan(1);
   });
 
+  /* Verifies that the primary SVG rendering function produces valid XML with expected content. */
   it('renders event to SVG string correctly', () => {
     const svg = renderEventToSvgString(mockEvent, mockData, 1);
     expect(svg).toContain('<svg');
@@ -50,6 +53,7 @@ describe('svgRenderer', () => {
     expect(svg).toContain('line'); // messages and team lines
   });
 
+  /* Ensures the renderer handles events with no active connections without errors. */
   it('handles empty messages and teams', () => {
       const emptyEvent: Event = { id: 11, title: 'Empty', messages: [], teams: {} };
       const svg = renderEventToSvgString(emptyEvent, mockData, 1);

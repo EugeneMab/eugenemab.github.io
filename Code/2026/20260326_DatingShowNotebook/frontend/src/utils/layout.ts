@@ -74,7 +74,7 @@ export function getFilteredPeople(data: AppData, episodeIndex: number) {
     }
     for (let i = 0; i < ranges.length; i += RANGE_STEP) {
       const start = ranges[i];
-      const end = ranges[i + 1] !== undefined ? ranges[i + 1] : start;
+      const end = ranges[i + 1] !== undefined ? ranges[i + 1] : Infinity;
       if (episodeIndex >= start && episodeIndex <= end) {
         return true;
       }
