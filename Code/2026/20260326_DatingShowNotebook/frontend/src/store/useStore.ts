@@ -79,7 +79,13 @@ interface AppState {
   openFolder: (path: string) => Promise<void>;
   saveData: (update: (prev: AppData) => AppData) => Promise<void>;
   setActiveMode: (mode: ActiveMode) => void;
-  // ... (rest of the interface)
+  setSelectedView: (episodeId: number | null, eventId: number | null) => void;
+  setBodyScale: (scale: number) => void;
+  setDescriptionScale: (scale: number) => void;
+  undo: () => void;
+  setRefreshState: (isRefreshing: boolean, current?: number, total?: number) => void;
+  setCancelRefresh: (cancelRefresh: boolean) => void;
+  fullRefresh: () => Promise<void>;
   setInterrupted: (interrupted: boolean) => void;
 }
 
@@ -203,7 +209,9 @@ export const useStore = create<AppState>((set, get) => {
                 }
                 let key;
                 if (m.type === 'bidirectional') {
-                  const sortedIds = [m.from, m.to].sort((a, b) => a - b);
+                  const sortedIds = [m.from, m.to].sort((a, b) => {
+                    return a - b;
+                  });
                   key = `${sortedIds[0]}-${sortedIds[1]}-${m.type}`;
                 } else {
                   key = `${m.from}-${m.to}-${m.type}`;

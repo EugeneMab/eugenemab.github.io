@@ -16,7 +16,9 @@ const workFolder = process.env.DSN_WORK_FOLDER || (process.argv[3] ? path.resolv
 const folderToClient = new Map<string, string>();
 
 function log(msg: string) {
-  if (process.env.NODE_ENV === 'test') return;
+  if (process.env.NODE_ENV === 'test') {
+    return;
+  }
   const now = new Date().toISOString();
   console.log(`[${now}] ${msg}`);
 }
@@ -81,7 +83,9 @@ async function backupData(data: unknown) {
 
     // Limit backups to last 10240
     const files = await fsp.readdir(backupDir);
-    const jsonFiles = files.filter((f) => f.endsWith('.json')).sort();
+    const jsonFiles = files.filter((f) => {
+      return f.endsWith('.json');
+    }).sort();
     if (jsonFiles.length > 10240) {
       for (const file of jsonFiles.slice(0, jsonFiles.length - 10240)) {
         await fsp.unlink(path.join(backupDir, file));
@@ -103,7 +107,9 @@ app.get('/api/browse', async (req, res) => {
 
     const folders = await Promise.all(
       entries
-        .filter((e) => e.isDirectory() && !e.name.startsWith('.'))
+        .filter((e) => {
+          return e.isDirectory() && !e.name.startsWith('.');
+        })
         .map(async (e) => {
           const folderPath = path.join(fullPath, e.name);
           const hasDataJson = fs.existsSync(path.join(folderPath, 'data.json'));
@@ -118,7 +124,9 @@ app.get('/api/browse', async (req, res) => {
     res.json({
       currentPath: getRelativePath(fullPath),
       parentPath: fullPath === restrictedRoot ? null : getRelativePath(path.dirname(fullPath)),
-      folders: folders.sort((a, b) => a.name.localeCompare(b.name)),
+      folders: folders.sort((a, b) => {
+        return a.name.localeCompare(b.name);
+      }),
     });
   } catch (_e) {
     log(`Error: Browse failed: ${_e}`);

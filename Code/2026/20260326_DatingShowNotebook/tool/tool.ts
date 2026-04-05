@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import * as http from 'http';
+import os from 'os';
 
 const action = process.argv[2];
 const baseDir = process.cwd();
@@ -36,7 +37,9 @@ async function main() {
 
   console.log(`~~ Action: ${action.toUpperCase()}`);
   console.log(`~~ Work Folder: ${workFolder}`);
-  if (dataFolder) console.log(`~~ Data Folder: ${dataFolder}`);
+  if (dataFolder) {
+    console.log(`~~ Data Folder: ${dataFolder}`);
+  }
 
   // Ensure work folder exists
   if (!fs.existsSync(workFolder)) {
@@ -115,7 +118,9 @@ async function handleKill() {
 async function handleFollow() {
   const title = process.argv[3];
   const cmdFile = process.argv[4];
-  if (!title || !cmdFile) process.exit(1);
+  if (!title || !cmdFile) {
+    process.exit(1);
+  }
 
   const updateTitle = () => {
     // Only use standard title command, no ANSI escape sequences
@@ -139,8 +144,11 @@ function runCommand(cmd: string, cwd: string, name: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const proc = spawn('cmd.exe', ['/c', cmdFile], { stdio: 'inherit' });
     proc.on('close', (code) => {
-      if (code === 0) resolve();
-      else reject(new Error(`Command ${name} failed with code ${code}`));
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Command ${name} failed with code ${code}`));
+      }
     });
   });
 }
@@ -174,10 +182,16 @@ function httpRequest(url: string, method: string): Promise<void> {
       path: urlObj.pathname,
     };
     const req = http.request(options, (res) => {
-      res.on('data', () => {});
-      res.on('end', () => resolve());
+      res.on('data', () => {
+        return;
+      });
+      res.on('end', () => {
+        return resolve();
+      });
     });
-    req.on('error', (e) => reject(e));
+    req.on('error', (e) => {
+      return reject(e);
+    });
     req.end();
   });
 }

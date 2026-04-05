@@ -243,13 +243,17 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
               return `
               <g>
                 <line x1="${x1}" y1="${y1}" x2="${centerX}" y2="${y2}" stroke="${color}" stroke-width="${MESSAGE_STROKE_WIDTH * scale}" />
-                <line x1="${centerX}" y1="${y2}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${MESSAGE_STROKE_WIDTH * scale}" ${marker ? `marker-end="url(#${marker})"` : ''} />
+                <line x1="${centerX}" y1="${y2}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${MESSAGE_STROKE_WIDTH * scale}" ${
+                  marker ? `marker-end="url(#${marker})"` : ''
+                } />
               </g>
             `;
             }
 
             // Normal straight-line arrows for cross-gender messages
-            return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${MESSAGE_STROKE_WIDTH * scale}" ${marker ? `marker-end="url(#${marker})"` : ''} />`;
+            return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${MESSAGE_STROKE_WIDTH * scale}" ${
+              marker ? `marker-end="url(#${marker})"` : ''
+            } />`;
           })
           .join('')}
       </g>
@@ -264,7 +268,9 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
                 .map((id) => {
                   return personPositions[id];
                 })
-                .filter(Boolean);
+                .filter((p) => {
+                  return Boolean(p);
+                });
               if (validMembers.length > 0) {
                 return { originalIndex, validMembers };
               }

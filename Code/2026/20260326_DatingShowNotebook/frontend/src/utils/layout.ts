@@ -52,21 +52,21 @@ export const LINE_OFFSET_Y = 10;
 /**
  * Filters the people list based on whether the current episode index falls within their 'ranges'.
  */
-export function getFilteredPeople(data: AppData, episodeIndex: number) {
+export function getFilteredPeople(data: any, episodeIndex: number) {
   if (episodeIndex <= 0) {
     return data.people;
   }
-  return data.people.filter((p) => {
+  return data.people.filter((p: any) => {
     const ranges = p.ranges
       .trim()
       .split(/\s+/)
-      .filter((s) => {
+      .filter((s: string) => {
         return s !== '';
       })
-      .map((s) => {
+      .map((s: string) => {
         return Number(s);
       })
-      .filter((n) => {
+      .filter((n: number) => {
         return !isNaN(n);
       });
     if (ranges.length === 0) {
@@ -87,8 +87,8 @@ export function getFilteredPeople(data: AppData, episodeIndex: number) {
  * Pre-calculates the center X and Y coordinates for every visible person.
  * Used as anchor points for drawing relationship lines and team connections.
  */
-export function calculatePersonPositions(males: Person[], females: Person[], scale: number) {
-  const pos: { [id: number]: { x: number; y: number; gender: Gender } } = {};
+export function calculatePersonPositions(males: any[], females: any[], scale: number) {
+  const pos: { [id: number]: { x: number; y: number; gender: string } } = {};
 
   // Males: Anchored to the right edge of their image
   males.forEach((p, i) => {
@@ -110,7 +110,7 @@ export function calculatePersonPositions(males: Person[], females: Person[], sca
 /**
  * Determines the color and arrowhead marker for a relationship message.
  */
-export function getMessageStyle(type: MessageType, gender: Gender) {
+export function getMessageStyle(type: string, gender: string) {
   const isMale = gender === 'male';
   let color;
   let marker;
@@ -133,8 +133,8 @@ export function getMessageStyle(type: MessageType, gender: Gender) {
  * Applies vertical and horizontal offsets to ensure lines are distinct.
  */
 export function calculateMessageCoords(
-  fromPos: { x: number; y: number; gender: Gender },
-  toPos: { x: number; y: number; gender: Gender },
+  fromPos: { x: number; y: number; gender: string },
+  toPos: { x: number; y: number; gender: string },
   scale: number
 ) {
   const isMale = fromPos.gender === 'male';
@@ -159,7 +159,7 @@ export function calculateMessageCoords(
  * Calculates the anchor point on a person's image boundary for team membership lines.
  */
 export function calculatTeamMemberCoords(
-  pos: { x: number; y: number; gender: Gender },
+  pos: { x: number; y: number; gender: string },
   scale: number
 ) {
   const isMale = pos.gender === 'male';
