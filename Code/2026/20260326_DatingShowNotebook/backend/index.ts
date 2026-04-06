@@ -6,13 +6,17 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const app = express();
-const port = 13762;
+const PORT = 13762;
+const JSON_LIMIT = '50mb';
+const MAX_BACKUPS = 10240;
+const SHUTDOWN_DELAY_MS = 100;
 
 app.use(cors());
-app.use(express.json({ limit: '50mb' }));
+app.use(express.json({ limit: JSON_LIMIT }));
 
 const restrictedRoot = path.resolve(process.env.DSN_RESTRICTED_ROOT || process.argv[2] || '.');
-const workFolder = process.env.DSN_WORK_FOLDER || (process.argv[3] ? path.resolve(process.argv[3]) : null);
+const workFolder =
+  process.env.DSN_WORK_FOLDER || (process.argv[3] ? path.resolve(process.argv[3]) : null);
 const folderToClient = new Map<string, string>();
 
 function log(msg: string) {
@@ -81,13 +85,15 @@ async function backupData(data: unknown) {
     await fsp.writeFile(backupPath, JSON.stringify(data, null, 2), 'utf-8');
     log(`Disk: Written backup to ${backupPath}`);
 
-    // Limit backups to last 10240
+    // Limit backups to last MAX_BACKUPS
     const files = await fsp.readdir(backupDir);
-    const jsonFiles = files.filter((f) => {
-      return f.endsWith('.json');
-    }).sort();
-    if (jsonFiles.length > 10240) {
-      for (const file of jsonFiles.slice(0, jsonFiles.length - 10240)) {
+    const jsonFiles = files
+      .filter((f) => {
+        return f.endsWith('.json');
+      })
+      .sort();
+    if (jsonFiles.length > MAX_BACKUPS) {
+      for (const file of jsonFiles.slice(0, jsonFiles.length - MAX_BACKUPS)) {
         await fsp.unlink(path.join(backupDir, file));
         log(`Disk: Deleted old backup ${file}`);
       }
@@ -300,15 +306,15 @@ app.post('/api/shutdown', (req, res) => {
   res.json({ success: true });
   setTimeout(() => {
     process.exit(0);
-  }, 100);
+  }, SHUTDOWN_DELAY_MS);
 });
 
 if (
   import.meta.url === `file:///${fileURLToPath(import.meta.url).replace(/\\/g, '/')}` &&
   (process.argv[1].endsWith('index.ts') || process.argv[1].endsWith('backend\\index.ts'))
 ) {
-  app.listen(port, () => {
-    log(`Backend listening at http://localhost:${port}`);
+  app.listen(PORT, () => {
+    log(`Backend listening at http://localhost:${PORT}`);
   });
 }
 

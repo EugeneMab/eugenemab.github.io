@@ -40,6 +40,14 @@ const DEBOUNCE_DELAY_MS = 1000;
 const MIN_DESC_ROWS = 2;
 const MSG_CENTER_DIVIDER = 2;
 
+const MARKER_WIDTH = 10;
+const MARKER_HEIGHT = 7;
+const MARKER_REFX = 9;
+const MARKER_REFY = 3.5;
+const POLYGON_POINTS = '0 0, 10 3.5, 0 7';
+const DASH_ARRAY_6 = 6;
+const DASH_ARRAY_4 = 4;
+
 const MainBody: React.FC = () => {
   const {
     data,
@@ -446,43 +454,43 @@ const MainBody: React.FC = () => {
           <defs>
             <marker
               id="arrowhead-blue"
-              markerWidth="10"
-              markerHeight="7"
-              refX="9"
-              refY="3.5"
+              markerWidth={MARKER_WIDTH}
+              markerHeight={MARKER_HEIGHT}
+              refX={MARKER_REFX}
+              refY={MARKER_REFY}
               orient="auto"
             >
-              <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb" />
+              <polygon points={POLYGON_POINTS} fill="#2563eb" />
             </marker>
             <marker
               id="arrowhead-red"
-              markerWidth="10"
-              markerHeight="7"
-              refX="9"
-              refY="3.5"
+              markerWidth={MARKER_WIDTH}
+              markerHeight={MARKER_HEIGHT}
+              refX={MARKER_REFX}
+              refY={MARKER_REFY}
               orient="auto"
             >
-              <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626" />
+              <polygon points={POLYGON_POINTS} fill="#dc2626" />
             </marker>
             <marker
               id="arrowhead-lightblue"
-              markerWidth="10"
-              markerHeight="7"
-              refX="9"
-              refY="3.5"
+              markerWidth={MARKER_WIDTH}
+              markerHeight={MARKER_HEIGHT}
+              refX={MARKER_REFX}
+              refY={MARKER_REFY}
               orient="auto"
             >
-              <polygon points="0 0, 10 3.5, 0 7" fill="#93c5fd" />
+              <polygon points={POLYGON_POINTS} fill="#93c5fd" />
             </marker>
             <marker
               id="arrowhead-lightred"
-              markerWidth="10"
-              markerHeight="7"
-              refX="9"
-              refY="3.5"
+              markerWidth={MARKER_WIDTH}
+              markerHeight={MARKER_HEIGHT}
+              refX={MARKER_REFX}
+              refY={MARKER_REFY}
               orient="auto"
             >
-              <polygon points="0 0, 10 3.5, 0 7" fill="#fca5a5" />
+              <polygon points={POLYGON_POINTS} fill="#fca5a5" />
             </marker>
           </defs>
 
@@ -786,7 +794,7 @@ const MainBody: React.FC = () => {
                           y2={teamY}
                           stroke={TEAM_COLORS[Number(originalIndex)]}
                           strokeWidth={TEAM_LINE_STROKE_WIDTH * scale}
-                          strokeDasharray={`${6 * scale} ${4 * scale}`}
+                          strokeDasharray={`${DASH_ARRAY_6 * scale} ${DASH_ARRAY_4 * scale}`}
                         />
                       );
                     })}

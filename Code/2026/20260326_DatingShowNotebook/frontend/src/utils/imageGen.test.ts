@@ -74,7 +74,7 @@ describe('imageGen utils', () => {
       getContext: vi.fn().mockReturnValue(mockContext),
       toDataURL: vi.fn().mockReturnValue('data:image/jpeg;base64,fake'),
     };
-    
+
     vi.stubGlobal('document', {
       createElement: (tag: string) => {
         if (tag === 'canvas') {
@@ -85,17 +85,23 @@ describe('imageGen utils', () => {
     });
 
     // Mock Image using a constructor
-    let lastInstance: any = null;
-    vi.stubGlobal('Image', class {
-      onload: any = null;
-      onerror: any = null;
-      src: string = '';
-      width: number = 100;
-      height: number = 100;
-      constructor() {
-        lastInstance = this;
+    let lastInstance: { onload?: () => void; onerror?: (e: unknown) => void } | null = null;
+    vi.stubGlobal(
+      'Image',
+      class {
+        onload?: () => void;
+        onerror?: (e: unknown) => void;
+        src: string = '';
+        width: number = 100;
+        height: number = 100;
+        constructor() {
+          // Use a functional approach to avoid the "no-this-alias" error
+          // lastInstance = this;
+          const self = this as unknown as { onload?: () => void; onerror?: (e: unknown) => void };
+          lastInstance = self;
+        }
       }
-    });
+    );
 
     const promise = svgToJpeg('<svg></svg>');
 
@@ -129,13 +135,17 @@ describe('imageGen utils', () => {
       },
     });
 
-    let lastInstance: any = null;
-    vi.stubGlobal('Image', class {
-      onload: any = null;
-      constructor() {
-        lastInstance = this;
+    let lastInstance: { onload?: () => void } | null = null;
+    vi.stubGlobal(
+      'Image',
+      class {
+        onload?: () => void;
+        constructor() {
+          const self = this as unknown as { onload?: () => void };
+          lastInstance = self;
+        }
       }
-    });
+    );
 
     const promise = svgToJpeg('<svg></svg>');
 
@@ -152,15 +162,19 @@ describe('imageGen utils', () => {
 
   /* Tests svgToJpeg error path. */
   it('svgToJpeg handles image load error', async () => {
-    let lastInstance: any = null;
-    vi.stubGlobal('Image', class {
-      onload: any = null;
-      onerror: any = null;
-      src: string = '';
-      constructor() {
-        lastInstance = this;
+    let lastInstance: { onerror?: (e: unknown) => void } | null = null;
+    vi.stubGlobal(
+      'Image',
+      class {
+        onload: unknown = null;
+        onerror?: (e: unknown) => void;
+        src: string = '';
+        constructor() {
+          const self = this as unknown as { onerror?: (e: unknown) => void };
+          lastInstance = self;
+        }
       }
-    });
+    );
 
     const promise = svgToJpeg('<svg></svg>');
 

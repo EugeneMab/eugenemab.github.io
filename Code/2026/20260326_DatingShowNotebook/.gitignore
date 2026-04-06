@@ -12,7 +12,6 @@ frontend/dist/
 frontend/node_modules/
 
 # Tests
-test-data/
 test-work/
 coverage/
 

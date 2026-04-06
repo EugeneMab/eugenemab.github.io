@@ -45,11 +45,11 @@ describe('layout utils', () => {
 
     /* Ensures participants with no specified range are visible by default in all episodes. */
     it('returns true if range is empty', () => {
-        const dataWithEmptyRange: AppData = {
-            ...mockData,
-            people: [{ ...mockPerson, ranges: '' }]
-        };
-        expect(getFilteredPeople(dataWithEmptyRange, 10)).toHaveLength(1);
+      const dataWithEmptyRange: AppData = {
+        ...mockData,
+        people: [{ ...mockPerson, ranges: '' }],
+      };
+      expect(getFilteredPeople(dataWithEmptyRange, 10)).toHaveLength(1);
     });
   });
 
@@ -60,7 +60,7 @@ describe('layout utils', () => {
       const females: Person[] = [{ ...mockPerson, id: 2, gender: 'female' }];
       const scale = 1;
       const positions = calculatePersonPositions(males, females, scale);
-      
+
       expect(positions[1].gender).toBe('male');
       expect(positions[2].gender).toBe('female');
       expect(positions[1].x).toBeGreaterThan(0);
@@ -76,11 +76,25 @@ describe('layout utils', () => {
       expect(style.marker).toBe('arrowhead-blue');
     });
 
+    /* Tests the visual styling logic for strong female message. */
+    it('returns correct style for strong female message', () => {
+      const style = getMessageStyle('strong', 'female');
+      expect(style.color).toBe('#dc2626');
+      expect(style.marker).toBe('arrowhead-red');
+    });
+
     /* Checks styling for weak relationship indicators for female participants. */
     it('returns correct style for weak female message', () => {
       const style = getMessageStyle('weak', 'female');
       expect(style.color).toBe('#fca5a5');
       expect(style.marker).toBe('arrowhead-lightred');
+    });
+
+    /* Checks styling for weak relationship indicators for male participants. */
+    it('returns correct style for weak male message', () => {
+      const style = getMessageStyle('weak', 'male');
+      expect(style.color).toBe('#93c5fd');
+      expect(style.marker).toBe('arrowhead-lightblue');
     });
 
     /* Verifies the distinct styling used for mutual relationship connections. */
@@ -92,23 +106,23 @@ describe('layout utils', () => {
   });
 
   describe('calculateMessageCoords', () => {
-      /* Tests the calculation of message line endpoints, including scaling factors. */
-      it('calculates coords with scale', () => {
-          const fromPos = { x: 100, y: 100, gender: 'male' as const };
-          const toPos = { x: 500, y: 100, gender: 'female' as const };
-          const coords = calculateMessageCoords(fromPos, toPos, 1);
-          expect(coords.x1).toBe(110);
-          expect(coords.y1).toBe(110);
-      });
+    /* Tests the calculation of message line endpoints, including scaling factors. */
+    it('calculates coords with scale', () => {
+      const fromPos = { x: 100, y: 100, gender: 'male' as const };
+      const toPos = { x: 500, y: 100, gender: 'female' as const };
+      const coords = calculateMessageCoords(fromPos, toPos, 1);
+      expect(coords.x1).toBe(110);
+      expect(coords.y1).toBe(110);
+    });
   });
 
   describe('calculatTeamMemberCoords', () => {
     /* Verifies the anchor point calculations for team connection lines. */
     it('calculates coords correctly', () => {
-        const pos = { x: 100, y: 100, gender: 'male' as const };
-        const coords = calculatTeamMemberCoords(pos, 1);
-        expect(coords.x1).toBe(110);
-        expect(coords.y1).toBe(100);
+      const pos = { x: 100, y: 100, gender: 'male' as const };
+      const coords = calculatTeamMemberCoords(pos, 1);
+      expect(coords.x1).toBe(110);
+      expect(coords.y1).toBe(100);
     });
   });
 
@@ -117,6 +131,19 @@ describe('layout utils', () => {
     it('wraps long text into lines', () => {
       const lines = wrapText('This is a long text that should be wrapped', 50, 16);
       expect(lines.length).toBeGreaterThan(1);
+    });
+
+    /* Verifies that empty text results in no lines. */
+    it('handles empty text', () => {
+      const lines = wrapText('', 50, 16);
+      expect(lines).toHaveLength(0);
+    });
+
+    /* Verifies behavior when the very first word exceeds the maximum width. */
+    it('handles first word exceeding maxWidth', () => {
+      const lines = wrapText('ExtremelyLongWordThatExceedsWidth', 10, 16);
+      expect(lines).toHaveLength(1);
+      expect(lines[0]).toBe('ExtremelyLongWordThatExceedsWidth');
     });
   });
 });

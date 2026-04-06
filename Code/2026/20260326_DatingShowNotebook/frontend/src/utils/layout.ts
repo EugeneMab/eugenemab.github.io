@@ -1,5 +1,8 @@
+import { AppData, Person } from '../store/useStore';
+
 const RANGE_STEP = 2;
 const AVG_CHAR_WIDTH_FACTOR = 0.55;
+const IMG_Y_CENTER_DIVIDER = 2;
 
 /**
  * Layout Constants (Base dimensions in pixels before scaling)
@@ -52,11 +55,11 @@ export const LINE_OFFSET_Y = 10;
 /**
  * Filters the people list based on whether the current episode index falls within their 'ranges'.
  */
-export function getFilteredPeople(data: any, episodeIndex: number) {
+export function getFilteredPeople(data: AppData, episodeIndex: number): Person[] {
   if (episodeIndex <= 0) {
     return data.people;
   }
-  return data.people.filter((p: any) => {
+  return data.people.filter((p: Person) => {
     const ranges = p.ranges
       .trim()
       .split(/\s+/)
@@ -87,19 +90,27 @@ export function getFilteredPeople(data: any, episodeIndex: number) {
  * Pre-calculates the center X and Y coordinates for every visible person.
  * Used as anchor points for drawing relationship lines and team connections.
  */
-export function calculatePersonPositions(males: any[], females: any[], scale: number) {
+export function calculatePersonPositions(
+  males: Person[],
+  females: Person[],
+  scale: number
+): { [id: number]: { x: number; y: number; gender: string } } {
   const pos: { [id: number]: { x: number; y: number; gender: string } } = {};
 
   // Males: Anchored to the right edge of their image
   males.forEach((p, i) => {
-    const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP) + IMG_HEIGHT / 2) * scale;
+    const y =
+      (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP) + IMG_HEIGHT / IMG_Y_CENTER_DIVIDER) *
+      scale;
     const x = (X_MALE_IMG + MALE_IMG_WIDTH) * scale;
     pos[p.id] = { x, y, gender: 'male' };
   });
 
   // Females: Anchored to the left edge of their image
   females.forEach((p, i) => {
-    const y = (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP) + IMG_HEIGHT / 2) * scale;
+    const y =
+      (TITLE_HEIGHT + PADDING + i * (IMG_HEIGHT + ROW_GAP) + IMG_HEIGHT / IMG_Y_CENTER_DIVIDER) *
+      scale;
     const x = X_FEMALE_IMG * scale;
     pos[p.id] = { x, y, gender: 'female' };
   });
@@ -110,7 +121,7 @@ export function calculatePersonPositions(males: any[], females: any[], scale: nu
 /**
  * Determines the color and arrowhead marker for a relationship message.
  */
-export function getMessageStyle(type: string, gender: string) {
+export function getMessageStyle(type: string, gender: string): { color: string; marker?: string } {
   const isMale = gender === 'male';
   let color;
   let marker;

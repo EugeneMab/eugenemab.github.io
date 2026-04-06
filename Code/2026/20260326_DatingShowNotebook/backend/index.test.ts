@@ -36,14 +36,16 @@ describe('Backend API', () => {
 
     /* Verifies that the browse API defaults to the root directory if no path is provided. */
     it('handles missing path query', async () => {
-        const res = await request(app).get('/api/browse');
-        expect(res.status).toBe(200);
+      const res = await request(app).get('/api/browse');
+      expect(res.status).toBe(200);
     });
 
     /* Ensures the browse API remains robust when receiving unexpected query parameter types. */
     it('handles non-string path query', async () => {
-        const res = await request(app).get('/api/browse').query({ path: ['a', 'b'] });
-        expect(res.status).toBe(200);
+      const res = await request(app)
+        .get('/api/browse')
+        .query({ path: ['a', 'b'] });
+      expect(res.status).toBe(200);
     });
   });
 
@@ -51,28 +53,24 @@ describe('Backend API', () => {
     /* Tests opening a valid data folder and receiving the application state. */
     it('opens a folder and returns data', async () => {
       if (!fs.existsSync(fullTestFolder)) {
-          await fsp.mkdir(fullTestFolder, { recursive: true });
+        await fsp.mkdir(fullTestFolder, { recursive: true });
       }
-      const res = await request(app)
-        .post('/api/open')
-        .send({ path: testFolder, clientId });
+      const res = await request(app).post('/api/open').send({ path: testFolder, clientId });
       expect(res.status).toBe(200);
       expect(res.body).toHaveProperty('episodes');
     });
 
     /* Verifies that only one client can have a folder open at a time, enforcing session exclusivity. */
     it('evicts old client when new client opens same folder', async () => {
-        clientId = 'new-client';
-        const res = await request(app)
-          .post('/api/open')
-          .send({ path: testFolder, clientId });
-        expect(res.status).toBe(200);
+      clientId = 'new-client';
+      const res = await request(app).post('/api/open').send({ path: testFolder, clientId });
+      expect(res.status).toBe(200);
     });
 
     /* Checks that the open API validates required request body parameters. */
     it('returns 400 if missing params', async () => {
-        const res = await request(app).post('/api/open').send({});
-        expect(res.status).toBe(400);
+      const res = await request(app).post('/api/open').send({});
+      expect(res.status).toBe(400);
     });
   });
 
@@ -84,39 +82,51 @@ describe('Backend API', () => {
         .post('/api/data')
         .query({ folder: folderParam, 'client-id': clientId })
         .send({ people: [], episodes: [], nextUniqueId: 1 });
-      
+
       expect(res.status).toBe(200);
       expect(fs.existsSync(path.join(fullTestFolder, 'data.json'))).toBe(true);
     });
 
     /* Ensures that a failure in the backup process does not prevent the primary data save. */
     it('handles backup failure gracefully', async () => {
-        const folderParam = toSafeBase64(testFolder);
-        const originalWriteFile = fsp.writeFile;
-        const writeFileSpy = vi.spyOn(fsp, 'writeFile').mockImplementation((path: any, data: any, options: any) => {
+      const folderParam = toSafeBase64(testFolder);
+      const originalWriteFile = fsp.writeFile;
+      const writeFileSpy = vi
+        .spyOn(fsp, 'writeFile')
+        .mockImplementation(
+          (
+            path: string | fsp.FileHandle | URL,
+            data:
+              | string
+              | NodeJS.ArrayBufferView
+              | Iterable<string | NodeJS.ArrayBufferView>
+              | AsyncIterable<string | NodeJS.ArrayBufferView>,
+            options?: fs.WriteFileOptions
+          ) => {
             if (path.toString().includes('DSN')) {
-                return Promise.reject(new Error('backup failed'));
+              return Promise.reject(new Error('backup failed'));
             }
             return originalWriteFile(path, data, options);
-        });
-        
-        const res = await request(app)
-          .post('/api/data')
-          .query({ folder: folderParam, 'client-id': clientId })
-          .send({ people: [], episodes: [], nextUniqueId: 1 });
-        
-        expect(res.status).toBe(200);
-        writeFileSpy.mockRestore();
+          }
+        );
+
+      const res = await request(app)
+        .post('/api/data')
+        .query({ folder: folderParam, 'client-id': clientId })
+        .send({ people: [], episodes: [], nextUniqueId: 1 });
+
+      expect(res.status).toBe(200);
+      writeFileSpy.mockRestore();
     });
 
     /* Verifies that unauthorized clients are blocked from saving data to a folder owned by another client. */
     it('returns 409 on client conflict', async () => {
-        const folderParam = toSafeBase64(testFolder);
-        const res = await request(app)
-          .post('/api/data')
-          .query({ folder: folderParam, 'client-id': 'wrong-client' })
-          .send({});
-        expect(res.status).toBe(409);
+      const folderParam = toSafeBase64(testFolder);
+      const res = await request(app)
+        .post('/api/data')
+        .query({ folder: folderParam, 'client-id': 'wrong-client' })
+        .send({});
+      expect(res.status).toBe(409);
     });
   });
 
@@ -128,104 +138,109 @@ describe('Backend API', () => {
         .post('/api/save-image')
         .query({ folder: folderParam, 'client-id': clientId })
         .send({ filename: 'test.jpg', base64: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==' });
-      
+
       expect(res.status).toBe(200);
       expect(fs.existsSync(path.join(fullTestFolder, 'test.jpg'))).toBe(true);
     });
 
     /* Verifies security checks that prevent directory traversal attacks via filenames. */
     it('rejects invalid filenames', async () => {
-        const folderParam = toSafeBase64(testFolder);
-        const res = await request(app)
-          .post('/api/save-image')
-          .query({ folder: folderParam, 'client-id': clientId })
-          .send({ filename: '../hacked.jpg', base64: '...' });
-        expect(res.status).toBe(400);
+      const folderParam = toSafeBase64(testFolder);
+      const res = await request(app)
+        .post('/api/save-image')
+        .query({ folder: folderParam, 'client-id': clientId })
+        .send({ filename: '../hacked.jpg', base64: '...' });
+      expect(res.status).toBe(400);
     });
   });
 
   describe('POST /api/cleanup-images', () => {
-      /* Tests the cleanup logic that deletes images not currently used in the application. */
-      it('removes unused images', async () => {
-        const folderParam = toSafeBase64(testFolder);
-        const zombiePath = path.join(fullTestFolder, '01_01.jpg');
-        await fsp.writeFile(zombiePath, 'dummy');
+    /* Tests the cleanup logic that deletes images not currently used in the application. */
+    it('removes unused images', async () => {
+      const folderParam = toSafeBase64(testFolder);
+      const zombiePath = path.join(fullTestFolder, '01_01.jpg');
+      await fsp.writeFile(zombiePath, 'dummy');
 
-        const res = await request(app)
-          .post('/api/cleanup-images')
-          .query({ folder: folderParam, 'client-id': clientId })
-          .send({ activeFilenames: [] });
-        
-        expect(res.status).toBe(200);
-        expect(fs.existsSync(zombiePath)).toBe(false);
-      });
+      const res = await request(app)
+        .post('/api/cleanup-images')
+        .query({ folder: folderParam, 'client-id': clientId })
+        .send({ activeFilenames: [] });
+
+      expect(res.status).toBe(200);
+      expect(fs.existsSync(zombiePath)).toBe(false);
+    });
   });
 
   describe('Error handling and edge cases', () => {
-      /* Checks error handling when browsing a non-existent system path. */
-      it('returns 500 on invalid directory in browse', async () => {
-          const res = await request(app).get('/api/browse').query({ path: 'non-existent-at-all' });
-          expect(res.status).toBe(500);
-      });
+    /* Checks error handling when browsing a non-existent system path. */
+    it('returns 500 on invalid directory in browse', async () => {
+      const res = await request(app).get('/api/browse').query({ path: 'non-existent-at-all' });
+      expect(res.status).toBe(500);
+    });
 
-      /* Verifies validation of session-related query parameters. */
-      it('returns 400 on invalid session params', async () => {
-          const res = await request(app).post('/api/data').query({ folder: '!!!' });
-          expect(res.status).toBe(400);
-      });
+    /* Verifies validation of session-related query parameters. */
+    it('returns 400 on invalid session params', async () => {
+      const res = await request(app).post('/api/data').query({ folder: '!!!' });
+      expect(res.status).toBe(400);
+    });
 
-      /* Tests that a new folder is initialized with default state if no data.json exists. */
-      it('returns defaultData if file not found in open', async () => {
-          const folderPath = 'new-folder';
-          const fullPath = path.join(testRoot, folderPath);
-          if (!fs.existsSync(fullPath)) {
-              await fsp.mkdir(fullPath, { recursive: true });
-          }
-          const res = await request(app).post('/api/open').send({ path: folderPath, clientId: 'c2' });
-          expect(res.status).toBe(200);
-          expect(res.body.people).toEqual([]);
-      });
+    /* Tests that a new folder is initialized with default state if no data.json exists. */
+    it('returns defaultData if file not found in open', async () => {
+      const folderPath = 'new-folder';
+      const fullPath = path.join(testRoot, folderPath);
+      if (!fs.existsSync(fullPath)) {
+        await fsp.mkdir(fullPath, { recursive: true });
+      }
+      const res = await request(app).post('/api/open').send({ path: folderPath, clientId: 'c2' });
+      expect(res.status).toBe(200);
+      expect(res.body.people).toEqual([]);
+    });
 
-      /* Handles cases where the data.json file exists but contains no content. */
-      it('returns defaultData if data.json is empty', async () => {
-          const folderPath = 'empty-data-folder';
-          const fullPath = path.join(testRoot, folderPath);
-          if (!fs.existsSync(fullPath)) {
-              await fsp.mkdir(fullPath, { recursive: true });
-          }
-          await fsp.writeFile(path.join(fullPath, 'data.json'), '  ');
-          const res = await request(app).post('/api/open').send({ path: folderPath, clientId: 'c3' });
-          expect(res.status).toBe(200);
-          expect(res.body.people).toEqual([]);
-      });
+    /* Handles cases where the data.json file exists but contains no content. */
+    it('returns defaultData if data.json is empty', async () => {
+      const folderPath = 'empty-data-folder';
+      const fullPath = path.join(testRoot, folderPath);
+      if (!fs.existsSync(fullPath)) {
+        await fsp.mkdir(fullPath, { recursive: true });
+      }
+      await fsp.writeFile(path.join(fullPath, 'data.json'), '  ');
+      const res = await request(app).post('/api/open').send({ path: folderPath, clientId: 'c3' });
+      expect(res.status).toBe(200);
+      expect(res.body.people).toEqual([]);
+    });
   });
 
   describe('POST /api/shutdown', () => {
-      /* Tests the graceful shutdown endpoint and process termination. */
-      it('returns success and exits process', async () => {
-          vi.useFakeTimers();
-          const exitMock = vi.spyOn(process, 'exit').mockImplementation(() => { return undefined as never; });
-          const res = await request(app).post('/api/shutdown');
-          expect(res.status).toBe(200);
-          expect(res.body.success).toBe(true);
-          
-          vi.advanceTimersByTime(200);
-          expect(exitMock).toHaveBeenCalledWith(0);
-          vi.useRealTimers();
+    /* Tests the graceful shutdown endpoint and process termination. */
+    it('returns success and exits process', async () => {
+      vi.useFakeTimers();
+      const exitMock = vi.spyOn(process, 'exit').mockImplementation(() => {
+        return undefined as never;
       });
+      const res = await request(app).post('/api/shutdown');
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      vi.advanceTimersByTime(200);
+      expect(exitMock).toHaveBeenCalledWith(0);
+      vi.useRealTimers();
+    });
   });
 
   describe('Session checks', () => {
-      /* Verifies strict parameter checking for data saving operations. */
-      it('returns 400 if folder or client-id missing', async () => {
-          const res = await request(app).post('/api/data').send({});
-          expect(res.status).toBe(400);
-      });
+    /* Verifies strict parameter checking for data saving operations. */
+    it('returns 400 if folder or client-id missing', async () => {
+      const res = await request(app).post('/api/data').send({});
+      expect(res.status).toBe(400);
+    });
 
-      /* Ensures robust handling of malformed base64 encoded parameters. */
-      it('returns 400 on invalid base64 folder', async () => {
-          const res = await request(app).post('/api/data').query({ folder: '!', 'client-id': 'c' }).send({});
-          expect(res.status).toBe(400);
-      });
+    /* Ensures robust handling of malformed base64 encoded parameters. */
+    it('returns 400 on invalid base64 folder', async () => {
+      const res = await request(app)
+        .post('/api/data')
+        .query({ folder: '!', 'client-id': 'c' })
+        .send({});
+      expect(res.status).toBe(400);
+    });
   });
 });

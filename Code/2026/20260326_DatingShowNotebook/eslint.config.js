@@ -7,7 +7,7 @@ import prettierPlugin from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 
 export default tseslint.config(
-  { ignores: ['dist', 'node_modules', 'frontend/dist'] },
+  { ignores: ['dist', 'node_modules', 'frontend/dist', 'coverage'] },
   // Frontend config
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
