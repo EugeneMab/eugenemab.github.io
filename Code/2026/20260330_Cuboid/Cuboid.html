@@ -433,6 +433,9 @@
           <button class="btn" id="btn-export">Export OBJ</button>
           <button class="btn" id="btn-export-png">PNG</button>
           <button class="btn" id="btn-export-jpg">JPG</button>
+          <label style="width: auto; display: flex; align-items: center; gap: 4px; font-size: 11px">
+            <input type="checkbox" id="chk-color-casting" /> Color Casting
+          </label>
           <div id="resizer-toolbar" class="resizer-h"></div>
         </div>
         <div id="info-bar">
@@ -734,6 +737,8 @@
         historyIndex: -1,
         /* persistence flag for current session */
         lastSaved: true,
+        /* pick objects by pixel sample instead of ray casting */
+        colorCastingEnabled: false,
       };
 
       // --- Utility Functions ---
@@ -1295,6 +1300,7 @@
             scale: State.scale,
             ui: State.ui,
             lastSaved: State.lastSaved,
+            colorCastingEnabled: State.colorCastingEnabled,
           })
         );
       }
@@ -1725,6 +1731,83 @@
         }
         /* Schedule next frame */
         requestAnimationFrame(() => drawScene());
+      }
+
+      /* Pick an object by ray casting from the mouse position */
+      function pickByRayCasting(/* screen x */ screenX, /* screen y */ screenY) {
+        const width = gl.canvas.width;
+        const height = gl.canvas.height;
+        const aspect = width / (height || 1);
+        const fovY = (State.camera.zoom * Math.PI) / 180;
+        const h = Math.tan(fovY / 2);
+        const w = h * aspect;
+
+        /* Convert screen to NDC [-1, 1] */
+        const nx = (2 * screenX) / width - 1;
+        const ny = 1 - (2 * screenY) / height;
+
+        /* Get camera coordinate frame */
+        const { forward, right, up } = getCameraVectors();
+        const cosR = Math.cos(State.camera.roll);
+        const sinR = Math.sin(State.camera.roll);
+        /* Apply camera roll to lateral axes */
+        const rolledRight = right.mul(cosR).add(up.mul(sinR));
+        const rolledUp = right.mul(-sinR).add(up.mul(cosR));
+
+        /* Calculate ray direction in world space */
+        const dir = forward
+          .add(rolledRight.mul(nx * w))
+          .add(rolledUp.mul(ny * h))
+          .normalize();
+        const origin = State.camera.pos;
+
+        let closestId = null;
+        let minT = Infinity;
+
+        /* Recursive tree traversal to check for ray-cuboid intersections */
+        function walk(/* node to test */ node) {
+          if (node.hidden) return;
+          if (node.type === 'cuboid') {
+            const m = State.shrinkMargin;
+            const t = intersectRayAABB(
+              origin,
+              dir,
+              { x: node.x + m, y: node.y + m, z: node.z + m },
+              { x: node.x + node.w - m, y: node.y + node.h - m, z: node.z + node.d - m }
+            );
+            if (t !== null && t < minT) {
+              minT = t;
+              closestId = node.id;
+            }
+          } else if (node.children) {
+            node.children.forEach(walk);
+          }
+        }
+        walk(State.scene.root);
+        return closestId;
+      }
+
+      /* Helper: Ray-AABB intersection (Slab method) */
+      function intersectRayAABB(/* ray origin */ origin, /* ray dir */ dir, /* AABB min */ min, /* AABB max */ max) {
+        let tmin = -Infinity,
+          tmax = Infinity;
+        const invDir = [1 / dir.x, 1 / dir.y, 1 / dir.z];
+        const o = [origin.x, origin.y, origin.z];
+        const minArr = [min.x, min.y, min.z];
+        const maxArr = [max.x, max.y, max.z];
+
+        for (let i = 0; i < 3; i++) {
+          const d = i === 0 ? dir.x : i === 1 ? dir.y : dir.z;
+          if (Math.abs(d) < 1e-10) {
+            if (o[i] < minArr[i] || o[i] > maxArr[i]) return null;
+          } else {
+            let t1 = (minArr[i] - o[i]) * invDir[i];
+            let t2 = (maxArr[i] - o[i]) * invDir[i];
+            tmin = Math.max(tmin, Math.min(t1, t2));
+            tmax = Math.min(tmax, Math.max(t1, t2));
+          }
+        }
+        return tmax >= tmin && tmax >= 0 ? tmin : null;
       }
 
       // --- Global Actions ---
@@ -2271,15 +2354,17 @@
           lx = x;
           ly = y;
           isFallbackRotate = false;
-          /* handle 3D object selection via pixel picking */
+          /* handle 3D object selection via picking */
           if (State.mode === 'select') {
             const rect = canvas.getBoundingClientRect();
-            /* perform render and sample pixel color */
-            const id /* sampled object identifier */ = drawScene(
-              true,
-              x - rect.left,
-              rect.bottom - y
-            );
+            let id;
+            if (State.colorCastingEnabled) {
+              /* perform render and sample pixel color (special colors) */
+              id = drawScene(true, x - rect.left, rect.bottom - y);
+            } else {
+              /* pick by algorithm of Ray Casting */
+              id = pickByRayCasting(x - rect.left, y - rect.top);
+            }
             if (id) {
               if (!isCtrl) State.selection.clear();
               State.selection.add(id);
@@ -2424,6 +2509,10 @@
               document.getElementById('chk-axis').checked = p.showAxis;
             }
             if (p.ui) State.ui = p.ui;
+            if (p.colorCastingEnabled !== undefined) {
+              State.colorCastingEnabled = p.colorCastingEnabled;
+              document.getElementById('chk-color-casting').checked = p.colorCastingEnabled;
+            }
             /* notify user of unsaved changes from previous session */
             if (!p.lastSaved)
               setTimeout(() => {
@@ -2432,6 +2521,13 @@
               }, 500);
           } catch (e /* load error */) {}
         }
+
+        /* Color casting toggle handler */
+        document.getElementById('chk-color-casting').onchange = (e /* event */) => {
+          State.colorCastingEnabled = e.target.checked;
+          updateLocalStorage();
+        };
+
         applyUIPanelSizes();
         saveHistory();
         renderTree();
