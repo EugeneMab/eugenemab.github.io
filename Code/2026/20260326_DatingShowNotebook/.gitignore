@@ -11,8 +11,9 @@ yarn-error.log*
 frontend/dist/
 frontend/node_modules/
 
-# Local data
-data.json
+# Tests
+test-work/
+coverage/
 
 # OS files
 .DS_Store

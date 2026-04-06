@@ -32,9 +32,28 @@ import {
 const EXPORT_SCALE = 1;
 const TITLE_Y_DIVIDER = 2;
 const IMG_RX = 4;
-const MID_X_OFFSET = 2;
 const DASH_ARRAY_6 = 6;
 const DASH_ARRAY_4 = 4;
+
+const MARKER_WIDTH = 10;
+const MARKER_HEIGHT = 7;
+const MARKER_REFX = 9;
+const MARKER_REFY = 3.5;
+const POLYGON_POINTS = '0 0, 10 3.5, 0 7';
+
+const COLOR_WHITE = 'white';
+const COLOR_TITLE_BG = '#f9fafb';
+const COLOR_TITLE_LINE = '#f3f4f6';
+const COLOR_MALE_NAME = '#1e3a8a';
+const COLOR_MALE_DESC = '#1e40af';
+const COLOR_FEMALE_NAME = '#7f1d1d';
+const COLOR_FEMALE_DESC = '#991b1b';
+const COLOR_IMG_BG = '#e5e7eb';
+const COLOR_IMG_STROKE = '#d1d5db';
+const COLOR_NO_IMG_TEXT = '#6b7280';
+
+const TEXT_PADDING_8 = 8;
+const MARGIN_BOTTOM_4 = 4;
 
 export function renderEventToSvgString(event: Event, data: AppData, episodeIndex: number): string {
   const filteredPeople = getFilteredPeople(data, episodeIndex);
@@ -60,27 +79,27 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
   const personPositions = calculatePersonPositions(males, females, scale);
 
   const svgContent = `
-    <svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${totalHeight}" viewBox="0 0 ${totalWidth} ${totalHeight}" style="background: white;">
+    <svg xmlns="http://www.w3.org/2000/svg" width="${totalWidth}" height="${totalHeight}" viewBox="0 0 ${totalWidth} ${totalHeight}" style="background: ${COLOR_WHITE};">
       <defs>
-        <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb" />
+        <marker id="arrowhead-blue" markerWidth="${MARKER_WIDTH}" markerHeight="${MARKER_HEIGHT}" refX="${MARKER_REFX}" refY="${MARKER_REFY}" orient="auto">
+          <polygon points="${POLYGON_POINTS}" fill="#2563eb" />
         </marker>
-        <marker id="arrowhead-red" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" fill="#dc2626" />
+        <marker id="arrowhead-red" markerWidth="${MARKER_WIDTH}" markerHeight="${MARKER_HEIGHT}" refX="${MARKER_REFX}" refY="${MARKER_REFY}" orient="auto">
+          <polygon points="${POLYGON_POINTS}" fill="#dc2626" />
         </marker>
-        <marker id="arrowhead-lightblue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" fill="#93c5fd" />
+        <marker id="arrowhead-lightblue" markerWidth="${MARKER_WIDTH}" markerHeight="${MARKER_HEIGHT}" refX="${MARKER_REFX}" refY="${MARKER_REFY}" orient="auto">
+          <polygon points="${POLYGON_POINTS}" fill="#93c5fd" />
         </marker>
-        <marker id="arrowhead-lightred" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
-          <polygon points="0 0, 10 3.5, 0 7" fill="#fca5a5" />
+        <marker id="arrowhead-lightred" markerWidth="${MARKER_WIDTH}" markerHeight="${MARKER_HEIGHT}" refX="${MARKER_REFX}" refY="${MARKER_REFY}" orient="auto">
+          <polygon points="${POLYGON_POINTS}" fill="#fca5a5" />
         </marker>
       </defs>
 
-      <rect width="100%" height="100%" fill="white" />
+      <rect width="100%" height="100%" fill="${COLOR_WHITE}" />
 
       <!-- Title Section -->
-      <rect x="0" y="0" width="${totalWidth}" height="${TITLE_HEIGHT * scale}" fill="#f9fafb" />
-      <line x1="0" y1="${TITLE_HEIGHT * scale}" x2="${totalWidth}" y2="${TITLE_HEIGHT * scale}" stroke="#f3f4f6" stroke-width="1" />
+      <rect x="0" y="0" width="${totalWidth}" height="${TITLE_HEIGHT * scale}" fill="${COLOR_TITLE_BG}" />
+      <line x1="0" y1="${TITLE_HEIGHT * scale}" x2="${totalWidth}" y2="${TITLE_HEIGHT * scale}" stroke="${COLOR_TITLE_LINE}" stroke-width="1" />
       <text 
         x="${totalWidth / TITLE_Y_DIVIDER}" 
         y="${(TITLE_HEIGHT * scale) / TITLE_Y_DIVIDER}" 
@@ -104,9 +123,9 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
               width="${MALE_TEXT_WIDTH * scale}"
               height="${IMG_HEIGHT * scale}"
             >
-              <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; text-align: right; padding-right: 8px; height: 100%; justify-content: flex-start; padding-top: 8px; width: 100%; font-family: sans-serif;">
-                <div style="font-weight: bold; font-size: ${NAME_FONT_SIZE * scale}rem; color: #1e3a8a; margin-bottom: 4px;">${p.name}</div>
-                <div style="font-size: ${descFontSize}rem; color: #1e40af; white-space: pre-wrap; word-wrap: break-word;">${p.description}</div>
+              <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; text-align: right; padding-right: ${TEXT_PADDING_8}px; height: 100%; justify-content: flex-start; padding-top: ${TEXT_PADDING_8}px; width: 100%; font-family: sans-serif;">
+                <div style="font-weight: bold; font-size: ${NAME_FONT_SIZE * scale}rem; color: ${COLOR_MALE_NAME}; margin-bottom: ${MARGIN_BOTTOM_4}px;">${p.name}</div>
+                <div style="font-size: ${descFontSize}rem; color: ${COLOR_MALE_DESC}; white-space: pre-wrap; word-wrap: break-word;">${p.description}</div>
               </div>
             </foreignObject>
 
@@ -116,7 +135,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
               y="${y}" 
               width="${MALE_IMG_WIDTH * scale}" 
               height="${IMG_HEIGHT * scale}" 
-              fill="#e5e7eb" 
+              fill="${COLOR_IMG_BG}" 
               rx="${IMG_RX * scale}"
             />
             ${
@@ -136,7 +155,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
                 y="${y + (IMG_HEIGHT / TITLE_Y_DIVIDER) * scale}" 
                 text-anchor="middle" 
                 dominant-baseline="middle" 
-                style="font-family: sans-serif; font-size: ${SMALL_FONT_SIZE * scale}rem; fill: #6b7280;"
+                style="font-family: sans-serif; font-size: ${SMALL_FONT_SIZE * scale}rem; fill: ${COLOR_NO_IMG_TEXT};"
               >No Image</text>
             `
             }
@@ -146,8 +165,8 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
               width="${MALE_IMG_WIDTH * scale}" 
               height="${IMG_HEIGHT * scale}" 
               fill="none" 
-              stroke="#d1d5db" 
-              stroke-width="${MID_X_OFFSET * scale}" 
+              stroke="${COLOR_IMG_STROKE}" 
+              stroke-width="2" 
               rx="${IMG_RX * scale}"
             />
           </g>
@@ -169,7 +188,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
               y="${y}" 
               width="${FEMALE_IMG_WIDTH * scale}" 
               height="${IMG_HEIGHT * scale}" 
-              fill="#e5e7eb" 
+              fill="${COLOR_IMG_BG}" 
               rx="${IMG_RX * scale}"
             />
             ${
@@ -189,7 +208,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
                 y="${y + (IMG_HEIGHT / TITLE_Y_DIVIDER) * scale}" 
                 text-anchor="middle" 
                 dominant-baseline="middle" 
-                style="font-family: sans-serif; font-size: ${SMALL_FONT_SIZE * scale}rem; fill: #6b7280;"
+                style="font-family: sans-serif; font-size: ${SMALL_FONT_SIZE * scale}rem; fill: ${COLOR_NO_IMG_TEXT};"
               >No Image</text>
             `
             }
@@ -199,8 +218,8 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
               width="${FEMALE_IMG_WIDTH * scale}" 
               height="${IMG_HEIGHT * scale}" 
               fill="none" 
-              stroke="#d1d5db" 
-              stroke-width="${MID_X_OFFSET * scale}" 
+              stroke="${COLOR_IMG_STROKE}" 
+              stroke-width="2" 
               rx="${IMG_RX * scale}"
             />
 
@@ -211,9 +230,9 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
               width="${FEMALE_TEXT_WIDTH * scale}"
               height="${IMG_HEIGHT * scale}"
             >
-              <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; text-align: left; padding-left: 8px; height: 100%; justify-content: flex-start; padding-top: 8px; width: 100%; font-family: sans-serif;">
-                <div style="font-weight: bold; font-size: ${NAME_FONT_SIZE * scale}rem; color: #7f1d1d; margin-bottom: 4px;">${p.name}</div>
-                <div style="font-size: ${descFontSize}rem; color: #991b1b; white-space: pre-wrap; word-wrap: break-word;">${p.description}</div>
+              <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; text-align: left; padding-left: ${TEXT_PADDING_8}px; height: 100%; justify-content: flex-start; padding-top: ${TEXT_PADDING_8}px; width: 100%; font-family: sans-serif;">
+                <div style="font-weight: bold; font-size: ${NAME_FONT_SIZE * scale}rem; color: ${COLOR_FEMALE_NAME}; margin-bottom: ${MARGIN_BOTTOM_4}px;">${p.name}</div>
+                <div style="font-size: ${descFontSize}rem; color: ${COLOR_FEMALE_DESC}; white-space: pre-wrap; word-wrap: break-word;">${p.description}</div>
               </div>
             </foreignObject>
           </g>
@@ -234,6 +253,8 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
             const { color, marker } = getMessageStyle(m.type, fromPos.gender);
             const { x1, y1, x2, y2 } = calculateMessageCoords(fromPos, toPos, scale);
 
+            const markerEndAttr = marker ? `marker-end="url(#${marker})"` : '';
+
             /**
              * Special Routing for Same-gender Messages:
              * Redirects through the horizontal center of the middle column to prevent overlapping profile images.
@@ -243,13 +264,13 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
               return `
               <g>
                 <line x1="${x1}" y1="${y1}" x2="${centerX}" y2="${y2}" stroke="${color}" stroke-width="${MESSAGE_STROKE_WIDTH * scale}" />
-                <line x1="${centerX}" y1="${y2}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${MESSAGE_STROKE_WIDTH * scale}" ${marker ? `marker-end="url(#${marker})"` : ''} />
+                <line x1="${centerX}" y1="${y2}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${MESSAGE_STROKE_WIDTH * scale}" ${markerEndAttr} />
               </g>
             `;
             }
 
             // Normal straight-line arrows for cross-gender messages
-            return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${MESSAGE_STROKE_WIDTH * scale}" ${marker ? `marker-end="url(#${marker})"` : ''} />`;
+            return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${MESSAGE_STROKE_WIDTH * scale}" ${markerEndAttr} />`;
           })
           .join('')}
       </g>
@@ -264,7 +285,9 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
                 .map((id) => {
                   return personPositions[id];
                 })
-                .filter(Boolean);
+                .filter((p) => {
+                  return Boolean(p);
+                });
               if (validMembers.length > 0) {
                 return { originalIndex, validMembers };
               }

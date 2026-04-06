@@ -56,7 +56,11 @@ export async function saveEventImage(
   folderPath: string | null,
   clientId: string
 ) {
-  await axios.post(buildUrl('/api/save-image', folderPath, clientId), { filename, base64 });
+  const url = buildUrl('/api/save-image', folderPath, clientId);
+  await axios.post(url, {
+    filename,
+    base64,
+  });
 }
 
 export async function cleanupZombieImages(
@@ -64,5 +68,8 @@ export async function cleanupZombieImages(
   folderPath: string | null,
   clientId: string
 ) {
-  await axios.post(buildUrl('/api/cleanup-images', folderPath, clientId), { activeFilenames });
+  const url = buildUrl('/api/cleanup-images', folderPath, clientId);
+  await axios.post(url, {
+    activeFilenames,
+  });
 }
