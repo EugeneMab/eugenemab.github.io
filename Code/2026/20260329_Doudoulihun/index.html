@@ -200,7 +200,7 @@
         });
       }
 
-      function convertSyllable(s) {
+      function convertSyllable(s, justOrganize) {
         var vMatch = null;
         for (var vc of VOWEL_COMBINATIONS) {
           var idx = s.indexOf(vc);
@@ -234,9 +234,10 @@
         }
         
         var sc = bsc.concat(asc);
-        var res = pc;
+        var res = justOrganize ? pc.toUpperCase() : pc;
         
         function getX(c, v) {
+          if (justOrganize) return c;
           if ("bpfv".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "uf" : (v==='i'?"uf":"iuf");
           if ("dt".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "ih" : (v==='i'?"uih":"ij");
           if ("s".indexOf(c) !== -1 || c==="ts" || c==="dz") return "aeo".indexOf(v) !== -1 ? "ij" : (v==='i'?"uij":"ij");
@@ -248,6 +249,7 @@
           return "";
         }
         function getY(c, v) {
+          if (justOrganize) return c;
           if ("bpfv".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "fu" : (v==='i'?"fu":"fui");
           if ("dt".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "hi" : (v==='i'?"hiu":"ji");
           if ("s".indexOf(c) !== -1 || c==="ts" || c==="dz") return "aeo".indexOf(v) !== -1 ? "ji" : (v==='i'?"jiu":"ji");
@@ -257,6 +259,7 @@
           return "";
         }
         function getZ(c) {
+          if (justOrganize) return c;
           if ("bpfv".indexOf(c) !== -1) return "m";
           if ("dtgk".indexOf(c) !== -1) return "n";
           return "";
@@ -281,20 +284,23 @@
         var input = document.getElementById("convInput").value.toLowerCase();
         var error = document.getElementById("convError");
         var step3Out = document.getElementById("convStep3");
+        var step3_5Out = document.getElementById("convStep3_5");
         var step4Out = document.getElementById("convStep4");
         error.innerHTML = "";
         step3Out.value = "";
+        step3_5Out.value = "";
         step4Out.value = "";
         if (!input) {
           return;
         }
         // Split words
         var interleaving = input.split(/([a-z]+)/).filter(s => s !== '');
-        var results3 = [], results4 = [];
+        var results3 = [], results3_5 = [], results4 = [];
         for (let index = 0; index < interleaving.length; index++) {
           const item = interleaving[index];
           if (index % 2 == 1) {
             results3.push(item);
+            results3_5.push(item);
             results4.push(item);
             continue;
           }
@@ -313,9 +319,11 @@
           }
           var syls = syllabify(word);
           results3.push(syls.join("-"));
-          results4.push(syls.map(convertSyllable).join(""));
+          results3_5.push(syls.map(s => convertSyllable(s, true)).join(""));
+          results4.push(syls.map(s => convertSyllable(s, false)).join(""));
         }
         step3Out.value = results3.join("");
+        step3_5Out.value = results3_5.join("");
         step4Out.value = results4.join("");
       }
 
@@ -621,71 +629,71 @@
     </p>
     <center>
       <table>
-        <tr><td> Latin/English </td><td> Before Table </td><td> Doudouling         </td></tr>
-        <tr><td> state         </td><td> Stat         </td><td> sihahi             </td></tr>
-        <tr><td> sper          </td><td> Spew         </td><td> sufewu             </td></tr>
-        <tr><td> sport         </td><td> Spowt        </td><td> sufowun            </td></tr>
-        <tr><td> science       </td><td> Stsi-esn     </td><td> suijiejin          </td></tr>
-        <tr><td> photo         </td><td> FoTo         </td><td> foto               </td></tr>
-        <tr><td> wagon         </td><td> VaGon        </td><td> vagon              </td></tr>
-        <tr><td> cent          </td><td> Tsetn        </td><td> tsehin             </td></tr>
-        <tr><td> center        </td><td> TsenTew      </td><td> tsentewu           </td></tr>
-        <tr><td> aqu           </td><td> ak           </td><td> ahu                </td></tr>
-        <tr><td> aquatic       </td><td> aKuaTik      </td><td> akuatihu           </td></tr>
-        <tr><td> question      </td><td> KuesTSion    </td><td> kuejitsion         </td></tr>
-        <tr><td> tank          </td><td> Takn         </td><td> tahun              </td></tr>
-        <tr><td> xerox         </td><td> TseWkos      </td><td> tsewuhoji          </td></tr>
-        <tr><td> chocolate     </td><td> TsoKoLat     </td><td> tsokolahi          </td></tr>
-        <tr><td> just          </td><td> DZsut        </td><td> dzijuji            </td></tr>
-        <tr><td> adoption      </td><td> aDopTSion    </td><td> adofutsion         </td></tr>
-        <tr><td> train         </td><td> Twain        </td><td> tuwain             </td></tr>
-        <tr><td> tract         </td><td> Twakt        </td><td> tuwahun            </td></tr>
-        <tr><td> create        </td><td> Kwe-at       </td><td> kuweahi            </td></tr>
-        <tr><td> class         </td><td> Klass        </td><td> kuvaji             </td></tr>
-        <tr><td> cause         </td><td> Kaus         </td><td> kauji              </td></tr>
-        <tr><td> daemon        </td><td> Daemon       </td><td> daemon             </td></tr>
-        <tr><td> coffee        </td><td> KofFee       </td><td> kofufee            </td></tr>
-        <tr><td> moustache     </td><td> MouStats     </td><td> mousihaji          </td></tr>
-        <tr><td> phoenix       </td><td> FoeNkis      </td><td> foenuhijiu         </td></tr>
-        <tr><td> phoenician    </td><td> FoeNiTSian   </td><td> foenitsian         </td></tr>
-        <tr><td> europe        </td><td> euWop        </td><td> euwofu             </td></tr>
-        <tr><td> return        </td><td> WeTuwn       </td><td> wetuwuin           </td></tr>
-        <tr><td> depart        </td><td> DePwat       </td><td> depuwahi           </td></tr>
-        <tr><td> alt           </td><td> lat          </td><td> uvahi              </td></tr>
-        <tr><td> art           </td><td> wat          </td><td> uwahi              </td></tr>
-        <tr><td> arts          </td><td> wats         </td><td> uwaji              </td></tr>
-        <tr><td> culture       </td><td> KulTuw       </td><td> kuvuituwui         </td></tr>
-        <tr><td> court         </td><td> Kwout        </td><td> kuwouji            </td></tr>
-        <tr><td> cant          </td><td> Katn         </td><td> kahin              </td></tr>
-        <tr><td> simple        </td><td> SimPle       </td><td> simpuve            </td></tr>
-        <tr><td> hom           </td><td> Hom          </td><td> hom                </td></tr>
-        <tr><td> autumn        </td><td> auTunm       </td><td> autum              </td></tr>
-        <tr><td> environment   </td><td> enViWonMetn  </td><td> enviwonmehin       </td></tr>
-        <tr><td> fact          </td><td> Fkat         </td><td> fuhahi             </td></tr>
-        <tr><td> experiment    </td><td> ekSpeWiMetn  </td><td> ehusufewimehin     </td></tr>
-        <tr><td> expresss      </td><td> ekSpwess     </td><td> ehusufewu          </td></tr>
-        <tr><td> sign          </td><td> Sign         </td><td> sihun              </td></tr>
-        <tr><td> sing          </td><td> Sign         </td><td> sihun              </td></tr>
-        <tr><td> skin          </td><td> Skin         </td><td> suhin              </td></tr>
-        <tr><td> dogmatic      </td><td> DogMaTik     </td><td> dohumatihu         </td></tr>
-        <tr><td> construct     </td><td> KonStuwk     </td><td> konsijuwuin        </td></tr>
-        <tr><td> verb          </td><td> Vweb         </td><td> vuwefu             </td></tr>
-        <tr><td> partner       </td><td> PwatNew      </td><td> puwahinewu         </td></tr>
-        <tr><td> investment    </td><td> inVsetMetn   </td><td> invijehimehin      </td></tr>
-        <tr><td> continue      </td><td> KonTiNu      </td><td> kontinu            </td></tr>
-        <tr><td> Doudouling    </td><td> DouDouLign   </td><td> doudoulihun        </td></tr>
-        <tr><td> data          </td><td> DaTa         </td><td> data               </td></tr>
-        <tr><td> exact         </td><td> ekSkat       </td><td> ehusuhahi          </td></tr>
-        <tr><td> slave         </td><td> Slav         </td><td> suvafu             </td></tr>
-        <tr><td> salv          </td><td> Slav         </td><td> suvafu             </td></tr>
-        <tr><td> next          </td><td> Nkest        </td><td> nuhejin            </td></tr>
-        <tr><td> stunt         </td><td> Stutn        </td><td> sijujin            </td></tr>
-        <tr><td> complex       </td><td> KomPleks     </td><td> kompuvehu          </td></tr>
-        <tr><td> start         </td><td> Stawt        </td><td> sihawun            </td></tr>
-        <tr><td> strate        </td><td> Stawt        </td><td> sihawun            </td></tr>
-        <tr><td> transfer      </td><td> TwasnFew     </td><td> tuwajinfewu        </td></tr>
+        <tr><td> Latin/English </td><td> After Step 2     </td><td> Syllable breakdown </td><td> After Organizing </td><td> Doudouling         </td></tr>
+        <tr><td> state         </td><td> stat             </td><td> stat               </td><td> Stat             </td><td> sihahi             </td></tr>
+        <tr><td> sper          </td><td> spew             </td><td> spew               </td><td> Spew             </td><td> sufewu             </td></tr>
+        <tr><td> sport         </td><td> spowt            </td><td> spowt              </td><td> Spowt            </td><td> sufowun            </td></tr>
+        <tr><td> science       </td><td> stsients         </td><td> stsients           </td><td> Stsietsn         </td><td> suijiejin          </td></tr>
+        <tr><td> photo         </td><td> foto             </td><td> fo-to              </td><td> FoTo             </td><td> foto               </td></tr>
+        <tr><td> wagon         </td><td> vagon            </td><td> va-gon             </td><td> VaGon            </td><td> vagon              </td></tr>
+        <tr><td> cent          </td><td> tsent            </td><td> tsent              </td><td> TSetn            </td><td> tsehin             </td></tr>
+        <tr><td> center        </td><td> tsentew          </td><td> tsen-tew           </td><td> TSenTew          </td><td> tsentewu           </td></tr>
+        <tr><td> aqu           </td><td> ak               </td><td> ak                 </td><td> ak               </td><td> ahu                </td></tr>
+        <tr><td> aquatic       </td><td> akuatik          </td><td> a-kua-tik          </td><td> aKuaTik          </td><td> akuatihu           </td></tr>
+        <tr><td> question      </td><td> kuestsion        </td><td> kues-tsion         </td><td> KuesTSion        </td><td> kuejitsion         </td></tr>
+        <tr><td> tank          </td><td> tank             </td><td> tank               </td><td> Takn             </td><td> tahun              </td></tr>
+        <tr><td> xerox         </td><td> tsewoks          </td><td> tse-woks           </td><td> TSeWkos          </td><td> tsewuhoji          </td></tr>
+        <tr><td> chocolate     </td><td> tsokolat         </td><td> tso-ko-lat         </td><td> TSoKoLat         </td><td> tsokolahi          </td></tr>
+        <tr><td> just          </td><td> dzust            </td><td> dzust              </td><td> DZsut            </td><td> dzijuji            </td></tr>
+        <tr><td> adoption      </td><td> adoptsion        </td><td> a-dop-tsion        </td><td> aDopTSion        </td><td> adofutsion         </td></tr>
+        <tr><td> train         </td><td> twain            </td><td> twain              </td><td> Twain            </td><td> tuwain             </td></tr>
+        <tr><td> tract         </td><td> twakt            </td><td> twakt              </td><td> Twakt            </td><td> tuwahun            </td></tr>
+        <tr><td> create        </td><td> kweat            </td><td> kwe-at             </td><td> Kweat            </td><td> kuweahi            </td></tr>
+        <tr><td> class         </td><td> klass            </td><td> klass              </td><td> Klass            </td><td> kuvaji             </td></tr>
+        <tr><td> cause         </td><td> kaus             </td><td> kaus               </td><td> Kaus             </td><td> kauji              </td></tr>
+        <tr><td> daemon        </td><td> daemon           </td><td> da-e-mon           </td><td> DaeMon           </td><td> daemon             </td></tr>
+        <tr><td> coffee        </td><td> koffee           </td><td> kof-fe-e           </td><td> KofFee           </td><td> kofufee            </td></tr>
+        <tr><td> moustache     </td><td> moustats         </td><td> mou-stats          </td><td> MouStats         </td><td> mousihaji          </td></tr>
+        <tr><td> phoenix       </td><td> foeniks          </td><td> fo-e-niks          </td><td> FoeNkis          </td><td> foenuhijiu         </td></tr>
+        <tr><td> phoenician    </td><td> foenitsian       </td><td> fo-e-ni-tsian      </td><td> FoeNiTSian       </td><td> foenitsian         </td></tr>
+        <tr><td> europe        </td><td> euwop            </td><td> eu-wop             </td><td> euWop            </td><td> euwofu             </td></tr>
+        <tr><td> return        </td><td> wetuwn           </td><td> we-tuwn            </td><td> WeTuwn           </td><td> wetuwuin           </td></tr>
+        <tr><td> depart        </td><td> depawt           </td><td> de-pawt            </td><td> DePwat           </td><td> depuwahi           </td></tr>
+        <tr><td> alt           </td><td> alt              </td><td> alt                </td><td> lat              </td><td> uvahi              </td></tr>
+        <tr><td> art           </td><td> awt              </td><td> awt                </td><td> wat              </td><td> uwahi              </td></tr>
+        <tr><td> arts          </td><td> awts             </td><td> awts               </td><td> wats             </td><td> uwaji              </td></tr>
+        <tr><td> culture       </td><td> kultuw           </td><td> kul-tuw            </td><td> KulTuw           </td><td> kuvuituwui         </td></tr>
+        <tr><td> court         </td><td> kouwt            </td><td> kouwt              </td><td> Kwout            </td><td> kuwouji            </td></tr>
+        <tr><td> cant          </td><td> kant             </td><td> kant               </td><td> Katn             </td><td> kahin              </td></tr>
+        <tr><td> simple        </td><td> simple           </td><td> sim-ple            </td><td> SimPle           </td><td> simpuve            </td></tr>
+        <tr><td> hom           </td><td> hom              </td><td> hom                </td><td> Hom              </td><td> hom                </td></tr>
+        <tr><td> autumn        </td><td> autumn           </td><td> au-tumn            </td><td> auTunm           </td><td> autum              </td></tr>
+        <tr><td> environment   </td><td> enviwonment      </td><td> en-vi-won-ment     </td><td> enViWonMetn      </td><td> enviwonmehin       </td></tr>
+        <tr><td> fact          </td><td> fakt             </td><td> fakt               </td><td> Fkat             </td><td> fuhahi             </td></tr>
+        <tr><td> experiment    </td><td> ekspewiment      </td><td> ek-spe-wi-ment     </td><td> ekSpeWiMetn      </td><td> ehusufewimehin     </td></tr>
+        <tr><td> expresss      </td><td> ekspwess         </td><td> ek-spwess          </td><td> ekSpews          </td><td> ehusufewu          </td></tr>
+        <tr><td> sign          </td><td> sign             </td><td> sign               </td><td> Sign             </td><td> sihun              </td></tr>
+        <tr><td> sing          </td><td> sing             </td><td> sing               </td><td> Sign             </td><td> sihun              </td></tr>
+        <tr><td> skin          </td><td> skin             </td><td> skin               </td><td> Skin             </td><td> suhin              </td></tr>
+        <tr><td> dogmatic      </td><td> dogmatik         </td><td> dog-ma-tik         </td><td> DogMaTik         </td><td> dohumatihu         </td></tr>
+        <tr><td> construct     </td><td> konstwuk         </td><td> kon-stwuk          </td><td> KonStuwk         </td><td> konsijuwuin        </td></tr>
+        <tr><td> verb          </td><td> vewb             </td><td> vewb               </td><td> Vweb             </td><td> vuwefu             </td></tr>
+        <tr><td> partner       </td><td> pawtnew          </td><td> pawt-new           </td><td> PwatNew          </td><td> puwahinewu         </td></tr>
+        <tr><td> investment    </td><td> investment       </td><td> in-vest-ment       </td><td> inVsetMetn       </td><td> invijehimehin      </td></tr>
+        <tr><td> continue      </td><td> kontinu          </td><td> kon-ti-nu          </td><td> KonTiNu          </td><td> kontinu            </td></tr>
+        <tr><td> Doudouling    </td><td> doudouling       </td><td> dou-dou-ling       </td><td> DouDouLign       </td><td> doudoulihun        </td></tr>
+        <tr><td> data          </td><td> data             </td><td> da-ta              </td><td> DaTa             </td><td> data               </td></tr>
+        <tr><td> exact         </td><td> eksakt           </td><td> ek-sakt            </td><td> ekSkat           </td><td> ehusuhahi          </td></tr>
+        <tr><td> slave         </td><td> slav             </td><td> slav               </td><td> Slav             </td><td> suvafu             </td></tr>
+        <tr><td> salv          </td><td> salv             </td><td> salv               </td><td> Slav             </td><td> suvafu             </td></tr>
+        <tr><td> next          </td><td> nekst            </td><td> nekst              </td><td> Nkest            </td><td> nuhejin            </td></tr>
+        <tr><td> stunt         </td><td> stunt            </td><td> stunt              </td><td> Stutn            </td><td> sijujin            </td></tr>
+        <tr><td> complex       </td><td> kompleks         </td><td> kom-pleks          </td><td> KomPleks         </td><td> kompuvehu          </td></tr>
+        <tr><td> start         </td><td> stawt            </td><td> stawt              </td><td> Stawt            </td><td> sihawun            </td></tr>
+        <tr><td> strate        </td><td> stwat            </td><td> stwat              </td><td> Stawt            </td><td> sihawun            </td></tr>
+        <tr><td> transfer      </td><td> twansfew         </td><td> twans-few          </td><td> TwasnFew         </td><td> tuwajinfewu        </td></tr>
         <!--
-        <tr><td>               </td><td>              </td><td>                    </td></tr>
+        <tr><td>               </td><td>                  </td><td>                    </td><td>                  </td><td>                    </td></tr>
         -->
       </table>
     </center>
@@ -1022,6 +1030,13 @@
           d="Le sivulavue pijohi la sepawation:"
           >Syllables after break down:</span>
         <textarea id="convStep3" readonly style="width: 100%; height: 40px; font-size: 20px;"></textarea>
+      </p>
+      <p>
+        <span class="t"
+          c="整理后:"
+          d="Le sivulabuve pijohi la owuganidzatsion:"
+          >After organizing:</span>
+        <textarea id="convStep3_5" readonly style="width: 100%; height: 40px; font-size: 20px;"></textarea>
       </p>
       <p>
         <span class="t"
