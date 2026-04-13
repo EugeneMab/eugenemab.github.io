@@ -1,10 +1,26 @@
 /* Unit tests for image generation and server-side image management utilities. */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { saveEventImage, cleanupZombieImages, svgToJpeg } from './imageGen';
-import axios from 'axios';
+import netClient from './NetClient';
 
-vi.mock('axios');
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+import { Mock } from 'vitest';
+
+vi.mock('./NetClient', () => {
+  return {
+    default: {
+      post: vi.fn(),
+      interceptors: {
+        response: {
+          use: vi.fn(),
+        },
+      },
+    },
+  };
+});
+
+const mockedNetClient = netClient as unknown as {
+  post: Mock;
+};
 
 describe('imageGen utils', () => {
   beforeEach(() => {
@@ -12,14 +28,14 @@ describe('imageGen utils', () => {
   });
 
   /* Verifies that event images are correctly sent to the backend API for storage. */
-  it('saveEventImage calls axios.post', async () => {
-    mockedAxios.post.mockResolvedValueOnce({
+  it('saveEventImage calls netClient.post', async () => {
+    mockedNetClient.post.mockResolvedValueOnce({
       data: {
         success: true,
       },
     });
     await saveEventImage('test.jpg', 'base64data', 'folder', 'client');
-    expect(mockedAxios.post).toHaveBeenCalledWith(expect.stringContaining('/api/save-image'), {
+    expect(mockedNetClient.post).toHaveBeenCalledWith(expect.stringContaining('/api/save-image'), {
       filename: 'test.jpg',
       base64: 'base64data',
     });
@@ -27,37 +43,40 @@ describe('imageGen utils', () => {
 
   /* Verifies that buildUrl handles null folderPath (covers line 11). */
   it('saveEventImage handles null folderPath', async () => {
-    mockedAxios.post.mockResolvedValueOnce({
+    mockedNetClient.post.mockResolvedValueOnce({
       data: {
         success: true,
       },
     });
     await saveEventImage('test.jpg', 'base64data', null, 'client');
-    expect(mockedAxios.post).toHaveBeenCalledWith('/api/save-image', expect.anything());
+    expect(mockedNetClient.post).toHaveBeenCalledWith('/api/save-image', expect.anything());
   });
 
   /* Tests the triggering of the image cleanup process via the backend API. */
-  it('cleanupZombieImages calls axios.post', async () => {
-    mockedAxios.post.mockResolvedValueOnce({
+  it('cleanupZombieImages calls netClient.post', async () => {
+    mockedNetClient.post.mockResolvedValueOnce({
       data: {
         success: true,
       },
     });
     await cleanupZombieImages(['01_01.jpg'], 'folder', 'client');
-    expect(mockedAxios.post).toHaveBeenCalledWith(expect.stringContaining('/api/cleanup-images'), {
-      activeFilenames: ['01_01.jpg'],
-    });
+    expect(mockedNetClient.post).toHaveBeenCalledWith(
+      expect.stringContaining('/api/cleanup-images'),
+      {
+        activeFilenames: ['01_01.jpg'],
+      }
+    );
   });
 
   /* Verifies buildUrl for cleanupZombieImages with null folderPath. */
   it('cleanupZombieImages handles null folderPath', async () => {
-    mockedAxios.post.mockResolvedValueOnce({
+    mockedNetClient.post.mockResolvedValueOnce({
       data: {
         success: true,
       },
     });
     await cleanupZombieImages(['01_01.jpg'], null, 'client');
-    expect(mockedAxios.post).toHaveBeenCalledWith('/api/cleanup-images', expect.anything());
+    expect(mockedNetClient.post).toHaveBeenCalledWith('/api/cleanup-images', expect.anything());
   });
 
   /* Tests svgToJpeg by mocking Image and Canvas. */

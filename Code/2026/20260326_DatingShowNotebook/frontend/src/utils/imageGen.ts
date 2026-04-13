@@ -1,4 +1,4 @@
-import axios from 'axios';
+import netClient from './NetClient';
 import { toSafeBase64 } from '../store/useStore';
 
 const JPEG_QUALITY = 0.8;
@@ -57,7 +57,7 @@ export async function saveEventImage(
   clientId: string
 ) {
   const url = buildUrl('/api/save-image', folderPath, clientId);
-  await axios.post(url, {
+  await netClient.post(url, {
     filename,
     base64,
   });
@@ -69,7 +69,7 @@ export async function cleanupZombieImages(
   clientId: string
 ) {
   const url = buildUrl('/api/cleanup-images', folderPath, clientId);
-  await axios.post(url, {
+  await netClient.post(url, {
     activeFilenames,
   });
 }

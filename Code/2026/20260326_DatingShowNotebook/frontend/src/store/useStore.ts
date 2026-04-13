@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import axios from 'axios';
+import netClient from '../utils/NetClient';
 import { renderEventToSvgString } from '../utils/svgRenderer';
 import { svgToJpeg, saveEventImage, cleanupZombieImages } from '../utils/imageGen';
 
@@ -162,7 +162,7 @@ export const useStore = create<AppState>((set, get) => {
 
       try {
         const clientId = get().clientId;
-        const res = await axios.post('/api/open', { path: folderPath, clientId });
+        const res = await netClient.post('/api/open', { path: folderPath, clientId });
         const data: AppData = res.data;
 
         // --- ID Compaction & Data Cleaning Logic ---
@@ -271,7 +271,7 @@ export const useStore = create<AppState>((set, get) => {
           isInterrupted: false,
         });
 
-        await axios.post(buildUrl('/api/data', folderPath, clientId), data);
+        await netClient.post(buildUrl('/api/data', folderPath, clientId), data);
       } catch (e) {
         console.error('Failed to open folder', e);
         set({ isOpening: false });
@@ -299,7 +299,7 @@ export const useStore = create<AppState>((set, get) => {
           }
 
           try {
-            await axios.post(
+            await netClient.post(
               buildUrl('/api/data', latestState.currentFolderPath, latestState.clientId),
               latestState.data
             );
@@ -358,7 +358,7 @@ export const useStore = create<AppState>((set, get) => {
         undoStack: remainingStack,
       });
 
-      axios.post(buildUrl('/api/data', folderPath, get().clientId), prevData);
+      netClient.post(buildUrl('/api/data', folderPath, get().clientId), prevData);
     },
 
     setRefreshState: (isRefreshing, current, total) => {
@@ -440,7 +440,7 @@ export const useStore = create<AppState>((set, get) => {
   };
 });
 
-axios.interceptors.response.use(
+netClient.interceptors.response.use(
   (response) => {
     return response;
   },

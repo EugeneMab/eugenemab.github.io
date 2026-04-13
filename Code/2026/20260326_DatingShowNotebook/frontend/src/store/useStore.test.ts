@@ -1,7 +1,7 @@
 /* Unit tests for the Zustand application store and global state management. */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { useStore, toSafeBase64 } from './useStore';
-import axios from 'axios';
+import netClient from '../utils/NetClient';
 import * as imageGen from '../utils/imageGen';
 
 describe('utils', () => {
@@ -14,7 +14,20 @@ describe('utils', () => {
   });
 });
 
-vi.mock('axios');
+import { Mock } from 'vitest';
+
+vi.mock('../utils/NetClient', () => {
+  return {
+    default: {
+      post: vi.fn(),
+      interceptors: {
+        response: {
+          use: vi.fn(),
+        },
+      },
+    },
+  };
+});
 vi.mock('../utils/imageGen', async (importOriginal) => {
   const actual = await importOriginal<typeof imageGen>();
   return {
@@ -28,7 +41,9 @@ vi.mock('../utils/svgRenderer', () => ({
   renderEventToSvgString: vi.fn().mockReturnValue('<svg></svg>'),
 }));
 
-const mockedAxios = axios as jest.Mocked<typeof axios>;
+const mockedNetClient = netClient as unknown as {
+  post: Mock;
+};
 
 describe('useStore', () => {
   beforeEach(() => {
@@ -89,8 +104,8 @@ describe('useStore', () => {
       ],
       nextUniqueId: 2,
     };
-    mockedAxios.post.mockResolvedValueOnce({ data: mockData });
-    mockedAxios.post.mockResolvedValueOnce({ data: { success: true } });
+    mockedNetClient.post.mockResolvedValueOnce({ data: mockData });
+    mockedNetClient.post.mockResolvedValueOnce({ data: { success: true } });
 
     await useStore.getState().openFolder('test-path');
 
@@ -104,7 +119,7 @@ describe('useStore', () => {
   it('openFolder returns early if isOpening is true', async () => {
     useStore.setState({ isOpening: true });
     await useStore.getState().openFolder('another');
-    expect(mockedAxios.post).not.toHaveBeenCalled();
+    expect(mockedNetClient.post).not.toHaveBeenCalled();
   });
 
   /* Tests the state update mechanism and the automatic creation of undo points. */

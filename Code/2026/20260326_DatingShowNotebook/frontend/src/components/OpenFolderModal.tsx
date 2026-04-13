@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useStore } from '../store/useStore';
 import { Folder, ChevronRight, ChevronLeft, FileJson, Clock, X } from 'lucide-react';
-import axios from 'axios';
+import netClient from '../utils/NetClient';
 
 interface FolderEntry {
   name: string;
@@ -34,7 +34,7 @@ const OpenFolderModal: React.FC<OpenFolderModalProps> = ({ onClose }) => {
   const browse = async (path: string) => {
     setLoading(true);
     try {
-      const res = await axios.get(`/api/browse?path=${encodeURIComponent(path)}`);
+      const res = await netClient.get(`/api/browse?path=${encodeURIComponent(path)}`);
       setData(res.data);
       setCurrentPath(res.data.currentPath);
     } catch (e) {
