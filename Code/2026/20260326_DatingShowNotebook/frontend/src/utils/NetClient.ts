@@ -17,7 +17,7 @@ type ResponseInterceptor = {
   onRejected?: (error: unknown) => unknown;
 };
 
-class NetClient {
+export class NetClient {
   private responseInterceptors: ResponseInterceptor[] = [];
 
   public interceptors: {
