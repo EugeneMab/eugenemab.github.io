@@ -27,250 +27,319 @@ const VOWEL_COMBINATIONS = [
     'a', 'e', 'i', 'o', 'u',
 ];
 
-function tokenizeConsonants(str) {
-    var res = [];
-    var i = 0;
-    while (i < str.length) {
-        if (str.startsWith("ts", i) || str.startsWith("dz", i)) {
-            res.push(str.substring(i, i + 2));
-            i += 2;
+function tokenizeConsonants(text) {
+    var result = [];
+    var index = 0;
+    while (index < text.length) {
+        if (text.startsWith("ts", index) || text.startsWith("dz", index)) {
+            result.push(text.substring(index, index + 2));
+            index += 2;
         }
-        else { res.push(str[i]); i++; }
+        else {
+            result.push(text[index]);
+            index++;
+        }
     }
-    return res;
+    return result;
 }
 
 function syllabify(text) {
     var positions = [];
-    var i = 0;
-    while (i < text.length) {
+    var index = 0;
+    while (index < text.length) {
         var matched = false;
-        for (var vc of VOWEL_COMBINATIONS) {
-            if (text.startsWith(vc, i)) {
-                positions.push({ start: i, end: i + vc.length, vc: vc });
-                i += vc.length;
+        for (var vowelCombination of VOWEL_COMBINATIONS) {
+            if (text.startsWith(vowelCombination, index)) {
+                positions.push({ start: index, end: index + vowelCombination.length, vc: vowelCombination });
+                index += vowelCombination.length;
                 matched = true;
                 break;
             }
         }
         if (!matched) {
-            i++;
+            index++;
         }
     }
     if (positions.length === 0) {
         return [text];
     }
 
-    var syllables = positions.map(function (p) {
-        return { vc: p.vc, start: p.start, end: p.end, pre: [], post: [] };
+    var syllables = positions.map(function (position) {
+        return { vc: position.vc, start: position.start, end: position.end, pre: [], post: [] };
     });
 
-    for (var idx = 1; idx < syllables.length; idx++) {
-        var prevEnd = syllables[idx - 1].end;
-        var currStart = syllables[idx].start;
-        var mid = text.substring(prevEnd, currStart);
-        var units = tokenizeConsonants(mid);
+    for (var syllableIdx = 1; syllableIdx < syllables.length; syllableIdx++) {
+        var prevEnd = syllables[syllableIdx - 1].end;
+        var currStart = syllables[syllableIdx].start;
+        var middleText = text.substring(prevEnd, currStart);
+        var units = tokenizeConsonants(middleText);
 
         var claimed = [];
-        var k = units.length - 1;
+        var unitIndex = units.length - 1;
         var stop = false;
-        while (k >= 0 && !stop) {
-            var u = units[k];
-            if (u === 'w') {
-                claimed.unshift(u);
-                k--;
-                if (k >= 0) {
-                    if ('ptk'.indexOf(units[k]) !== -1) {
-                        claimed.unshift(units[k]);
-                        k--;
-                        if (k >= 0 && units[k] === 's') {
-                            claimed.unshift(units[k]);
-                            k--;
+        while (unitIndex >= 0 && !stop) {
+            var unit = units[unitIndex];
+            if (unit === 'w') {
+                claimed.unshift(unit);
+                unitIndex--;
+                if (unitIndex >= 0) {
+                    if ('ptk'.indexOf(units[unitIndex]) !== -1) {
+                        claimed.unshift(units[unitIndex]);
+                        unitIndex--;
+                        if (unitIndex >= 0 && units[unitIndex] === 's') {
+                            claimed.unshift(units[unitIndex]);
+                            unitIndex--;
                         }
-                    } else if ('bdg'.indexOf(units[k]) !== -1) {
-                        claimed.unshift(units[k]); k--;
+                    } else if ('bdg'.indexOf(units[unitIndex]) !== -1) {
+                        claimed.unshift(units[unitIndex]);
+                        unitIndex--;
                     }
                 }
                 stop = true;
-            } else if (u === 'l') {
-                claimed.unshift(u);
-                k--;
-                if (k >= 0) {
-                    if ('pk'.indexOf(units[k]) !== -1) {
-                        claimed.unshift(units[k]);
-                        k--;
-                        if (k >= 0 && units[k] === 's') {
-                            claimed.unshift(units[k]);
-                            k--;
+            } else if (unit === 'l') {
+                claimed.unshift(unit);
+                unitIndex--;
+                if (unitIndex >= 0) {
+                    if ('pk'.indexOf(units[unitIndex]) !== -1) {
+                        claimed.unshift(units[unitIndex]);
+                        unitIndex--;
+                        if (unitIndex >= 0 && units[unitIndex] === 's') {
+                            claimed.unshift(units[unitIndex]);
+                            unitIndex--;
                         }
-                    } else if ('bg'.indexOf(units[k]) !== -1) {
-                        claimed.unshift(units[k]); k--;
+                    } else if ('bg'.indexOf(units[unitIndex]) !== -1) {
+                        claimed.unshift(units[unitIndex]);
+                        unitIndex--;
                     }
                 }
                 stop = true;
-            } else if ('ptk'.indexOf(u) !== -1) {
-                claimed.unshift(u);
-                k--;
-                if (k >= 0 && units[k] === 's') {
-                    claimed.unshift(units[k]);
-                    k--;
+            } else if ('ptk'.indexOf(unit) !== -1) {
+                claimed.unshift(unit);
+                unitIndex--;
+                if (unitIndex >= 0 && units[unitIndex] === 's') {
+                    claimed.unshift(units[unitIndex]);
+                    unitIndex--;
                 }
                 stop = true;
             } else {
-                claimed.unshift(u);
-                k--;
+                claimed.unshift(unit);
+                unitIndex--;
                 stop = true;
             }
         }
-        syllables[idx].pre = claimed;
-        syllables[idx - 1].post = units.slice(0, k + 1);
+        syllables[syllableIdx].pre = claimed;
+        syllables[syllableIdx - 1].post = units.slice(0, unitIndex + 1);
     }
 
     syllables[0].pre = tokenizeConsonants(text.substring(0, syllables[0].start));
     syllables[syllables.length - 1].post = tokenizeConsonants(text.substring(syllables[syllables.length - 1].end));
 
-    return syllables.map(function (s) {
-        return s.pre.join("") + s.vc + s.post.join("");
+    return syllables.map(function (syllable) {
+        return syllable.pre.join("") + syllable.vc + syllable.post.join("");
     });
 }
 
-function convertSyllable(s, justOrganize) {
-    var vMatch = null;
-    for (var vc of VOWEL_COMBINATIONS) {
-        var idx = s.indexOf(vc);
-        if (idx !== -1) {
-            vMatch = { vc: vc, start: idx, end: idx + vc.length };
+function convertSyllable(syllable, justOrganize) {
+    var vowelMatch = null;
+    for (var vowelCombination of VOWEL_COMBINATIONS) {
+        var index = syllable.indexOf(vowelCombination);
+        if (index !== -1) {
+            vowelMatch = { vc: vowelCombination, start: index, end: index + vowelCombination.length };
             break;
         }
     }
-    if (!vMatch) {
-        return s;
+    if (!vowelMatch) {
+        return syllable;
     }
 
-    var pre = tokenizeConsonants(s.substring(0, vMatch.start));
-    var post = tokenizeConsonants(s.substring(vMatch.end));
-    var vc = vMatch.vc;
-    var fv = vc[0];
-    var lv = vc[vc.length - 1];
+    var prePart = tokenizeConsonants(syllable.substring(0, vowelMatch.start));
+    var postPart = tokenizeConsonants(syllable.substring(vowelMatch.end));
+    var vc = vowelMatch.vc;
+    var firstVowel = vc[0];
+    var lastVowel = vc[vc.length - 1];
 
-    var pc = pre.length > 0 ? pre[0] : "";
-    var bsc = pre.slice(1);
+    var primaryConsonant = prePart.length > 0 ? prePart[0] : "";
+    var beforeVowelSupportConsonant = prePart.slice(1);
 
-    var pn = "";
-    var asc = [];
-    for (var i = 0; i < post.length; i++) {
-        if ((post[i] === 'm' || post[i] === 'n') && pn === "") {
-            pn = post[i];
+    var postNasal = "";
+    var afterVowelSupportConsonant = [];
+    for (var i = 0; i < postPart.length; i++) {
+        if ((postPart[i] === 'm' || postPart[i] === 'n') && postNasal === "") {
+            postNasal = postPart[i];
         }
         else {
-            asc.push(post[i]);
+            afterVowelSupportConsonant.push(postPart[i]);
         }
     }
 
-    var sc = bsc.concat(asc);
-    var res = justOrganize ? pc.toUpperCase() : pc;
+    var supportConsonant = beforeVowelSupportConsonant.concat(afterVowelSupportConsonant);
+    var convertedResult = justOrganize ? primaryConsonant.toUpperCase() : primaryConsonant;
 
-    function getX(c, v) {
-        if (justOrganize) return c;
-        if ("bpfv".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "uf" : (v === 'i' ? "uf" : "iuf");
-        if ("dt".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "ih" : (v === 'i' ? "uih" : "ij");
-        if ("s".indexOf(c) !== -1 || c === "ts" || c === "dz") return "aeo".indexOf(v) !== -1 ? "ij" : (v === 'i' ? "uij" : "ij");
-        if ("gk".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "uh" : (v === 'i' ? "uh" : "iuh");
-        if (c === "w") return "aeo".indexOf(v) !== -1 ? "uw" : (v === 'i' ? "uw" : "iuw");
-        if (c === "l") return "aeo".indexOf(v) !== -1 ? "uv" : (v === 'i' ? "uv" : "iuv");
-        if (c === "m") return "aeo".indexOf(v) !== -1 ? "uf" : (v === 'i' ? "uf" : "iuf");
-        if (c === "n") return "aeo".indexOf(v) !== -1 ? "ih" : (v === 'i' ? "uih" : "ihu");
+    function getX(consonant, vowel) {
+        if (justOrganize) {
+            return consonant;
+        }
+        if ("bpfv".indexOf(consonant) !== -1) {
+            return "aeo".indexOf(vowel) !== -1 ? "uf" : (vowel === 'i' ? "uf" : "iuf");
+        }
+        if ("dt".indexOf(consonant) !== -1) {
+            return "aeo".indexOf(vowel) !== -1 ? "ih" : (vowel === 'i' ? "uih" : "ij");
+        }
+        if ("s".indexOf(consonant) !== -1 || consonant === "ts" || consonant === "dz") {
+            return "aeo".indexOf(vowel) !== -1 ? "ij" : (vowel === 'i' ? "uij" : "ij");
+        }
+        if ("gk".indexOf(consonant) !== -1) {
+            return "aeo".indexOf(vowel) !== -1 ? "uh" : (vowel === 'i' ? "uh" : "iuh");
+        }
+        if (consonant === "w") {
+            return "aeo".indexOf(vowel) !== -1 ? "uw" : (vowel === 'i' ? "uw" : "iuw");
+        }
+        if (consonant === "l") {
+            return "aeo".indexOf(vowel) !== -1 ? "uv" : (vowel === 'i' ? "uv" : "iuv");
+        }
+        if (consonant === "m") {
+            return "aeo".indexOf(vowel) !== -1 ? "uf" : (vowel === 'i' ? "uf" : "iuf");
+        }
+        if (consonant === "n") {
+            return "aeo".indexOf(vowel) !== -1 ? "ih" : (vowel === 'i' ? "uih" : "ihu");
+        }
         return "";
     }
-    function getY(c, v) {
-        if (justOrganize) return c;
-        if ("bpfv".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "fu" : (v === 'i' ? "fu" : "fui");
-        if ("dt".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "hi" : (v === 'i' ? "hiu" : "ji");
-        if ("s".indexOf(c) !== -1 || c === "ts" || c === "dz") return "aeo".indexOf(v) !== -1 ? "ji" : (v === 'i' ? "jiu" : "ji");
-        if ("gk".indexOf(c) !== -1) return "aeo".indexOf(v) !== -1 ? "hu" : (v === 'i' ? "hu" : "hui");
-        if (c === "w") return "aeo".indexOf(v) !== -1 ? "wu" : (v === 'i' ? "wu" : "wui");
-        if (c === "l") return "aeo".indexOf(v) !== -1 ? "vu" : (v === 'i' ? "vu" : "vui");
+    function getY(consonant, vowel) {
+        if (justOrganize) {
+            return consonant;
+        }
+        if ("bpfv".indexOf(consonant) !== -1) {
+            return "aeo".indexOf(vowel) !== -1 ? "fu" : (vowel === 'i' ? "fu" : "fui");
+        }
+        if ("dt".indexOf(consonant) !== -1) {
+            return "aeo".indexOf(vowel) !== -1 ? "hi" : (vowel === 'i' ? "hiu" : "ji");
+        }
+        if ("s".indexOf(consonant) !== -1 || consonant === "ts" || consonant === "dz") {
+            return "aeo".indexOf(vowel) !== -1 ? "ji" : (vowel === 'i' ? "jiu" : "ji");
+        }
+        if ("gk".indexOf(consonant) !== -1) {
+            return "aeo".indexOf(vowel) !== -1 ? "hu" : (vowel === 'i' ? "hu" : "hui");
+        }
+        if (consonant === "w") {
+            return "aeo".indexOf(vowel) !== -1 ? "wu" : (vowel === 'i' ? "wu" : "wui");
+        }
+        if (consonant === "l") {
+            return "aeo".indexOf(vowel) !== -1 ? "vu" : (vowel === 'i' ? "vu" : "vui");
+        }
         return "";
     }
-    function getZ(c) {
-        if (justOrganize) return c;
-        if ("bpfv".indexOf(c) !== -1) return "m";
-        if ("dtgk".indexOf(c) !== -1) return "n";
+    function getZ(consonant) {
+        if (justOrganize) {
+            return consonant;
+        }
+        if ("bpfv".indexOf(consonant) !== -1) {
+            return "m";
+        }
+        if ("dtgk".indexOf(consonant) !== -1) {
+            return "n";
+        }
         return "";
     }
 
-    if (pn !== "") {
-        if (sc.length === 0) res += vc + pn;
-        else if (sc.length === 1 && bsc.length === 1) res += getX(bsc[0], fv) + vc + pn;
-        else if (sc.length === 1 && asc.length === 1) res += vc + getY(asc[0], lv) + pn;
-        else if (sc.length >= 2) res += getX(sc[0], fv) + vc + getY(sc[1], lv) + pn;
+    if (postNasal !== "") {
+        if (supportConsonant.length === 0) {
+            convertedResult += vc + postNasal;
+        }
+        else if (supportConsonant.length === 1 && beforeVowelSupportConsonant.length === 1) {
+            convertedResult += getX(beforeVowelSupportConsonant[0], firstVowel) + vc + postNasal;
+        }
+        else if (supportConsonant.length === 1 && afterVowelSupportConsonant.length === 1) {
+            convertedResult += vc + getY(afterVowelSupportConsonant[0], lastVowel) + postNasal;
+        }
+        else if (supportConsonant.length >= 2) {
+            convertedResult += getX(supportConsonant[0], firstVowel) + vc + getY(supportConsonant[1], lastVowel) + postNasal;
+        }
     } else {
-        if (sc.length === 0) res += vc;
-        else if (sc.length === 1 && bsc.length === 1) res += getX(bsc[0], fv) + vc;
-        else if (sc.length === 1 && asc.length === 1) res += vc + getY(asc[0], lv);
-        else if (sc.length === 2) res += getX(sc[0], fv) + vc + getY(sc[1], lv);
-        else if (sc.length >= 3) res += getX(sc[0], fv) + vc + getY(sc[1], lv) + getZ(sc[2]);
+        if (supportConsonant.length === 0) {
+            convertedResult += vc;
+        }
+        else if (supportConsonant.length === 1 && beforeVowelSupportConsonant.length === 1) {
+            convertedResult += getX(beforeVowelSupportConsonant[0], firstVowel) + vc;
+        }
+        else if (supportConsonant.length === 1 && afterVowelSupportConsonant.length === 1) {
+            convertedResult += vc + getY(afterVowelSupportConsonant[0], lastVowel);
+        }
+        else if (supportConsonant.length === 2) {
+            convertedResult += getX(supportConsonant[0], firstVowel) + vc + getY(supportConsonant[1], lastVowel);
+        }
+        else if (supportConsonant.length >= 3) {
+            convertedResult += getX(supportConsonant[0], firstVowel) + vc + getY(supportConsonant[1], lastVowel) + getZ(supportConsonant[2]);
+        }
     }
-    return res;
+    return convertedResult;
 }
 
-const newLines = lines.map(line => {
-    if (line.trim() === "") return line;
-    let cols = line.split(',');
+const newLines = lines.map((line) => {
+    if (line.trim() === "") {
+        return line;
+    }
+    let columns = line.split(',');
     
     // Ensure we have exactly 7 columns
-    if (cols.length > 7) {
-        cols = cols.slice(0, 7);
+    if (columns.length > 7) {
+        columns = columns.slice(0, 7);
     } else {
-        while (cols.length < 7) cols.push('');
+        while (columns.length < 7) {
+            columns.push('');
+        }
     }
 
-    const doudouling = cols[0].trim();
-    const root = cols[1].trim();
-    const override = cols[2].trim();
+    const doudouling = columns[0].trim();
+    const root = columns[1].trim();
+    const override = columns[2].trim();
 
     const input = override !== "" ? override : root;
 
-    cols[2] = override; 
+    columns[2] = override; 
 
     try {
         const word = input.toLowerCase();
         // Validation from index.html
-        var invalid = word.match(/[^abdefghijklmnopstuvwz]/g);
-        if (invalid) {
-            cols[3] = ""; // Breakdown
-            cols[4] = ""; // Organized
-            cols[5] = ""; // Generated
-            cols[6] = ("Invalid characters: " + Array.from(new Set(invalid)).join(" and "));
+        var invalidMatches = word.match(/[^abdefghijklmnopstuvwz]/g);
+        if (invalidMatches) {
+            columns[3] = ""; // Breakdown
+            columns[4] = ""; // Organized
+            columns[5] = ""; // Generated
+            columns[6] = ("Invalid characters: " + Array.from(new Set(invalidMatches)).join(" and "));
         } else if (/(^|[^d])z/.test(word)) {
-            cols[3] = "";
-            cols[4] = "";
-            cols[5] = "";
-            cols[6] = "Invalid sequence: 'z' must follow 'd'";
+            columns[3] = "";
+            columns[4] = "";
+            columns[5] = "";
+            columns[6] = "Invalid sequence: 'z' must follow 'd'";
         } else {
-            const syls = syllabify(word);
-            const breakdown = syls.join("-");
-            const organized = syls.map(s => convertSyllable(s, true)).join("");
-            const generated = syls.map(s => convertSyllable(s, false)).join("");
+            const syllables = syllabify(word);
+            const breakdown = syllables.join("-");
+            const organized = syllables.map((syllable) => {
+                return convertSyllable(syllable, true);
+            }).join("");
+            const generated = syllables.map((syllable) => {
+                return convertSyllable(syllable, false);
+            }).join("");
 
-            cols[3] = breakdown;
-            cols[4] = organized;
-            cols[5] = generated;
+            columns[3] = breakdown;
+            columns[4] = organized;
+            columns[5] = generated;
 
             if (doudouling !== generated) {
-                cols[6] = "mismatched";
+                columns[6] = "mismatched";
             } else {
-                cols[6] = "";
+                columns[6] = "";
             }
         }
-    } catch (e) {
-        cols[3] = "";
-        cols[4] = "";
-        cols[5] = "";
-        cols[6] = ("Error: " + e.message).replace(/,/g, " and ");
+    } catch (error) {
+        columns[3] = "";
+        columns[4] = "";
+        columns[5] = "";
+        columns[6] = ("Error: " + error.message).replace(/,/g, " and ");
     }
 
-    return cols.join(',');
+    return columns.join(',');
 });
 
 const newCsvDataStr = newLines.join('\n');

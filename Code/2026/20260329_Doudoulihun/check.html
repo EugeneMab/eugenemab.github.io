@@ -25,11 +25,6 @@
             background-color: #f9f9f9;
         }
     </style>
-</head>
-<body>
-    <h1>Doudouling Word Pairs</h1>
-    <div id="tableContainer"></div>
-
     <script>
         const csvData = `
 tihiule,title,,tit-le,TitLe,tihiule,
@@ -335,24 +330,30 @@ malihun,malign,,ma-lign,MaLign,malihun,
 amen,amen,,a-men,aMen,amen,
 `;
 
-        function displayTable(csv) {
-            const lines = csv.split('\n').filter(line => line.trim().length > 0);
-            let html = '<table><thead><tr><th>Doudouling</th><th>Root</th><th>Override</th><th>Breakdown</th><th>Organized</th><th>Generated</th><th>Mismatch</th></tr></thead><tbody>';
+        function displayTable(text) {
+            const lines = text.split('\n').filter((line) => {
+                return line.trim().length > 0;
+            });
+            let htmlOutput = '<table><thead><tr><th>Doudouling</th><th>Root</th><th>Override</th><th>Breakdown</th><th>Organized</th><th>Generated</th><th>Mismatch</th></tr></thead><tbody>';
             
-            lines.forEach(line => {
-                const columns = line.split(',');
-                html += '<tr>';
-                for (let i = 0; i < 7; i++) {
-                    html += `<td>${columns[i] || ''}</td>`;
+            lines.forEach((line) => {
+                const columnValues = line.split(',');
+                htmlOutput += '<tr>';
+                for (let columnIndex = 0; columnIndex < 7; columnIndex++) {
+                    htmlOutput += `<td>${columnValues[columnIndex] || ''}</td>`;
                 }
-                html += '</tr>';
+                htmlOutput += '</tr>';
             });
             
-            html += '</tbody></table>';
-            document.getElementById('tableContainer').innerHTML = html;
+            htmlOutput += '</tbody></table>';
+            document.body.innerHTML = htmlOutput;
         }
 
-        displayTable(csvData);
+        window.addEventListener('load', () => {
+            displayTable(csvData);
+        });
     </script>
+</head>
+<body>
 </body>
 </html>
