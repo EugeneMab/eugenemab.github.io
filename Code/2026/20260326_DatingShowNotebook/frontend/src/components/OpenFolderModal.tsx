@@ -54,7 +54,7 @@ const OpenFolderModal: React.FC<OpenFolderModalProps> = ({ onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[50] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[80vh]">
         <div className="p-4 border-b flex justify-between items-center bg-gray-50">
           <h2 className="text-xl font-bold flex items-center gap-2">

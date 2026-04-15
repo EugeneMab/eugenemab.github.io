@@ -9,7 +9,7 @@ const InterruptionModal: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm">
       <div className="bg-white rounded-lg shadow-2xl p-8 max-w-md w-full text-center border-4 border-red-500">
         <h2 className="text-2xl font-bold text-red-600 mb-4">Interrupted</h2>
         <p className="text-gray-700 mb-6">

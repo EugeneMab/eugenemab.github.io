@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useStore, Episode, Event } from '../store/useStore';
 import { ChevronDown, Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -13,7 +13,36 @@ const NavigationPane: React.FC = () => {
   const [openDropdown, setOpenDropdown] = useState<{
     type: 'episode' | 'event';
     id: number;
+    showAbove?: boolean;
   } | null>(null);
+
+  const paneRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (paneRef.current && !paneRef.current.contains(event.target as Node)) {
+        setOpenDropdown(null);
+      }
+    };
+
+    if (openDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDropdown]);
+
+  const handleToggleDropdown = (e: React.MouseEvent, type: 'episode' | 'event', id: number) => {
+    e.stopPropagation();
+    if (openDropdown?.id === id && openDropdown?.type === type) {
+      setOpenDropdown(null);
+    } else {
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      const showAbove = rect.bottom > window.innerHeight / 2;
+      setOpenDropdown({ type, id, showAbove });
+    }
+  };
 
   const handleAddEpisode = () => {
     saveData((prev) => {
@@ -198,7 +227,10 @@ const NavigationPane: React.FC = () => {
   };
 
   return (
-    <div className="w-64 bg-[#8B008B] text-white flex flex-col h-full shrink-0 relative z-50 overflow-x-hidden">
+    <div
+      ref={paneRef}
+      className="w-64 bg-[#8B008B] text-white flex flex-col h-full shrink-0 relative z-30 overflow-x-hidden"
+    >
       <button
         className="p-4 text-xl font-bold border-b border-pink-800/50 text-left hover:bg-[#9B109B] transition-colors bg-[#8B008B] shrink-0"
         onClick={() => {
@@ -232,7 +264,7 @@ const NavigationPane: React.FC = () => {
                 key={episode.id}
                 className={clsx(
                   'border-b border-pink-800/50',
-                  isEpisodeDropdownOpen ? 'relative z-[60]' : 'relative z-0'
+                  isEpisodeDropdownOpen ? 'relative z-10' : 'relative z-0'
                 )}
               >
                 <div className="flex items-center group relative w-full">
@@ -260,18 +292,18 @@ const NavigationPane: React.FC = () => {
                     <button
                       className="p-3 hover:bg-pink-800/30 text-white/70 hover:text-white"
                       onClick={(e) => {
-                        e.stopPropagation();
-                        return setOpenDropdown(
-                          openDropdown?.id === episode.id
-                            ? null
-                            : { type: 'episode', id: episode.id }
-                        );
+                        return handleToggleDropdown(e, 'episode', episode.id);
                       }}
                     >
                       <ChevronDown size={ICON_SIZE_16} />
                     </button>
                     {isEpisodeDropdownOpen && (
-                      <div className="absolute right-0 top-full mt-0 w-48 bg-white text-gray-900 rounded shadow-xl z-[100] border border-gray-200">
+                      <div
+                        className={clsx(
+                          'absolute right-0 w-48 bg-white text-gray-900 rounded shadow-xl z-20 border border-gray-200',
+                          openDropdown.showAbove ? 'bottom-full mb-0' : 'top-full mt-0'
+                        )}
+                      >
                         <button
                           className="w-full p-3 text-left hover:bg-gray-100 flex items-center gap-2 border-b border-gray-100"
                           onClick={() => {
@@ -319,7 +351,7 @@ const NavigationPane: React.FC = () => {
                         key={event.id}
                         className={clsx(
                           'flex items-center group relative w-full',
-                          isEventDropdownOpen ? 'z-[70]' : 'z-0'
+                          isEventDropdownOpen ? 'relative z-10' : 'z-0'
                         )}
                       >
                         <div
@@ -349,18 +381,18 @@ const NavigationPane: React.FC = () => {
                               openDropdown?.id === event.id ? 'block' : 'hidden'
                             )}
                             onClick={(e) => {
-                              e.stopPropagation();
-                              return setOpenDropdown(
-                                openDropdown?.id === event.id
-                                  ? null
-                                  : { type: 'event', id: event.id }
-                              );
+                              return handleToggleDropdown(e, 'event', event.id);
                             }}
                           >
                             <ChevronDown size={ICON_SIZE_14} />
                           </button>
                           {isEventDropdownOpen && (
-                            <div className="absolute right-0 top-full mt-0 w-48 bg-white text-gray-900 rounded shadow-xl z-[100] border border-gray-200">
+                            <div
+                              className={clsx(
+                                'absolute right-0 w-48 bg-white text-gray-900 rounded shadow-xl z-20 border border-gray-200',
+                                openDropdown.showAbove ? 'bottom-full mb-0' : 'top-full mt-0'
+                              )}
+                            >
                               <button
                                 className="w-full p-3 text-left hover:bg-gray-100 flex items-center gap-2 border-b border-gray-100 disabled:opacity-50"
                                 disabled={evIdx === 0}
