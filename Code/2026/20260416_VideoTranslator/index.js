@@ -3,6 +3,7 @@ const path = require('path');
 const fs = require('fs');
 const Logger = require('./Logger');
 const { captureVideo } = require('./capture');
+const AudioProcessor = require('./AudioProcessor');
 
 program
   .version('1.0.0')
