@@ -6,7 +6,7 @@ class AudioProcessor {
     constructor(workFolder, logger) {
         this.workFolder = workFolder;
         this.logger = logger;
-        this.ffmpegPath = path.join(process.cwd(), 'ffmpeg.exe');
+        this.ffmpegPath = path.join(process.cwd(), 'bin', 'ffmpeg.exe');
         this.tempFolder = path.join(workFolder, 'temp');
         if (!fs.existsSync(this.tempFolder)) fs.mkdirSync(this.tempFolder, { recursive: true });
     }

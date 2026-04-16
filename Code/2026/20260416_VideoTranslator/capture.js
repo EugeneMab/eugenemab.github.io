@@ -10,7 +10,7 @@ async function captureVideo(url, maxDuration, maxBytes, chromePath, workFolder, 
     if (!fs.existsSync(captureFolder)) fs.mkdirSync(captureFolder, { recursive: true });
 
     const videoPath = path.join(captureFolder, 'original_video.mp4');
-    const ytDlpPath = path.join(__dirname, 'yt-dlp.exe');
+    const ytDlpPath = path.join(__dirname, 'bin', 'yt-dlp.exe');
 
     try {
         logger.info("Executing yt-dlp...");
