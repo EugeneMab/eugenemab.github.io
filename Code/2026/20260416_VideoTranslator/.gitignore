@@ -1,0 +1,27 @@
+# Dependency directories
+node_modules/
+
+# Logs
+logs/
+*.log
+
+# Work folder specific (if people use folders inside the project)
+capture/
+segments/
+speakers/
+temp/
+work/
+
+# Video/Audio files
+*.mp4
+*.webm
+*.wav
+*.m4a
+*.json
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
