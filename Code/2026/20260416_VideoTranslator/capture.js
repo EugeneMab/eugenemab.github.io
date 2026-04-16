@@ -2,168 +2,97 @@ const { chromium } = require('playwright');
 const fs = require('fs');
 const path = require('path');
 
+function formatTime(seconds) {
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${hrs.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+}
+
 async function captureVideo(url, maxDuration, maxBytes, chromePath, workFolder, logger) {
     logger.setStep('01_capture');
-    logger.info(`Starting capture for URL: ${url}`);
+    logger.info(`Starting Capture (Session Method) for URL: ${url}`);
 
     const captureFolder = path.join(workFolder, 'capture');
     if (!fs.existsSync(captureFolder)) fs.mkdirSync(captureFolder, { recursive: true });
 
-    const outputPath = path.join(captureFolder, 'raw_capture.webm');
-    const writeStream = fs.createWriteStream(outputPath);
+    const audioOutputPath = path.join(captureFolder, 'raw_capture.webm');
+    const writeStream = fs.createWriteStream(audioOutputPath);
 
     let bytesWritten = 0;
-    let stopRequested = false;
+    let videoCurrentTime = 0;
+    let lastDataTime = Date.now();
 
     const userDataDir = path.join(process.env.LOCALAPPDATA, 'Google/Chrome/User Data/Default_Translator_Profile');
-    
-    logger.info(`Launching browser. Profile: ${userDataDir}`);
     const context = await chromium.launchPersistentContext(userDataDir, {
         executablePath: chromePath || undefined,
-        headless: false, 
-        args: [
-            '--autoplay-policy=no-user-gesture-required',
-            '--mute-audio=false'
-        ]
+        headless: false,
+        args: ['--autoplay-policy=no-user-gesture-required']
     });
 
     const page = await context.newPage();
     
-    // Ad-Skipper
-    await page.addInitScript(() => {
-        setInterval(() => {
-            const ad = document.querySelector('.ad-showing video, .ytp-ad-player-overlay, .bilibili-player-video-ad-unit');
-            if (ad) {
-                const video = document.querySelector('video');
-                if (video) {
-                    video.playbackRate = 16.0;
-                    video.muted = true;
-                }
-                const skipBtn = document.querySelector('.ytp-ad-skip-button, .ytp-ad-skip-button-modern');
-                if (skipBtn) skipBtn.click();
-            }
-        }, 500);
-    });
-
-    await page.goto(url, { waitUntil: 'networkidle' });
-    logger.info("Page loaded.");
-
-    // Screenshot at start
-    await page.screenshot({ path: path.join(logger.logFolder, 'capture_start.png') });
-
-    let activeWrites = 0;
-
     await page.exposeFunction('onDataAvailable', (data) => {
-        logger.debug(`onDataAvailable called with ${data.length} chars`);
-        if (stopRequested) return;
-        activeWrites++;
+        lastDataTime = Date.now();
         const buffer = Buffer.from(data, 'base64');
         bytesWritten += buffer.length;
-        writeStream.write(buffer, (err) => {
-            if (err) logger.error(`Write error: ${err.message}`);
-            activeWrites--;
-        });
+        writeStream.write(buffer);
+    });
 
-        if (maxBytes && bytesWritten >= maxBytes) {
-            logger.warn(`Max bytes (${maxBytes}) reached. Stopping capture.`);
-            stopRequested = true;
+    await page.exposeFunction('logProgress', (currentTime) => {
+        videoCurrentTime = currentTime;
+        logger.info(`Capture Progress: [${formatTime(currentTime)} / ${formatTime(maxDuration)}] (${(bytesWritten / 1024 / 1024).toFixed(2)} MB)`);
+    });
+
+    const watchdog = setInterval(() => {
+        if (bytesWritten > 0 && (Date.now() - lastDataTime) > 30000) {
+            logger.error("STALL DETECTED: No data for 30s. Exiting.");
+            process.exit(1);
         }
-    });
-
-    await page.exposeFunction('logFromBrowser', (msg) => {
-        logger.debug(`Browser Log: ${msg}`);
-    });
-
-    page.on('console', msg => logger.debug(`Browser Console: ${msg.text()}`));
-    page.on('pageerror', err => logger.error(`Browser Page Error: ${err.message}`));
-
-    // Hard watchdog timer
-    const watchdogTimeout = (maxDuration || 60) + 30;
-    const watchdog = setTimeout(async () => {
-        logger.warn(`Watchdog timeout (${watchdogTimeout}s) triggered. Force closing browser.`);
-        stopRequested = true;
-        await context.close();
-    }, watchdogTimeout * 1000);
+    }, 5000);
 
     try {
+        await page.goto(url, { waitUntil: 'networkidle' });
+        
         await page.evaluate(async ({ mSec }) => {
-            window.logFromBrowser("Locating video element...");
             const video = document.querySelector('video');
-            if (!video) {
-                window.logFromBrowser("Video element not found");
-                return;
-            }
+            if (!video) return;
 
-            window.logFromBrowser("Video src: " + video.src);
-            if (video.readyState < 1) {
-                window.logFromBrowser("Waiting for metadata...");
-                await new Promise(r => video.addEventListener('loadedmetadata', r, { once: true }));
-            }
+            // Wait for metadata
+            if (video.readyState < 1) await new Promise(r => video.onloadedmetadata = r);
+            await video.play();
 
-            try {
-                window.logFromBrowser("Attempting play...");
-                await video.play();
-                
-                const stream = video.captureStream();
-                const recorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9,opus' });
-                let chunksReceived = 0;
+            setInterval(() => window.logProgress(video.currentTime), 2000);
 
-                recorder.ondataavailable = async (event) => {
-                    if (event.data.size > 0) {
-                        chunksReceived++;
-                        window.logFromBrowser(`Chunk #${chunksReceived} received, size: ${event.data.size}`);
-                        
-                        const arrayBuffer = await event.data.arrayBuffer();
-                        const uint8Array = new Uint8Array(arrayBuffer);
-                        // Convert to base64 in chunks or as a whole if not too large
-                        let binary = '';
-                        for (let i = 0; i < uint8Array.length; i++) {
-                            binary += String.fromCharCode(uint8Array[i]);
-                        }
-                        const base64 = btoa(binary);
-                        window.onDataAvailable(base64);
+            const stream = video.captureStream();
+            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9,opus' });
+            
+            recorder.ondataavailable = async (e) => {
+                if (e.data.size > 0) {
+                    const buf = await e.data.arrayBuffer();
+                    const b64 = btoa(String.fromCharCode(...new Uint8Array(buf)));
+                    window.onDataAvailable(b64);
+                }
+            };
+
+            recorder.start(1000);
+
+            return new Promise(resolve => {
+                recorder.onstop = resolve;
+                const i = setInterval(() => {
+                    if (video.currentTime >= mSec) {
+                        recorder.stop();
+                        clearInterval(i);
                     }
-                };
-
-                recorder.start(1000); 
-                window.logFromBrowser("MediaRecorder started");
-
-                return new Promise(resolve => {
-                    recorder.onstop = () => {
-                        window.logFromBrowser("MediaRecorder stopped normally");
-                        setTimeout(resolve, 3000); // Give time for last chunks to reach Node
-                    };
-                    video.onended = () => {
-                        window.logFromBrowser("Video ended automatically");
-                        if (recorder.state !== 'inactive') recorder.stop();
-                    };
-                    if (mSec) setTimeout(() => {
-                        window.logFromBrowser("Duration limit reached");
-                        if (recorder.state !== 'inactive') recorder.stop();
-                    }, mSec * 1000);
-                });
-            } catch (e) {
-                window.logFromBrowser("Critical error in browser capture: " + e.message);
-                throw e;
-            }
+                }, 500);
+            });
         }, { mSec: maxDuration });
 
-        // Wait for all active writes to complete
-        logger.info("Waiting for remaining chunks to be written...");
-        let waitTime = 0;
-        while (activeWrites > 0 && waitTime < 5000) {
-            await new Promise(r => setTimeout(r, 100));
-            waitTime += 100;
-        }
-
-        await page.screenshot({ path: path.join(logger.logFolder, 'capture_end.png') });
-    } catch (err) {
-        logger.error(`Evaluation failed: ${err.message}`);
     } finally {
-        clearTimeout(watchdog);
-        logger.info(`Capture finished. Total bytes: ${bytesWritten}`);
-        if (context) await context.close();
+        clearInterval(watchdog);
+        await context.close();
         writeStream.end();
+        logger.info(`Capture Finished. Total Bytes: ${bytesWritten}`);
     }
 }
 
