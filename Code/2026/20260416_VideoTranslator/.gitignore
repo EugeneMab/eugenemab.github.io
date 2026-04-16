@@ -19,6 +19,7 @@ work/
 *.wav
 *.m4a
 *.json
+*.exe
 
 # Environment variables
 .env
