@@ -8,7 +8,9 @@ program
   .version('1.0.0')
   .requiredOption('-u, --url <url>', 'URL of the video (YouTube/Bilibili)')
   .requiredOption('-w, --work-folder <folder>', 'Folder to store temporary and output files')
-  .option('-m, --max-length <seconds>', 'Maximum length of video to process', parseInt)
+  .option('-m, --max-length <seconds>', 'Maximum length of video in seconds', parseInt)
+  .option('-b, --max-bytes <bytes>', 'Maximum allowed file size in bytes', parseInt)
+  .option('-c, --chrome-path <path>', 'Path to the chrome.exe executable')
   .parse(process.argv);
 
 const options = program.opts();
@@ -24,7 +26,7 @@ async function main() {
 
     try {
         // Step 1: Capture
-        await captureVideo(options.url, options.maxLength, workFolder, logger);
+        await captureVideo(options.url, options.maxLength, options.maxBytes, options.chromePath, workFolder, logger);
 
         // Placeholder for future steps
         logger.setStep('02_processing');
