@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useStore } from '../store/useStore';
+import { useStore, toSafeBase64 } from '../store/useStore';
 import { Folder, ChevronRight, ChevronLeft, FileJson, Clock, X } from 'lucide-react';
 import netClient from '../utils/NetClient';
+import { useNavigate } from 'react-router-dom';
 
 interface FolderEntry {
   name: string;
@@ -26,15 +27,18 @@ const ICON_SIZE_20 = 20;
 const ICON_SIZE_24 = 24;
 
 const OpenFolderModal: React.FC<OpenFolderModalProps> = ({ onClose }) => {
-  const { openFolder, recentFolders } = useStore();
+  const { recentFolders } = useStore();
   const [currentPath, setCurrentPath] = useState('');
   const [data, setData] = useState<BrowseResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const browse = async (path: string) => {
     setLoading(true);
     try {
-      const res = await netClient.get(`/api/browse?path=${encodeURIComponent(path)}`);
+      const res = await netClient.get<BrowseResponse>(
+        `/api/browse?path=${encodeURIComponent(path)}`
+      );
       setData(res.data);
       setCurrentPath(res.data.currentPath);
     } catch (e) {
@@ -49,7 +53,7 @@ const OpenFolderModal: React.FC<OpenFolderModalProps> = ({ onClose }) => {
   }, []);
 
   const handleSelect = async (path: string) => {
-    await openFolder(path);
+    navigate(`/folder/${toSafeBase64(path)}`);
     return onClose();
   };
 

@@ -1,5 +1,6 @@
-import React from 'react';
-import { useStore } from './store/useStore';
+import React, { useEffect } from 'react';
+import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { useStore, fromSafeBase64 } from './store/useStore';
 import NavigationPane from './components/NavigationPane';
 import TopButtonPane from './components/TopButtonPane';
 import MainBody from './components/MainBody';
@@ -10,7 +11,26 @@ import { FolderOpen } from 'lucide-react';
 
 const ICON_SIZE_40 = 40;
 
-const App: React.FC = () => {
+const FolderHandler: React.FC = () => {
+  const { folderId } = useParams<{ folderId: string }>();
+  const { openFolder, currentFolderPath } = useStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (folderId) {
+      const decodedPath = fromSafeBase64(folderId);
+      if (decodedPath && decodedPath !== currentFolderPath) {
+        openFolder(decodedPath).catch(() => {
+          navigate('/');
+        });
+      }
+    }
+  }, [folderId, openFolder, currentFolderPath, navigate]);
+
+  return null;
+};
+
+const AppContent: React.FC = () => {
   const { selectedEpisodeId, currentFolderPath } = useStore();
 
   return (
@@ -41,6 +61,31 @@ const App: React.FC = () => {
       <ProgressModal />
       <InterruptionModal />
     </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <>
+            <FolderHandler />
+            <AppContent />
+          </>
+        }
+      />
+      <Route
+        path="/folder/:folderId"
+        element={
+          <>
+            <FolderHandler />
+            <AppContent />
+          </>
+        }
+      />
+    </Routes>
   );
 };
 

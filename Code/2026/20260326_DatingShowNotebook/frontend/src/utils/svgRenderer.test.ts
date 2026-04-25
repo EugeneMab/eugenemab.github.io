@@ -77,10 +77,10 @@ describe('svgRenderer', () => {
 
   /* Tests that default values are used when optional data fields are missing. */
   it('uses default descriptionScale and handles missing images', () => {
-    const sparseData: AppData = {
+    const sparseData = {
       ...mockData,
       descriptionScale: undefined,
-    };
+    } as unknown as AppData;
     const svg = renderEventToSvgString(mockEvent, sparseData, 1);
     expect(svg).toContain('font-size: 0.875rem'); // DESC_FONT_SIZE * 1
   });

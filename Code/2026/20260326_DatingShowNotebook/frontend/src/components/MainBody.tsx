@@ -756,7 +756,7 @@ const MainBody: React.FC = () => {
                 })
                 .filter(Boolean) as {
                 originalIndex: string;
-                validMembers: { x: number; y: number }[];
+                validMembers: { x: number; y: number; gender: string }[];
               }[];
 
               return concreteTeams.map(({ originalIndex, validMembers }, concreteIndex) => {

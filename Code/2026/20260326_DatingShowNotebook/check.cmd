@@ -1,1 +1,1 @@
-npm run format && npm run lint && npm test
+npx tsx tool/tool.ts check

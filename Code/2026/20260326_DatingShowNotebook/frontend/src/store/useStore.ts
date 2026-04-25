@@ -107,10 +107,35 @@ const CLIENT_ID = generateId();
  * Encodes a string to a URL-safe base64 string.
  */
 export function toSafeBase64(str: string): string {
+  if (typeof btoa === 'undefined') {
+    return Buffer.from(unescape(encodeURIComponent(str)), 'utf-8')
+      .toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '');
+  }
   return btoa(unescape(encodeURIComponent(str)))
     .replace(/\+/g, '-')
     .replace(/\//g, '_')
     .replace(/=+$/, '');
+}
+
+/**
+ * Decodes a URL-safe base64 string.
+ */
+export function fromSafeBase64(safeBase64: string): string {
+  let base64 = safeBase64.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  try {
+    if (typeof atob === 'undefined') {
+      return Buffer.from(base64, 'base64').toString('utf-8');
+    }
+    return decodeURIComponent(escape(atob(base64)));
+  } catch (_e) {
+    return '';
+  }
 }
 
 /**
@@ -120,13 +145,15 @@ function buildUrl(baseUrl: string, folderPath: string | null, clientId: string):
   if (!folderPath) {
     return baseUrl;
   }
-  const url = new URL(baseUrl, window.location.origin);
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost';
+  const url = new URL(baseUrl, origin);
   url.searchParams.set('folder', toSafeBase64(folderPath));
   url.searchParams.set('client-id', clientId);
   return url.pathname + url.search;
 }
 
-const savedRecent = localStorage.getItem('dsn_recent_folders');
+const savedRecent =
+  typeof window !== 'undefined' ? localStorage.getItem('dsn_recent_folders') : null;
 const initialRecent = savedRecent ? JSON.parse(savedRecent) : [];
 
 let globalSaveTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -162,8 +189,8 @@ export const useStore = create<AppState>((set, get) => {
 
       try {
         const clientId = get().clientId;
-        const res = await netClient.post('/api/open', { path: folderPath, clientId });
-        const data: AppData = res.data;
+        const res = await netClient.post<AppData>('/api/open', { path: folderPath, clientId });
+        const data = res.data;
 
         // --- ID Compaction & Data Cleaning Logic ---
         const personMap = new Map<number, number>();
@@ -257,7 +284,9 @@ export const useStore = create<AppState>((set, get) => {
             return p !== folderPath;
           }),
         ].slice(0, RECENT_FOLDERS_LIMIT);
-        localStorage.setItem('dsn_recent_folders', JSON.stringify(newRecent));
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('dsn_recent_folders', JSON.stringify(newRecent));
+        }
 
         set({
           data,
@@ -444,8 +473,13 @@ netClient.interceptors.response.use(
   (response) => {
     return response;
   },
-  (error) => {
-    if (error.response?.status === 409) {
+  (error: unknown) => {
+    if (
+      error &&
+      typeof error === 'object' &&
+      'response' in error &&
+      (error as { response: { status: number } }).response?.status === 409
+    ) {
       useStore.getState().setInterrupted(true);
     }
     return Promise.reject(error);

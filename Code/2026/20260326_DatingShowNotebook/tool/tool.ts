@@ -54,9 +54,41 @@ async function main() {
     await handleStart();
   } else if (action === 'kill') {
     await handleKill();
+  } else if (action === 'check') {
+    await handleCheck();
   } else {
     console.error(`Unknown action: ${action}`);
     process.exit(1);
+  }
+}
+
+// ... (other handlers)
+
+async function handleCheck() {
+  console.log('~~ Starting comprehensive verification...');
+  let failed = false;
+
+  const steps = [
+    { name: 'format', cmd: 'npm run format' },
+    { name: 'lint', cmd: 'npm run lint' },
+    { name: 'test', cmd: 'npm test' },
+  ];
+
+  for (const step of steps) {
+    try {
+      console.log(`~~ Running ${step.name}...`);
+      await runCommand(step.cmd, baseDir, `check_${step.name}`);
+    } catch (_e) {
+      console.error(`~~ ${step.name} failed.`);
+      failed = true;
+    }
+  }
+
+  if (failed) {
+    console.error('~~ Verification completed with errors.');
+    process.exit(1);
+  } else {
+    console.log('~~ All checks passed!');
   }
 }
 
@@ -75,41 +107,26 @@ async function handleStart() {
     console.log('~~ Root node_modules found. Skipping install.');
   }
 
-  // Start Backend
-  console.log('~~ Spawning Backend process (Port 13762)...');
-  spawnCommand(
-    `npx tsx index.ts "${dataFolder}" "${workFolder}"`,
-    path.join(baseDir, 'backend'),
-    'DSN_Backend'
-  );
+  // Start Unified SSR Server
+  console.log('~~ Spawning Unified SSR Server (Port 3762)...');
+  process.env.DSN_RESTRICTED_ROOT = dataFolder;
+  process.env.DSN_WORK_FOLDER = workFolder;
+  spawnCommand(`npm run dev`, baseDir, 'DSN_Server');
 
-  // Start Frontend
-  console.log('~~ Spawning Frontend process (Port 3762)...');
-  spawnCommand('npx vite', path.join(baseDir, 'frontend'), 'DSN_Frontend');
-
-  console.log('~~ All systems launched.');
+  console.log('~~ SSR Server launched.');
   console.log('~~ Access the UI at: http://localhost:3762/');
 }
 
 async function handleKill() {
   console.log('~~ Initiating shutdown sequence...');
 
-  // Call Backend shutdown
+  // Call Unified Server shutdown/quit
   try {
-    console.log('~~ Requesting Backend graceful shutdown (POST :13762/api/shutdown)...');
-    await httpRequest('http://localhost:13762/api/shutdown', 'POST');
-    console.log('~~ Backend shutdown request sent.');
-  } catch (_e) {
-    console.log('~~ Backend unreachable or already stopped.');
-  }
-
-  // Call Frontend quit
-  try {
-    console.log('~~ Requesting Frontend termination (GET :3762/quit)...');
+    console.log('~~ Requesting Server termination (GET :3762/quit)...');
     await httpRequest('http://localhost:3762/quit', 'GET');
-    console.log('~~ Frontend termination request sent.');
+    console.log('~~ Server termination request sent.');
   } catch (_e) {
-    console.log('~~ Frontend unreachable or already stopped.');
+    console.log('~~ Server unreachable or already stopped.');
   }
 
   console.log('~~ Cleanup complete.');
