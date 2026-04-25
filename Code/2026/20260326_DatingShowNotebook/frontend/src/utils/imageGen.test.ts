@@ -104,7 +104,7 @@ describe('imageGen utils', () => {
     });
 
     // Mock Image using a constructor
-    let lastInstance: any = null;
+    let lastInstance: { onload?: () => void; onerror?: (e: unknown) => void } | null = null;
     vi.stubGlobal(
       'Image',
       class {
@@ -114,9 +114,7 @@ describe('imageGen utils', () => {
         width: number = 100;
         height: number = 100;
         constructor() {
-          // Use a functional approach to avoid the "no-this-alias" error
-          // lastInstance = this;
-          const self = this as unknown as { onload?: () => void; onerror?: (e: unknown) => void };
+          const self = this as { onload?: () => void; onerror?: (e: unknown) => void };
           lastInstance = self;
         }
       }
@@ -154,13 +152,13 @@ describe('imageGen utils', () => {
       },
     });
 
-    let lastInstance: any = null;
+    let lastInstance: { onload?: () => void } | null = null;
     vi.stubGlobal(
       'Image',
       class {
         onload?: () => void;
         constructor() {
-          const self = this as unknown as { onload?: () => void };
+          const self = this as { onload?: () => void };
           lastInstance = self;
         }
       }
@@ -181,7 +179,7 @@ describe('imageGen utils', () => {
 
   /* Tests svgToJpeg error path. */
   it('svgToJpeg handles image load error', async () => {
-    let lastInstance: any = null;
+    let lastInstance: { onerror?: (e: unknown) => void } | null = null;
     vi.stubGlobal(
       'Image',
       class {
@@ -189,7 +187,7 @@ describe('imageGen utils', () => {
         onerror?: (e: unknown) => void;
         src: string = '';
         constructor() {
-          const self = this as unknown as { onerror?: (e: unknown) => void };
+          const self = this as { onerror?: (e: unknown) => void };
           lastInstance = self;
         }
       }
@@ -201,7 +199,6 @@ describe('imageGen utils', () => {
       return setTimeout(r, 0);
     });
 
-    // Simulate image error
     if (lastInstance && lastInstance.onerror) {
       lastInstance.onerror(new Error('Load failed'));
     }

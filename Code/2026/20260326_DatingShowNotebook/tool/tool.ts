@@ -78,7 +78,7 @@ async function handleCheck() {
     try {
       console.log(`~~ Running ${step.name}...`);
       await runCommand(step.cmd, baseDir, `check_${step.name}`);
-    } catch (e) {
+    } catch (_e) {
       console.error(`~~ ${step.name} failed.`);
       failed = true;
     }
