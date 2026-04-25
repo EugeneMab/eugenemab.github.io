@@ -30,7 +30,7 @@ A specialized tool for tracking interactions, messages, and team formations in d
 ## Ports
 
 - **Frontend**: `3762`
-- **Backend**: `13762`
+- **Backend**: `3762`
 
 ## AI Assistance Acknowledgment
 

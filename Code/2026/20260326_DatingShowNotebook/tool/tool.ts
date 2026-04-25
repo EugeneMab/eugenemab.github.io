@@ -76,13 +76,13 @@ async function handleStart() {
   }
 
   // Start Unified SSR Server
-  console.log('~~ Spawning Unified SSR Server (Port 13762)...');
+  console.log('~~ Spawning Unified SSR Server (Port 3762)...');
   process.env.DSN_RESTRICTED_ROOT = dataFolder;
   process.env.DSN_WORK_FOLDER = workFolder;
   spawnCommand(`npm run dev`, baseDir, 'DSN_Server');
 
   console.log('~~ SSR Server launched.');
-  console.log('~~ Access the UI at: http://localhost:13762/');
+  console.log('~~ Access the UI at: http://localhost:3762/');
 }
 
 async function handleKill() {
@@ -90,8 +90,8 @@ async function handleKill() {
 
   // Call Unified Server shutdown/quit
   try {
-    console.log('~~ Requesting Server termination (GET :13762/quit)...');
-    await httpRequest('http://localhost:13762/quit', 'GET');
+    console.log('~~ Requesting Server termination (GET :3762/quit)...');
+    await httpRequest('http://localhost:3762/quit', 'GET');
     console.log('~~ Server termination request sent.');
   } catch (_e) {
     console.log('~~ Server unreachable or already stopped.');

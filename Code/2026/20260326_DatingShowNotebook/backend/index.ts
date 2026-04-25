@@ -8,7 +8,7 @@ import compression from 'compression';
 import sirv from 'sirv';
 
 const app = express();
-const PORT = 13762;
+const PORT = 3762;
 const JSON_LIMIT = '50mb';
 const MAX_BACKUPS = 10240;
 const SHUTDOWN_DELAY_MS = 100;
