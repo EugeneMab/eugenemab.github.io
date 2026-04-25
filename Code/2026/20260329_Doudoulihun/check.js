@@ -201,7 +201,7 @@ function convertSyllable(syllable, justOrganize) {
             return "aeo".indexOf(vowel) !== -1 ? "uf" : (vowel === 'i' ? "uf" : "iuf");
         }
         if (consonant === "n") {
-            return "aeo".indexOf(vowel) !== -1 ? "ih" : (vowel === 'i' ? "uih" : "ihu");
+            return "aeo".indexOf(vowel) !== -1 ? "ih" : (vowel === 'i' ? "uih" : "ij");
         }
         return "";
     }
