@@ -362,11 +362,13 @@ async function startServer() {
     try {
       let template, render;
       if (!isProd) {
-        template = fs.readFileSync(path.resolve(root, 'frontend/index.html'), 'utf-8');
-        if (vite) {
-          template = await vite.transformIndexHtml(url, template);
-          render = (await vite.ssrLoadModule('/src/entry-server.tsx')).render;
+        if (!vite) {
+          res.status(500).end('Vite not initialized');
+          return;
         }
+        template = fs.readFileSync(path.resolve(root, 'frontend/index.html'), 'utf-8');
+        template = await vite.transformIndexHtml(url, template);
+        render = (await vite.ssrLoadModule('/src/entry-server.tsx')).render;
       } else {
         template = fs.readFileSync(path.resolve(root, 'frontend/dist/client/index.html'), 'utf-8');
         // @ts-expect-error Production SSR bundle might not exist during build-time analysis

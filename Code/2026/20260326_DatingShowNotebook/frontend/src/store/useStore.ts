@@ -121,6 +121,24 @@ export function toSafeBase64(str: string): string {
 }
 
 /**
+ * Decodes a URL-safe base64 string.
+ */
+export function fromSafeBase64(safeBase64: string): string {
+  let base64 = safeBase64.replace(/-/g, '+').replace(/_/g, '/');
+  while (base64.length % 4) {
+    base64 += '=';
+  }
+  try {
+    if (typeof atob === 'undefined') {
+      return Buffer.from(base64, 'base64').toString('utf-8');
+    }
+    return decodeURIComponent(escape(atob(base64)));
+  } catch (_e) {
+    return '';
+  }
+}
+
+/**
  * Builds a URL with folder and client-id parameters.
  */
 function buildUrl(baseUrl: string, folderPath: string | null, clientId: string): string {

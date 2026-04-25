@@ -295,7 +295,10 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
             })
             .filter((t) => {
               return t !== null;
-            }) as { originalIndex: string; validMembers: { x: number; y: number }[] }[];
+            }) as {
+            originalIndex: string;
+            validMembers: { x: number; y: number; gender: string }[];
+          }[];
 
           return concreteTeams
             .map(({ originalIndex, validMembers }, concreteIndex) => {

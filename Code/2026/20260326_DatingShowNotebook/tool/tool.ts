@@ -54,9 +54,41 @@ async function main() {
     await handleStart();
   } else if (action === 'kill') {
     await handleKill();
+  } else if (action === 'check') {
+    await handleCheck();
   } else {
     console.error(`Unknown action: ${action}`);
     process.exit(1);
+  }
+}
+
+// ... (other handlers)
+
+async function handleCheck() {
+  console.log('~~ Starting comprehensive verification...');
+  let failed = false;
+
+  const steps = [
+    { name: 'format', cmd: 'npm run format' },
+    { name: 'lint', cmd: 'npm run lint' },
+    { name: 'test', cmd: 'npm test' },
+  ];
+
+  for (const step of steps) {
+    try {
+      console.log(`~~ Running ${step.name}...`);
+      await runCommand(step.cmd, baseDir, `check_${step.name}`);
+    } catch (e) {
+      console.error(`~~ ${step.name} failed.`);
+      failed = true;
+    }
+  }
+
+  if (failed) {
+    console.error('~~ Verification completed with errors.');
+    process.exit(1);
+  } else {
+    console.log('~~ All checks passed!');
   }
 }
 

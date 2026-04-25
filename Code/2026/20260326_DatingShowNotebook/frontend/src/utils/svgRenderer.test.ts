@@ -80,7 +80,7 @@ describe('svgRenderer', () => {
     const sparseData: AppData = {
       ...mockData,
       descriptionScale: undefined,
-    };
+    } as any;
     const svg = renderEventToSvgString(mockEvent, sparseData, 1);
     expect(svg).toContain('font-size: 0.875rem'); // DESC_FONT_SIZE * 1
   });
