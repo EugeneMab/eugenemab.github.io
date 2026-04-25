@@ -267,7 +267,7 @@
             return "aeo".indexOf(vowel) !== -1 ? "uf" : (vowel === 'i' ? "uf" : "iuf");
           }
           if (consonant === "n") {
-            return "aeo".indexOf(vowel) !== -1 ? "ih" : (vowel === 'i' ? "uih" : "ihu");
+            return "aeo".indexOf(vowel) !== -1 ? "ih" : (vowel === 'i' ? "uih" : "ij");
           }
           return "";
         }
@@ -652,7 +652,7 @@
         <tr><td>w      </td><td>uw        </td><td>uw    </td><td>iuw   </td><td>wu        </td><td>wu    </td><td>wui   </td><td>-    </td></tr>
         <tr><td>l      </td><td>uv        </td><td>uv    </td><td>iuv   </td><td>vu        </td><td>vu    </td><td>vui   </td><td>     </td></tr>
         <tr><td>m      </td><td>uf        </td><td>uf    </td><td>iuf   </td><td>-         </td><td>-     </td><td>-     </td><td>-    </td></tr>
-        <tr><td>n      </td><td>ih        </td><td>uih   </td><td>ihu   </td><td>-         </td><td>-     </td><td>-     </td><td>-    </td></tr>
+        <tr><td>n      </td><td>ih        </td><td>uih   </td><td>ij    </td><td>-         </td><td>-     </td><td>-     </td><td>-    </td></tr>
       </table>
     </center>
     <p>
@@ -1199,6 +1199,7 @@
         <li>Change {d t: Y: LV=u} from {uhi} to {ji}</li>
         <li>Change {g k: X: FV=i} from {uhi} to {uh}</li>
         <li>Change {g k: Y: LV=i} from {ihu} to {hu}</li>
+        <li>Change {n: X: FV=u} from {ihu} to {ij}</li>
         <li>Change from Latin only vocabulary to Latin-preferred English-backup vocabulary</li>
       </ul>
     </p>
