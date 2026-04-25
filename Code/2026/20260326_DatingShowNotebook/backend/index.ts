@@ -4,6 +4,8 @@ import fs from 'fs';
 import { promises as fsp } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import compression from 'compression';
+import sirv from 'sirv';
 
 const app = express();
 const PORT = 13762;
@@ -11,8 +13,34 @@ const JSON_LIMIT = '50mb';
 const MAX_BACKUPS = 10240;
 const SHUTDOWN_DELAY_MS = 100;
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const isProd = process.env.NODE_ENV === 'production';
+const root = path.resolve(__dirname, '..');
+
 app.use(cors());
 app.use(express.json({ limit: JSON_LIMIT }));
+
+app.use((req, res, next) => {
+  if (req.url === '/favicon.ico') {
+    res.writeHead(200, { 'Content-Type': 'image/png' });
+    const magentaPng = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
+      'base64'
+    );
+    res.end(magentaPng);
+    return;
+  }
+  if (req.url === '/quit') {
+    res.end('Quitting...');
+    setTimeout(() => {
+      process.exit(0);
+    }, 100);
+    return;
+  }
+  next();
+});
+
+// ... rest of API routes ...
 
 const restrictedRoot = path.resolve(process.env.DSN_RESTRICTED_ROOT || process.argv[2] || '.');
 const workFolder =
@@ -309,13 +337,75 @@ app.post('/api/shutdown', (req, res) => {
   }, SHUTDOWN_DELAY_MS);
 });
 
+async function startServer() {
+  let vite: import('vite').ViteDevServer | undefined;
+  if (!isProd) {
+    const { createServer } = await import('vite');
+    vite = await createServer({
+      root: path.resolve(root, 'frontend'),
+      server: { middlewareMode: true },
+      appType: 'custom',
+    });
+    app.use(vite.middlewares);
+  } else {
+    app.use(compression());
+    app.use(
+      sirv(path.resolve(root, 'frontend/dist/client'), {
+        extensions: [],
+      })
+    );
+  }
+
+  app.use('*', async (req, res) => {
+    const url = req.originalUrl;
+
+    try {
+      let template, render;
+      if (!isProd) {
+        template = fs.readFileSync(path.resolve(root, 'frontend/index.html'), 'utf-8');
+        if (vite) {
+          template = await vite.transformIndexHtml(url, template);
+          render = (await vite.ssrLoadModule('/src/entry-server.tsx')).render;
+        }
+      } else {
+        template = fs.readFileSync(path.resolve(root, 'frontend/dist/client/index.html'), 'utf-8');
+        // @ts-expect-error Production SSR bundle might not exist during build-time analysis
+        if (isProd) {
+          const ssrBundlePath = '../frontend/dist/server/entry-server.js';
+          render = (await import(ssrBundlePath)).render;
+        } else {
+          // Fallback for tests or other environments where dist might not exist
+          render = () => {
+            return { html: '' };
+          };
+        }
+      }
+
+      if (render) {
+        const { html: appHtml } = await render(url);
+        const html = template.replace(`<!--ssr-outlet-->`, appHtml);
+        res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+      }
+    } catch (e: unknown) {
+      const err = e as Error;
+      if (!isProd && vite) {
+        vite.ssrFixStacktrace(err);
+      }
+      console.log(err.stack);
+      res.status(500).end(err.stack);
+    }
+  });
+
+  app.listen(PORT, () => {
+    log(`Server listening at http://localhost:${PORT}`);
+  });
+}
+
 if (
   import.meta.url === `file:///${fileURLToPath(import.meta.url).replace(/\\/g, '/')}` &&
   (process.argv[1].endsWith('index.ts') || process.argv[1].endsWith('backend\\index.ts'))
 ) {
-  app.listen(PORT, () => {
-    log(`Backend listening at http://localhost:${PORT}`);
-  });
+  startServer();
 }
 
 export { app };
