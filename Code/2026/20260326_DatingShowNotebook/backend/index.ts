@@ -46,6 +46,7 @@ const restrictedRoot = path.resolve(process.env.DSN_RESTRICTED_ROOT || process.a
 const workFolder =
   process.env.DSN_WORK_FOLDER || (process.argv[3] ? path.resolve(process.argv[3]) : null);
 const folderToClient = new Map<string, string>();
+let viteServer: import('vite').ViteDevServer | undefined;
 
 function generateId() {
   return Math.random().toString(36).substring(2) + Date.now().toString(36);
@@ -341,16 +342,109 @@ app.post('/api/shutdown', (req, res) => {
   }, SHUTDOWN_DELAY_MS);
 });
 
+export async function handleSSR(req: express.Request, res: express.Response) {
+  const url = req.originalUrl;
+
+  try {
+    let template, render;
+    if (!isProd) {
+      const templatePath = path.resolve(root, 'frontend/index.html');
+      if (viteServer) {
+        template = fs.readFileSync(templatePath, 'utf-8');
+        template = await viteServer.transformIndexHtml(url, template);
+        render = (
+          await viteServer.ssrLoadModule(path.resolve(root, 'frontend/src/entry-server.tsx'))
+        ).render;
+      } else if (fs.existsSync(templatePath)) {
+        // Fallback for tests if vite is not running
+        template = fs.readFileSync(templatePath, 'utf-8');
+      } else {
+        res.status(404).end('Not Found');
+        return;
+      }
+    } else {
+      const clientIndex = path.resolve(root, 'frontend/dist/client/index.html');
+      if (fs.existsSync(clientIndex)) {
+        template = fs.readFileSync(clientIndex, 'utf-8');
+        const ssrBundlePath = '../frontend/dist/server/entry-server.js';
+        try {
+          render = (await import(ssrBundlePath)).render;
+        } catch (_e) {
+          // ignore
+        }
+      } else {
+        res.status(404).end('Not Found');
+        return;
+      }
+    }
+
+    if (render || template) {
+      let initialData = null;
+      let initialPath = null;
+      let initialClientId = null;
+
+      // Try to pre-load data for folder routes
+      const folderMatch = url.match(/\/folder\/([^/?#]+)/);
+      if (folderMatch) {
+        const folderId = folderMatch[1];
+        const relPath = fromSafeBase64(folderId);
+        if (relPath) {
+          const fullPath = getFullPath(relPath);
+          const dataPath = path.join(fullPath, 'data.json');
+          if (fs.existsSync(dataPath)) {
+            try {
+              const content = fs.readFileSync(dataPath, 'utf-8');
+              initialData = content.trim() ? JSON.parse(content) : defaultData;
+              initialPath = relPath;
+            } catch (e) {
+              log(`Error: Failed to pre-load SSR data for ${dataPath}: ${e}`);
+            }
+          } else if (fs.existsSync(fullPath)) {
+            initialData = defaultData;
+            initialPath = relPath;
+          }
+
+          if (initialPath) {
+            initialClientId = generateId();
+            folderToClient.set(initialPath, initialClientId);
+          }
+        }
+      }
+
+      let appHtml = '';
+      if (render) {
+        const result = await render(url, initialData, initialPath, initialClientId);
+        appHtml = result.html;
+      }
+
+      let html = (template || '<!--ssr-outlet-->').replace(`<!--ssr-outlet-->`, appHtml);
+
+      if (initialData) {
+        const dataInjection = `<script>window.__INITIAL_DATA__ = ${JSON.stringify(initialData)}; window.__INITIAL_PATH__ = ${JSON.stringify(initialPath)}; window.__INITIAL_CLIENT_ID__ = ${JSON.stringify(initialClientId)};</script>`;
+        html = html.replace(`</head>`, `${dataInjection}</head>`);
+      }
+
+      res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
+    }
+  } catch (e: unknown) {
+    const err = e as Error;
+    if (!isProd && viteServer) {
+      viteServer.ssrFixStacktrace(err);
+    }
+    console.log(err.stack);
+    res.status(500).end(err.stack);
+  }
+}
+
 async function startServer() {
-  let vite: import('vite').ViteDevServer | undefined;
   if (!isProd) {
     const { createServer } = await import('vite');
-    vite = await createServer({
+    viteServer = await createServer({
       root: path.resolve(root, 'frontend'),
       server: { middlewareMode: true },
       appType: 'custom',
     });
-    app.use(vite.middlewares);
+    app.use(viteServer.middlewares);
   } else {
     app.use(compression());
     app.use(
@@ -360,85 +454,7 @@ async function startServer() {
     );
   }
 
-  app.use('*', async (req, res) => {
-    const url = req.originalUrl;
-
-    try {
-      let template, render;
-      if (!isProd) {
-        if (!vite) {
-          res.status(500).end('Vite not initialized');
-          return;
-        }
-        template = fs.readFileSync(path.resolve(root, 'frontend/index.html'), 'utf-8');
-        template = await vite.transformIndexHtml(url, template);
-        render = (await vite.ssrLoadModule(path.resolve(root, 'frontend/src/entry-server.tsx'))).render;
-      } else {
-        template = fs.readFileSync(path.resolve(root, 'frontend/dist/client/index.html'), 'utf-8');
-        // @ts-expect-error Production SSR bundle might not exist during build-time analysis
-        if (isProd) {
-          const ssrBundlePath = '../frontend/dist/server/entry-server.js';
-          render = (await import(ssrBundlePath)).render;
-        } else {
-          // Fallback for tests or other environments where dist might not exist
-          render = () => {
-            return { html: '' };
-          };
-        }
-      }
-
-      if (render) {
-        let initialData = null;
-        let initialPath = null;
-        let initialClientId = null;
-
-        // Try to pre-load data for folder routes
-        const folderMatch = url.match(/\/folder\/([^/?#]+)/);
-        if (folderMatch) {
-          const folderId = folderMatch[1];
-          const relPath = fromSafeBase64(folderId);
-          if (relPath) {
-            const fullPath = getFullPath(relPath);
-            const dataPath = path.join(fullPath, 'data.json');
-            if (fs.existsSync(dataPath)) {
-              try {
-                const content = fs.readFileSync(dataPath, 'utf-8');
-                initialData = content.trim() ? JSON.parse(content) : defaultData;
-                initialPath = relPath;
-              } catch (e) {
-                log(`Error: Failed to pre-load SSR data for ${dataPath}: ${e}`);
-              }
-            } else if (fs.existsSync(fullPath)) {
-              initialData = defaultData;
-              initialPath = relPath;
-            }
-
-            if (initialPath) {
-              initialClientId = generateId();
-              folderToClient.set(initialPath, initialClientId);
-            }
-          }
-        }
-
-        const { html: appHtml } = await render(url, initialData, initialPath, initialClientId);
-        let html = template.replace(`<!--ssr-outlet-->`, appHtml);
-
-        if (initialData) {
-          const dataInjection = `<script>window.__INITIAL_DATA__ = ${JSON.stringify(initialData)}; window.__INITIAL_PATH__ = ${JSON.stringify(initialPath)}; window.__INITIAL_CLIENT_ID__ = ${JSON.stringify(initialClientId)};</script>`;
-          html = html.replace(`</head>`, `${dataInjection}</head>`);
-        }
-
-        res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
-      }
-    } catch (e: unknown) {
-      const err = e as Error;
-      if (!isProd && vite) {
-        vite.ssrFixStacktrace(err);
-      }
-      console.log(err.stack);
-      res.status(500).end(err.stack);
-    }
-  });
+  app.use('*', handleSSR);
 
   app.listen(PORT, () => {
     log(`Server listening at http://localhost:${PORT}`);

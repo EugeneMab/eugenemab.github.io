@@ -8,8 +8,15 @@ const ICON_SIZE_16 = 16;
 const ICON_SIZE_18 = 18;
 
 const NavigationPane: React.FC = () => {
-  const { data, selectedEpisodeId, selectedEventId, setSelectedView, saveData, fullRefresh } =
-    useStore();
+  const {
+    data,
+    selectedEpisodeId,
+    selectedEventId,
+    setSelectedView,
+    saveData,
+    fullRefresh,
+    currentFolderPath,
+  } = useStore();
   const [openDropdown, setOpenDropdown] = useState<{
     type: 'episode' | 'event';
     id: number;
@@ -17,6 +24,13 @@ const NavigationPane: React.FC = () => {
   } | null>(null);
 
   const paneRef = useRef<HTMLDivElement>(null);
+  const selectedRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (selectedRef.current) {
+      selectedRef.current.scrollIntoView({ behavior: 'auto', block: 'center' });
+    }
+  }, [currentFolderPath]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -349,6 +363,7 @@ const NavigationPane: React.FC = () => {
                     return (
                       <div
                         key={event.id}
+                        ref={selectedEventId === event.id ? selectedRef : null}
                         className={clsx(
                           'flex items-center group relative w-full',
                           isEventDropdownOpen ? 'relative z-10' : 'z-0'

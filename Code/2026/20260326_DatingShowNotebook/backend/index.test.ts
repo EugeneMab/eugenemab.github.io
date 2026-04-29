@@ -1,7 +1,7 @@
 /* Integration tests for the backend Express API endpoints. */
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import request from 'supertest';
-import { app } from './index';
+import { app, handleSSR } from './index';
 import fs from 'fs';
 import { promises as fsp } from 'fs';
 import path from 'path';
@@ -13,15 +13,32 @@ describe('Backend API', () => {
   const fullTestFolder = path.join(testRoot, testFolder);
   let clientId = 'test-client';
 
+  const frontendDir = path.resolve(__dirname, '../frontend');
+  const dummyTemplate = path.join(frontendDir, 'index.html');
+  let dummyCreated = false;
+
   beforeAll(async () => {
     if (!fs.existsSync(testRoot)) {
       await fsp.mkdir(testRoot, { recursive: true });
+    }
+    if (!fs.existsSync(dummyTemplate)) {
+      if (!fs.existsSync(frontendDir)) {
+        await fsp.mkdir(frontendDir, { recursive: true });
+      }
+      await fsp.writeFile(
+        dummyTemplate,
+        '<html><head></head><body><!--ssr-outlet--></body></html>'
+      );
+      dummyCreated = true;
     }
   });
 
   afterAll(async () => {
     if (fs.existsSync(testRoot)) {
       await fsp.rm(testRoot, { recursive: true, force: true });
+    }
+    if (dummyCreated && fs.existsSync(dummyTemplate)) {
+      await fsp.unlink(dummyTemplate);
     }
   });
 
@@ -71,6 +88,13 @@ describe('Backend API', () => {
     it('returns 400 if missing params', async () => {
       const res = await request(app).post('/api/open').send({});
       expect(res.status).toBe(400);
+    });
+
+    it('returns 404 if folder not found', async () => {
+      const res = await request(app)
+        .post('/api/open')
+        .send({ path: 'non-existent', clientId: 'c' });
+      expect(res.status).toBe(404);
     });
   });
 
@@ -241,6 +265,43 @@ describe('Backend API', () => {
         .query({ folder: '!', 'client-id': 'c' })
         .send({});
       expect(res.status).toBe(400);
+    });
+  });
+
+  describe('SSR catch-all route', () => {
+    beforeAll(() => {
+      app.use('*', handleSSR);
+    });
+
+    it('pre-loads folder data in SSR', async () => {
+      const folderPath = 'ssr-test-folder';
+      const fullPath = path.join(testRoot, folderPath);
+      if (!fs.existsSync(fullPath)) {
+        await fsp.mkdir(fullPath, { recursive: true });
+      }
+      await fsp.writeFile(
+        path.join(fullPath, 'data.json'),
+        JSON.stringify({ people: [{ id: 1, name: 'SSR' }], episodes: [] })
+      );
+
+      const folderId = toSafeBase64(folderPath);
+      const res = await request(app).get(`/folder/${folderId}`);
+
+      expect(res.status).toBe(200);
+      expect(res.text).toContain('window.__INITIAL_DATA__ =');
+      expect(res.text).toContain('SSR');
+    });
+
+    it('handles non-existent folder in SSR', async () => {
+      const folderId = toSafeBase64('does-not-exist');
+      const res = await request(app).get(`/folder/${folderId}`);
+      expect(res.status).toBe(200);
+      expect(res.text).not.toContain('window.__INITIAL_DATA__ =');
+    });
+
+    it('returns 200 for root URL in SSR', async () => {
+      const res = await request(app).get('/');
+      expect(res.status).toBe(200);
     });
   });
 });

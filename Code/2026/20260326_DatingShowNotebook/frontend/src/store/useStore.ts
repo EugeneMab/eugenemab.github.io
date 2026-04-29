@@ -177,18 +177,22 @@ function getInitialView(data: AppData) {
 let globalSaveTimeout: ReturnType<typeof setTimeout> | null = null;
 let activeStore: AppStore | null = null;
 
+interface DsnWindow extends Window {
+  __INITIAL_DATA__?: AppData;
+  __INITIAL_PATH__?: string;
+  __INITIAL_CLIENT_ID__?: string;
+}
+
 export const createAppStore = (
   initialData?: AppData,
   initialPath?: string,
   initialClientId?: string
 ) => {
-  const ssrData =
-    initialData || (typeof window !== 'undefined' ? (window as any).__INITIAL_DATA__ : null);
-  const ssrPath =
-    initialPath || (typeof window !== 'undefined' ? (window as any).__INITIAL_PATH__ : null);
-  const ssrClientId =
-    initialClientId ||
-    (typeof window !== 'undefined' ? (window as any).__INITIAL_CLIENT_ID__ : null);
+  const dsnWindow = (typeof window !== 'undefined' ? window : {}) as DsnWindow;
+
+  const ssrData = initialData || dsnWindow.__INITIAL_DATA__ || null;
+  const ssrPath = initialPath || dsnWindow.__INITIAL_PATH__ || null;
+  const ssrClientId = initialClientId || dsnWindow.__INITIAL_CLIENT_ID__ || null;
 
   const savedRecent =
     typeof window !== 'undefined' ? localStorage.getItem('dsn_recent_folders') : null;
