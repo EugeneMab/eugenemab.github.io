@@ -139,19 +139,92 @@ async function handleFollow() {
     process.exit(1);
   }
 
+  const logFile = `${cmdFile}.log`;
+  let stopped = false;
+  let exitCode = 0;
+
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
   const updateTitle = () => {
-    // Only use standard title command, no ANSI escape sequences
     spawn('cmd.exe', ['/c', 'title', title]);
   };
 
-  updateTitle();
-  const interval = setInterval(updateTitle, 1000);
+  // Fiber #1: Process Runner
+  const runner = async () => {
+    return new Promise<void>((resolve) => {
+      // Open log file for writing
+      const logStream = fs.createWriteStream(logFile, { flags: 'w' });
 
-  const proc = spawn('cmd.exe', ['/c', cmdFile], { stdio: 'inherit' });
-  proc.on('close', (code) => {
-    clearInterval(interval);
-    process.exit(code || 0);
-  });
+      // Spawn process without shell redirection
+      const proc = spawn('cmd.exe', ['/c', cmdFile], {
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
+
+      proc.stdout.pipe(logStream);
+      proc.stderr.pipe(logStream);
+
+      proc.on('close', (code) => {
+        exitCode = code || 0;
+        stopped = true;
+        logStream.end(() => {
+          resolve();
+        });
+      });
+
+      proc.on('error', (err) => {
+        console.error(`~~ Runner error: ${err.message}`);
+        stopped = true;
+        logStream.end(() => {
+          resolve();
+        });
+      });
+    });
+  };
+
+  // Fiber #2: Title Updater
+  const titleUpdater = async () => {
+    while (!stopped) {
+      updateTitle();
+      await sleep(1000);
+    }
+  };
+
+  // Fiber #3: Log Tailer
+  const logTailer = async () => {
+    let lastReadIndex = 0;
+    while (true) {
+      if (fs.existsSync(logFile)) {
+        try {
+          const content = fs.readFileSync(logFile, 'utf8');
+          const lines = content.split(/\r?\n/);
+          let newLines: string[] = [];
+
+          if (!stopped) {
+            if (lines.length > 1) {
+              newLines = lines.slice(lastReadIndex, -1);
+            }
+          } else {
+            newLines = lines.slice(lastReadIndex);
+          }
+
+          if (newLines.length > 0) {
+            for (const line of newLines) {
+              process.stdout.write(line + '\n');
+            }
+            lastReadIndex += newLines.length;
+          }
+        } catch (_e) {
+          // Ignore read errors
+        }
+      }
+
+      if (stopped) break;
+      await sleep(100);
+    }
+  };
+
+  await Promise.all([runner(), titleUpdater(), logTailer()]);
+  process.exit(exitCode);
 }
 
 function runCommand(cmd: string, cwd: string, name: string): Promise<void> {
