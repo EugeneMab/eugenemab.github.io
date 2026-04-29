@@ -47,6 +47,10 @@ const workFolder =
   process.env.DSN_WORK_FOLDER || (process.argv[3] ? path.resolve(process.argv[3]) : null);
 const folderToClient = new Map<string, string>();
 
+function generateId() {
+  return Math.random().toString(36).substring(2) + Date.now().toString(36);
+}
+
 function log(msg: string) {
   if (process.env.NODE_ENV === 'test') {
     return;
@@ -368,7 +372,7 @@ async function startServer() {
         }
         template = fs.readFileSync(path.resolve(root, 'frontend/index.html'), 'utf-8');
         template = await vite.transformIndexHtml(url, template);
-        render = (await vite.ssrLoadModule('/src/entry-server.tsx')).render;
+        render = (await vite.ssrLoadModule(path.resolve(root, 'frontend/src/entry-server.tsx'))).render;
       } else {
         template = fs.readFileSync(path.resolve(root, 'frontend/dist/client/index.html'), 'utf-8');
         // @ts-expect-error Production SSR bundle might not exist during build-time analysis
@@ -384,8 +388,46 @@ async function startServer() {
       }
 
       if (render) {
-        const { html: appHtml } = await render(url);
-        const html = template.replace(`<!--ssr-outlet-->`, appHtml);
+        let initialData = null;
+        let initialPath = null;
+        let initialClientId = null;
+
+        // Try to pre-load data for folder routes
+        const folderMatch = url.match(/\/folder\/([^/?#]+)/);
+        if (folderMatch) {
+          const folderId = folderMatch[1];
+          const relPath = fromSafeBase64(folderId);
+          if (relPath) {
+            const fullPath = getFullPath(relPath);
+            const dataPath = path.join(fullPath, 'data.json');
+            if (fs.existsSync(dataPath)) {
+              try {
+                const content = fs.readFileSync(dataPath, 'utf-8');
+                initialData = content.trim() ? JSON.parse(content) : defaultData;
+                initialPath = relPath;
+              } catch (e) {
+                log(`Error: Failed to pre-load SSR data for ${dataPath}: ${e}`);
+              }
+            } else if (fs.existsSync(fullPath)) {
+              initialData = defaultData;
+              initialPath = relPath;
+            }
+
+            if (initialPath) {
+              initialClientId = generateId();
+              folderToClient.set(initialPath, initialClientId);
+            }
+          }
+        }
+
+        const { html: appHtml } = await render(url, initialData, initialPath, initialClientId);
+        let html = template.replace(`<!--ssr-outlet-->`, appHtml);
+
+        if (initialData) {
+          const dataInjection = `<script>window.__INITIAL_DATA__ = ${JSON.stringify(initialData)}; window.__INITIAL_PATH__ = ${JSON.stringify(initialPath)}; window.__INITIAL_CLIENT_ID__ = ${JSON.stringify(initialClientId)};</script>`;
+          html = html.replace(`</head>`, `${dataInjection}</head>`);
+        }
+
         res.status(200).set({ 'Content-Type': 'text/html' }).end(html);
       }
     } catch (e: unknown) {

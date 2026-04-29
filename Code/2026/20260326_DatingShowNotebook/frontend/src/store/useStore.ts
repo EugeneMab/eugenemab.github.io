@@ -1,4 +1,5 @@
-import { create } from 'zustand';
+import { create, useStore as useZustandStore } from 'zustand';
+import { createContext, useContext } from 'react';
 import netClient from '../utils/NetClient';
 import { renderEventToSvgString } from '../utils/svgRenderer';
 import { svgToJpeg, saveEventImage, cleanupZombieImages } from '../utils/imageGen';
@@ -59,7 +60,7 @@ export type ActiveMode =
   | 'team-9'
   | 'eraser';
 
-interface AppState {
+export interface AppState {
   data: AppData;
   activeMode: ActiveMode;
   selectedEpisodeId: number | null;
@@ -87,6 +88,7 @@ interface AppState {
   setCancelRefresh: (cancelRefresh: boolean) => void;
   fullRefresh: () => Promise<void>;
   setInterrupted: (interrupted: boolean) => void;
+  initializeSSR: (data: AppData, folderPath: string) => void;
 }
 
 const ID_RADIX = 36;
@@ -101,7 +103,6 @@ const generateId = () => {
   }
   return Math.random().toString(ID_RADIX).substring(2) + Date.now().toString(ID_RADIX);
 };
-const CLIENT_ID = generateId();
 
 /**
  * Encodes a string to a URL-safe base64 string.
@@ -152,141 +153,355 @@ function buildUrl(baseUrl: string, folderPath: string | null, clientId: string):
   return url.pathname + url.search;
 }
 
-const savedRecent =
-  typeof window !== 'undefined' ? localStorage.getItem('dsn_recent_folders') : null;
-const initialRecent = savedRecent ? JSON.parse(savedRecent) : [];
+const defaultAppData: AppData = {
+  people: [],
+  episodes: [],
+  nextUniqueId: 1,
+  bodyScale: 1,
+  descriptionScale: 1,
+};
+
+function getInitialView(data: AppData) {
+  let lastEpisodeId = null;
+  let lastEventId = null;
+  if (data.episodes.length > 0) {
+    const lastEpisode = data.episodes[data.episodes.length - 1];
+    lastEpisodeId = lastEpisode.id;
+    if (lastEpisode.events.length > 0) {
+      lastEventId = lastEpisode.events[lastEpisode.events.length - 1].id;
+    }
+  }
+  return { lastEpisodeId, lastEventId };
+}
 
 let globalSaveTimeout: ReturnType<typeof setTimeout> | null = null;
+let activeStore: AppStore | null = null;
 
-export const useStore = create<AppState>((set, get) => {
-  return {
-    data: {
-      people: [],
-      episodes: [],
-      nextUniqueId: 1,
-      bodyScale: 1,
-      descriptionScale: 1,
-    },
-    activeMode: 'message',
-    selectedEpisodeId: null,
-    selectedEventId: null,
-    undoStack: [],
-    isRefreshing: false,
-    isOpening: false,
-    refreshProgress: { current: 0, total: 0 },
-    cancelRefresh: false,
+export const createAppStore = (
+  initialData?: AppData,
+  initialPath?: string,
+  initialClientId?: string
+) => {
+  const ssrData =
+    initialData || (typeof window !== 'undefined' ? (window as any).__INITIAL_DATA__ : null);
+  const ssrPath =
+    initialPath || (typeof window !== 'undefined' ? (window as any).__INITIAL_PATH__ : null);
+  const ssrClientId =
+    initialClientId ||
+    (typeof window !== 'undefined' ? (window as any).__INITIAL_CLIENT_ID__ : null);
 
-    clientId: CLIENT_ID,
-    currentFolderPath: null,
-    recentFolders: initialRecent,
-    isInterrupted: false,
+  const savedRecent =
+    typeof window !== 'undefined' ? localStorage.getItem('dsn_recent_folders') : null;
+  const initialRecent = savedRecent ? JSON.parse(savedRecent) : [];
 
-    openFolder: async (folderPath) => {
-      if (get().isOpening) {
-        return;
-      }
-      set({ isOpening: true });
+  const initialView = ssrData
+    ? getInitialView(ssrData)
+    : { lastEpisodeId: null, lastEventId: null };
 
-      try {
-        const clientId = get().clientId;
-        const res = await netClient.post<AppData>('/api/open', { path: folderPath, clientId });
-        const data = res.data;
+  const clientId = ssrClientId || generateId();
 
-        // --- ID Compaction & Data Cleaning Logic ---
-        const personMap = new Map<number, number>();
-        const episodeMap = new Map<number, number>();
-        const eventMap = new Map<number, number>();
-        let nextId = 1;
+  const store = create<AppState>((set, get) => {
+    return {
+      data: ssrData || defaultAppData,
+      activeMode: 'message',
+      selectedEpisodeId: initialView.lastEpisodeId,
+      selectedEventId: initialView.lastEventId,
+      undoStack: [],
+      isRefreshing: false,
+      isOpening: false,
+      refreshProgress: { current: 0, total: 0 },
+      cancelRefresh: false,
 
-        data.people.forEach((p) => {
-          personMap.set(p.id, nextId++);
-        });
+      clientId,
+      currentFolderPath: ssrPath || null,
+      recentFolders: initialRecent,
+      isInterrupted: false,
 
-        data.episodes.forEach((ep) => {
-          episodeMap.set(ep.id, nextId++);
-          ep.events.forEach((ev) => {
-            eventMap.set(ev.id, nextId++);
+      openFolder: async (folderPath) => {
+        if (get().isOpening) {
+          return;
+        }
+        set({ isOpening: true });
+
+        try {
+          const clientId = get().clientId;
+          const res = await netClient.post<AppData>('/api/open', { path: folderPath, clientId });
+          const data = res.data;
+
+          // --- ID Compaction & Data Cleaning Logic ---
+          const personMap = new Map<number, number>();
+          const episodeMap = new Map<number, number>();
+          const eventMap = new Map<number, number>();
+          let nextId = 1;
+
+          data.people.forEach((p) => {
+            personMap.set(p.id, nextId++);
           });
-        });
 
-        data.nextUniqueId = nextId;
-
-        const validPersonIds = new Set(personMap.values());
-
-        data.people.forEach((p) => {
-          p.id = personMap.get(p.id)!;
-        });
-
-        data.episodes.forEach((ep) => {
-          ep.id = episodeMap.get(ep.id)!;
-          ep.events.forEach((ev) => {
-            ev.id = eventMap.get(ev.id)!;
-            const seenMessages = new Set<string>();
-            ev.messages = ev.messages
-              .map((m) => {
-                return {
-                  ...m,
-                  from: personMap.get(m.from)!,
-                  to: personMap.get(m.to)!,
-                };
-              })
-              .filter((m) => {
-                if (!m.from || !m.to || !validPersonIds.has(m.from) || !validPersonIds.has(m.to)) {
-                  return false;
-                }
-                let key;
-                if (m.type === 'bidirectional') {
-                  const sortedIds = [m.from, m.to].sort((a, b) => {
-                    return a - b;
-                  });
-                  key = `${sortedIds[0]}-${sortedIds[1]}-${m.type}`;
-                } else {
-                  key = `${m.from}-${m.to}-${m.type}`;
-                }
-                if (seenMessages.has(key)) {
-                  return false;
-                }
-                seenMessages.add(key);
-                return true;
-              });
-
-            const cleanedTeams: { [teamIndex: string]: number[] } = {};
-            Object.entries(ev.teams).forEach(([idx, members]) => {
-              const validMembers = members
-                .map((id) => {
-                  return personMap.get(id)!;
-                })
-                .filter((id) => {
-                  return id && validPersonIds.has(id);
-                });
-              const uniqueMembers = Array.from(new Set(validMembers));
-              if (uniqueMembers.length > 0) {
-                cleanedTeams[idx] = uniqueMembers;
-              }
+          data.episodes.forEach((ep) => {
+            episodeMap.set(ep.id, nextId++);
+            ep.events.forEach((ev) => {
+              eventMap.set(ev.id, nextId++);
             });
-            ev.teams = cleanedTeams;
           });
+
+          data.nextUniqueId = nextId;
+
+          const validPersonIds = new Set(personMap.values());
+
+          data.people.forEach((p) => {
+            p.id = personMap.get(p.id)!;
+          });
+
+          data.episodes.forEach((ep) => {
+            ep.id = episodeMap.get(ep.id)!;
+            ep.events.forEach((ev) => {
+              ev.id = eventMap.get(ev.id)!;
+              const seenMessages = new Set<string>();
+              ev.messages = ev.messages
+                .map((m) => {
+                  return {
+                    ...m,
+                    from: personMap.get(m.from)!,
+                    to: personMap.get(m.to)!,
+                  };
+                })
+                .filter((m) => {
+                  if (
+                    !m.from ||
+                    !m.to ||
+                    !validPersonIds.has(m.from) ||
+                    !validPersonIds.has(m.to)
+                  ) {
+                    return false;
+                  }
+                  let key;
+                  if (m.type === 'bidirectional') {
+                    const sortedIds = [m.from, m.to].sort((a, b) => {
+                      return a - b;
+                    });
+                    key = `${sortedIds[0]}-${sortedIds[1]}-${m.type}`;
+                  } else {
+                    key = `${m.from}-${m.to}-${m.type}`;
+                  }
+                  if (seenMessages.has(key)) {
+                    return false;
+                  }
+                  seenMessages.add(key);
+                  return true;
+                });
+
+              const cleanedTeams: { [teamIndex: string]: number[] } = {};
+              Object.entries(ev.teams).forEach(([idx, members]) => {
+                const validMembers = members
+                  .map((id) => {
+                    return personMap.get(id)!;
+                  })
+                  .filter((id) => {
+                    return id && validPersonIds.has(id);
+                  });
+                const uniqueMembers = Array.from(new Set(validMembers));
+                if (uniqueMembers.length > 0) {
+                  cleanedTeams[idx] = uniqueMembers;
+                }
+              });
+              ev.teams = cleanedTeams;
+            });
+          });
+
+          const { lastEpisodeId, lastEventId } = getInitialView(data);
+
+          const newRecent = [
+            folderPath,
+            ...get().recentFolders.filter((p) => {
+              return p !== folderPath;
+            }),
+          ].slice(0, RECENT_FOLDERS_LIMIT);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('dsn_recent_folders', JSON.stringify(newRecent));
+          }
+
+          set({
+            data,
+            currentFolderPath: folderPath,
+            selectedEpisodeId: lastEpisodeId,
+            selectedEventId: lastEventId,
+            activeMode: 'message',
+            recentFolders: newRecent,
+            undoStack: [],
+            isOpening: false,
+            isInterrupted: false,
+          });
+
+          await netClient.post(buildUrl('/api/data', folderPath, clientId), data);
+        } catch (e) {
+          console.error('Failed to open folder', e);
+          set({ isOpening: false });
+          throw e;
+        }
+      },
+
+      saveData: async (update) => {
+        const folderPath = get().currentFolderPath;
+        if (!folderPath) {
+          return;
+        }
+
+        set((state) => {
+          const currentData = state.data;
+          const newData = update(currentData);
+
+          if (globalSaveTimeout) {
+            clearTimeout(globalSaveTimeout);
+          }
+          globalSaveTimeout = setTimeout(async () => {
+            const latestState = get();
+            if (!latestState.currentFolderPath) {
+              return;
+            }
+
+            try {
+              await netClient.post(
+                buildUrl('/api/data', latestState.currentFolderPath, latestState.clientId),
+                latestState.data
+              );
+            } catch (_e) {
+              console.error('Failed to save data to backend', _e);
+            }
+          }, SAVE_DEBOUNCE_MS);
+
+          return {
+            undoStack: [JSON.parse(JSON.stringify(currentData)), ...state.undoStack].slice(
+              0,
+              UNDO_STACK_LIMIT
+            ),
+            data: newData,
+          };
+        });
+      },
+
+      setActiveMode: (mode) => {
+        return set({ activeMode: mode });
+      },
+
+      setSelectedView: (episodeId, eventId) => {
+        return set({
+          selectedEpisodeId: episodeId,
+          selectedEventId: eventId,
+          activeMode: 'message',
+        });
+      },
+
+      setBodyScale: (scale) => {
+        get().saveData((prev) => {
+          return { ...prev, bodyScale: scale };
+        });
+      },
+
+      setDescriptionScale: (scale) => {
+        get().saveData((prev) => {
+          return { ...prev, descriptionScale: scale };
+        });
+      },
+
+      undo: () => {
+        const folderPath = get().currentFolderPath;
+        if (!folderPath) {
+          return;
+        }
+
+        const stack = get().undoStack;
+        if (stack.length === 0) {
+          return;
+        }
+        const [prevData, ...remainingStack] = stack;
+        set({
+          data: prevData,
+          undoStack: remainingStack,
         });
 
-        let lastEpisodeId = null;
-        let lastEventId = null;
-        if (data.episodes.length > 0) {
-          const lastEpisode = data.episodes[data.episodes.length - 1];
-          lastEpisodeId = lastEpisode.id;
-          if (lastEpisode.events.length > 0) {
-            lastEventId = lastEpisode.events[lastEpisode.events.length - 1].id;
+        netClient.post(buildUrl('/api/data', folderPath, get().clientId), prevData);
+      },
+
+      setRefreshState: (isRefreshing, current, total) => {
+        set((state) => {
+          return {
+            isRefreshing,
+            refreshProgress: {
+              current: current !== undefined ? current : state.refreshProgress.current,
+              total: total !== undefined ? total : state.refreshProgress.total,
+            },
+          };
+        });
+      },
+
+      setCancelRefresh: (cancelRefresh) => {
+        return set({ cancelRefresh });
+      },
+
+      fullRefresh: async () => {
+        const { data, setRefreshState, setCancelRefresh, currentFolderPath, clientId } = get();
+        if (!currentFolderPath) {
+          return;
+        }
+
+        const episodes = data.episodes;
+        const eventCount = episodes.reduce((acc, ep) => {
+          return acc + ep.events.length;
+        }, 0);
+        const totalSteps = eventCount + 1;
+
+        setRefreshState(true, 0, totalSteps);
+        setCancelRefresh(false);
+
+        const activeFilenames: string[] = [];
+        let currentStep = 0;
+
+        for (let i = 0; i < episodes.length; i++) {
+          const episode = episodes[i];
+          for (let j = 0; j < episode.events.length; j++) {
+            if (get().cancelRefresh) {
+              setRefreshState(false);
+              return;
+            }
+
+            const event = episode.events[j];
+            const epIdx = String(i + 1).padStart(2, '0');
+            const evIdx = String(j + 1).padStart(2, '0');
+            const filename = `${epIdx}_${evIdx}.jpg`;
+            activeFilenames.push(filename);
+
+            try {
+              const svgString = renderEventToSvgString(event, data, i + 1);
+              const jpegBase64 = await svgToJpeg(svgString);
+              await saveEventImage(filename, jpegBase64, currentFolderPath, clientId);
+            } catch (_e) {
+              // Error logged via backend
+            }
+
+            currentStep++;
+            setRefreshState(true, currentStep, totalSteps);
           }
         }
 
-        const newRecent = [
-          folderPath,
-          ...get().recentFolders.filter((p) => {
-            return p !== folderPath;
-          }),
-        ].slice(0, RECENT_FOLDERS_LIMIT);
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('dsn_recent_folders', JSON.stringify(newRecent));
+        if (!get().cancelRefresh) {
+          await cleanupZombieImages(activeFilenames, currentFolderPath, clientId);
+          currentStep++;
+          setRefreshState(true, currentStep, totalSteps);
         }
+
+        await new Promise((r) => {
+          return setTimeout(r, REFRESH_DELAY_MS);
+        });
+        setRefreshState(false);
+      },
+
+      setInterrupted: (interrupted) => {
+        return set({ isInterrupted: interrupted });
+      },
+
+      initializeSSR: (data, folderPath) => {
+        const { lastEpisodeId, lastEventId } = getInitialView(data);
 
         set({
           data,
@@ -294,180 +509,29 @@ export const useStore = create<AppState>((set, get) => {
           selectedEpisodeId: lastEpisodeId,
           selectedEventId: lastEventId,
           activeMode: 'message',
-          recentFolders: newRecent,
-          undoStack: [],
-          isOpening: false,
           isInterrupted: false,
         });
+      },
+    };
+  });
 
-        await netClient.post(buildUrl('/api/data', folderPath, clientId), data);
-      } catch (e) {
-        console.error('Failed to open folder', e);
-        set({ isOpening: false });
-        throw e;
-      }
-    },
+  if (typeof window !== 'undefined') {
+    activeStore = store;
+  }
 
-    saveData: async (update) => {
-      const folderPath = get().currentFolderPath;
-      if (!folderPath) {
-        return;
-      }
+  return store;
+};
 
-      set((state) => {
-        const currentData = state.data;
-        const newData = update(currentData);
+export type AppStore = ReturnType<typeof createAppStore>;
+export const StoreContext = createContext<AppStore | null>(null);
 
-        if (globalSaveTimeout) {
-          clearTimeout(globalSaveTimeout);
-        }
-        globalSaveTimeout = setTimeout(async () => {
-          const latestState = useStore.getState();
-          if (!latestState.currentFolderPath) {
-            return;
-          }
-
-          try {
-            await netClient.post(
-              buildUrl('/api/data', latestState.currentFolderPath, latestState.clientId),
-              latestState.data
-            );
-          } catch (_e) {
-            console.error('Failed to save data to backend', _e);
-          }
-        }, SAVE_DEBOUNCE_MS);
-
-        return {
-          undoStack: [JSON.parse(JSON.stringify(currentData)), ...state.undoStack].slice(
-            0,
-            UNDO_STACK_LIMIT
-          ),
-          data: newData,
-        };
-      });
-    },
-
-    setActiveMode: (mode) => {
-      return set({ activeMode: mode });
-    },
-
-    setSelectedView: (episodeId, eventId) => {
-      return set({
-        selectedEpisodeId: episodeId,
-        selectedEventId: eventId,
-        activeMode: 'message',
-      });
-    },
-
-    setBodyScale: (scale) => {
-      get().saveData((prev) => {
-        return { ...prev, bodyScale: scale };
-      });
-    },
-
-    setDescriptionScale: (scale) => {
-      get().saveData((prev) => {
-        return { ...prev, descriptionScale: scale };
-      });
-    },
-
-    undo: () => {
-      const folderPath = get().currentFolderPath;
-      if (!folderPath) {
-        return;
-      }
-
-      const stack = get().undoStack;
-      if (stack.length === 0) {
-        return;
-      }
-      const [prevData, ...remainingStack] = stack;
-      set({
-        data: prevData,
-        undoStack: remainingStack,
-      });
-
-      netClient.post(buildUrl('/api/data', folderPath, get().clientId), prevData);
-    },
-
-    setRefreshState: (isRefreshing, current, total) => {
-      set((state) => {
-        return {
-          isRefreshing,
-          refreshProgress: {
-            current: current !== undefined ? current : state.refreshProgress.current,
-            total: total !== undefined ? total : state.refreshProgress.total,
-          },
-        };
-      });
-    },
-
-    setCancelRefresh: (cancelRefresh) => {
-      return set({ cancelRefresh });
-    },
-
-    fullRefresh: async () => {
-      const { data, setRefreshState, setCancelRefresh, currentFolderPath, clientId } = get();
-      if (!currentFolderPath) {
-        return;
-      }
-
-      const episodes = data.episodes;
-      const eventCount = episodes.reduce((acc, ep) => {
-        return acc + ep.events.length;
-      }, 0);
-      const totalSteps = eventCount + 1;
-
-      setRefreshState(true, 0, totalSteps);
-      setCancelRefresh(false);
-
-      const activeFilenames: string[] = [];
-      let currentStep = 0;
-
-      for (let i = 0; i < episodes.length; i++) {
-        const episode = episodes[i];
-        for (let j = 0; j < episode.events.length; j++) {
-          if (get().cancelRefresh) {
-            setRefreshState(false);
-            return;
-          }
-
-          const event = episode.events[j];
-          const epIdx = String(i + 1).padStart(2, '0');
-          const evIdx = String(j + 1).padStart(2, '0');
-          const filename = `${epIdx}_${evIdx}.jpg`;
-          activeFilenames.push(filename);
-
-          try {
-            const svgString = renderEventToSvgString(event, data, i + 1);
-            const jpegBase64 = await svgToJpeg(svgString);
-            await saveEventImage(filename, jpegBase64, currentFolderPath, clientId);
-          } catch (_e) {
-            // Error logged via backend
-          }
-
-          currentStep++;
-          setRefreshState(true, currentStep, totalSteps);
-        }
-      }
-
-      if (!get().cancelRefresh) {
-        await cleanupZombieImages(activeFilenames, currentFolderPath, clientId);
-        currentStep++;
-        setRefreshState(true, currentStep, totalSteps);
-      }
-
-      await new Promise((r) => {
-        return setTimeout(r, REFRESH_DELAY_MS);
-      });
-      setRefreshState(false);
-    },
-
-    setInterrupted: (interrupted) => {
-      return set({ isInterrupted: interrupted });
-    },
-  };
-});
+export const useStore = <T = AppState>(selector?: (state: AppState) => T): T => {
+  const store = useContext(StoreContext);
+  if (!store) {
+    throw new Error('useStore must be used within a StoreProvider');
+  }
+  return useZustandStore(store, selector || ((s) => s as unknown as T));
+};
 
 netClient.interceptors.response.use(
   (response) => {
@@ -480,7 +544,9 @@ netClient.interceptors.response.use(
       'response' in error &&
       (error as { response: { status: number } }).response?.status === 409
     ) {
-      useStore.getState().setInterrupted(true);
+      if (activeStore) {
+        activeStore.getState().setInterrupted(true);
+      }
     }
     return Promise.reject(error);
   }

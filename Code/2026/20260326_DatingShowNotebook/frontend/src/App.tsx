@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
-import { useStore, fromSafeBase64 } from './store/useStore';
+import { useStore, fromSafeBase64, StoreContext, AppStore } from './store/useStore';
 import NavigationPane from './components/NavigationPane';
 import TopButtonPane from './components/TopButtonPane';
 import MainBody from './components/MainBody';
@@ -13,12 +13,15 @@ const ICON_SIZE_40 = 40;
 
 const FolderHandler: React.FC = () => {
   const { folderId } = useParams<{ folderId: string }>();
-  const { openFolder, currentFolderPath } = useStore();
+  const { openFolder, currentFolderPath } = useStore((s) => {
+    return { openFolder: s.openFolder, currentFolderPath: s.currentFolderPath };
+  });
   const navigate = useNavigate();
 
   useEffect(() => {
     if (folderId) {
       const decodedPath = fromSafeBase64(folderId);
+      // Skip fetching if already loaded (via SSR or previous navigation)
       if (decodedPath && decodedPath !== currentFolderPath) {
         openFolder(decodedPath).catch(() => {
           navigate('/');
@@ -31,7 +34,9 @@ const FolderHandler: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  const { selectedEpisodeId, currentFolderPath } = useStore();
+  const { selectedEpisodeId, currentFolderPath } = useStore((s) => {
+    return { selectedEpisodeId: s.selectedEpisodeId, currentFolderPath: s.currentFolderPath };
+  });
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gray-100 text-gray-900">
@@ -64,28 +69,30 @@ const AppContent: React.FC = () => {
   );
 };
 
-const App: React.FC = () => {
+const App: React.FC<{ store: AppStore }> = ({ store }) => {
   return (
-    <Routes>
-      <Route
-        path="/"
-        element={
-          <>
-            <FolderHandler />
-            <AppContent />
-          </>
-        }
-      />
-      <Route
-        path="/folder/:folderId"
-        element={
-          <>
-            <FolderHandler />
-            <AppContent />
-          </>
-        }
-      />
-    </Routes>
+    <StoreContext.Provider value={store}>
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <>
+              <FolderHandler />
+              <AppContent />
+            </>
+          }
+        />
+        <Route
+          path="/folder/:folderId"
+          element={
+            <>
+              <FolderHandler />
+              <AppContent />
+            </>
+          }
+        />
+      </Routes>
+    </StoreContext.Provider>
   );
 };
 
