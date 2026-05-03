@@ -288,8 +288,10 @@ describe('Backend API', () => {
       const res = await request(app).get(`/folder/${folderId}`);
 
       expect(res.status).toBe(200);
-      expect(res.text).toContain('window.__INITIAL_DATA__ =');
-      expect(res.text).toContain('SSR');
+      expect(res.text).toContain('window.__INITIAL_DATA__ = {');
+      expect(res.text).toContain('"data":{"people":[{"id":1,"name":"SSR"}]');
+      expect(res.text).toContain(`"path":"${folderPath}"`);
+      expect(res.text).toContain('"clientId"');
     });
 
     it('handles non-existent folder in SSR', async () => {

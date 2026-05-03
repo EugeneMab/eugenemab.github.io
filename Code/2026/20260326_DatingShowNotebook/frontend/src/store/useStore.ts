@@ -178,9 +178,11 @@ let globalSaveTimeout: ReturnType<typeof setTimeout> | null = null;
 let activeStore: AppStore | null = null;
 
 interface DsnWindow extends Window {
-  __INITIAL_DATA__?: AppData;
-  __INITIAL_PATH__?: string;
-  __INITIAL_CLIENT_ID__?: string;
+  __INITIAL_DATA__?: {
+    data: AppData;
+    path: string;
+    clientId: string;
+  };
 }
 
 export const createAppStore = (
@@ -190,9 +192,9 @@ export const createAppStore = (
 ) => {
   const dsnWindow = (typeof window !== 'undefined' ? window : {}) as DsnWindow;
 
-  const ssrData = initialData || dsnWindow.__INITIAL_DATA__ || null;
-  const ssrPath = initialPath || dsnWindow.__INITIAL_PATH__ || null;
-  const ssrClientId = initialClientId || dsnWindow.__INITIAL_CLIENT_ID__ || null;
+  const ssrData = initialData || dsnWindow.__INITIAL_DATA__?.data || null;
+  const ssrPath = initialPath || dsnWindow.__INITIAL_DATA__?.path || null;
+  const ssrClientId = initialClientId || dsnWindow.__INITIAL_DATA__?.clientId || null;
 
   const savedRecent =
     typeof window !== 'undefined' ? localStorage.getItem('dsn_recent_folders') : null;
