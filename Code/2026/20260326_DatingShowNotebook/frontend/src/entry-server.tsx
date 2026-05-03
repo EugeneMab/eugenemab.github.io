@@ -14,7 +14,10 @@ export function render(
 
   const html = ReactDOMServer.renderToString(
     <React.StrictMode>
-      <StaticRouter location={url}>
+      <StaticRouter
+        location={url}
+        future={{ v7_startTransition: true, v7_relativeSplatPath: true }}
+      >
         <App store={store} />
       </StaticRouter>
     </React.StrictMode>
