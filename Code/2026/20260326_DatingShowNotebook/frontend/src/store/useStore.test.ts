@@ -277,4 +277,33 @@ describe('useStore', () => {
     expect(store.getState().selectedEpisodeId).toBe(1);
     expect(store.getState().selectedEventId).toBe(2);
   });
+
+  it('createAppStore reads from window.__INITIAL_DATA__', () => {
+    const mockData = {
+      people: [],
+      episodes: [
+        { id: 1, title: 'Ep 1', events: [{ id: 2, title: 'Ev 1-1', messages: [], teams: {} }] },
+      ],
+      nextUniqueId: 3,
+      bodyScale: 1,
+      descriptionScale: 1,
+    };
+    const mockCombined = {
+      data: mockData,
+      path: 'ssr-path',
+      clientId: 'ssr-client',
+    };
+
+    // Mock window
+    vi.stubGlobal('window', {
+      __INITIAL_DATA__: mockCombined,
+    });
+
+    const ssrStore = createAppStore();
+    expect(ssrStore.getState().currentFolderPath).toBe('ssr-path');
+    expect(ssrStore.getState().clientId).toBe('ssr-client');
+    expect(ssrStore.getState().data.nextUniqueId).toBe(3);
+
+    vi.unstubAllGlobals();
+  });
 });

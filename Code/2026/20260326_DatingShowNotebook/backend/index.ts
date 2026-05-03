@@ -420,7 +420,12 @@ export async function handleSSR(req: express.Request, res: express.Response) {
       let html = (template || '<!--ssr-outlet-->').replace(`<!--ssr-outlet-->`, appHtml);
 
       if (initialData) {
-        const dataInjection = `<script>window.__INITIAL_DATA__ = ${JSON.stringify(initialData)}; window.__INITIAL_PATH__ = ${JSON.stringify(initialPath)}; window.__INITIAL_CLIENT_ID__ = ${JSON.stringify(initialClientId)};</script>`;
+        const combinedData = {
+          data: initialData,
+          path: initialPath,
+          clientId: initialClientId,
+        };
+        const dataInjection = `<script>window.__INITIAL_DATA__ = ${JSON.stringify(combinedData)};</script>`;
         html = html.replace(`</head>`, `${dataInjection}</head>`);
       }
 
