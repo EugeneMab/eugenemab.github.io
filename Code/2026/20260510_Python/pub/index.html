@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python to WASM Compiler</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Python ⮕ WASM</h1>
+        </header>
+        
+        <main class="main-layout">
+            <!-- Left Side: Samples and Editor -->
+            <div class="left-panel">
+                <div class="sample-selector">
+                    <label for="sample-select">Load Sample:</label>
+                    <select id="sample-select">
+                        <option value="">-- Select a sample --</option>
+                        <option value="sample/basic.py">Basic Return</option>
+                        <option value="sample/variables.py">Variables & Math</option>
+                    </select>
+                </div>
+                <h3>Python Source</h3>
+                <textarea id="editor" spellcheck="false" placeholder="def main():\n    return 42"></textarea>
+                <div class="controls">
+                    <button id="compile-btn">Compile & Run</button>
+                    <button id="load-file-btn">Open File...</button>
+                    <input type="file" id="file-input" hidden accept=".py">
+                </div>
+            </div>
+
+            <!-- Right Side: Outputs -->
+            <div class="right-panel">
+                <div class="output-tabs">
+                    <button class="tab-btn active" data-tab="lex">Lexicon</button>
+                    <button class="tab-btn" data-tab="ast">AST</button>
+                    <button class="tab-btn" data-tab="wat">WAT (Text)</button>
+                    <button class="tab-btn" data-tab="wasm">WASM (Hex)</button>
+                    <button class="tab-btn" data-tab="exec">Execution</button>
+                </div>
+                
+                <div class="tab-content" id="lex-content">
+                    <pre id="lex-output"></pre>
+                </div>
+                <div class="tab-content hidden" id="ast-content">
+                    <pre id="ast-output"></pre>
+                </div>
+                <div class="tab-content hidden" id="wat-content">
+                    <pre id="wat-output"></pre>
+                </div>
+                <div class="tab-content hidden" id="wasm-content">
+                    <pre id="wasm-output"></pre>
+                </div>
+                <div class="tab-content hidden" id="exec-content">
+                    <div id="result-output" class="result-box"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
