@@ -1,0 +1,121 @@
+// src/parser.ts
+import { TokenType } from "./lexer.js";
+export class Parser {
+    tokens;
+    pos = 0;
+    constructor(tokens) {
+        this.tokens = tokens;
+    }
+    parse() {
+        const body = [];
+        while (!this.isAtEnd()) {
+            const node = this.parseStatement();
+            if (node)
+                body.push(node);
+        }
+        return { type: "Program", body };
+    }
+    parseStatement() {
+        if (this.match(TokenType.DEF))
+            return this.parseFunctionDef();
+        if (this.match(TokenType.RETURN))
+            return this.parseReturn();
+        if (this.peek().type === TokenType.IDENTIFIER &&
+            this.peekNext()?.type === TokenType.EQUALS) {
+            return this.parseAssignment();
+        }
+        // Skip stray newlines
+        if (this.match(TokenType.NEWLINE))
+            return null;
+        throw new Error(`Unexpected token: ${this.peek().type} at line ${this.peek().line}`);
+    }
+    parseFunctionDef() {
+        const name = this.consume(TokenType.IDENTIFIER, "Expect function name").value;
+        this.consume(TokenType.LPAREN, "Expect '(' after function name");
+        this.consume(TokenType.RPAREN, "Expect ')' after '('");
+        this.consume(TokenType.COLON, "Expect ':' after parameters");
+        this.consume(TokenType.NEWLINE, "Expect newline after ':'");
+        this.consume(TokenType.INDENT, "Expect indentation after function definition");
+        const body = [];
+        while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
+            const node = this.parseStatement();
+            if (node)
+                body.push(node);
+        }
+        this.consume(TokenType.DEDENT, "Expect dedent after function body");
+        return { type: "FunctionDef", name, body };
+    }
+    parseAssignment() {
+        const target = this.consume(TokenType.IDENTIFIER, "Expect variable name").value;
+        this.consume(TokenType.EQUALS, "Expect '=' after variable name");
+        const value = this.parseExpression();
+        this.consume(TokenType.NEWLINE, "Expect newline after assignment");
+        return { type: "Assignment", target, value };
+    }
+    parseReturn() {
+        const value = this.parseExpression();
+        // Return is often the last statement, might be followed by NEWLINE then DEDENT
+        if (this.check(TokenType.NEWLINE))
+            this.advance();
+        return { type: "Return", value };
+    }
+    parseExpression() {
+        return this.parseAddition();
+    }
+    parseAddition() {
+        let left = this.parsePrimary();
+        while (this.match(TokenType.PLUS, TokenType.MINUS)) {
+            const operator = this.previous().type === TokenType.PLUS ? "+" : "-";
+            const right = this.parsePrimary();
+            left = { type: "BinaryExpression", left, operator, right };
+        }
+        return left;
+    }
+    parsePrimary() {
+        if (this.match(TokenType.NUMBER)) {
+            return { type: "Literal", value: parseInt(this.previous().value) };
+        }
+        if (this.match(TokenType.IDENTIFIER)) {
+            return { type: "Identifier", name: this.previous().value };
+        }
+        throw new Error(`Expect expression at line ${this.peek().line}`);
+    }
+    match(...types) {
+        for (const type of types) {
+            if (this.check(type)) {
+                this.advance();
+                return true;
+            }
+        }
+        return false;
+    }
+    check(type) {
+        if (this.isAtEnd())
+            return false;
+        return this.peek().type === type;
+    }
+    advance() {
+        if (!this.isAtEnd())
+            this.pos++;
+        return this.previous();
+    }
+    isAtEnd() {
+        return this.peek().type === TokenType.EOF;
+    }
+    peek() {
+        return this.tokens[this.pos];
+    }
+    peekNext() {
+        if (this.pos + 1 >= this.tokens.length)
+            return null;
+        return this.tokens[this.pos + 1];
+    }
+    previous() {
+        return this.tokens[this.pos - 1];
+    }
+    consume(type, message) {
+        if (this.check(type))
+            return this.advance();
+        throw new Error(`${message} at line ${this.peek().line}, found ${this.peek().type}`);
+    }
+}

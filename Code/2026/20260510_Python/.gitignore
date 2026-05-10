@@ -2,7 +2,6 @@
 src/node_modules/
 
 # Compilation Output
-pub/js/
 
 # IDE and System Files
 .vscode/
