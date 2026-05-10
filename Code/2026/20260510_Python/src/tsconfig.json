@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "../pub/js",
+    "rootDir": ".",
+    "sourceMap": true
+  },
+  "include": ["**/*.ts"]
+}

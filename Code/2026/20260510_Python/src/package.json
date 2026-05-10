@@ -1,0 +1,14 @@
+{
+  "name": "python-to-wasm-src",
+  "version": "1.0.0",
+  "description": "Python to WASM compiler source",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.9.3"
+  }
+}
