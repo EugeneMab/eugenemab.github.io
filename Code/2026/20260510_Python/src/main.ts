@@ -126,6 +126,12 @@ if (sampleSelect) {
 
 // Compile Button
 const compileBtn = document.getElementById('compile-btn');
+const editor = document.getElementById('editor') as HTMLTextAreaElement;
+
+if (editor) {
+    editor.placeholder = "def main():\n    return 42";
+}
+
 if (compileBtn) {
     console.log(`[${VERSION}] UI: Attaching click listener to #compile-btn`);
     compileBtn.addEventListener('click', () => {

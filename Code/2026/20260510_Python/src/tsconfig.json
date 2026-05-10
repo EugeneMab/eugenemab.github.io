@@ -7,7 +7,7 @@
     "forceConsistentCasingInFileNames": true,
     "outDir": "../pub/js",
     "rootDir": ".",
-    "sourceMap": true
+    "sourceMap": false
   },
   "include": ["**/*.ts"],
   "exclude": ["**/*.test.ts"]
