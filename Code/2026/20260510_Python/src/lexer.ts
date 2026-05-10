@@ -38,7 +38,10 @@ export class Lexer {
   }
 
   tokenize(): Token[] {
-    console.log("Lexer: Starting tokenization of source length:", this.source.length);
+    console.log(
+      "Lexer: Starting tokenization of source length:",
+      this.source.length,
+    );
     const tokens: Token[] = [];
     let token: Token;
     do {

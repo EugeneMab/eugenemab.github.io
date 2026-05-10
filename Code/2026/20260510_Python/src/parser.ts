@@ -131,13 +131,13 @@ export class Parser {
   }
 
   private parseAddition(): ASTNode {
-      let left = this.parsePrimary();
-      while (this.match(TokenType.PLUS, TokenType.MINUS)) {
-          const operator = this.previous().type === TokenType.PLUS ? "+" : "-";
-          const right = this.parsePrimary();
-          left = { type: "BinaryExpression", left, operator, right };
-      }
-      return left;
+    let left = this.parsePrimary();
+    while (this.match(TokenType.PLUS, TokenType.MINUS)) {
+      const operator = this.previous().type === TokenType.PLUS ? "+" : "-";
+      const right = this.parsePrimary();
+      left = { type: "BinaryExpression", left, operator, right };
+    }
+    return left;
   }
   private parsePrimary(): ASTNode {
     if (this.match(TokenType.NUMBER)) {

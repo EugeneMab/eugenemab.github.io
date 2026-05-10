@@ -27,13 +27,16 @@ export class Compiler {
             }
         };
         scanBody(node.body);
-        let bodyWat = "";
+        const bodyLines = [];
         for (const stmt of node.body) {
-            bodyWat += this.emitStatementWAT(stmt);
+            const stmtWat = this.emitStatementWAT(stmt);
+            if (stmtWat) {
+                bodyLines.push(...stmtWat.split("\n"));
+            }
         }
+        const allLines = [...localDecls, ...bodyLines].filter((line) => line.trim().length > 0);
         return (`  (func $${node.name} (result i32)\n` +
-            `    ${localDecls.join("\n    ")}\n` +
-            `    ${bodyWat.split("\n").join("\n    ")}\n` +
+            `    ${allLines.join("\n    ")}\n` +
             `  )\n` +
             `  (export "${node.name}" (func $${node.name}))\n`);
     }
