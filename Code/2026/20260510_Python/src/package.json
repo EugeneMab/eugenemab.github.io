@@ -4,11 +4,16 @@
   "description": "Python to WASM compiler source",
   "main": "main.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node ../pub/js/lexer.test.js && node ../pub/js/parser.test.js && node ../pub/js/compiler.test.js",
+    "test:ui": "npx playwright test ui.test.ts",
+    "serve": "npx http-server ../pub -p 8080 -a 127.0.0.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.59.1",
     "eslint": "^8.0.0",
+    "http-server": "^14.1.1",
     "prettier": "^3.0.0",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }
 }

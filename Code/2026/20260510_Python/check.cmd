@@ -4,4 +4,6 @@ npx prettier --write src/**/*.ts
 echo Running ESLint...
 npx eslint src/**/*.ts
 echo Running Unit Tests...
-npm test --prefix src
+cd src
+npm test
+cd ..

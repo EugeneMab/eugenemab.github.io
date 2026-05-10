@@ -1,0 +1,53 @@
+import { Lexer } from "./lexer.js";
+import { Parser } from "./parser.js";
+import { Compiler } from "./compiler.js";
+
+async function test() {
+  console.log("Running Compiler Tests...");
+
+  const cases = [
+    {
+      name: "Basic Return",
+      code: "def main():\n    return 42",
+      expectedResult: 42,
+    },
+    {
+      name: "Variables and Math",
+      code: "def main():\n    x = 10\n    y = 20\n    return x + y",
+      expectedResult: 30,
+    },
+  ];
+
+  let passed = 0;
+  for (const c of cases) {
+    try {
+      const lexer = new Lexer(c.code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      const ast = parser.parse();
+      const compiler = new Compiler();
+
+      const wat = compiler.compileWAT(ast);
+      const wasm = compiler.compileWASM(ast);
+
+      // Verify by running in WASM runtime
+      const { instance } = (await WebAssembly.instantiate(wasm)) as any;
+      const result = (instance.exports.main as Function)();
+
+      if (result === c.expectedResult) {
+        console.log(`✅ [PASS] ${c.name} (Result: ${result})`);
+        passed++;
+      } else {
+        console.log(`❌ [FAIL] ${c.name}`);
+        console.log(`   Expected: ${c.expectedResult}, Actual: ${result}`);
+      }
+    } catch (e) {
+      console.log(`❌ [ERROR] ${c.name}: ${e}`);
+    }
+  }
+
+  console.log(`\nTests: ${passed}/${cases.length} passed`);
+  if (passed !== cases.length) process.exit(1);
+}
+
+test();
