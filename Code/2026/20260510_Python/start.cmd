@@ -1,6 +1,4 @@
-@echo off
-echo Starting local server...
-echo Please open http://127.0.0.1:8080 in your browser.
-start http://127.0.0.1:8080
+setlocal
+call kill.cmd
 cd src
-npm run serve
+start /min "Python_WASM_Server" start_host.cmd

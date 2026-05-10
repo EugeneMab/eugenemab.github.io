@@ -1,6 +1,7 @@
 {
   "name": "python-to-wasm-src",
   "version": "1.0.0",
+  "type": "module",
   "description": "Python to WASM compiler source",
   "main": "main.js",
   "scripts": {
