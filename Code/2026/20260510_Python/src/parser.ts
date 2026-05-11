@@ -79,8 +79,9 @@ export class Parser {
     // Skip stray newlines
     if (this.match(TokenType.NEWLINE)) return null;
 
+    const token = this.peek();
     throw new Error(
-      `Unexpected token: ${this.peek().type} at line ${this.peek().line}`,
+      `Unexpected token: ${token.type} at line ${token.line}, col ${token.col}`,
     );
   }
 
@@ -146,7 +147,15 @@ export class Parser {
     if (this.match(TokenType.IDENTIFIER)) {
       return { type: "Identifier", name: this.previous().value };
     }
-    throw new Error(`Expect expression at line ${this.peek().line}`);
+    if (this.match(TokenType.LPAREN)) {
+      const expr = this.parseExpression();
+      this.consume(TokenType.RPAREN, "Expect ')' after expression");
+      return expr;
+    }
+    const token = this.peek();
+    throw new Error(
+      `Expect expression at line ${token.line}, col ${token.col}`,
+    );
   }
 
   private match(...types: TokenType[]): boolean {
@@ -188,8 +197,9 @@ export class Parser {
 
   private consume(type: TokenType, message: string): Token {
     if (this.check(type)) return this.advance();
+    const token = this.peek();
     throw new Error(
-      `${message} at line ${this.peek().line}, found ${this.peek().type}`,
+      `${message} at line ${token.line}, col ${token.col}, found ${token.type}`,
     );
   }
 }
