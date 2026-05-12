@@ -13,3 +13,8 @@ Thumbs.db
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Project Specific
+pub/js/
+src/coverage/
+src/test_output/

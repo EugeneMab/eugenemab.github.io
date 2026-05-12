@@ -1,14 +1,5 @@
 // src/compiler.ts
-import {
-  ProgramNode,
-  ASTNode,
-  FunctionDefNode,
-  ReturnNode,
-  AssignmentNode,
-  BinaryExpressionNode,
-  LiteralNode,
-  IdentifierNode,
-} from "./parser.js";
+import { ProgramNode, ASTNode, FunctionDefNode } from "./parser.js";
 
 export class Compiler {
   private locals: Map<string, number> = new Map();
@@ -100,8 +91,6 @@ export class Compiler {
   compileWASM(program: ProgramNode): Uint8Array {
     const magic = [0x00, 0x61, 0x73, 0x6d];
     const version = [0x01, 0x00, 0x00, 0x00];
-
-    const sections: number[][] = [];
 
     // 1. Type Section
     const typeSection = this.createSection(1, [
@@ -233,7 +222,7 @@ export class Compiler {
   private encodeSignedLEB128(n: number): number[] {
     const buffer = [];
     while (true) {
-      let byte = n & 0x7f;
+      const byte = n & 0x7f;
       n >>= 7;
       if (
         (n === 0 && (byte & 0x40) === 0) ||

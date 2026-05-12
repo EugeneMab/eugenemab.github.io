@@ -14,6 +14,16 @@ async function test() {
             code: "def main():\n    x = 10\n    y = 20\n    return x + y",
             expectedResult: 30,
         },
+        {
+            name: "Subtraction and Locals",
+            code: "def main():\n    a = 100\n    b = 40\n    c = a - b\n    return c - 10",
+            expectedResult: 50,
+        },
+        {
+            name: "Complex Math",
+            code: "def main():\n    return (10 + 5) - (2 + 3)",
+            expectedResult: 10,
+        },
     ];
     let passed = 0;
     for (const c of cases) {
@@ -23,7 +33,7 @@ async function test() {
             const parser = new Parser(tokens);
             const ast = parser.parse();
             const compiler = new Compiler();
-            const wat = compiler.compileWAT(ast);
+            compiler.compileWAT(ast);
             const wasm = compiler.compileWASM(ast);
             // Verify by running in WASM runtime
             const { instance } = (await WebAssembly.instantiate(wasm));

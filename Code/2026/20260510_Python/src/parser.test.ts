@@ -32,6 +32,20 @@ function test() {
         );
       },
     },
+    {
+      name: "Complex Expression AST",
+      code: "def main():\n    return (1 + 2) - 3",
+      validate: (ast: any) => {
+        const ret = ast.body[0].body[0];
+        return (
+          ret.type === "Return" &&
+          ret.value.type === "BinaryExpression" &&
+          ret.value.operator === "-" &&
+          ret.value.left.type === "BinaryExpression" &&
+          ret.value.right.value === 3
+        );
+      },
+    },
   ];
 
   let passed = 0;
@@ -54,8 +68,29 @@ function test() {
     }
   });
 
-  console.log(`\nTests: ${passed}/${cases.length} passed`);
-  if (passed !== cases.length) process.exit(1);
+  // Test error cases
+  const errorCases = [
+    { name: "Unexpected token", code: "def main():\n    return 1 2" },
+    { name: "Expect function name", code: "def ():" },
+    { name: "Expect expression", code: "def main():\n    return +" },
+  ];
+
+  errorCases.forEach((ec) => {
+    try {
+      const lexer = new Lexer(ec.code);
+      const tokens = lexer.tokenize();
+      const parser = new Parser(tokens);
+      parser.parse();
+      console.log(`❌ [FAIL] ${ec.name}: Expected error`);
+    } catch (e) {
+      console.log(`✅ [PASS] ${ec.name} error caught: ${e}`);
+      passed++;
+    }
+  });
+
+  const total = cases.length + errorCases.length;
+  console.log(`\nTests: ${passed}/${total} passed`);
+  if (passed !== total) process.exit(1);
 }
 
 test();

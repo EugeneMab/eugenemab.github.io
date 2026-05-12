@@ -70,7 +70,6 @@ export class Compiler {
     compileWASM(program) {
         const magic = [0x00, 0x61, 0x73, 0x6d];
         const version = [0x01, 0x00, 0x00, 0x00];
-        const sections = [];
         // 1. Type Section
         const typeSection = this.createSection(1, [
             this.encodeVector([
@@ -184,7 +183,7 @@ export class Compiler {
     encodeSignedLEB128(n) {
         const buffer = [];
         while (true) {
-            let byte = n & 0x7f;
+            const byte = n & 0x7f;
             n >>= 7;
             if ((n === 0 && (byte & 0x40) === 0) ||
                 (n === -1 && (byte & 0x40) !== 0)) {
@@ -198,3 +197,4 @@ export class Compiler {
         return buffer;
     }
 }
+//# sourceMappingURL=compiler.js.map
