@@ -43,3 +43,4 @@ server.on("exit", (code) => {
 // Handle termination signals
 process.on("SIGINT", killAll);
 process.on("SIGTERM", killAll);
+//# sourceMappingURL=start_host.js.map

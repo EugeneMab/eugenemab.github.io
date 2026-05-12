@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test } from "@playwright/test";
 
 test("diagnose empty output issue", async ({ page }) => {
   // Capture all logs

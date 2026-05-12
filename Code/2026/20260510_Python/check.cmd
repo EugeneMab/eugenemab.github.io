@@ -1,9 +1,13 @@
 @echo off
 echo Running Prettier...
-npx prettier --write src/**/*.ts
+call npx prettier --write src/**/*.ts
+
 echo Running ESLint...
-npx eslint src/**/*.ts
-echo Running Unit Tests...
+call npx eslint src/**/*.ts
+
+echo Running Unit Tests with Coverage...
+if not exist src\test_output mkdir src\test_output
 cd src
-npm test
+call npm test > test_output\test.log 2>&1
+type test_output\test.log
 cd ..

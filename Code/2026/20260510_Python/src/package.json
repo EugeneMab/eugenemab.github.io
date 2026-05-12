@@ -5,16 +5,25 @@
   "description": "Python to WASM compiler source",
   "main": "main.js",
   "scripts": {
-    "test": "node ../pub/js/lexer.test.js && node ../pub/js/parser.test.js && node ../pub/js/compiler.test.js",
+    "test": "vitest run --coverage",
     "test:ui": "npx playwright test ui.test.ts",
-    "serve": "npx http-server ../pub -p 8080 -a 127.0.0.1"
+    "serve": "npx http-server ../pub -p 8080 -a 127.0.0.1",
+    "coverage": "c8 report --reporter=text"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.59.1",
-    "eslint": "^8.0.0",
+    "@types/jsdom": "^28.0.1",
+    "@vitest/coverage-v8": "^4.1.6",
+    "c8": "^11.0.0",
+    "eslint": "^10.3.0",
+    "globals": "^17.6.0",
     "http-server": "^14.1.1",
+    "jsdom": "^29.1.1",
     "prettier": "^3.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.59.3",
+    "vitest": "^4.1.6"
   }
 }
