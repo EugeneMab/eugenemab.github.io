@@ -127,4 +127,3 @@ export class Parser {
         throw new Error(`${message} at line ${token.line}, col ${token.col}, found ${token.type}`);
     }
 }
-//# sourceMappingURL=parser.js.map

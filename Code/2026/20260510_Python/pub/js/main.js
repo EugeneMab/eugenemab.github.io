@@ -267,4 +267,3 @@ window.addEventListener("keydown", (e) => {
     }
 });
 console.log(`[${VERSION}] Python-to-WASM Compiler Initialized`);
-//# sourceMappingURL=main.js.map

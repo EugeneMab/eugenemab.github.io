@@ -196,4 +196,3 @@ export class Lexer {
         return this.isAlpha(char) || this.isDigit(char);
     }
 }
-//# sourceMappingURL=lexer.js.map
