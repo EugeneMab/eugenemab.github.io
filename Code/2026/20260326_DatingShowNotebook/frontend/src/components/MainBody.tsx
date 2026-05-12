@@ -550,13 +550,11 @@ const MainBody: React.FC = () => {
                       }}
                     />
                     <textarea
-                      className="overflow-hidden bg-transparent border-none text-right focus:ring-0 p-0 resize-none text-blue-800 w-full"
+                      className="overflow-hidden bg-transparent border-none text-right focus:ring-0 p-0 resize-none text-blue-800 w-full flex-1"
                       style={{
                         fontSize: `${DESC_FONT_SIZE * scale * descScale}rem`,
-                        height: 'auto',
                       }}
                       value={p.description}
-                      rows={Math.max(MIN_DESC_ROWS, p.description.split('\n').length)}
                       onChange={(e) => {
                         return handleUpdatePerson(p.id, { description: e.target.value });
                       }}
@@ -662,13 +660,11 @@ const MainBody: React.FC = () => {
                       }}
                     />
                     <textarea
-                      className="overflow-hidden bg-transparent border-none text-left focus:ring-0 p-0 resize-none text-red-800 w-full"
+                      className="overflow-hidden bg-transparent border-none text-left focus:ring-0 p-0 resize-none text-red-800 w-full flex-1"
                       style={{
                         fontSize: `${DESC_FONT_SIZE * scale * descScale}rem`,
-                        height: 'auto',
                       }}
                       value={p.description}
-                      rows={Math.max(MIN_DESC_ROWS, p.description.split('\n').length)}
                       onChange={(e) => {
                         return handleUpdatePerson(p.id, { description: e.target.value });
                       }}
