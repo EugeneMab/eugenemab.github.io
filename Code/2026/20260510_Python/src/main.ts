@@ -6,6 +6,34 @@ import { Compiler } from "./compiler.js";
 
 const VERSION = "1.0.3 - " + new Date().toLocaleTimeString();
 
+let isEscapedMode = false;
+let escCount = 0;
+
+function updateStatus(errorText?: string) {
+  const statusLine = document.getElementById("status-line");
+  const modeIndicator = document.getElementById("mode-indicator");
+
+  if (modeIndicator) {
+    if (isEscapedMode) {
+      modeIndicator.textContent = "ESC";
+      modeIndicator.classList.add("visible");
+    } else {
+      modeIndicator.textContent = "";
+      modeIndicator.classList.remove("visible");
+    }
+  }
+
+  if (statusLine) {
+    if (errorText) {
+      statusLine.textContent = errorText;
+      statusLine.classList.add("error");
+    } else {
+      statusLine.textContent = "Ready";
+      statusLine.classList.remove("error");
+    }
+  }
+}
+
 async function compileAndRun() {
   console.log(`[${VERSION}] Main: Starting compileAndRun...`);
 
@@ -15,7 +43,6 @@ async function compileAndRun() {
   const watOutput = document.getElementById("wat-output")!;
   const wasmOutput = document.getElementById("wasm-output")!;
   const resultOutput = document.getElementById("result-output")!;
-  const statusLine = document.getElementById("status-line")!;
 
   const code = editor.value;
   console.log(
@@ -25,8 +52,7 @@ async function compileAndRun() {
 
   let phase = "Initialization";
   try {
-    statusLine.textContent = "Compiling";
-    statusLine.classList.remove("error");
+    updateStatus(); // Reset status
 
     // Clear previous outputs
     lexOutput.textContent = "";
@@ -36,7 +62,6 @@ async function compileAndRun() {
     resultOutput.textContent = "Compiling...";
 
     if (!code.trim()) {
-      statusLine.textContent = "Ready";
       console.warn(`[${VERSION}] Main: Code is empty, stopping.`);
       resultOutput.textContent = "Error: Code is empty";
       return;
@@ -79,17 +104,15 @@ async function compileAndRun() {
 
       // 4. Execution
       phase = "Execution";
-      statusLine.textContent = "Executing";
       console.log(`[${VERSION}] Main: Step 4 - Execution...`);
       const { instance } = (await WebAssembly.instantiate(wasm)) as any;
       const result = (instance.exports.main as Function)();
       console.log(`[${VERSION}] Main: Execution result:`, result);
       resultOutput.textContent = `Result: ${result}`;
 
-      statusLine.textContent = "Ready";
+      updateStatus();
     } catch (e: any) {
-      statusLine.textContent = `Error: ${phase}: ${e.message || e}`;
-      statusLine.classList.add("error");
+      updateStatus(`Error: ${phase}: ${e.message || e}`);
 
       // Visual error marker
       const msg = e.message || "";
@@ -113,8 +136,7 @@ async function compileAndRun() {
     }
   } catch (e: any) {
     console.error(`[${VERSION}] Main: ERROR during compilation:`, e);
-    statusLine.textContent = `Error: Initialization: ${e.message || e}`;
-    statusLine.classList.add("error");
+    updateStatus(`Error: Initialization: ${e.message || e}`);
     resultOutput.textContent = "Error: " + e;
   }
 }
@@ -183,42 +205,74 @@ const editor = document.getElementById("editor") as HTMLTextAreaElement;
 if (editor) {
   editor.placeholder = "def main():\n    return 42";
 
-  editor.addEventListener("keydown", (e) => {
-    if (e.key === "Tab") {
-      if (e.ctrlKey) return; // Allow Ctrl+Tab to navigate
-      e.preventDefault();
-      const start = editor.selectionStart;
-      const end = editor.selectionEnd;
-      const value = editor.value;
+  const handleIndentation = (isShift: boolean) => {
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const value = editor.value;
+    const lineStart = value.lastIndexOf("\n", start - 1) + 1;
 
-      // Find start of the current line
-      const lineStart = value.lastIndexOf("\n", start - 1) + 1;
-
-      if (e.shiftKey) {
-        // Shift+Tab: Decrease indentation by up to 4 spaces
-        const lineEnd = value.indexOf("\n", start);
-        const line = value.substring(
-          lineStart,
-          lineEnd === -1 ? value.length : lineEnd,
-        );
-        const leadingSpaces = line.match(/^\s*/)?.[0] || "";
-        const spacesToRemove = Math.min(leadingSpaces.length, 4);
-        if (spacesToRemove > 0) {
-          editor.value =
-            value.substring(0, lineStart) +
-            line.substring(spacesToRemove) +
-            value.substring(lineEnd === -1 ? value.length : lineEnd);
-          editor.selectionStart = Math.max(lineStart, start - spacesToRemove);
-          editor.selectionEnd = Math.max(lineStart, end - spacesToRemove);
-        }
-      } else {
-        // Tab: Increase indentation of the current line by 4 spaces
+    if (isShift) {
+      const lineEnd = value.indexOf("\n", start);
+      const line = value.substring(
+        lineStart,
+        lineEnd === -1 ? value.length : lineEnd,
+      );
+      const leadingSpaces = line.match(/^\s*/)?.[0] || "";
+      const spacesToRemove = Math.min(leadingSpaces.length, 4);
+      if (spacesToRemove > 0) {
         editor.value =
-          value.substring(0, lineStart) + "    " + value.substring(lineStart);
-        editor.selectionStart = start + 4;
-        editor.selectionEnd = end + 4;
+          value.substring(0, lineStart) +
+          line.substring(spacesToRemove) +
+          value.substring(lineEnd === -1 ? value.length : lineEnd);
+        editor.selectionStart = Math.max(lineStart, start - spacesToRemove);
+        editor.selectionEnd = Math.max(lineStart, end - spacesToRemove);
       }
-    } else if (e.key === "Enter") {
+    } else {
+      editor.value =
+        value.substring(0, lineStart) + "    " + value.substring(lineStart);
+      editor.selectionStart = start + 4;
+      editor.selectionEnd = end + 4;
+    }
+  };
+
+  editor.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      e.stopPropagation();
+      isEscapedMode = !isEscapedMode;
+      escCount = isEscapedMode ? 1 : 2;
+      updateStatus();
+      return;
+    }
+
+    if (e.key === "Tab") {
+      if (isEscapedMode && escCount === 1) {
+        // ESC then Tab: Allow default navigation and clear mode
+        isEscapedMode = false;
+        escCount = 0;
+        updateStatus();
+      } else if (!isEscapedMode && escCount >= 2) {
+        // ESC then ESC then Tab: Indentation
+        e.preventDefault();
+        handleIndentation(e.shiftKey);
+        escCount = 0;
+        updateStatus();
+      } else {
+        // Regular Tab in Editing mode or Escaped with sequence broken
+        e.preventDefault();
+      }
+      return;
+    }
+
+    if (isEscapedMode) {
+      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault(); // Block typing in escaped mode
+      }
+      if (e.key !== "Shift") escCount = 0;
+      return;
+    }
+
+    if (e.key === "Enter") {
       e.preventDefault();
       const start = editor.selectionStart;
       const end = editor.selectionEnd;
@@ -238,6 +292,8 @@ if (editor) {
       const newPos = start + 1 + indentation.length;
       editor.selectionStart = editor.selectionEnd = newPos;
     }
+
+    if (e.key !== "Shift") escCount = 0;
   });
 }
 
@@ -306,6 +362,8 @@ window.addEventListener("keydown", (e) => {
   } else if (e.ctrlKey && e.key === "s") {
     e.preventDefault();
     saveFile();
+  } else {
+    if (e.key !== "Shift") escCount = 0;
   }
 });
 
