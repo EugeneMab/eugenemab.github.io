@@ -9,6 +9,8 @@ export enum TokenType {
   PLUS = "PLUS",
   MINUS = "MINUS",
   COLON = "COLON",
+  WHILE = "WHILE",
+  TRUE = "TRUE",
 
   NEWLINE = "NEWLINE",
   INDENT = "INDENT",
@@ -179,10 +181,14 @@ export class Lexer {
       value += this.advance();
     }
 
-    let type = TokenType.IDENTIFIER;
-    if (value === "def") type = TokenType.DEF;
-    if (value === "return") type = TokenType.RETURN;
+    const keywords: Record<string, TokenType> = {
+      def: TokenType.DEF,
+      return: TokenType.RETURN,
+      while: TokenType.WHILE,
+      True: TokenType.TRUE,
+    };
 
+    const type = keywords[value] || TokenType.IDENTIFIER;
     return { type, value, line: this.line, col: startCol };
   }
 

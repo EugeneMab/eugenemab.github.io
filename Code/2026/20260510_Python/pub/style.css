@@ -112,6 +112,14 @@ button {
 button:hover { background: #4582b5; }
 button.active { background: #4582b5; font-weight: bold; }
 
+.abort-btn {
+    background: #3572A5;
+}
+
+.abort-btn:hover {
+    background: #4582b5;
+}
+
 .output-tabs {
     display: flex;
     gap: 2px;
