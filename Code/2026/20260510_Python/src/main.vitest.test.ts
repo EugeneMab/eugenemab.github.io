@@ -51,7 +51,14 @@ describe("main.ts", () => {
       postMessage(data: any) {
         if (data.type === "compile") {
           setTimeout(() => {
-            if (data.code.includes("\nreturn")) {
+            if (data.code.includes("*")) {
+              this.onmessage({
+                data: {
+                  type: "error",
+                  payload: "Unexpected character: * at line 2, col 17",
+                },
+              });
+            } else if (data.code.includes("\nreturn")) {
               // Simulating an error for missing indentation in "return 42"
               this.onmessage({
                 data: { type: "error", payload: "Indentation error" },
@@ -192,6 +199,25 @@ describe("main.ts", () => {
 
     await vi.waitFor(() => {
       expect(resultOutput.innerHTML).toContain("####");
+    });
+  });
+
+  it("should show detailed error with source line and marker", async () => {
+    vi.resetModules();
+    await import("./main.ts");
+    const editor = document.getElementById("editor") as HTMLTextAreaElement;
+    const compileBtn = document.getElementById("compile-btn")!;
+    const resultOutput = document.getElementById("result-output")!;
+
+    editor.value = "def main():\n    return 1 + * 2";
+    compileBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    await vi.waitFor(() => {
+      expect(resultOutput.innerHTML).toContain("Unexpected character: *");
+      expect(resultOutput.innerHTML).toContain("line:     return 1 + * 2");
+      expect(resultOutput.innerHTML).toContain(
+        "line with marker:     return 1 + *#### 2",
+      );
     });
   });
 

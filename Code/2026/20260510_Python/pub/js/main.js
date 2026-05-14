@@ -133,7 +133,25 @@ async function compileAndRun() {
                     clearTimeout(timeoutTimer);
                 updateStatus(`Error: ${payload}`);
                 const errorLine = document.createElement("div");
-                errorLine.textContent = `Error: #### ${payload} ####`;
+                const msg = payload || "";
+                const match = msg.match(/line (\d+), col (\d+)/);
+                if (match) {
+                    const l = parseInt(match[1]);
+                    const c = parseInt(match[2]);
+                    const sourceLines = editor.value.split("\n");
+                    const errorLineText = sourceLines[l - 1] || "";
+                    const highlightedLine = errorLineText.substring(0, c - 1) +
+                        "####" +
+                        errorLineText.substring(c - 1);
+                    errorLine.innerHTML =
+                        `<div style="color: #f44747; font-family: monospace; white-space: pre-wrap;">` +
+                            `Error: ${msg}<br/>` +
+                            `line: ${errorLineText}<br/>` +
+                            `line with marker: ${highlightedLine}</div>`;
+                }
+                else {
+                    errorLine.textContent = `Error: #### ${payload} ####`;
+                }
                 resultOutput.appendChild(errorLine);
                 appendToInfo(`End state: Error (${payload})`);
                 appendToInfo(`End time: ${new Date().toLocaleTimeString()}`);
