@@ -9,8 +9,11 @@ const setupDOM = () => {
     <div id="wat-output"></div>
     <div id="wasm-output"></div>
     <div id="result-output"></div>
+    <div id="info-output"></div>
     <div id="status-line"></div>
     <button id="compile-btn"></button>
+    <input id="timeout-input" value="10">
+    <button id="abort-btn"></button>
     <button id="load-file-btn"></button>
     <button id="save-btn"></button>
     <input type="file" id="file-input">
@@ -42,12 +45,47 @@ describe("main.ts", () => {
       });
       Object.defineProperty(URL, "revokeObjectURL", { value: vi.fn() });
     }
+    // Mock Worker
+    class MockWorker {
+      onmessage = () => {};
+      postMessage(data: any) {
+        if (data.type === "compile") {
+          setTimeout(() => {
+            if (data.code.includes("*")) {
+              this.onmessage({
+                data: {
+                  type: "error",
+                  payload: "Unexpected character: * at line 2, col 17",
+                },
+              });
+            } else if (data.code.includes("\nreturn")) {
+              // Simulating an error for missing indentation in "return 42"
+              this.onmessage({
+                data: { type: "error", payload: "Indentation error" },
+              });
+            } else {
+              this.onmessage({ data: { type: "lex", payload: "tokens" } });
+              this.onmessage({ data: { type: "ast", payload: "{}" } });
+              this.onmessage({ data: { type: "wat", payload: "(module)" } });
+              this.onmessage({
+                data: { type: "wasm", payload: "00 61 73 6d" },
+              });
+              this.onmessage({
+                data: { type: "result", payload: "Result: 42" },
+              });
+            }
+          }, 10);
+        }
+      }
+      terminate() {}
+    }
+    vi.stubGlobal("Worker", MockWorker);
   });
 
   it("should initialize and handle compile button click", async () => {
     // Reset modules to ensure top-level code runs again with fresh DOM
     vi.resetModules();
-    await import("./main.js");
+    await import("./main.ts");
 
     const editor = document.getElementById("editor") as HTMLTextAreaElement;
     const compileBtn = document.getElementById("compile-btn")!;
@@ -59,17 +97,15 @@ describe("main.ts", () => {
     // Wait for async execution
     await vi.waitFor(
       () => {
-        return resultOutput.textContent?.includes("Result: 42");
+        expect(resultOutput.textContent).toContain("Result: 42");
       },
       { timeout: 2000 },
     );
-
-    expect(resultOutput.textContent).toContain("Result: 42");
   });
 
   it("should handle keyboard shortcuts", async () => {
     vi.resetModules();
-    await import("./main.js");
+    await import("./main.ts");
     const resultOutput = document.getElementById("result-output")!;
     const editor = document.getElementById("editor") as HTMLTextAreaElement;
     editor.value = "def main():\n    return 42";
@@ -80,16 +116,15 @@ describe("main.ts", () => {
 
     await vi.waitFor(
       () => {
-        return resultOutput.textContent?.includes("Result: 42");
+        expect(resultOutput.textContent).toContain("Result: 42");
       },
       { timeout: 2000 },
     );
-    expect(resultOutput.textContent).toContain("Result: 42");
   });
 
   it("should handle tab key in editor", async () => {
     vi.resetModules();
-    await import("./main.js");
+    await import("./main.ts");
     const editor = document.getElementById("editor") as HTMLTextAreaElement;
 
     // Test Tab
@@ -122,7 +157,7 @@ describe("main.ts", () => {
 
   it("should handle tab switching", async () => {
     vi.resetModules();
-    await import("./main.js");
+    await import("./main.ts");
     const tabBtn = document.querySelector(".tab-btn") as HTMLElement;
     tabBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     expect(tabBtn.classList.contains("active")).toBe(true);
@@ -130,7 +165,7 @@ describe("main.ts", () => {
 
   it("should handle sample selection", async () => {
     vi.resetModules();
-    await import("./main.js");
+    await import("./main.ts");
     const sampleSelect = document.getElementById(
       "sample-select",
     ) as HTMLSelectElement;
@@ -154,7 +189,7 @@ describe("main.ts", () => {
 
   it("should handle error highlighting", async () => {
     vi.resetModules();
-    await import("./main.js");
+    await import("./main.ts");
     const editor = document.getElementById("editor") as HTMLTextAreaElement;
     const compileBtn = document.getElementById("compile-btn")!;
     const resultOutput = document.getElementById("result-output")!;
@@ -163,14 +198,32 @@ describe("main.ts", () => {
     compileBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
     await vi.waitFor(() => {
-      return resultOutput.innerHTML.includes("####");
+      expect(resultOutput.innerHTML).toContain("####");
     });
-    expect(resultOutput.innerHTML).toContain("####");
+  });
+
+  it("should show detailed error with source line and marker", async () => {
+    vi.resetModules();
+    await import("./main.ts");
+    const editor = document.getElementById("editor") as HTMLTextAreaElement;
+    const compileBtn = document.getElementById("compile-btn")!;
+    const resultOutput = document.getElementById("result-output")!;
+
+    editor.value = "def main():\n    return 1 + * 2";
+    compileBtn.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+
+    await vi.waitFor(() => {
+      expect(resultOutput.innerHTML).toContain("Unexpected character: *");
+      expect(resultOutput.innerHTML).toContain("line:     return 1 + * 2");
+      expect(resultOutput.innerHTML).toContain(
+        "line with marker:     return 1 + *#### 2",
+      );
+    });
   });
 
   it("should handle Ctrl+O and Ctrl+S shortcuts", async () => {
     vi.resetModules();
-    await import("./main.js");
+    await import("./main.ts");
     const fileInput = document.getElementById("file-input") as HTMLInputElement;
     const clickSpy = vi.spyOn(fileInput, "click");
 

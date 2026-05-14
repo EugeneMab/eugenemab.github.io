@@ -62,6 +62,23 @@ export class Compiler {
         return (
           this.emitExpressionWAT(node.value) + `\nlocal.set $${node.target}`
         );
+      case "While":
+        return (
+          `block\n` +
+          `  loop\n` +
+          `    ${this.emitExpressionWAT(node.condition)}\n` +
+          `    i32.eqz\n` +
+          `    br_if 1\n` +
+          `    ${node.body.map((s) => this.emitStatementWAT(s)).join("\n")}\n` +
+          `    br 0\n` +
+          `  end\n` +
+          `end`
+        );
+      case "CallExpression":
+        return (
+          node.args.map((a) => this.emitExpressionWAT(a)).join("\n") +
+          `\ncall $${node.callee}`
+        );
       default:
         return "";
     }
@@ -81,6 +98,11 @@ export class Compiler {
           "\n" +
           (node.operator === "+" ? "i32.add" : "i32.sub")
         );
+      case "CallExpression":
+        return (
+          node.args.map((a) => this.emitExpressionWAT(a)).join("\n") +
+          `\ncall $${node.callee}`
+        );
       default:
         return "";
     }
@@ -95,13 +117,32 @@ export class Compiler {
     // 1. Type Section
     const typeSection = this.createSection(1, [
       this.encodeVector([
-        [0x60, 0x00, 0x01, 0x7f], // (func () (result i32))
+        [0x60, 0x01, 0x7f, 0x00], // Type 0: (i32) -> void
+        [0x60, 0x00, 0x01, 0x7f], // Type 1: () -> i32
+      ]),
+    ]);
+
+    // 2. Import Section
+    const importSection = this.createSection(2, [
+      this.encodeVector([
+        [
+          ...this.encodeString("env"),
+          ...this.encodeString("print"),
+          0x00,
+          0x00,
+        ],
+        [
+          ...this.encodeString("env"),
+          ...this.encodeString("sleep"),
+          0x00,
+          0x00,
+        ],
       ]),
     ]);
 
     // 3. Function Section
     const funcSection = this.createSection(3, [
-      this.encodeVector([0x00]), // Function 0 uses Type 0
+      this.encodeVector([0x01]), // main uses Type 1
     ]);
 
     // 7. Export Section
@@ -110,7 +151,7 @@ export class Compiler {
     ) as FunctionDefNode;
     const exportSection = this.createSection(7, [
       this.encodeVector([
-        [...this.encodeString(mainFunc.name), 0x00, 0x00], // func 0
+        [...this.encodeString(mainFunc.name), 0x00, 0x02], // main index is 2
       ]),
     ]);
 
@@ -122,6 +163,7 @@ export class Compiler {
       ...magic,
       ...version,
       ...typeSection,
+      ...importSection,
       ...funcSection,
       ...exportSection,
       ...codeSection,
@@ -185,6 +227,29 @@ export class Compiler {
           0x21,
           ...this.encodeUnsignedLEB128(idx),
         ]; // local.set
+      case "While":
+        return [
+          0x02,
+          0x40, // block
+          0x03,
+          0x40, // loop
+          ...this.emitExpressionBinary(node.condition),
+          0x45, // i32.eqz
+          0x0d,
+          0x01, // br_if 1
+          ...node.body.map((s) => this.emitStatementBinary(s)).flat(),
+          0x0c,
+          0x00, // br 0
+          0x0b, // end
+          0x0b, // end
+        ];
+      case "CallExpression":
+        const calleeIdx = node.callee === "print" ? 0 : 1;
+        return [
+          ...node.args.map((a) => this.emitExpressionBinary(a)).flat(),
+          0x10,
+          ...this.encodeUnsignedLEB128(calleeIdx),
+        ];
       default:
         return [];
     }
@@ -202,6 +267,13 @@ export class Compiler {
           ...this.emitExpressionBinary(node.left),
           ...this.emitExpressionBinary(node.right),
           node.operator === "+" ? 0x6a : 0x6b, // i32.add / i32.sub
+        ];
+      case "CallExpression":
+        const calleeIdx = node.callee === "print" ? 0 : 1;
+        return [
+          ...node.args.map((a) => this.emitExpressionBinary(a)).flat(),
+          0x10,
+          ...this.encodeUnsignedLEB128(calleeIdx),
         ];
       default:
         return [];

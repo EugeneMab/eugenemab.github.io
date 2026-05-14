@@ -164,7 +164,16 @@ describe("Compiler", () => {
       const parser = new Parser(lexer.tokenize());
       const compiler = new Compiler();
       const wasm = compiler.compileWASM(parser.parse());
-      const { instance } = (await WebAssembly.instantiate(wasm)) as any;
+      const importObject = {
+        env: {
+          print: () => {},
+          sleep: () => {},
+        },
+      };
+      const { instance } = (await WebAssembly.instantiate(
+        wasm,
+        importObject,
+      )) as any;
       expect(instance.exports.main()).toBe(c.expected);
     }
   });

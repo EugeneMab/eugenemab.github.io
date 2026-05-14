@@ -9,6 +9,8 @@ export var TokenType;
     TokenType["PLUS"] = "PLUS";
     TokenType["MINUS"] = "MINUS";
     TokenType["COLON"] = "COLON";
+    TokenType["WHILE"] = "WHILE";
+    TokenType["TRUE"] = "TRUE";
     TokenType["NEWLINE"] = "NEWLINE";
     TokenType["INDENT"] = "INDENT";
     TokenType["DEDENT"] = "DEDENT";
@@ -142,11 +144,13 @@ export class Lexer {
         while (this.pos < this.source.length && this.isAlphaNumeric(this.peek())) {
             value += this.advance();
         }
-        let type = TokenType.IDENTIFIER;
-        if (value === "def")
-            type = TokenType.DEF;
-        if (value === "return")
-            type = TokenType.RETURN;
+        const keywords = {
+            def: TokenType.DEF,
+            return: TokenType.RETURN,
+            while: TokenType.WHILE,
+            True: TokenType.TRUE,
+        };
+        const type = keywords[value] || TokenType.IDENTIFIER;
         return { type, value, line: this.line, col: startCol };
     }
     handleNumber() {

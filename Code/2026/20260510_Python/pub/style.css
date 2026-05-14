@@ -99,6 +99,25 @@ textarea {
     display: inline-block;
 }
 
+.timeout-control {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #333;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 0.9rem;
+}
+
+.timeout-control input {
+    background: #444;
+    color: #fff;
+    border: 1px solid #555;
+    width: 60px;
+    padding: 2px 5px;
+    border-radius: 2px;
+}
+
 button {
     background: #3572A5;
     color: white;
@@ -111,6 +130,14 @@ button {
 
 button:hover { background: #4582b5; }
 button.active { background: #4582b5; font-weight: bold; }
+
+.abort-btn {
+    background: #3572A5;
+}
+
+.abort-btn:hover {
+    background: #4582b5;
+}
 
 .output-tabs {
     display: flex;

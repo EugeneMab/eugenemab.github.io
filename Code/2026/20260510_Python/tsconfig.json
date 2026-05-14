@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "outDir": "./pub/js",
+    "rootDir": "./src",
+    "sourceMap": false,
+    "lib": ["ESNext", "DOM", "WebWorker"]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "src/**/*.test.ts", "vitest.config.ts"]
+}

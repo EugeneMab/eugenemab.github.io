@@ -8,7 +8,9 @@ export type ASTNode =
   | BinaryExpressionNode
   | LiteralNode
   | IdentifierNode
-  | ReturnNode;
+  | ReturnNode
+  | WhileNode
+  | CallExpressionNode;
 
 export interface ProgramNode {
   type: "Program";
@@ -49,6 +51,18 @@ export interface ReturnNode {
   value: ASTNode;
 }
 
+export interface WhileNode {
+  type: "While";
+  condition: ASTNode;
+  body: ASTNode[];
+}
+
+export interface CallExpressionNode {
+  type: "CallExpression";
+  callee: string;
+  args: ASTNode[];
+}
+
 export class Parser {
   private tokens: Token[];
   private pos: number = 0;
@@ -69,11 +83,23 @@ export class Parser {
   private parseStatement(): ASTNode | null {
     if (this.match(TokenType.DEF)) return this.parseFunctionDef();
     if (this.match(TokenType.RETURN)) return this.parseReturn();
-    if (
-      this.peek().type === TokenType.IDENTIFIER &&
-      this.peekNext()?.type === TokenType.EQUALS
-    ) {
-      return this.parseAssignment();
+    if (this.match(TokenType.WHILE)) return this.parseWhile();
+
+    if (this.peek().type === TokenType.IDENTIFIER) {
+      if (this.peekNext()?.type === TokenType.EQUALS) {
+        return this.parseAssignment();
+      }
+      if (this.peekNext()?.type === TokenType.LPAREN) {
+        const call = this.parseCall();
+        if (
+          this.match(TokenType.NEWLINE) ||
+          this.isAtEnd() ||
+          this.check(TokenType.DEDENT)
+        ) {
+          // statement call
+        }
+        return call;
+      }
     }
 
     // Skip stray newlines
@@ -83,6 +109,36 @@ export class Parser {
     throw new Error(
       `Unexpected token: ${token.type} at line ${token.line}, col ${token.col}`,
     );
+  }
+
+  private parseWhile(): WhileNode {
+    const condition = this.parseExpression();
+    this.consume(TokenType.COLON, "Expect ':' after while condition");
+    this.consume(TokenType.NEWLINE, "Expect newline after ':'");
+    this.consume(TokenType.INDENT, "Expect indent after while");
+    const body: ASTNode[] = [];
+    while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
+      const node = this.parseStatement();
+      if (node) body.push(node);
+    }
+    this.consume(TokenType.DEDENT, "Expect dedent after while body");
+    return { type: "While", condition, body };
+  }
+
+  private parseCall(): CallExpressionNode {
+    const callee = this.consume(
+      TokenType.IDENTIFIER,
+      "Expect function name",
+    ).value;
+    this.consume(TokenType.LPAREN, "Expect '('");
+    const args: ASTNode[] = [];
+    if (!this.check(TokenType.RPAREN)) {
+      do {
+        args.push(this.parseExpression());
+      } while (this.match(TokenType.PLUS)); // Separator hack
+    }
+    this.consume(TokenType.RPAREN, "Expect ')'");
+    return { type: "CallExpression", callee, args };
   }
 
   private parseFunctionDef(): FunctionDefNode {
@@ -144,8 +200,16 @@ export class Parser {
     if (this.match(TokenType.NUMBER)) {
       return { type: "Literal", value: parseInt(this.previous().value) };
     }
+    if (this.match(TokenType.TRUE)) {
+      return { type: "Literal", value: 1 };
+    }
     if (this.match(TokenType.IDENTIFIER)) {
-      return { type: "Identifier", name: this.previous().value };
+      const name = this.previous().value;
+      if (this.check(TokenType.LPAREN)) {
+        this.pos--; // Backtrack identifier
+        return this.parseCall();
+      }
+      return { type: "Identifier", name };
     }
     if (this.match(TokenType.LPAREN)) {
       const expr = this.parseExpression();

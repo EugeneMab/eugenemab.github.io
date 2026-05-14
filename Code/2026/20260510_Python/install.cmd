@@ -1,6 +1,4 @@
 @echo off
-echo Installing dependencies in src...
-cd src
+echo Installing dependencies...
 npm install
-cd ..
 echo Installation complete.

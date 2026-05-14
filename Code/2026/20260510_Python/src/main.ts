@@ -1,13 +1,19 @@
 // src/main.ts
 
-import { Lexer } from "./lexer.js";
-import { Parser } from "./parser.js";
-import { Compiler } from "./compiler.js";
-
 const VERSION = "1.0.3 - " + new Date().toLocaleTimeString();
 
 let isEscapedMode = false;
 let escCount = 0;
+let currentWorker: Worker | null = null;
+let timeoutTimer: any = null;
+let startTime: Date | null = null;
+
+function appendToInfo(text: string) {
+  const infoOutput = document.getElementById("info-output");
+  if (infoOutput) {
+    infoOutput.textContent += text + "\n";
+  }
+}
 
 function updateStatus(errorText?: string) {
   const statusLine = document.getElementById("status-line");
@@ -34,6 +40,31 @@ function updateStatus(errorText?: string) {
   }
 }
 
+function abortExecution(isNewStart = false, isTimeout = false) {
+  if (timeoutTimer) {
+    clearTimeout(timeoutTimer);
+    timeoutTimer = null;
+  }
+
+  if (currentWorker) {
+    currentWorker.terminate();
+    currentWorker = null;
+    if (!isNewStart) {
+      const state = isTimeout ? "timeout" : "aborted";
+      updateStatus(`Error: ${state.charAt(0).toUpperCase() + state.slice(1)}`);
+      const resultOutput = document.getElementById("result-output")!;
+      const abortLine = document.createElement("div");
+      abortLine.textContent = isTimeout
+        ? "Execution timed out."
+        : "Execution aborted by user.";
+      resultOutput.appendChild(abortLine);
+
+      appendToInfo(`End state: ${state}`);
+      appendToInfo(`End time: ${new Date().toLocaleTimeString()}`);
+    }
+  }
+}
+
 async function compileAndRun() {
   console.log(`[${VERSION}] Main: Starting compileAndRun...`);
 
@@ -43,102 +74,113 @@ async function compileAndRun() {
   const watOutput = document.getElementById("wat-output")!;
   const wasmOutput = document.getElementById("wasm-output")!;
   const resultOutput = document.getElementById("result-output")!;
+  const infoOutput = document.getElementById("info-output")!;
+  const timeoutInput = document.getElementById(
+    "timeout-input",
+  ) as HTMLInputElement;
 
   const code = editor.value;
-  console.log(
-    `[${VERSION}] Main: Code to compile (len=${code.length}):`,
-    code.substring(0, 30),
-  );
+  const timeoutSeconds = parseInt(timeoutInput.value) || 10;
 
-  let phase = "Initialization";
-  try {
-    updateStatus(); // Reset status
-
-    // Clear previous outputs
-    lexOutput.textContent = "";
-    astOutput.textContent = "";
-    watOutput.textContent = "";
-    wasmOutput.textContent = "";
-    resultOutput.textContent = "Compiling...";
-
-    if (!code.trim()) {
-      console.warn(`[${VERSION}] Main: Code is empty, stopping.`);
-      resultOutput.textContent = "Error: Code is empty";
-      return;
-    }
-
-    // 1. Lexing
-    try {
-      phase = "Lexing";
-      console.log(`[${VERSION}] Main: Step 1 - Lexing...`);
-      const lexer = new Lexer(code);
-      const tokens = lexer.tokenize();
-      console.log(`[${VERSION}] Main: Lexing produced ${tokens.length} tokens`);
-
-      lexOutput.textContent = tokens
-        .map((t) => `${t.type} ${t.line} ${t.col} "${t.value}"`)
-        .join("\n");
-
-      // 2. Parsing
-      phase = "Parsing";
-      console.log(`[${VERSION}] Main: Step 2 - Parsing...`);
-      const parser = new Parser(tokens);
-      const ast = parser.parse();
-      console.log(`[${VERSION}] Main: Parsing complete`);
-      astOutput.textContent = JSON.stringify(ast, null, 2);
-
-      // 3. Compiling
-      phase = "Compiling";
-      console.log(`[${VERSION}] Main: Step 3 - Emitter...`);
-      const compiler = new Compiler();
-      const wat = compiler.compileWAT(ast);
-      watOutput.textContent = wat;
-
-      const wasm = compiler.compileWASM(ast);
-      console.log(
-        `[${VERSION}] Main: WASM binary generated, size: ${wasm.length} bytes`,
-      );
-      wasmOutput.textContent = Array.from(wasm)
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join(" ");
-
-      // 4. Execution
-      phase = "Execution";
-      console.log(`[${VERSION}] Main: Step 4 - Execution...`);
-      const { instance } = (await WebAssembly.instantiate(wasm)) as any;
-      const result = (instance.exports.main as Function)();
-      console.log(`[${VERSION}] Main: Execution result:`, result);
-      resultOutput.textContent = `Result: ${result}`;
-
-      updateStatus();
-    } catch (e: any) {
-      updateStatus(`Error: ${phase}: ${e.message || e}`);
-
-      // Visual error marker
-      const msg = e.message || "";
-      const match = msg.match(/line (\d+), col (\d+)/);
-      if (match) {
-        const l = parseInt(match[1]);
-        const c = parseInt(match[2]);
-        const sourceLines = code.split("\n");
-        const errorLineText = sourceLines[l - 1] || "";
-
-        // Construct a line that inserts #### at the error point
-        const highlightedLine =
-          errorLineText.substring(0, c - 1) +
-          "####" +
-          errorLineText.substring(c - 1);
-
-        resultOutput.innerHTML = `<div style="color: #f44747; font-family: monospace; white-space: pre;">Error: ${phase}: ${msg}<br/><br/>${errorLineText}<br/><span style="color: #4ec9b0; font-weight: bold;">${highlightedLine}</span></div>`;
-      } else {
-        resultOutput.textContent = `Error: ${phase}: ${e}`;
-      }
-    }
-  } catch (e: any) {
-    console.error(`[${VERSION}] Main: ERROR during compilation:`, e);
-    updateStatus(`Error: Initialization: ${e.message || e}`);
-    resultOutput.textContent = "Error: " + e;
+  if (currentWorker) {
+    console.log(`[${VERSION}] Main: Aborting previous worker...`);
+    abortExecution(true);
   }
+
+  updateStatus(); // Reset status
+  lexOutput.textContent = "";
+  astOutput.textContent = "";
+  watOutput.textContent = "";
+  wasmOutput.textContent = "";
+  resultOutput.textContent = "";
+
+  startTime = new Date();
+  infoOutput.textContent = `Start time: ${startTime.toLocaleTimeString()}\n`;
+  appendToInfo(`Execution timeout in seconds: ${timeoutSeconds}`);
+
+  if (!code.trim()) {
+    resultOutput.textContent = "Error: Code is empty";
+    appendToInfo("End state: Error (Empty code)");
+    appendToInfo(`End time: ${new Date().toLocaleTimeString()}`);
+    return;
+  }
+
+  // Create new worker
+  currentWorker = new Worker("./js/worker.js", { type: "module" });
+
+  // Set timeout
+  timeoutTimer = setTimeout(() => {
+    console.log(`[${VERSION}] Main: Execution timeout reached`);
+    abortExecution(false, true);
+  }, timeoutSeconds * 1000);
+
+  currentWorker.onmessage = (e) => {
+    const { type, payload } = e.data;
+    switch (type) {
+      case "lex":
+        lexOutput.textContent = payload;
+        break;
+      case "ast":
+        astOutput.textContent = payload;
+        break;
+      case "wat":
+        watOutput.textContent = payload;
+        break;
+      case "wasm":
+        wasmOutput.textContent = payload;
+        break;
+      case "log":
+        const logLine = document.createElement("div");
+        logLine.textContent = `Print: ${payload}`;
+        resultOutput.appendChild(logLine);
+        break;
+      case "result":
+        if (timeoutTimer) clearTimeout(timeoutTimer);
+        const resultLine = document.createElement("div");
+        resultLine.textContent = payload;
+        resultOutput.appendChild(resultLine);
+        updateStatus();
+        appendToInfo("End state: normal");
+        appendToInfo(`End time: ${new Date().toLocaleTimeString()}`);
+        currentWorker?.terminate();
+        currentWorker = null;
+        break;
+      case "error":
+        if (timeoutTimer) clearTimeout(timeoutTimer);
+        updateStatus(`Error: ${payload}`);
+        const errorLine = document.createElement("div");
+
+        const msg = payload || "";
+        const match = msg.match(/line (\d+), col (\d+)/);
+        if (match) {
+          const l = parseInt(match[1]);
+          const c = parseInt(match[2]);
+          const sourceLines = editor.value.split("\n");
+          const errorLineText = sourceLines[l - 1] || "";
+          const highlightedLine =
+            errorLineText.substring(0, c - 1) +
+            "####" +
+            errorLineText.substring(c - 1);
+
+          errorLine.innerHTML =
+            `<div style="color: #f44747; font-family: monospace; white-space: pre-wrap;">` +
+            `Error: ${msg}<br/>` +
+            `line: ${errorLineText}<br/>` +
+            `line with marker: ${highlightedLine}</div>`;
+        } else {
+          errorLine.textContent = `Error: #### ${payload} ####`;
+        }
+
+        resultOutput.appendChild(errorLine);
+        appendToInfo(`End state: Error (${payload})`);
+        appendToInfo(`End time: ${new Date().toLocaleTimeString()}`);
+        currentWorker?.terminate();
+        currentWorker = null;
+        break;
+    }
+  };
+
+  currentWorker.postMessage({ type: "compile", code });
 }
 
 // Tab Switching Logic
@@ -260,6 +302,7 @@ if (editor) {
       } else {
         // Regular Tab in Editing mode or Escaped with sequence broken
         e.preventDefault();
+        handleIndentation(e.shiftKey);
       }
       return;
     }
@@ -307,6 +350,14 @@ if (compileBtn) {
   console.error(`[${VERSION}] UI: Could not find #compile-btn element!`);
 }
 
+const abortBtn = document.getElementById("abort-btn");
+if (abortBtn) {
+  abortBtn.addEventListener("click", () => {
+    console.log(`[${VERSION}] UI: Abort button clicked`);
+    abortExecution();
+  });
+}
+
 // Open File Logic
 const loadFileBtn = document.getElementById("load-file-btn");
 const fileInput = document.getElementById("file-input") as HTMLInputElement;
@@ -352,7 +403,7 @@ if (saveBtn) {
 }
 
 // Keyboard Shortcuts
-window.addEventListener("keydown", (e) => {
+const handleGlobalKeydown = (e: KeyboardEvent) => {
   if (e.key === "F8") {
     e.preventDefault();
     compileAndRun();
@@ -365,6 +416,23 @@ window.addEventListener("keydown", (e) => {
   } else {
     if (e.key !== "Shift") escCount = 0;
   }
-});
+};
+
+const win = window as any;
+if (win._pythonKeydown) {
+  window.removeEventListener("keydown", win._pythonKeydown);
+}
+window.addEventListener("keydown", handleGlobalKeydown);
+win._pythonKeydown = handleGlobalKeydown;
 
 console.log(`[${VERSION}] Python-to-WASM Compiler Initialized`);
+
+// Ensure the initial active tab is shown
+const initialTab = document.querySelector(".tab-btn.active") as HTMLElement;
+if (initialTab) {
+  console.log(
+    `[${VERSION}] UI: Selecting initial tab:`,
+    initialTab.dataset.tab,
+  );
+  initialTab.click();
+}

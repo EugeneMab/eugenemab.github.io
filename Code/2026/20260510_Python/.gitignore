@@ -1,5 +1,5 @@
 # Dependencies
-src/node_modules/
+node_modules/
 
 # Compilation Output
 
@@ -16,5 +16,5 @@ yarn-error.log*
 
 # Project Specific
 pub/js/
-src/coverage/
-src/test_output/
+coverage/
+test_output/
