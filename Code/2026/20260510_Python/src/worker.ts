@@ -62,11 +62,11 @@ self.onmessage = async (e) => {
         wasm,
         importObject,
       )) as any;
-      
+
       // If the code is an infinite loop, this will never return
       // unless the worker is terminated.
       const result = (instance.exports.main as Function)();
-      
+
       self.postMessage({ type: "result", payload: `Result: ${result}` });
     } catch (err: any) {
       self.postMessage({ type: "error", payload: err.message || String(err) });

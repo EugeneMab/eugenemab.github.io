@@ -5,6 +5,15 @@ const VERSION = "1.0.3 - " + new Date().toLocaleTimeString();
 let isEscapedMode = false;
 let escCount = 0;
 let currentWorker: Worker | null = null;
+let timeoutTimer: any = null;
+let startTime: Date | null = null;
+
+function appendToInfo(text: string) {
+  const infoOutput = document.getElementById("info-output");
+  if (infoOutput) {
+    infoOutput.textContent += text + "\n";
+  }
+}
 
 function updateStatus(errorText?: string) {
   const statusLine = document.getElementById("status-line");
@@ -31,14 +40,27 @@ function updateStatus(errorText?: string) {
   }
 }
 
-function abortExecution(isNewStart = false) {
+function abortExecution(isNewStart = false, isTimeout = false) {
+  if (timeoutTimer) {
+    clearTimeout(timeoutTimer);
+    timeoutTimer = null;
+  }
+
   if (currentWorker) {
     currentWorker.terminate();
     currentWorker = null;
     if (!isNewStart) {
-      updateStatus("Error: Aborted");
+      const state = isTimeout ? "timeout" : "aborted";
+      updateStatus(`Error: ${state.charAt(0).toUpperCase() + state.slice(1)}`);
       const resultOutput = document.getElementById("result-output")!;
-      resultOutput.textContent = "Execution aborted by user.";
+      const abortLine = document.createElement("div");
+      abortLine.textContent = isTimeout
+        ? "Execution timed out."
+        : "Execution aborted by user.";
+      resultOutput.appendChild(abortLine);
+
+      appendToInfo(`End state: ${state}`);
+      appendToInfo(`End time: ${new Date().toLocaleTimeString()}`);
     }
   }
 }
@@ -52,8 +74,13 @@ async function compileAndRun() {
   const watOutput = document.getElementById("wat-output")!;
   const wasmOutput = document.getElementById("wasm-output")!;
   const resultOutput = document.getElementById("result-output")!;
+  const infoOutput = document.getElementById("info-output")!;
+  const timeoutInput = document.getElementById(
+    "timeout-input",
+  ) as HTMLInputElement;
 
   const code = editor.value;
+  const timeoutSeconds = parseInt(timeoutInput.value) || 10;
 
   if (currentWorker) {
     console.log(`[${VERSION}] Main: Aborting previous worker...`);
@@ -65,15 +92,27 @@ async function compileAndRun() {
   astOutput.textContent = "";
   watOutput.textContent = "";
   wasmOutput.textContent = "";
-  resultOutput.textContent = "Compiling...";
+  resultOutput.textContent = "";
+
+  startTime = new Date();
+  infoOutput.textContent = `Start time: ${startTime.toLocaleTimeString()}\n`;
+  appendToInfo(`Execution timeout in seconds: ${timeoutSeconds}`);
 
   if (!code.trim()) {
     resultOutput.textContent = "Error: Code is empty";
+    appendToInfo("End state: Error (Empty code)");
+    appendToInfo(`End time: ${new Date().toLocaleTimeString()}`);
     return;
   }
 
   // Create new worker
   currentWorker = new Worker("./js/worker.js", { type: "module" });
+
+  // Set timeout
+  timeoutTimer = setTimeout(() => {
+    console.log(`[${VERSION}] Main: Execution timeout reached`);
+    abortExecution(false, true);
+  }, timeoutSeconds * 1000);
 
   currentWorker.onmessage = (e) => {
     const { type, payload } = e.data;
@@ -96,14 +135,24 @@ async function compileAndRun() {
         resultOutput.appendChild(logLine);
         break;
       case "result":
-        resultOutput.textContent = payload;
+        if (timeoutTimer) clearTimeout(timeoutTimer);
+        const resultLine = document.createElement("div");
+        resultLine.textContent = payload;
+        resultOutput.appendChild(resultLine);
         updateStatus();
+        appendToInfo("End state: normal");
+        appendToInfo(`End time: ${new Date().toLocaleTimeString()}`);
         currentWorker?.terminate();
         currentWorker = null;
         break;
       case "error":
+        if (timeoutTimer) clearTimeout(timeoutTimer);
         updateStatus(`Error: ${payload}`);
-        resultOutput.textContent = `Error: ${payload}`;
+        const errorLine = document.createElement("div");
+        errorLine.textContent = `Error: #### ${payload} ####`;
+        resultOutput.appendChild(errorLine);
+        appendToInfo(`End state: Error (${payload})`);
+        appendToInfo(`End time: ${new Date().toLocaleTimeString()}`);
         currentWorker?.terminate();
         currentWorker = null;
         break;
@@ -232,6 +281,7 @@ if (editor) {
       } else {
         // Regular Tab in Editing mode or Escaped with sequence broken
         e.preventDefault();
+        handleIndentation(e.shiftKey);
       }
       return;
     }
@@ -332,7 +382,7 @@ if (saveBtn) {
 }
 
 // Keyboard Shortcuts
-window.addEventListener("keydown", (e) => {
+const handleGlobalKeydown = (e: KeyboardEvent) => {
   if (e.key === "F8") {
     e.preventDefault();
     compileAndRun();
@@ -345,6 +395,23 @@ window.addEventListener("keydown", (e) => {
   } else {
     if (e.key !== "Shift") escCount = 0;
   }
-});
+};
+
+const win = window as any;
+if (win._pythonKeydown) {
+  window.removeEventListener("keydown", win._pythonKeydown);
+}
+window.addEventListener("keydown", handleGlobalKeydown);
+win._pythonKeydown = handleGlobalKeydown;
 
 console.log(`[${VERSION}] Python-to-WASM Compiler Initialized`);
+
+// Ensure the initial active tab is shown
+const initialTab = document.querySelector(".tab-btn.active") as HTMLElement;
+if (initialTab) {
+  console.log(
+    `[${VERSION}] UI: Selecting initial tab:`,
+    initialTab.dataset.tab,
+  );
+  initialTab.click();
+}

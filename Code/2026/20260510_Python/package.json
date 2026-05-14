@@ -7,7 +7,7 @@
   "scripts": {
     "test": "vitest run --coverage",
     "test:ui": "npx playwright test ui.test.ts",
-    "serve": "node serve.js",
+    "serve": "node src/serve.js",
     "coverage": "c8 report --reporter=text"
   },
   "devDependencies": {

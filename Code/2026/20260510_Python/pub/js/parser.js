@@ -28,7 +28,9 @@ export class Parser {
             }
             if (this.peekNext()?.type === TokenType.LPAREN) {
                 const call = this.parseCall();
-                if (this.match(TokenType.NEWLINE) || this.isAtEnd() || this.check(TokenType.DEDENT)) {
+                if (this.match(TokenType.NEWLINE) ||
+                    this.isAtEnd() ||
+                    this.check(TokenType.DEDENT)) {
                     // statement call
                 }
                 return call;

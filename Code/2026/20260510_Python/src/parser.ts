@@ -91,7 +91,11 @@ export class Parser {
       }
       if (this.peekNext()?.type === TokenType.LPAREN) {
         const call = this.parseCall();
-        if (this.match(TokenType.NEWLINE) || this.isAtEnd() || this.check(TokenType.DEDENT)) {
+        if (
+          this.match(TokenType.NEWLINE) ||
+          this.isAtEnd() ||
+          this.check(TokenType.DEDENT)
+        ) {
           // statement call
         }
         return call;
@@ -122,7 +126,10 @@ export class Parser {
   }
 
   private parseCall(): CallExpressionNode {
-    const callee = this.consume(TokenType.IDENTIFIER, "Expect function name").value;
+    const callee = this.consume(
+      TokenType.IDENTIFIER,
+      "Expect function name",
+    ).value;
     this.consume(TokenType.LPAREN, "Expect '('");
     const args: ASTNode[] = [];
     if (!this.check(TokenType.RPAREN)) {

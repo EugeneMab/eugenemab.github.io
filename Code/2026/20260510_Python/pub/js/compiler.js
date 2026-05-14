@@ -96,8 +96,18 @@ export class Compiler {
         // 2. Import Section
         const importSection = this.createSection(2, [
             this.encodeVector([
-                [...this.encodeString("env"), ...this.encodeString("print"), 0x00, 0x00],
-                [...this.encodeString("env"), ...this.encodeString("sleep"), 0x00, 0x00],
+                [
+                    ...this.encodeString("env"),
+                    ...this.encodeString("print"),
+                    0x00,
+                    0x00,
+                ],
+                [
+                    ...this.encodeString("env"),
+                    ...this.encodeString("sleep"),
+                    0x00,
+                    0x00,
+                ],
             ]),
         ]);
         // 3. Function Section
@@ -175,13 +185,17 @@ export class Compiler {
                 ]; // local.set
             case "While":
                 return [
-                    0x02, 0x40, // block
-                    0x03, 0x40, // loop
+                    0x02,
+                    0x40, // block
+                    0x03,
+                    0x40, // loop
                     ...this.emitExpressionBinary(node.condition),
                     0x45, // i32.eqz
-                    0x0d, 0x01, // br_if 1
+                    0x0d,
+                    0x01, // br_if 1
                     ...node.body.map((s) => this.emitStatementBinary(s)).flat(),
-                    0x0c, 0x00, // br 0
+                    0x0c,
+                    0x00, // br 0
                     0x0b, // end
                     0x0b, // end
                 ];

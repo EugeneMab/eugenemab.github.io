@@ -5,11 +5,11 @@
     "strict": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "outDir": "../pub/js",
-    "rootDir": ".",
+    "outDir": "./pub/js",
+    "rootDir": "./src",
     "sourceMap": false,
     "lib": ["ESNext", "DOM", "WebWorker"]
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "**/*.test.ts", "vitest.config.ts"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "src/**/*.test.ts", "vitest.config.ts"]
 }

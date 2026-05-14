@@ -35,22 +35,25 @@ async function run() {
         // Simple busy wait in Node for verification
         const start = Date.now();
         while (Date.now() - start < ms);
-      }
-    }
+      },
+    },
   };
 
   console.log("Instantiating WASM...");
-  const { instance } = await WebAssembly.instantiate(wasm, importObject) as any;
-  
+  const { instance } = (await WebAssembly.instantiate(
+    wasm,
+    importObject,
+  )) as any;
+
   console.log("Starting Execution (will terminate after 5 iterations)...");
-  
-  // We run the function in a way that we can "interrupt" it? 
-  // No, WASM execution is synchronous. 
+
+  // We run the function in a way that we can "interrupt" it?
+  // No, WASM execution is synchronous.
   // But our 'print' callback can throw an error to stop it!
-  
+
   try {
     const main = instance.exports.main as Function;
-    
+
     // Patch print to throw after 5
     const originalPrint = importObject.env.print;
     importObject.env.print = (val: number) => {
@@ -63,14 +66,16 @@ async function run() {
     main();
   } catch (err: any) {
     if (err.message === "TERMINATE_FOR_VERIFICATION") {
-      console.log("✅ Successfully terminated infinite loop after 5 iterations.");
+      console.log(
+        "✅ Successfully terminated infinite loop after 5 iterations.",
+      );
     } else {
       throw err;
     }
   }
 }
 
-run().catch(err => {
+run().catch((err) => {
   console.error("❌ Verification failed:", err);
   process.exit(1);
 });

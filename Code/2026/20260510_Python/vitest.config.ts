@@ -3,15 +3,15 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   test: {
     environment: "jsdom",
-    include: ["**/*.vitest.test.ts", "unit-tests.test.ts"],
+    include: ["src/**/*.vitest.test.ts", "src/unit-tests.test.ts"],
     coverage: {
       provider: "v8",
       include: [
-        "lexer.ts",
-        "parser.ts",
-        "compiler.ts",
-        "main.ts",
-        "start_host.ts",
+        "src/lexer.ts",
+        "src/parser.ts",
+        "src/compiler.ts",
+        "src/main.ts",
+        "src/start_host.ts",
       ],
       thresholds: {
         lines: 60,
