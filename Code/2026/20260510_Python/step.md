@@ -41,13 +41,13 @@
     - [x] `test_error_ui`: Confirm line/col highlighting for syntax errors.
 
 ## Step 6: Control Flow & Booleans
-- [ ] Implement `if`, `elif`, `else` statements.
-- [ ] Add boolean literals (`True`, `False`) and logic (`and`, `or`, `not`).
-- [ ] Implement comparison operators (`==`, `!=`, `<`, `>`, `<=`, `>=`).
-- [ ] **Granular Testing:**
-    - [ ] `test_if_else`: Basic branching.
-    - [ ] `test_elif_chain`: Multiple condition branches.
-    - [ ] `test_boolean_logic`: Complex `and/or/not` combinations.
+- [x] Implement `if`, `elif`, `else` statements.
+- [x] Add boolean literals (`True`, `False`) and logic (`and`, `or`, `not`).
+- [x] Implement comparison operators (`==`, `!=`, `<`, `>`, `<=`, `>=`).
+- [x] **Granular Testing:**
+    - [x] `test_if_else`: Basic branching.
+    - [x] `test_elif_chain`: Multiple condition branches.
+    - [x] `test_boolean_logic`: Complex `and/or/not` combinations.
 
 ## Step 7: Parameters & Scoping
 - [ ] Support function parameters and multiple arguments.

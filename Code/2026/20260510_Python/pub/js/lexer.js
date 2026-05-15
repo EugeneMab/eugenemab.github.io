@@ -6,11 +6,24 @@ export var TokenType;
     TokenType["IDENTIFIER"] = "IDENTIFIER";
     TokenType["NUMBER"] = "NUMBER";
     TokenType["EQUALS"] = "EQUALS";
+    TokenType["EQUALS_EQUALS"] = "EQUALS_EQUALS";
+    TokenType["NOT_EQUALS"] = "NOT_EQUALS";
+    TokenType["LESS"] = "LESS";
+    TokenType["GREATER"] = "GREATER";
     TokenType["PLUS"] = "PLUS";
     TokenType["MINUS"] = "MINUS";
+    TokenType["STAR"] = "STAR";
+    TokenType["SLASH"] = "SLASH";
     TokenType["COLON"] = "COLON";
     TokenType["WHILE"] = "WHILE";
+    TokenType["IF"] = "IF";
+    TokenType["ELIF"] = "ELIF";
+    TokenType["ELSE"] = "ELSE";
+    TokenType["AND"] = "AND";
+    TokenType["OR"] = "OR";
+    TokenType["NOT"] = "NOT";
     TokenType["TRUE"] = "TRUE";
+    TokenType["FALSE"] = "FALSE";
     TokenType["NEWLINE"] = "NEWLINE";
     TokenType["INDENT"] = "INDENT";
     TokenType["DEDENT"] = "DEDENT";
@@ -75,11 +88,29 @@ export class Lexer {
         this.advance();
         switch (char) {
             case "=":
+                if (this.peek() === "=") {
+                    this.advance();
+                    return this.createToken(TokenType.EQUALS_EQUALS, "==");
+                }
                 return this.createToken(TokenType.EQUALS, "=");
+            case "!":
+                if (this.peek() === "=") {
+                    this.advance();
+                    return this.createToken(TokenType.NOT_EQUALS, "!=");
+                }
+                throw new Error(`Unexpected character: ! at line ${this.line}`);
+            case "<":
+                return this.createToken(TokenType.LESS, "<");
+            case ">":
+                return this.createToken(TokenType.GREATER, ">");
             case "+":
                 return this.createToken(TokenType.PLUS, "+");
             case "-":
                 return this.createToken(TokenType.MINUS, "-");
+            case "*":
+                return this.createToken(TokenType.STAR, "*");
+            case "/":
+                return this.createToken(TokenType.SLASH, "/");
             case ":":
                 return this.createToken(TokenType.COLON, ":");
             case "(":
@@ -148,7 +179,14 @@ export class Lexer {
             def: TokenType.DEF,
             return: TokenType.RETURN,
             while: TokenType.WHILE,
+            if: TokenType.IF,
+            elif: TokenType.ELIF,
+            else: TokenType.ELSE,
+            and: TokenType.AND,
+            or: TokenType.OR,
+            not: TokenType.NOT,
             True: TokenType.TRUE,
+            False: TokenType.FALSE,
         };
         const type = keywords[value] || TokenType.IDENTIFIER;
         return { type, value, line: this.line, col: startCol };

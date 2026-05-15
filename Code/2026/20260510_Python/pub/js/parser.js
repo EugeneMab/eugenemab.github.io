@@ -22,6 +22,8 @@ export class Parser {
             return this.parseReturn();
         if (this.match(TokenType.WHILE))
             return this.parseWhile();
+        if (this.match(TokenType.IF))
+            return this.parseIf();
         if (this.peek().type === TokenType.IDENTIFIER) {
             if (this.peekNext()?.type === TokenType.EQUALS) {
                 return this.parseAssignment();
@@ -41,6 +43,36 @@ export class Parser {
             return null;
         const token = this.peek();
         throw new Error(`Unexpected token: ${token.type} at line ${token.line}, col ${token.col}`);
+    }
+    parseIf() {
+        const condition = this.parseExpression();
+        this.consume(TokenType.COLON, "Expect ':' after if condition");
+        this.consume(TokenType.NEWLINE, "Expect newline after ':'");
+        this.consume(TokenType.INDENT, "Expect indent after if");
+        const thenBranch = [];
+        while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
+            const node = this.parseStatement();
+            if (node)
+                thenBranch.push(node);
+        }
+        this.consume(TokenType.DEDENT, "Expect dedent after if body");
+        let elseBranch = null;
+        if (this.match(TokenType.ELIF)) {
+            elseBranch = [this.parseIf()];
+        }
+        else if (this.match(TokenType.ELSE)) {
+            this.consume(TokenType.COLON, "Expect ':' after else");
+            this.consume(TokenType.NEWLINE, "Expect newline after ':'");
+            this.consume(TokenType.INDENT, "Expect indent after else");
+            elseBranch = [];
+            while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
+                const node = this.parseStatement();
+                if (node)
+                    elseBranch.push(node);
+            }
+            this.consume(TokenType.DEDENT, "Expect dedent after else body");
+        }
+        return { type: "If", condition, thenBranch, elseBranch };
     }
     parseWhile() {
         const condition = this.parseExpression();
@@ -99,16 +131,68 @@ export class Parser {
         return { type: "Return", value };
     }
     parseExpression() {
-        return this.parseAddition();
+        return this.parseOr();
     }
-    parseAddition() {
-        let left = this.parsePrimary();
-        while (this.match(TokenType.PLUS, TokenType.MINUS)) {
-            const operator = this.previous().type === TokenType.PLUS ? "+" : "-";
-            const right = this.parsePrimary();
+    parseOr() {
+        let left = this.parseAnd();
+        while (this.match(TokenType.OR)) {
+            const operator = "or";
+            const right = this.parseAnd();
             left = { type: "BinaryExpression", left, operator, right };
         }
         return left;
+    }
+    parseAnd() {
+        let left = this.parseNot();
+        while (this.match(TokenType.AND)) {
+            const operator = "and";
+            const right = this.parseNot();
+            left = { type: "BinaryExpression", left, operator, right };
+        }
+        return left;
+    }
+    parseNot() {
+        if (this.match(TokenType.NOT)) {
+            const operator = "not";
+            const argument = this.parseNot();
+            return { type: "UnaryExpression", operator, argument };
+        }
+        return this.parseComparison();
+    }
+    parseComparison() {
+        let left = this.parseAddition();
+        while (this.match(TokenType.EQUALS_EQUALS, TokenType.NOT_EQUALS, TokenType.LESS, TokenType.GREATER)) {
+            const operator = this.previous().value;
+            const right = this.parseAddition();
+            left = { type: "BinaryExpression", left, operator, right };
+        }
+        return left;
+    }
+    parseAddition() {
+        let left = this.parseMultiplication();
+        while (this.match(TokenType.PLUS, TokenType.MINUS)) {
+            const operator = this.previous().type === TokenType.PLUS ? "+" : "-";
+            const right = this.parseMultiplication();
+            left = { type: "BinaryExpression", left, operator, right };
+        }
+        return left;
+    }
+    parseMultiplication() {
+        let left = this.parseUnary();
+        while (this.match(TokenType.STAR, TokenType.SLASH)) {
+            const operator = this.previous().type === TokenType.STAR ? "*" : "/";
+            const right = this.parseUnary();
+            left = { type: "BinaryExpression", left, operator, right };
+        }
+        return left;
+    }
+    parseUnary() {
+        if (this.match(TokenType.MINUS)) {
+            const operator = "-";
+            const argument = this.parseUnary();
+            return { type: "UnaryExpression", operator, argument };
+        }
+        return this.parsePrimary();
     }
     parsePrimary() {
         if (this.match(TokenType.NUMBER)) {
@@ -116,6 +200,9 @@ export class Parser {
         }
         if (this.match(TokenType.TRUE)) {
             return { type: "Literal", value: 1 };
+        }
+        if (this.match(TokenType.FALSE)) {
+            return { type: "Literal", value: 0 };
         }
         if (this.match(TokenType.IDENTIFIER)) {
             const name = this.previous().value;
