@@ -158,6 +158,31 @@ describe("Compiler", () => {
         expected: 5,
       },
       { code: "def main():\n    return (10 + 2) - 3", expected: 9 },
+      { code: "def main():\n    return 2 * 3 + 4", expected: 10 },
+      { code: "def main():\n    return 2 * (3 + 4)", expected: 14 },
+      { code: "def main():\n    return 1 + -5", expected: -4 },
+      { code: "def main():\n    return 10 / 2", expected: 5 },
+      { code: "def main():\n    return (10 - 2) * -3", expected: -24 },
+      {
+        code: "def main():\n    if 10 > 5:\n        return 1\n    else:\n        return 0",
+        expected: 1,
+      },
+      {
+        code: "def main():\n    x = 10\n    if x == 5:\n        return 1\n    elif x == 10:\n        return 2\n    else:\n        return 3",
+        expected: 2,
+      },
+      {
+        code: "def main():\n    if True and False:\n        return 1\n    else:\n        return 0",
+        expected: 0,
+      },
+      {
+        code: "def main():\n    if True or False:\n        return 1\n    else:\n        return 0",
+        expected: 1,
+      },
+      {
+        code: "def main():\n    if not False:\n        return 42\n    return 0",
+        expected: 42,
+      },
     ];
     for (const c of cases) {
       const lexer = new Lexer(c.code);

@@ -6,11 +6,24 @@ export enum TokenType {
   IDENTIFIER = "IDENTIFIER",
   NUMBER = "NUMBER",
   EQUALS = "EQUALS",
+  EQUALS_EQUALS = "EQUALS_EQUALS",
+  NOT_EQUALS = "NOT_EQUALS",
+  LESS = "LESS",
+  GREATER = "GREATER",
   PLUS = "PLUS",
   MINUS = "MINUS",
+  STAR = "STAR",
+  SLASH = "SLASH",
   COLON = "COLON",
   WHILE = "WHILE",
+  IF = "IF",
+  ELIF = "ELIF",
+  ELSE = "ELSE",
+  AND = "AND",
+  OR = "OR",
+  NOT = "NOT",
   TRUE = "TRUE",
+  FALSE = "FALSE",
 
   NEWLINE = "NEWLINE",
   INDENT = "INDENT",
@@ -95,11 +108,29 @@ export class Lexer {
     this.advance();
     switch (char) {
       case "=":
+        if (this.peek() === "=") {
+          this.advance();
+          return this.createToken(TokenType.EQUALS_EQUALS, "==");
+        }
         return this.createToken(TokenType.EQUALS, "=");
+      case "!":
+        if (this.peek() === "=") {
+          this.advance();
+          return this.createToken(TokenType.NOT_EQUALS, "!=");
+        }
+        throw new Error(`Unexpected character: ! at line ${this.line}`);
+      case "<":
+        return this.createToken(TokenType.LESS, "<");
+      case ">":
+        return this.createToken(TokenType.GREATER, ">");
       case "+":
         return this.createToken(TokenType.PLUS, "+");
       case "-":
         return this.createToken(TokenType.MINUS, "-");
+      case "*":
+        return this.createToken(TokenType.STAR, "*");
+      case "/":
+        return this.createToken(TokenType.SLASH, "/");
       case ":":
         return this.createToken(TokenType.COLON, ":");
       case "(":
@@ -185,7 +216,14 @@ export class Lexer {
       def: TokenType.DEF,
       return: TokenType.RETURN,
       while: TokenType.WHILE,
+      if: TokenType.IF,
+      elif: TokenType.ELIF,
+      else: TokenType.ELSE,
+      and: TokenType.AND,
+      or: TokenType.OR,
+      not: TokenType.NOT,
       True: TokenType.TRUE,
+      False: TokenType.FALSE,
     };
 
     const type = keywords[value] || TokenType.IDENTIFIER;

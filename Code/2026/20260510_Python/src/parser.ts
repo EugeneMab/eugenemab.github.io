@@ -10,11 +10,26 @@ export type ASTNode =
   | IdentifierNode
   | ReturnNode
   | WhileNode
-  | CallExpressionNode;
+  | CallExpressionNode
+  | UnaryExpressionNode
+  | IfNode;
 
 export interface ProgramNode {
   type: "Program";
   body: ASTNode[];
+}
+
+export interface IfNode {
+  type: "If";
+  condition: ASTNode;
+  thenBranch: ASTNode[];
+  elseBranch: ASTNode[] | null;
+}
+
+export interface UnaryExpressionNode {
+  type: "UnaryExpression";
+  operator: string;
+  argument: ASTNode;
 }
 
 export interface FunctionDefNode {
@@ -84,6 +99,7 @@ export class Parser {
     if (this.match(TokenType.DEF)) return this.parseFunctionDef();
     if (this.match(TokenType.RETURN)) return this.parseReturn();
     if (this.match(TokenType.WHILE)) return this.parseWhile();
+    if (this.match(TokenType.IF)) return this.parseIf();
 
     if (this.peek().type === TokenType.IDENTIFIER) {
       if (this.peekNext()?.type === TokenType.EQUALS) {
@@ -109,6 +125,36 @@ export class Parser {
     throw new Error(
       `Unexpected token: ${token.type} at line ${token.line}, col ${token.col}`,
     );
+  }
+
+  private parseIf(): IfNode {
+    const condition = this.parseExpression();
+    this.consume(TokenType.COLON, "Expect ':' after if condition");
+    this.consume(TokenType.NEWLINE, "Expect newline after ':'");
+    this.consume(TokenType.INDENT, "Expect indent after if");
+    const thenBranch: ASTNode[] = [];
+    while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
+      const node = this.parseStatement();
+      if (node) thenBranch.push(node);
+    }
+    this.consume(TokenType.DEDENT, "Expect dedent after if body");
+
+    let elseBranch: ASTNode[] | null = null;
+    if (this.match(TokenType.ELIF)) {
+      elseBranch = [this.parseIf()];
+    } else if (this.match(TokenType.ELSE)) {
+      this.consume(TokenType.COLON, "Expect ':' after else");
+      this.consume(TokenType.NEWLINE, "Expect newline after ':'");
+      this.consume(TokenType.INDENT, "Expect indent after else");
+      elseBranch = [];
+      while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
+        const node = this.parseStatement();
+        if (node) elseBranch.push(node);
+      }
+      this.consume(TokenType.DEDENT, "Expect dedent after else body");
+    }
+
+    return { type: "If", condition, thenBranch, elseBranch };
   }
 
   private parseWhile(): WhileNode {
@@ -184,24 +230,93 @@ export class Parser {
   }
 
   private parseExpression(): ASTNode {
-    return this.parseAddition();
+    return this.parseOr();
   }
 
-  private parseAddition(): ASTNode {
-    let left = this.parsePrimary();
-    while (this.match(TokenType.PLUS, TokenType.MINUS)) {
-      const operator = this.previous().type === TokenType.PLUS ? "+" : "-";
-      const right = this.parsePrimary();
+  private parseOr(): ASTNode {
+    let left = this.parseAnd();
+    while (this.match(TokenType.OR)) {
+      const operator = "or";
+      const right = this.parseAnd();
       left = { type: "BinaryExpression", left, operator, right };
     }
     return left;
   }
+
+  private parseAnd(): ASTNode {
+    let left = this.parseNot();
+    while (this.match(TokenType.AND)) {
+      const operator = "and";
+      const right = this.parseNot();
+      left = { type: "BinaryExpression", left, operator, right };
+    }
+    return left;
+  }
+
+  private parseNot(): ASTNode {
+    if (this.match(TokenType.NOT)) {
+      const operator = "not";
+      const argument = this.parseNot();
+      return { type: "UnaryExpression", operator, argument };
+    }
+    return this.parseComparison();
+  }
+
+  private parseComparison(): ASTNode {
+    let left = this.parseAddition();
+    while (
+      this.match(
+        TokenType.EQUALS_EQUALS,
+        TokenType.NOT_EQUALS,
+        TokenType.LESS,
+        TokenType.GREATER,
+      )
+    ) {
+      const operator = this.previous().value;
+      const right = this.parseAddition();
+      left = { type: "BinaryExpression", left, operator, right };
+    }
+    return left;
+  }
+
+  private parseAddition(): ASTNode {
+    let left = this.parseMultiplication();
+    while (this.match(TokenType.PLUS, TokenType.MINUS)) {
+      const operator = this.previous().type === TokenType.PLUS ? "+" : "-";
+      const right = this.parseMultiplication();
+      left = { type: "BinaryExpression", left, operator, right };
+    }
+    return left;
+  }
+
+  private parseMultiplication(): ASTNode {
+    let left = this.parseUnary();
+    while (this.match(TokenType.STAR, TokenType.SLASH)) {
+      const operator = this.previous().type === TokenType.STAR ? "*" : "/";
+      const right = this.parseUnary();
+      left = { type: "BinaryExpression", left, operator, right };
+    }
+    return left;
+  }
+
+  private parseUnary(): ASTNode {
+    if (this.match(TokenType.MINUS)) {
+      const operator = "-";
+      const argument = this.parseUnary();
+      return { type: "UnaryExpression", operator, argument };
+    }
+    return this.parsePrimary();
+  }
+
   private parsePrimary(): ASTNode {
     if (this.match(TokenType.NUMBER)) {
       return { type: "Literal", value: parseInt(this.previous().value) };
     }
     if (this.match(TokenType.TRUE)) {
       return { type: "Literal", value: 1 };
+    }
+    if (this.match(TokenType.FALSE)) {
+      return { type: "Literal", value: 0 };
     }
     if (this.match(TokenType.IDENTIFIER)) {
       const name = this.previous().value;
