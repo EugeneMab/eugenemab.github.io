@@ -48,25 +48,32 @@ export class Compiler {
             case "Assignment":
                 return (this.emitExpressionWAT(node.value) + `\nlocal.set $${node.target}`);
             case "While":
+                const loopContent = this.emitExpressionWAT(node.condition) +
+                    "\ni32.eqz\nbr_if 1\n" +
+                    node.body
+                        .map((s) => this.emitStatementWAT(s))
+                        .filter((s) => s)
+                        .join("\n") +
+                    "\nbr 0";
                 return (`block\n` +
                     `  loop\n` +
-                    `    ${this.emitExpressionWAT(node.condition)}\n` +
-                    `    i32.eqz\n` +
-                    `    br_if 1\n` +
-                    `    ${node.body.map((s) => this.emitStatementWAT(s)).join("\n")}\n` +
-                    `    br 0\n` +
+                    `${this.indent(this.indent(loopContent))}\n` +
                     `  end\n` +
                     `end`);
             case "If":
-                const thenBranch = node.thenBranch
+                const thenBranch = this.indent(node.thenBranch
                     .map((s) => this.emitStatementWAT(s))
-                    .join("\n");
+                    .filter((s) => s)
+                    .join("\n"));
                 const elseBranch = node.elseBranch
-                    ? `else\n  ${node.elseBranch.map((s) => this.emitStatementWAT(s)).join("\n")}\n`
+                    ? `else\n${this.indent(node.elseBranch
+                        .map((s) => this.emitStatementWAT(s))
+                        .filter((s) => s)
+                        .join("\n"))}\n`
                     : "";
                 return (`${this.emitExpressionWAT(node.condition)}\n` +
                     `if\n` +
-                    `  ${thenBranch}\n` +
+                    `${thenBranch}\n` +
                     `${elseBranch}` +
                     `end`);
             case "CallExpression":
@@ -75,6 +82,14 @@ export class Compiler {
             default:
                 return "";
         }
+    }
+    indent(text) {
+        if (!text)
+            return "";
+        return text
+            .split("\n")
+            .map((line) => "  " + line)
+            .join("\n");
     }
     emitExpressionWAT(node) {
         switch (node.type) {
