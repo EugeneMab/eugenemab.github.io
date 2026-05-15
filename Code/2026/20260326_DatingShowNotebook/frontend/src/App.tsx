@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import { useStore, fromSafeBase64, StoreContext, AppStore } from './store/useStore';
+import { getPageTitle } from './utils/layout';
 import NavigationPane from './components/NavigationPane';
 import TopButtonPane from './components/TopButtonPane';
 import MainBody from './components/MainBody';
@@ -37,6 +38,10 @@ const AppContent: React.FC = () => {
   const { selectedEpisodeId, currentFolderPath } = useStore((s) => {
     return { selectedEpisodeId: s.selectedEpisodeId, currentFolderPath: s.currentFolderPath };
   });
+
+  useEffect(() => {
+    document.title = getPageTitle(currentFolderPath);
+  }, [currentFolderPath]);
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gray-100 text-gray-900">

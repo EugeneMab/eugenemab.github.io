@@ -251,7 +251,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
             }
 
             const { color, marker } = getMessageStyle(m.type, fromPos.gender);
-            const { x1, y1, x2, y2 } = calculateMessageCoords(fromPos, toPos, scale);
+            const { x1, y1, x2, y2 } = calculateMessageCoords(fromPos, toPos, scale, m.type);
 
             const markerEndAttr = marker ? `marker-end="url(#${marker})"` : '';
 

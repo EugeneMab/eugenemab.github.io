@@ -37,7 +37,6 @@ import {
 } from '../utils/layout';
 
 const DEBOUNCE_DELAY_MS = 1000;
-const MIN_DESC_ROWS = 2;
 const MSG_CENTER_DIVIDER = 2;
 
 const MARKER_WIDTH = 10;
@@ -685,7 +684,7 @@ const MainBody: React.FC = () => {
               }
 
               const { color, marker } = getMessageStyle(m.type, fromPos.gender);
-              const { x1, y1, x2, y2 } = calculateMessageCoords(fromPos, toPos, scale);
+              const { x1, y1, x2, y2 } = calculateMessageCoords(fromPos, toPos, scale, m.type);
 
               /**
                * Special Case: Intra-gender messages (Same gender)
