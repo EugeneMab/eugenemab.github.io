@@ -15,6 +15,5 @@ yarn-debug.log*
 yarn-error.log*
 
 # Project Specific
-pub/js/
 coverage/
 test_output/
