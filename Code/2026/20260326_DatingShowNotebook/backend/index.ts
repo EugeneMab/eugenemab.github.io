@@ -419,6 +419,16 @@ export async function handleSSR(req: express.Request, res: express.Response) {
 
       let html = (template || '<!--ssr-outlet-->').replace(`<!--ssr-outlet-->`, appHtml);
 
+      if (initialPath) {
+        const parts = initialPath.split(/[\\/]/);
+        const lastPart = parts[parts.length - 1] || parts[parts.length - 2] || '';
+        const upperLetters = lastPart.replace(/[^A-Z]/g, '');
+        if (upperLetters) {
+          const newTitle = `${upperLetters} - Dating Show Notebook`;
+          html = html.replace(/<title>.*?<\/title>/, `<title>${newTitle}</title>`);
+        }
+      }
+
       if (initialData) {
         const combinedData = {
           data: initialData,

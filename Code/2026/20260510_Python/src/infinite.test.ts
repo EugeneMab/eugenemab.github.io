@@ -8,8 +8,9 @@ test("verify infinite loop and abort", async ({ page }) => {
   // Select infinite loop sample
   await page.selectOption("#sample-select", "sample/infinite.py");
 
-  // Verify editor content
-  await expect(page.locator("#editor")).toContainText("while True:");
+  // Verify editor content - wait for it to load
+  const editor = page.locator("#editor");
+  await expect(editor).toHaveValue(/while True:/, { timeout: 10000 });
 
   // Trigger compile & run
   await page.click("#compile-btn");

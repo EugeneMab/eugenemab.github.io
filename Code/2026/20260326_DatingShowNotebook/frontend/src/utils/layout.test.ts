@@ -7,6 +7,7 @@ import {
   calculateMessageCoords,
   calculatTeamMemberCoords,
   wrapText,
+  getPageTitle,
 } from './layout';
 import { AppData, Person } from '../store/useStore';
 
@@ -114,6 +115,17 @@ describe('layout utils', () => {
       expect(coords.x1).toBe(110);
       expect(coords.y1).toBe(110);
     });
+
+    /* Verifies that bidirectional messages have horizontal offset but connect to the vertical middle. */
+    it('calculates bidirectional coords with horizontal offset only', () => {
+      const fromPos = { x: 100, y: 100, gender: 'male' as const };
+      const toPos = { x: 500, y: 100, gender: 'female' as const };
+      const coords = calculateMessageCoords(fromPos, toPos, 1, 'bidirectional');
+      expect(coords.x1).toBe(110);
+      expect(coords.y1).toBe(100);
+      expect(coords.x2).toBe(490);
+      expect(coords.y2).toBe(100);
+    });
   });
 
   describe('calculatTeamMemberCoords', () => {
@@ -144,6 +156,24 @@ describe('layout utils', () => {
       const lines = wrapText('ExtremelyLongWordThatExceedsWidth', 10, 16);
       expect(lines).toHaveLength(1);
       expect(lines[0]).toBe('ExtremelyLongWordThatExceedsWidth');
+    });
+  });
+
+  describe('getPageTitle', () => {
+    /* Tests the dynamic page title generation based on folder names. */
+    it('returns base title if folderPath is null', () => {
+      expect(getPageTitle(null)).toBe('Dating Show Notebook');
+    });
+
+    /* Verifies extraction of uppercase letters to form the prefix. */
+    it('extracts uppercase letters correctly', () => {
+      expect(getPageTitle('C:\\D\\Def\\AlphaBetaCenter')).toBe('ABC - Dating Show Notebook');
+      expect(getPageTitle('/home/user/AlphaBetaCenter')).toBe('ABC - Dating Show Notebook');
+    });
+
+    /* Ensures the title defaults gracefully if no uppercase letters are found. */
+    it('returns base title if no uppercase letters found', () => {
+      expect(getPageTitle('C:\\D\\lowercasename')).toBe('Dating Show Notebook');
     });
   });
 });

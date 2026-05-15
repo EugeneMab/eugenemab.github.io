@@ -1,10 +1,9 @@
-import { Lexer } from "./lexer.js";
-import { Parser } from "./parser.js";
-import { Compiler } from "./compiler.js";
+import { describe, it, expect } from "vitest";
+import { Lexer } from "./lexer.ts";
+import { Parser } from "./parser.ts";
+import { Compiler } from "./compiler.ts";
 
-async function test() {
-  console.log("Running Compiler Tests...");
-
+describe("Compiler Integration", () => {
   const cases = [
     {
       name: "Basic Return",
@@ -28,9 +27,8 @@ async function test() {
     },
   ];
 
-  let passed = 0;
   for (const c of cases) {
-    try {
+    it(`should pass case: ${c.name}`, async () => {
       const lexer = new Lexer(c.code);
       const tokens = lexer.tokenize();
       const parser = new Parser(tokens);
@@ -40,24 +38,21 @@ async function test() {
       compiler.compileWAT(ast);
       const wasm = compiler.compileWASM(ast);
 
+      const importObject = {
+        env: {
+          print: () => {},
+          sleep: () => {},
+        },
+      };
+
       // Verify by running in WASM runtime
-      const { instance } = (await WebAssembly.instantiate(wasm)) as any;
+      const { instance } = (await WebAssembly.instantiate(
+        wasm,
+        importObject,
+      )) as any;
       const result = (instance.exports.main as Function)();
 
-      if (result === c.expectedResult) {
-        console.log(`✅ [PASS] ${c.name} (Result: ${result})`);
-        passed++;
-      } else {
-        console.log(`❌ [FAIL] ${c.name}`);
-        console.log(`   Expected: ${c.expectedResult}, Actual: ${result}`);
-      }
-    } catch (e) {
-      console.log(`❌ [ERROR] ${c.name}: ${e}`);
-    }
+      expect(result).toBe(c.expectedResult);
+    });
   }
-
-  console.log(`\nTests: ${passed}/${cases.length} passed`);
-  if (passed !== cases.length) process.exit(1);
-}
-
-test();
+});

@@ -1,8 +1,7 @@
-import { Lexer, TokenType } from "./lexer.js";
+import { describe, it, expect } from "vitest";
+import { Lexer, TokenType } from "./lexer.ts";
 
-function test() {
-  console.log("Running Lexer Tests...");
-
+describe("Lexer Legacy Tests", () => {
   const cases = [
     {
       name: "Basic Function",
@@ -102,40 +101,17 @@ function test() {
     },
   ];
 
-  let passed = 0;
-  cases.forEach((c) => {
-    try {
+  for (const c of cases) {
+    it(`should pass case: ${c.name}`, () => {
       const lexer = new Lexer(c.code);
       const tokens = lexer.tokenize();
       const types = tokens.map((t) => t.type);
-
-      const isMatch = JSON.stringify(types) === JSON.stringify(c.expected);
-      if (isMatch) {
-        console.log(`✅ [PASS] ${c.name}`);
-        passed++;
-      } else {
-        console.log(`❌ [FAIL] ${c.name}`);
-        console.log("   Expected:", c.expected.join(", "));
-        console.log("   Actual:  ", types.join(", "));
-      }
-    } catch (e) {
-      console.log(`❌ [ERROR] ${c.name}: ${e}`);
-    }
-  });
-
-  // Test error case
-  try {
-    console.log("Testing unexpected character error...");
-    const lexer = new Lexer("@");
-    lexer.tokenize();
-    console.log("❌ [FAIL] Expected error for @");
-  } catch {
-    console.log("✅ [PASS] Unexpected character error caught");
-    passed++;
+      expect(types).toEqual(c.expected);
+    });
   }
-  const total = cases.length + 1;
-  console.log(`\nTests: ${passed}/${total} passed`);
-  if (passed !== total) process.exit(1);
-}
 
-test();
+  it("should throw on unexpected character error", () => {
+    const lexer = new Lexer("@");
+    expect(() => lexer.tokenize()).toThrow();
+  });
+});

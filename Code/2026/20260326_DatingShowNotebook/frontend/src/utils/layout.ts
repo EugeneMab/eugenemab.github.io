@@ -146,17 +146,28 @@ export function getMessageStyle(type: string, gender: string): { color: string; 
 export function calculateMessageCoords(
   fromPos: { x: number; y: number; gender: string },
   toPos: { x: number; y: number; gender: string },
-  scale: number
+  scale: number,
+  type?: string
 ) {
   const isMale = fromPos.gender === 'male';
   const targetIsMale = toPos.gender === 'male';
 
-  // Offset Y: Males shift down, Females shift up to prevent overlap on same row
-  const vOffset = (isMale ? LINE_OFFSET_Y : -LINE_OFFSET_Y) * scale;
-
   // Offset X: Move away from the image boundary slightly
   const hOffsetFrom = (isMale ? LINE_OFFSET_X : -LINE_OFFSET_X) * scale;
   const hOffsetTo = (targetIsMale ? LINE_OFFSET_X : -LINE_OFFSET_X) * scale;
+
+  // Bidirectional messages should not have vertical offsets and connect to the vertical middle
+  if (type === 'bidirectional') {
+    return {
+      x1: fromPos.x + hOffsetFrom,
+      y1: fromPos.y,
+      x2: toPos.x + hOffsetTo,
+      y2: toPos.y,
+    };
+  }
+
+  // Offset Y: Males shift down, Females shift up to prevent overlap on same row
+  const vOffset = (isMale ? LINE_OFFSET_Y : -LINE_OFFSET_Y) * scale;
 
   return {
     x1: fromPos.x + hOffsetFrom,
@@ -223,4 +234,19 @@ export function wrapText(text: string, maxWidth: number, fontSize: number): stri
     lines.push(currentLine);
   }
   return lines;
+}
+
+/**
+ * Generates a page title based on the current folder path.
+ * Extracts uppercase letters from the folder name.
+ */
+export function getPageTitle(folderPath: string | null): string {
+  const BASE_TITLE = 'Dating Show Notebook';
+  if (!folderPath) {
+    return BASE_TITLE;
+  }
+  const parts = folderPath.split(/[\\/]/);
+  const lastPart = parts[parts.length - 1] || parts[parts.length - 2] || '';
+  const upperLetters = lastPart.replace(/[^A-Z]/g, '');
+  return upperLetters ? `${upperLetters} - ${BASE_TITLE}` : BASE_TITLE;
 }

@@ -1,9 +1,8 @@
-import { Lexer } from "./lexer.js";
-import { Parser } from "./parser.js";
+import { describe, it, expect } from "vitest";
+import { Lexer } from "./lexer.ts";
+import { Parser } from "./parser.ts";
 
-function test() {
-  console.log("Running Parser Tests...");
-
+describe("Parser Legacy Tests", () => {
   const cases = [
     {
       name: "Basic Function AST",
@@ -48,49 +47,28 @@ function test() {
     },
   ];
 
-  let passed = 0;
-  cases.forEach((c) => {
-    try {
+  for (const c of cases) {
+    it(`should pass case: ${c.name}`, () => {
       const lexer = new Lexer(c.code);
       const tokens = lexer.tokenize();
       const parser = new Parser(tokens);
       const ast = parser.parse();
+      expect(c.validate(ast)).toBe(true);
+    });
+  }
 
-      if (c.validate(ast)) {
-        console.log(`✅ [PASS] ${c.name}`);
-        passed++;
-      } else {
-        console.log(`❌ [FAIL] ${c.name}`);
-        console.log("   AST:", JSON.stringify(ast, null, 2));
-      }
-    } catch (e) {
-      console.log(`❌ [ERROR] ${c.name}: ${e}`);
-    }
-  });
-
-  // Test error cases
   const errorCases = [
     { name: "Unexpected token", code: "def main():\n    return 1 2" },
     { name: "Expect function name", code: "def ():" },
     { name: "Expect expression", code: "def main():\n    return +" },
   ];
 
-  errorCases.forEach((ec) => {
-    try {
+  for (const ec of errorCases) {
+    it(`should throw on ${ec.name}`, () => {
       const lexer = new Lexer(ec.code);
       const tokens = lexer.tokenize();
       const parser = new Parser(tokens);
-      parser.parse();
-      console.log(`❌ [FAIL] ${ec.name}: Expected error`);
-    } catch (e) {
-      console.log(`✅ [PASS] ${ec.name} error caught: ${e}`);
-      passed++;
-    }
-  });
-
-  const total = cases.length + errorCases.length;
-  console.log(`\nTests: ${passed}/${total} passed`);
-  if (passed !== total) process.exit(1);
-}
-
-test();
+      expect(() => parser.parse()).toThrow();
+    });
+  }
+});
