@@ -217,6 +217,3 @@ pip-log.txt
 #Aider
 .aider*
 
-# Playwright test results
-Code/2026/20260510_Python/test-results/
-
