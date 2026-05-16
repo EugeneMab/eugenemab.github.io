@@ -165,15 +165,18 @@ describe('layout utils', () => {
       expect(getPageTitle(null)).toBe('Dating Show Notebook');
     });
 
-    /* Verifies extraction of uppercase letters to form the prefix. */
-    it('extracts uppercase letters correctly', () => {
-      expect(getPageTitle('C:\\D\\Def\\AlphaBetaCenter')).toBe('ABC - Dating Show Notebook');
-      expect(getPageTitle('/home/user/AlphaBetaCenter')).toBe('ABC - Dating Show Notebook');
+    /* Verifies that the folder name (cleaned up) is used as the prefix. */
+    it('uses folder name correctly', () => {
+      expect(getPageTitle('C:\\D\\Def\\AlphaBetaCenter')).toBe(
+        'AlphaBetaCenter - Dating Show Notebook'
+      );
+      expect(getPageTitle('/home/user/My_Cool_Show')).toBe('My Cool Show - Dating Show Notebook');
+      expect(getPageTitle('20260326_DatingShowNotebook')).toBe('Dating Show Notebook');
     });
 
-    /* Ensures the title defaults gracefully if no uppercase letters are found. */
-    it('returns base title if no uppercase letters found', () => {
-      expect(getPageTitle('C:\\D\\lowercasename')).toBe('Dating Show Notebook');
+    /* Ensures the title is descriptive even for lowercase folder names. */
+    it('works with lowercase folder names', () => {
+      expect(getPageTitle('C:\\D\\lowercasename')).toBe('lowercasename - Dating Show Notebook');
     });
   });
 });

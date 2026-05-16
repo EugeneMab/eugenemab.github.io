@@ -31,7 +31,7 @@ set UI_RESULT=%ERRORLEVEL%
 echo UI test log: test_output\ui.log
 
 :: Kill background server
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr :7895') do taskkill /F /PID %%a > nul 2>&1
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr LISTENING ^| findstr /C:":7895 "') do taskkill /F /PID %%a > nul 2>&1
 
 if %UI_RESULT% neq 0 (
     echo [ERROR] UI tests failed.

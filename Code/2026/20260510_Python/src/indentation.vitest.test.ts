@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { Lexer } from "./lexer.ts";
-import { Parser } from "./parser.ts";
-import { Compiler } from "./compiler.ts";
+import { Lexer } from "./lexer.js";
+import { Parser } from "./parser.js";
+import { Compiler } from "./compiler.js";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -11,7 +11,7 @@ describe("Compiler WAT Indentation", () => {
   const testIndentation = (
     name: string,
     pythonCode: string,
-    expectedInWat: string[],
+    expectedLines: string[],
   ) => {
     const tokens = new Lexer(pythonCode).tokenize();
     const ast = new Parser(tokens).parse();
@@ -20,12 +20,17 @@ describe("Compiler WAT Indentation", () => {
     // Save verbose output to test_output folder
     const outputDir = path.join(process.cwd(), "test_output");
     if (!fs.existsSync(outputDir)) {
-      fs.mkdirSync(outputDir);
+      fs.mkdirSync(outputDir, { recursive: true });
     }
     const safeName = name.replace(/[^a-z0-9]/gi, "_").toLowerCase();
     fs.writeFileSync(path.join(outputDir, `indent_${safeName}.wat`), wat);
 
-    for (const expected of expectedInWat) {
+    // Check that each expected line exists with its relative indentation
+    // We trim the expectations and the actual lines to check for existence,
+    // but the test name implies we care about the overall structure.
+    for (const expected of expectedLines) {
+      // For now, we still check the exact string as it includes the indentation
+      // that this specific test suite is intended to verify.
       expect(wat).toContain(expected);
     }
   };

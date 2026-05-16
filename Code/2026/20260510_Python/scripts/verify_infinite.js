@@ -1,6 +1,6 @@
-import { Lexer } from "./lexer.js";
-import { Parser } from "./parser.js";
-import { Compiler } from "./compiler.js";
+import { Lexer } from "../pub/js/lexer.js";
+import { Parser } from "../pub/js/parser.js";
+import { Compiler } from "../pub/js/compiler.js";
 async function run() {
     const code = `def main():
     index = 0

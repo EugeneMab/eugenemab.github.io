@@ -1,6 +1,6 @@
-import { Lexer } from "./lexer.js";
-import { Parser } from "./parser.js";
-import { Compiler } from "./compiler.js";
+import { Lexer } from "../pub/js/lexer.js";
+import { Parser } from "../pub/js/parser.js";
+import { Compiler } from "../pub/js/compiler.js";
 import * as fs from "fs";
 import * as path from "path";
 async function verify() {

@@ -238,15 +238,31 @@ export function wrapText(text: string, maxWidth: number, fontSize: number): stri
 
 /**
  * Generates a page title based on the current folder path.
- * Extracts uppercase letters from the folder name.
+ * Uses the folder name (cleaned up) as a prefix.
  */
 export function getPageTitle(folderPath: string | null): string {
   const BASE_TITLE = 'Dating Show Notebook';
   if (!folderPath) {
     return BASE_TITLE;
   }
-  const parts = folderPath.split(/[\\/]/);
-  const lastPart = parts[parts.length - 1] || parts[parts.length - 2] || '';
-  const upperLetters = lastPart.replace(/[^A-Z]/g, '');
-  return upperLetters ? `${upperLetters} - ${BASE_TITLE}` : BASE_TITLE;
+  const parts = folderPath.split(/[\\/]/).filter(Boolean);
+  if (parts.length === 0) return BASE_TITLE;
+
+  let lastPart = parts[parts.length - 1];
+
+  // Remove 8-digit date prefix like 20260326_
+  lastPart = lastPart.replace(/^\d{8}_/, '');
+
+  // Replace underscores and hyphens with spaces
+  const displayPart = lastPart.replace(/[_-]/g, ' ').trim();
+
+  // Avoid redundancy if the folder name is similar to the app name
+  const normalizedDisplay = displayPart.toLowerCase().replace(/\s/g, '');
+  const normalizedBase = BASE_TITLE.toLowerCase().replace(/\s/g, '');
+
+  if (!displayPart || normalizedDisplay === normalizedBase) {
+    return BASE_TITLE;
+  }
+
+  return `${displayPart} - ${BASE_TITLE}`;
 }
