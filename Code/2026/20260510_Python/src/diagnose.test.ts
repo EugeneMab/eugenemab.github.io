@@ -9,7 +9,7 @@ test("diagnose empty output issue", async ({ page }) => {
     console.log(`BROWSER EXCEPTION: ${err.message}`),
   );
 
-  await page.goto("http://localhost:8080");
+  await page.goto("http://localhost:7895");
 
   // 1. Verify script loading
   const scriptLoaded = await page.evaluate(() => {

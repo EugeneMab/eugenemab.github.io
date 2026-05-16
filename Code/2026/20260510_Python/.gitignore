@@ -17,3 +17,4 @@ yarn-error.log*
 # Project Specific
 coverage/
 test_output/
+test-results/

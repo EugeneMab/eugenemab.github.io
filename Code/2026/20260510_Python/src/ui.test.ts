@@ -7,7 +7,7 @@ const samples = [
 ];
 
 test("verify all samples in UI", async ({ page }) => {
-  await page.goto("http://localhost:8080");
+  await page.goto("http://localhost:7895");
 
   // Monitor for console errors
   const errors: string[] = [];

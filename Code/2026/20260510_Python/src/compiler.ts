@@ -63,7 +63,7 @@ export class Compiler {
         return (
           this.emitExpressionWAT(node.value) + `\nlocal.set $${node.target}`
         );
-      case "While":
+      case "While": {
         const loopContent =
           this.emitExpressionWAT(node.condition) +
           "\ni32.eqz\nbr_if 1\n" +
@@ -79,7 +79,8 @@ export class Compiler {
           `  end\n` +
           `end`
         );
-      case "If":
+      }
+      case "If": {
         const thenBranch = this.indent(
           node.thenBranch
             .map((s) => this.emitStatementWAT(s))
@@ -101,6 +102,7 @@ export class Compiler {
           `${elseBranch}` +
           `end`
         );
+      }
       case "CallExpression":
         return (
           node.args.map((a) => this.emitExpressionWAT(a)).join("\n") +

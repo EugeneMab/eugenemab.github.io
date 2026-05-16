@@ -19,6 +19,8 @@ Build a pure client-side compiler that converts a subset of Python into WebAssem
 - Error handling (Exception trapping for division by zero).
 - Functional programming (Lambdas and Closures).
 
+## Roadmap Structure
+The implementation follows a 7-level escalating roadmap, from absolute foundations to advanced runtime internals, ensuring the compiler remains robust as complexity grows. See `step.md` for the detailed execution steps.
 
 ## Technical Limitations & Emulation
 Emulating Python (a dynamic, GC-collected, interpreted language) on WASM (a static, manually managed, binary format) presents several challenges:
