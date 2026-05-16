@@ -1,93 +1,175 @@
-# Implementation Steps
+# Implementation Roadmap (Python-WASM)
 
-## Step 1: Infrastructure & UI Update
-- [x] Update `tsconfig.json` to output to `pub/js`.
-- [x] Update `index.html` to load `js/main.js`.
-- [x] Verify `build.cmd` works with the new structure.
+## 🌟 Level 0: Foundations (Compiler Basics)
+- [x] **Step 1: Infrastructure & UI Update**
+    - [x] Update `tsconfig.json` to output to `pub/js`.
+    - [x] Update `index.html` to load `js/main.js`.
+    - [x] Verify `build.cmd` works with the new structure.
+- [x] **Step 2: Lexer (Python Subset)**
+    - [x] Implement `src/lexer.ts`.
+    - [x] Handle keywords, identifiers, literals, and operators.
+    - [x] Support single-line comments (`#`).
+    - [x] **Crucial:** Implement indentation tracking to emit `INDENT` and `DEDENT` tokens.
+    - [x] **Granular Testing:** `test_keywords`, `test_indentation`, `test_comments`, `test_literals`.
+- [x] **Step 3: Parser (AST)**
+    - [x] Implement `src/parser.ts` with Recursive Descent.
+    - [x] Support parentheses `()` to override operator precedence.
+    - [x] Support unary operators (e.g., `-5`, `not True`).
+    - [x] Support Function definitions (`def`), Assignments, and Arithmetic.
+    - [x] **Granular Testing:** `test_precedence`, `test_unary`, `test_nesting`.
+- [x] **Step 4: Emitter (WAT & WASM)**
+    - [x] Generate human-readable `.wat` and binary `.wasm`.
+    - [x] Encode LEB128 and Section headers.
+    - [x] **Granular Testing:** `test_leb128`, `test_sections`, `test_opcodes`.
+- [x] **Step 5: Execution & Integration**
+    - [x] Connect `main.ts` to `WebAssembly.instantiate`.
+    - [x] **Granular Testing:** `test_runtime_return`, `test_error_ui`.
+- [x] **Step 6: Control Flow & Booleans**
+    - [x] Implement `if`, `elif`, `else` statements.
+    - [x] Add boolean literals (`True`, `False`) and logic (`and`, `or`, `not`).
+    - [x] Implement comparison operators (`==`, `!=`, `<`, `>`, `<=`, `>=`).
+    - [x] **Granular Testing:** `test_if_else`, `test_elif_chain`, `test_boolean_logic`.
+- [ ] **Step 7: Parameters & Scoping**
+    - [ ] Support function parameters and multiple arguments.
+    - [ ] Implement local variable scoping (Stack frames in WASM).
+    - [ ] **Granular Testing:** 
+        - [ ] `test_params`: Verify 0, 1, 2, and 5+ arguments.
+        - [ ] `test_recursion`: Fibonacci and Factorial (tests deep stacking).
+        - [ ] `test_shadowing`: Local variables vs Global variables with same name.
+        - [ ] `test_scoping_nested`: Accessing outer scope variables (if supported).
 
-## Step 2: Lexer (Python Subset)
-- [x] Implement `src/lexer.ts`.
-- [x] Handle keywords, identifiers, literals, and operators.
-- [x] **New:** Support for single-line comments (`#`).
-- [x] **Crucial:** Implement indentation tracking to emit `INDENT` and `DEDENT` tokens.
-- [x] **Granular Testing:**
-    - [x] `test_keywords`: Verify `def`, `return`, `while`, etc.
-    - [x] `test_indentation`: Check mixed spaces/tabs and nested blocks.
-    - [x] `test_comments`: Ensure `#` and trailing text are ignored.
-    - [x] `test_literals`: Validate integers and future float/string placeholders.
+## 🌟 Level 1: Pythonic Thinking
+- [ ] **Step 8: Slicing & Advanced Indexing**
+    - [ ] Support `list[start:stop:step]` and negative indexing.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_list_slicing_basic`: `[1:3]` range.
+        - [ ] `test_list_slicing_step`: `[::2]` every second element.
+        - [ ] `test_negative_indexing`: `list[-1]` for last element.
+        - [ ] `test_string_slicing`: Slicing characters in a string literal.
+- [ ] **Step 9: Comprehensions**
+    - [ ] Implement List and Dict comprehensions (`[x for x in list]`).
+    - [ ] **Granular Testing:** 
+        - [ ] `test_list_comp`: Basic transform `[x * 2 for x in range(5)]`.
+        - [ ] `test_list_comp_if`: Filtering `[x for x in range(10) if x % 2 == 0]`.
+        - [ ] `test_dict_comp`: Key-value generation `{x: x*x for x in range(3)}`.
+        - [ ] `test_nested_comp`: Multi-loop comprehensions.
+- [ ] **Step 10: Iterators & Generators**
+    - [ ] Implement `yield`, `next()`, and `StopIteration` exception.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_generator_basic`: Generator function with multiple `yield`s.
+        - [ ] `test_infinite_sequence`: Fibonacci generator.
+        - [ ] `test_stop_iteration`: Manual `next()` calls until exhaustion.
+- [ ] **Step 11: Context Managers**
+    - [ ] Implement `with` statement and `__enter__`/`__exit__` protocol.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_with_basic`: Successful enter and exit.
+        - [ ] `test_with_cleanup`: Ensuring `__exit__` runs even on failure.
+        - [ ] `test_with_exception`: Handling exceptions raised inside `with` block.
 
-## Step 3: Parser (AST)
-- [x] Implement `src/parser.ts` with Recursive Descent.
-- [x] **New:** Support for parentheses `()` to override operator precedence.
-- [x] **New:** Support for unary operators (e.g., negative numbers like `-5` or `1 + -5`).
-- [x] Support Function definitions (`def`), Assignments, and Arithmetic.
-- [x] **Granular Testing:**
-    - [x] `test_precedence`: Verify `1 + 2 * 3` vs `(1 + 2) * 3`.
-    - [x] `test_unary`: Validate `-x`, `5 + -3`, and `--5`.
-    - [x] `test_nesting`: Ensure deep AST structures for complex expressions.
+## 🌟 Level 2: Object Model & Types
+- [ ] **Step 12: Memory Management & Tagged Unions**
+    - [ ] Implement a Linear Memory Allocator (Bump/Free-list).
+    - [ ] Implement Boxed Values (Tag + Pointer) for dynamic typing.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_malloc`: Basic allocation and alignment.
+        - [ ] `test_type_tags`: Correct tagging for int, float, str, list.
+        - [ ] `test_boxed_ops`: Adding boxed integers vs floating point.
+- [ ] **Step 13: Objects & Classes**
+    - [ ] Implement `class`, `self`, and `__init__`.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_class_init`: Instance attribute initialization.
+        - [ ] `test_method_calls`: Instance methods receiving `self`.
+        - [ ] `test_inheritance`: Basic method overriding.
+- [ ] **Step 14: Dunder Methods**
+    - [ ] Support operator overloading (`__add__`, `__mul__`) and formatting (`__repr__`, `__str__`).
+    - [ ] **Granular Testing:** 
+        - [ ] `test_dunder_add`: Custom `+` behavior.
+        - [ ] `test_dunder_repr`: Custom string representation.
+        - [ ] `test_dunder_len`: Support for `len(obj)`.
+- [ ] **Step 15: Type Hints & Dataclasses**
+    - [ ] Parse type hints and implement `@dataclass` for boilerplate-free objects.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_dataclass_fields`: Auto-generated `__init__` and fields.
+        - [ ] `test_type_validation`: Basic runtime check for hints (optional).
 
-## Step 4: Emitter (WAT & WASM)
-- [x] Generate human-readable `.wat` and binary `.wasm`.
-- [x] Encode LEB128 and Section headers.
-- [x] **Granular Testing:**
-    - [x] `test_leb128`: Verify encoding of large integers.
-    - [x] `test_sections`: Validate Type, Import, Function, and Export sections.
-    - [x] `test_opcodes`: Check mapping of AST nodes to WASM opcodes.
+## 🌟 Level 3: Packaging & Modules
+- [ ] **Step 16: Module System**
+    - [ ] Implement `import` and `from ... import`.
+    - [ ] Manage module namespaces and circular dependencies.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_import_basic`: Importing one file from another.
+        - [ ] `test_import_from`: Importing specific names.
+        - [ ] `test_circular_imports`: Detecting or resolving circularity.
+        - [ ] `test_module_namespace`: Ensuring no global pollution across modules.
+- [ ] **Step 17: Built-ins & Standard Library**
+    - [ ] Emulate `range()`, `abs()`, `len()`, and `print()`.
+    - [ ] Implement `math` module (`sqrt`, `pow`, `sin`, `cos`).
+    - [ ] **Granular Testing:** 
+        - [ ] `test_math_lib`: Precision check for trig functions.
+        - [ ] `test_range_iterator`: Correct start, stop, step behavior.
+        - [ ] `test_abs_len`: Built-in math and collection utilities.
 
-## Step 5: Execution & Integration
-- [x] Connect `main.ts` to `WebAssembly.instantiate`.
-- [x] **Granular Testing:**
-    - [x] `test_runtime_return`: Verify `main()` returns expected values.
-    - [x] `test_error_ui`: Confirm line/col highlighting for syntax errors.
+## 🌟 Level 4: Concurrency & Performance
+- [ ] **Step 18: Async/Await**
+    - [ ] Implement WASM suspension/resumption for `async`.
+    - [ ] Integrate with JS Event Loop for I/O tasks.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_async_sleep`: Waiting for a JS promise.
+        - [ ] `test_await_result`: Capturing values from awaited tasks.
+        - [ ] `test_async_chaining`: Multiple awaits in one coroutine.
+- [ ] **Step 19: Multiprocessing & Threads**
+    - [ ] Utilize Web Workers and `SharedArrayBuffer` for parallelism.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_worker_task`: Spawning a sub-task in a worker.
+        - [ ] `test_shared_memory`: Writing and reading from `SharedArrayBuffer`.
 
-## Step 6: Control Flow & Booleans
-- [x] Implement `if`, `elif`, `else` statements.
-- [x] Add boolean literals (`True`, `False`) and logic (`and`, `or`, `not`).
-- [x] Implement comparison operators (`==`, `!=`, `<`, `>`, `<=`, `>=`).
-- [x] **Granular Testing:**
-    - [x] `test_if_else`: Basic branching.
-    - [x] `test_elif_chain`: Multiple condition branches.
-    - [x] `test_boolean_logic`: Complex `and/or/not` combinations.
+## 🌟 Level 5: Internals & Deep Runtime
+- [ ] **Step 20: Garbage Collection**
+    - [ ] Implement Reference Counting or a basic Mark-and-Sweep collector in WASM memory.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_ref_count`: Basic increment/decrement and free.
+        - [ ] `test_cycle_collection`: Breaking circular references.
+        - [ ] `test_mem_cleanup`: Verifying memory reuse after collection.
+- [ ] **Step 21: Exceptions & Runtime Traps**
+    - [ ] Handle `1 / 0` and index errors via `try...except`.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_division_by_zero`: Catching `ZeroDivisionError`.
+        - [ ] `test_index_error`: Catching list out-of-bounds.
+        - [ ] `test_try_except_finally`: `finally` block execution.
+- [ ] **Step 22: Bytecode VM & Metaclasses**
+    - [ ] Transition to a Bytecode VM for complex dynamic features.
+    - [ ] Implement `type()` and metaclass factories.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_bytecode_ops`: Verifying individual opcode execution.
+        - [ ] `test_vm_stack_frames`: Function call stack integrity.
+        - [ ] `test_metaclass_init`: Intercepting class creation.
+- [ ] **Step 23: Profiling & Disassembly**
+    - [ ] Add `dis` module support to view generated WASM/Bytecode.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_dis_output`: Verifying expected disassembly strings.
+        - [ ] `test_execution_timer`: Measuring runtime performance via `time` module.
 
-## Step 7: Parameters & Scoping
-- [ ] Support function parameters and multiple arguments.
-- [ ] Implement local variable scoping.
-- [ ] **Granular Testing:**
-    - [ ] `test_params`: Passing 1, 2, and 5+ arguments.
-    - [ ] `test_recursion`: Fibonacci and Factorial implementations.
-    - [ ] `test_shadowing`: Local variables shadowing globals.
+## 🌟 Level 6: Browser Integration (Python ↔ JS)
+- [ ] **Step 24: FFI Bridge**
+    - [ ] Bi-directional communication: Calling JS functions from Python.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_js_callback`: Passing a Python function to JS.
+        - [ ] `test_js_to_python_types`: Converting JS objects to Python dicts.
+- [ ] **Step 25: DOM Manipulation**
+    - [ ] Pythonic wrappers for `document.getElementById` and event listeners.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_dom_get_set`: Modifying element text from Python.
+        - [ ] `test_dom_event`: Handling button clicks in Python code.
 
-## Step 8: Memory Management & Lists
-- [ ] Implement a Linear Memory Allocator.
-- [ ] Add support for `list` creation, indexing, and `len()`.
-- [ ] **Granular Testing:**
-    - [ ] `test_list_init`: `[1, 2, 3]` allocation.
-    - [ ] `test_list_indexing`: Reading and writing to list indices.
-    - [ ] `test_out_of_bounds`: Basic checks for index errors.
-
-## Step 9: Built-ins & Math
-- [ ] Emulate `range()`, `abs()`, and `print()`.
-- [ ] **New:** Implement `math` functions: `sqrt`, `pow`, `sin`, `cos`.
-- [ ] **Granular Testing:**
-    - [ ] `test_math_pow`: Verify `pow(x, y)`.
-    - [ ] `test_math_trig`: Validate `sin` and `cos` results.
-    - [ ] `test_range_iterator`: Correct loop counts.
-
-## Step 10: Objects & Classes
-- [ ] Implement `class`, `self`, and `__init__`.
-- [ ] **Granular Testing:**
-    - [ ] `test_class_instantiation`: Property storage in memory.
-    - [ ] `test_method_calls`: Correct `self` pointer passing.
-
-## Step 11: Exceptions & Runtime
-- [ ] **New:** Detect and handle runtime errors like `1 / 0`.
-- [ ] **New:** Basic `try...except` block support.
-- [ ] **Granular Testing:**
-    - [ ] `test_division_by_zero`: Ensure execution halts with error.
-    - [ ] `test_try_except`: Proper catch and recovery flow.
-
-## Step 12: Advanced Functions
-- [ ] **New:** Implement Lambda functions and Closures.
-- [ ] **Granular Testing:**
-    - [ ] `test_lambda`: Inline function execution.
-    - [ ] `test_closure`: Inner functions capturing local scope.
+## 🌟 Level 7: Advanced Patterns
+- [ ] **Step 26: Decorators & Closures**
+    - [ ] Support higher-order functions and variable capture.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_lambda`: Inline function execution.
+        - [ ] `test_closure`: Inner functions capturing local scope.
+        - [ ] `test_decorator`: @decorator syntax on functions.
+- [ ] **Step 27: Dependency Injection & Async Architecture**
+    - [ ] Advanced structural patterns implemented in Python-WASM.
+    - [ ] **Granular Testing:** 
+        - [ ] `test_di_container`: Basic service registration and resolution.
+        - [ ] `test_async_di`: Resolving services asynchronously.
