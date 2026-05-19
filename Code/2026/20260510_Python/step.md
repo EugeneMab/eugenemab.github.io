@@ -29,23 +29,23 @@
     - [x] Add boolean literals (`True`, `False`) and logic (`and`, `or`, `not`).
     - [x] Implement comparison operators (`==`, `!=`, `<`, `>`, `<=`, `>=`).
     - [x] **Granular Testing:** `test_if_else`, `test_elif_chain`, `test_boolean_logic`.
-- [ ] **Step 7: Parameters & Scoping**
-    - [ ] Support function parameters and multiple arguments.
-    - [ ] Implement local variable scoping (Stack frames in WASM).
-    - [ ] **Granular Testing:** 
-        - [ ] `test_params`: Verify 0, 1, 2, and 5+ arguments.
-        - [ ] `test_recursion`: Fibonacci and Factorial (tests deep stacking).
-        - [ ] `test_shadowing`: Local variables vs Global variables with same name.
-        - [ ] `test_scoping_nested`: Accessing outer scope variables (if supported).
+- [x] **Step 7: Parameters & Scoping**
+    - [x] Support function parameters and multiple arguments.
+    - [x] Implement local variable scoping (Stack frames in WASM).
+    - [x] **Granular Testing:** 
+        - [x] `test_params`: Verify 0, 1, 2, and 5+ arguments.
+        - [x] `test_recursion`: Fibonacci and Factorial (tests deep stacking).
+        - [x] `test_shadowing`: Local variables vs Global variables with same name.
+        - [x] `test_scoping_nested`: Accessing outer scope variables (if supported).
 
 ## 🌟 Level 1: Pythonic Thinking
-- [ ] **Step 8: Slicing & Advanced Indexing**
-    - [ ] Support `list[start:stop:step]` and negative indexing.
-    - [ ] **Granular Testing:** 
-        - [ ] `test_list_slicing_basic`: `[1:3]` range.
-        - [ ] `test_list_slicing_step`: `[::2]` every second element.
-        - [ ] `test_negative_indexing`: `list[-1]` for last element.
-        - [ ] `test_string_slicing`: Slicing characters in a string literal.
+- [x] **Step 8: Slicing & Advanced Indexing**
+    - [x] Support `list[start:stop:step]` and negative indexing.
+    - [x] **Granular Testing:** 
+        - [x] `test_list_slicing_basic`: `[1:3]` range.
+        - [x] `test_list_slicing_step`: `[::2]` every second element.
+        - [x] `test_negative_indexing`: `list[-1]` for last element.
+        - [x] `test_string_slicing`: Slicing characters in a string literal.
 - [ ] **Step 9: Comprehensions**
     - [ ] Implement List and Dict comprehensions (`[x for x in list]`).
     - [ ] **Granular Testing:** 

@@ -24,25 +24,28 @@ export class Parser {
             return this.parseWhile();
         if (this.match(TokenType.IF))
             return this.parseIf();
-        if (this.peek().type === TokenType.IDENTIFIER) {
-            if (this.peekNext()?.type === TokenType.EQUALS) {
-                return this.parseAssignment();
-            }
-            if (this.peekNext()?.type === TokenType.LPAREN) {
-                const call = this.parseCall();
-                if (this.match(TokenType.NEWLINE) ||
-                    this.isAtEnd() ||
-                    this.check(TokenType.DEDENT)) {
-                    // statement call
-                }
-                return call;
-            }
-        }
-        // Skip stray newlines
         if (this.match(TokenType.NEWLINE))
             return null;
+        const expr = this.parseExpression();
+        if (this.match(TokenType.EQUALS)) {
+            if (expr.type !== "Identifier") {
+                throw new Error("Invalid assignment target");
+            }
+            const value = this.parseExpression();
+            this.consumeStatementEnd();
+            return { type: "Assignment", target: expr.name, value };
+        }
+        this.consumeStatementEnd();
+        return expr;
+    }
+    consumeStatementEnd() {
+        if (this.match(TokenType.NEWLINE) ||
+            this.isAtEnd() ||
+            this.check(TokenType.DEDENT)) {
+            return;
+        }
         const token = this.peek();
-        throw new Error(`Unexpected token: ${token.type} at line ${token.line}, col ${token.col}`);
+        throw new Error(`Unexpected token at end of statement: ${token.type} at line ${token.line}, col ${token.col}`);
     }
     parseIf() {
         const condition = this.parseExpression();
@@ -95,7 +98,7 @@ export class Parser {
         if (!this.check(TokenType.RPAREN)) {
             do {
                 args.push(this.parseExpression());
-            } while (this.match(TokenType.PLUS)); // Separator hack
+            } while (this.match(TokenType.COMMA));
         }
         this.consume(TokenType.RPAREN, "Expect ')'");
         return { type: "CallExpression", callee, args };
@@ -103,7 +106,13 @@ export class Parser {
     parseFunctionDef() {
         const name = this.consume(TokenType.IDENTIFIER, "Expect function name").value;
         this.consume(TokenType.LPAREN, "Expect '(' after function name");
-        this.consume(TokenType.RPAREN, "Expect ')' after '('");
+        const params = [];
+        if (!this.check(TokenType.RPAREN)) {
+            do {
+                params.push(this.consume(TokenType.IDENTIFIER, "Expect parameter name").value);
+            } while (this.match(TokenType.COMMA));
+        }
+        this.consume(TokenType.RPAREN, "Expect ')' after parameters");
         this.consume(TokenType.COLON, "Expect ':' after parameters");
         this.consume(TokenType.NEWLINE, "Expect newline after ':'");
         this.consume(TokenType.INDENT, "Expect indentation after function definition");
@@ -114,20 +123,18 @@ export class Parser {
                 body.push(node);
         }
         this.consume(TokenType.DEDENT, "Expect dedent after function body");
-        return { type: "FunctionDef", name, body };
+        return { type: "FunctionDef", name, params, body };
     }
     parseAssignment() {
         const target = this.consume(TokenType.IDENTIFIER, "Expect variable name").value;
         this.consume(TokenType.EQUALS, "Expect '=' after variable name");
         const value = this.parseExpression();
-        this.consume(TokenType.NEWLINE, "Expect newline after assignment");
+        this.consumeStatementEnd();
         return { type: "Assignment", target, value };
     }
     parseReturn() {
         const value = this.parseExpression();
-        // Return is often the last statement, might be followed by NEWLINE then DEDENT
-        if (this.check(TokenType.NEWLINE))
-            this.advance();
+        this.consumeStatementEnd();
         return { type: "Return", value };
     }
     parseExpression() {
@@ -195,30 +202,128 @@ export class Parser {
         return this.parsePrimary();
     }
     parsePrimary() {
+        let expr;
         if (this.match(TokenType.NUMBER)) {
-            return { type: "Literal", value: parseInt(this.previous().value) };
+            expr = { type: "Literal", value: parseInt(this.previous().value) };
         }
-        if (this.match(TokenType.TRUE)) {
-            return { type: "Literal", value: 1 };
+        else if (this.match(TokenType.STRING)) {
+            expr = { type: "Literal", value: this.previous().value };
         }
-        if (this.match(TokenType.FALSE)) {
-            return { type: "Literal", value: 0 };
+        else if (this.match(TokenType.TRUE)) {
+            expr = { type: "Literal", value: 1 };
         }
-        if (this.match(TokenType.IDENTIFIER)) {
+        else if (this.match(TokenType.FALSE)) {
+            expr = { type: "Literal", value: 0 };
+        }
+        else if (this.match(TokenType.IDENTIFIER)) {
             const name = this.previous().value;
             if (this.check(TokenType.LPAREN)) {
                 this.pos--; // Backtrack identifier
-                return this.parseCall();
+                expr = this.parseCall();
             }
-            return { type: "Identifier", name };
+            else {
+                expr = { type: "Identifier", name };
+            }
         }
-        if (this.match(TokenType.LPAREN)) {
-            const expr = this.parseExpression();
+        else if (this.match(TokenType.LPAREN)) {
+            expr = this.parseExpression();
             this.consume(TokenType.RPAREN, "Expect ')' after expression");
-            return expr;
         }
-        const token = this.peek();
-        throw new Error(`Expect expression at line ${token.line}, col ${token.col}`);
+        else if (this.match(TokenType.LSQUARE)) {
+            expr = this.parseList();
+        }
+        else if (this.match(TokenType.LBRACE)) {
+            expr = this.parseDict();
+        }
+        else {
+            const token = this.peek();
+            throw new Error(`Expect expression at line ${token.line}, col ${token.col}`);
+        }
+        // Handle post-primary: subscripts
+        while (this.match(TokenType.LSQUARE)) {
+            expr = this.parseSubscript(expr);
+        }
+        return expr;
+    }
+    parseList() {
+        if (this.check(TokenType.RSQUARE)) {
+            this.advance();
+            return { type: "List", elements: [] };
+        }
+        const firstExpr = this.parseExpression();
+        if (this.match(TokenType.FOR)) {
+            const item = this.consume(TokenType.IDENTIFIER, "Expect variable name").value;
+            this.consume(TokenType.IN, "Expect 'in'");
+            const iterable = this.parseExpression();
+            let condition = null;
+            if (this.match(TokenType.IF)) {
+                condition = this.parseExpression();
+            }
+            this.consume(TokenType.RSQUARE, "Expect ']' after comprehension");
+            return {
+                type: "ListComprehension",
+                expression: firstExpr,
+                item,
+                iterable,
+                condition,
+            };
+        }
+        const elements = [firstExpr];
+        while (this.match(TokenType.COMMA)) {
+            if (this.check(TokenType.RSQUARE))
+                break;
+            elements.push(this.parseExpression());
+        }
+        this.consume(TokenType.RSQUARE, "Expect ']' after list");
+        return { type: "List", elements };
+    }
+    parseDict() {
+        const key = this.parseExpression();
+        this.consume(TokenType.COLON, "Expect ':' after key in dict comprehension");
+        const value = this.parseExpression();
+        this.consume(TokenType.FOR, "Expect 'for' in dict comprehension");
+        const item = this.consume(TokenType.IDENTIFIER, "Expect variable name").value;
+        this.consume(TokenType.IN, "Expect 'in'");
+        const iterable = this.parseExpression();
+        let condition = null;
+        if (this.match(TokenType.IF)) {
+            condition = this.parseExpression();
+        }
+        this.consume(TokenType.RBRACE, "Expect '}' after dict comprehension");
+        return { type: "DictComprehension", key, value, item, iterable, condition };
+    }
+    parseSubscript(value) {
+        let start = null;
+        let stop = null;
+        let step = null;
+        let isSlice = false;
+        if (!this.check(TokenType.COLON) && !this.check(TokenType.RSQUARE)) {
+            start = this.parseExpression();
+        }
+        if (this.match(TokenType.COLON)) {
+            isSlice = true;
+            if (!this.check(TokenType.COLON) && !this.check(TokenType.RSQUARE)) {
+                stop = this.parseExpression();
+            }
+            if (this.match(TokenType.COLON)) {
+                if (!this.check(TokenType.RSQUARE)) {
+                    step = this.parseExpression();
+                }
+            }
+        }
+        this.consume(TokenType.RSQUARE, "Expect ']' after subscript");
+        if (isSlice) {
+            return {
+                type: "Subscript",
+                value,
+                index: { type: "Slice", start, stop, step },
+            };
+        }
+        else {
+            if (start === null)
+                throw new Error("Expect index in subscript");
+            return { type: "Subscript", value, index: start };
+        }
     }
     match(...types) {
         for (const type of types) {

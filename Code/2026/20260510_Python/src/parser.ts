@@ -12,11 +12,51 @@ export type ASTNode =
   | WhileNode
   | CallExpressionNode
   | UnaryExpressionNode
-  | IfNode;
+  | IfNode
+  | ListNode
+  | ListComprehensionNode
+  | DictComprehensionNode
+  | SubscriptNode
+  | SliceNode;
 
 export interface ProgramNode {
   type: "Program";
   body: ASTNode[];
+}
+
+export interface ListComprehensionNode {
+  type: "ListComprehension";
+  expression: ASTNode;
+  item: string;
+  iterable: ASTNode;
+  condition: ASTNode | null;
+}
+
+export interface DictComprehensionNode {
+  type: "DictComprehension";
+  key: ASTNode;
+  value: ASTNode;
+  item: string;
+  iterable: ASTNode;
+  condition: ASTNode | null;
+}
+
+export interface ListNode {
+  type: "List";
+  elements: ASTNode[];
+}
+
+export interface SubscriptNode {
+  type: "Subscript";
+  value: ASTNode;
+  index: ASTNode;
+}
+
+export interface SliceNode {
+  type: "Slice";
+  start: ASTNode | null;
+  stop: ASTNode | null;
+  step: ASTNode | null;
 }
 
 export interface IfNode {
@@ -35,6 +75,7 @@ export interface UnaryExpressionNode {
 export interface FunctionDefNode {
   type: "FunctionDef";
   name: string;
+  params: string[];
   body: ASTNode[];
 }
 
@@ -53,7 +94,7 @@ export interface BinaryExpressionNode {
 
 export interface LiteralNode {
   type: "Literal";
-  value: number;
+  value: number | string | boolean;
 }
 
 export interface IdentifierNode {
@@ -101,29 +142,34 @@ export class Parser {
     if (this.match(TokenType.WHILE)) return this.parseWhile();
     if (this.match(TokenType.IF)) return this.parseIf();
 
-    if (this.peek().type === TokenType.IDENTIFIER) {
-      if (this.peekNext()?.type === TokenType.EQUALS) {
-        return this.parseAssignment();
-      }
-      if (this.peekNext()?.type === TokenType.LPAREN) {
-        const call = this.parseCall();
-        if (
-          this.match(TokenType.NEWLINE) ||
-          this.isAtEnd() ||
-          this.check(TokenType.DEDENT)
-        ) {
-          // statement call
-        }
-        return call;
-      }
-    }
-
-    // Skip stray newlines
     if (this.match(TokenType.NEWLINE)) return null;
 
+    const expr = this.parseExpression();
+
+    if (this.match(TokenType.EQUALS)) {
+      if (expr.type !== "Identifier") {
+        throw new Error("Invalid assignment target");
+      }
+      const value = this.parseExpression();
+      this.consumeStatementEnd();
+      return { type: "Assignment", target: expr.name, value };
+    }
+
+    this.consumeStatementEnd();
+    return expr;
+  }
+
+  private consumeStatementEnd(): void {
+    if (
+      this.match(TokenType.NEWLINE) ||
+      this.isAtEnd() ||
+      this.check(TokenType.DEDENT)
+    ) {
+      return;
+    }
     const token = this.peek();
     throw new Error(
-      `Unexpected token: ${token.type} at line ${token.line}, col ${token.col}`,
+      `Unexpected token at end of statement: ${token.type} at line ${token.line}, col ${token.col}`,
     );
   }
 
@@ -181,7 +227,7 @@ export class Parser {
     if (!this.check(TokenType.RPAREN)) {
       do {
         args.push(this.parseExpression());
-      } while (this.match(TokenType.PLUS)); // Separator hack
+      } while (this.match(TokenType.COMMA));
     }
     this.consume(TokenType.RPAREN, "Expect ')'");
     return { type: "CallExpression", callee, args };
@@ -193,7 +239,15 @@ export class Parser {
       "Expect function name",
     ).value;
     this.consume(TokenType.LPAREN, "Expect '(' after function name");
-    this.consume(TokenType.RPAREN, "Expect ')' after '('");
+    const params: string[] = [];
+    if (!this.check(TokenType.RPAREN)) {
+      do {
+        params.push(
+          this.consume(TokenType.IDENTIFIER, "Expect parameter name").value,
+        );
+      } while (this.match(TokenType.COMMA));
+    }
+    this.consume(TokenType.RPAREN, "Expect ')' after parameters");
     this.consume(TokenType.COLON, "Expect ':' after parameters");
     this.consume(TokenType.NEWLINE, "Expect newline after ':'");
     this.consume(
@@ -208,7 +262,7 @@ export class Parser {
     }
     this.consume(TokenType.DEDENT, "Expect dedent after function body");
 
-    return { type: "FunctionDef", name, body };
+    return { type: "FunctionDef", name, params, body };
   }
 
   private parseAssignment(): AssignmentNode {
@@ -218,14 +272,13 @@ export class Parser {
     ).value;
     this.consume(TokenType.EQUALS, "Expect '=' after variable name");
     const value = this.parseExpression();
-    this.consume(TokenType.NEWLINE, "Expect newline after assignment");
+    this.consumeStatementEnd();
     return { type: "Assignment", target, value };
   }
 
   private parseReturn(): ReturnNode {
     const value = this.parseExpression();
-    // Return is often the last statement, might be followed by NEWLINE then DEDENT
-    if (this.check(TokenType.NEWLINE)) this.advance();
+    this.consumeStatementEnd();
     return { type: "Return", value };
   }
 
@@ -309,32 +362,137 @@ export class Parser {
   }
 
   private parsePrimary(): ASTNode {
+    let expr: ASTNode;
     if (this.match(TokenType.NUMBER)) {
-      return { type: "Literal", value: parseInt(this.previous().value) };
-    }
-    if (this.match(TokenType.TRUE)) {
-      return { type: "Literal", value: 1 };
-    }
-    if (this.match(TokenType.FALSE)) {
-      return { type: "Literal", value: 0 };
-    }
-    if (this.match(TokenType.IDENTIFIER)) {
+      expr = { type: "Literal", value: parseInt(this.previous().value) };
+    } else if (this.match(TokenType.STRING)) {
+      expr = { type: "Literal", value: this.previous().value };
+    } else if (this.match(TokenType.TRUE)) {
+      expr = { type: "Literal", value: 1 };
+    } else if (this.match(TokenType.FALSE)) {
+      expr = { type: "Literal", value: 0 };
+    } else if (this.match(TokenType.IDENTIFIER)) {
       const name = this.previous().value;
       if (this.check(TokenType.LPAREN)) {
         this.pos--; // Backtrack identifier
-        return this.parseCall();
+        expr = this.parseCall();
+      } else {
+        expr = { type: "Identifier", name };
       }
-      return { type: "Identifier", name };
-    }
-    if (this.match(TokenType.LPAREN)) {
-      const expr = this.parseExpression();
+    } else if (this.match(TokenType.LPAREN)) {
+      expr = this.parseExpression();
       this.consume(TokenType.RPAREN, "Expect ')' after expression");
-      return expr;
+    } else if (this.match(TokenType.LSQUARE)) {
+      expr = this.parseList();
+    } else if (this.match(TokenType.LBRACE)) {
+      expr = this.parseDict();
+    } else {
+      const token = this.peek();
+      throw new Error(
+        `Expect expression at line ${token.line}, col ${token.col}`,
+      );
     }
-    const token = this.peek();
-    throw new Error(
-      `Expect expression at line ${token.line}, col ${token.col}`,
-    );
+
+    // Handle post-primary: subscripts
+    while (this.match(TokenType.LSQUARE)) {
+      expr = this.parseSubscript(expr);
+    }
+
+    return expr;
+  }
+
+  private parseList(): ListNode | ListComprehensionNode {
+    if (this.check(TokenType.RSQUARE)) {
+      this.advance();
+      return { type: "List", elements: [] };
+    }
+
+    const firstExpr = this.parseExpression();
+
+    if (this.match(TokenType.FOR)) {
+      const item = this.consume(
+        TokenType.IDENTIFIER,
+        "Expect variable name",
+      ).value;
+      this.consume(TokenType.IN, "Expect 'in'");
+      const iterable = this.parseExpression();
+      let condition: ASTNode | null = null;
+      if (this.match(TokenType.IF)) {
+        condition = this.parseExpression();
+      }
+      this.consume(TokenType.RSQUARE, "Expect ']' after comprehension");
+      return {
+        type: "ListComprehension",
+        expression: firstExpr,
+        item,
+        iterable,
+        condition,
+      };
+    }
+
+    const elements: ASTNode[] = [firstExpr];
+    while (this.match(TokenType.COMMA)) {
+      if (this.check(TokenType.RSQUARE)) break;
+      elements.push(this.parseExpression());
+    }
+    this.consume(TokenType.RSQUARE, "Expect ']' after list");
+    return { type: "List", elements };
+  }
+
+  private parseDict(): DictComprehensionNode {
+    const key = this.parseExpression();
+    this.consume(TokenType.COLON, "Expect ':' after key in dict comprehension");
+    const value = this.parseExpression();
+
+    this.consume(TokenType.FOR, "Expect 'for' in dict comprehension");
+    const item = this.consume(
+      TokenType.IDENTIFIER,
+      "Expect variable name",
+    ).value;
+    this.consume(TokenType.IN, "Expect 'in'");
+    const iterable = this.parseExpression();
+    let condition: ASTNode | null = null;
+    if (this.match(TokenType.IF)) {
+      condition = this.parseExpression();
+    }
+    this.consume(TokenType.RBRACE, "Expect '}' after dict comprehension");
+    return { type: "DictComprehension", key, value, item, iterable, condition };
+  }
+
+  private parseSubscript(value: ASTNode): ASTNode {
+    let start: ASTNode | null = null;
+    let stop: ASTNode | null = null;
+    let step: ASTNode | null = null;
+    let isSlice = false;
+
+    if (!this.check(TokenType.COLON) && !this.check(TokenType.RSQUARE)) {
+      start = this.parseExpression();
+    }
+
+    if (this.match(TokenType.COLON)) {
+      isSlice = true;
+      if (!this.check(TokenType.COLON) && !this.check(TokenType.RSQUARE)) {
+        stop = this.parseExpression();
+      }
+      if (this.match(TokenType.COLON)) {
+        if (!this.check(TokenType.RSQUARE)) {
+          step = this.parseExpression();
+        }
+      }
+    }
+
+    this.consume(TokenType.RSQUARE, "Expect ']' after subscript");
+
+    if (isSlice) {
+      return {
+        type: "Subscript",
+        value,
+        index: { type: "Slice", start, stop, step },
+      };
+    } else {
+      if (start === null) throw new Error("Expect index in subscript");
+      return { type: "Subscript", value, index: start };
+    }
   }
 
   private match(...types: TokenType[]): boolean {

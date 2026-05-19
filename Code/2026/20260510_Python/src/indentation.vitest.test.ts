@@ -25,12 +25,7 @@ describe("Compiler WAT Indentation", () => {
     const safeName = name.replace(/[^a-z0-9]/gi, "_").toLowerCase();
     fs.writeFileSync(path.join(outputDir, `indent_${safeName}.wat`), wat);
 
-    // Check that each expected line exists with its relative indentation
-    // We trim the expectations and the actual lines to check for existence,
-    // but the test name implies we care about the overall structure.
     for (const expected of expectedLines) {
-      // For now, we still check the exact string as it includes the indentation
-      // that this specific test suite is intended to verify.
       expect(wat).toContain(expected);
     }
   };
@@ -55,8 +50,9 @@ def main():
     while True:
         print(1)
 `;
+    // Added 'drop' because print returns i32 for expr compatibility
     testIndentation("while_loop", code, [
-      "    block\n      loop\n        i32.const 1\n        i32.eqz\n        br_if 1\n        i32.const 1\n        call $print\n        br 0\n      end",
+      "    block\n      loop\n        i32.const 1\n        i32.eqz\n        br_if 1\n        i32.const 1\n        call $print\n        drop\n        br 0\n      end\n    end",
     ]);
   });
 
@@ -67,7 +63,6 @@ def main():
         while True:
             return 1
 `;
-    // Nested blocks should have cumulative indentation
     testIndentation("nested_blocks", code, [
       "    if\n      block\n        loop\n          i32.const 1\n          i32.eqz\n          br_if 1\n          i32.const 1\n          return\n          br 0\n        end\n      end\n    end",
     ]);
