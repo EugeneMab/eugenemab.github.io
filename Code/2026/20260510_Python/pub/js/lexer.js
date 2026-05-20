@@ -38,6 +38,10 @@ export var TokenType;
     TokenType["LBRACE"] = "LBRACE";
     TokenType["RBRACE"] = "RBRACE";
     TokenType["STRING"] = "STRING";
+    TokenType["FSTRING"] = "FSTRING";
+    TokenType["DO"] = "DO";
+    TokenType["FROM"] = "FROM";
+    TokenType["TO"] = "TO";
 })(TokenType || (TokenType = {}));
 export class Lexer {
     source;
@@ -86,6 +90,11 @@ export class Lexer {
         }
         // Identifiers and Keywords
         if (this.isAlpha(char)) {
+            if ((char === "f" || char === "F") &&
+                (this.peekNext() === '"' || this.peekNext() === "'")) {
+                this.advance(); // consume 'f'
+                return this.handleString(this.advance(), true); // consume quote
+            }
             return this.handleIdentifier();
         }
         // Numbers
@@ -94,6 +103,7 @@ export class Lexer {
         }
         // Strings
         if (char === '"' || char === "'") {
+            this.advance(); // Skip opening quote
             return this.handleString(char);
         }
         // Operators and Punctuation
@@ -201,6 +211,9 @@ export class Lexer {
             def: TokenType.DEF,
             return: TokenType.RETURN,
             while: TokenType.WHILE,
+            do: TokenType.DO,
+            from: TokenType.FROM,
+            to: TokenType.TO,
             if: TokenType.IF,
             elif: TokenType.ELIF,
             else: TokenType.ELSE,
@@ -226,9 +239,8 @@ export class Lexer {
         }
         return { type: TokenType.NUMBER, value, line: this.line, col: startCol };
     }
-    handleString(quote) {
+    handleString(quote, isFString = false) {
         const startCol = this.col;
-        this.advance(); // Skip opening quote
         let value = "";
         while (this.pos < this.source.length && this.peek() !== quote) {
             if (this.peek() === "\n") {
@@ -240,7 +252,12 @@ export class Lexer {
             throw new Error(`Unterminated string at line ${this.line}`);
         }
         this.advance(); // Skip closing quote
-        return { type: TokenType.STRING, value, line: this.line, col: startCol };
+        return {
+            type: isFString ? TokenType.FSTRING : TokenType.STRING,
+            value,
+            line: this.line,
+            col: startCol,
+        };
     }
     skipWhitespaceAndComments() {
         while (this.pos < this.source.length) {
@@ -262,6 +279,11 @@ export class Lexer {
     }
     peek() {
         return this.source[this.pos];
+    }
+    peekNext() {
+        if (this.pos + 1 >= this.source.length)
+            return "";
+        return this.source[this.pos + 1];
     }
     advance() {
         const char = this.source[this.pos++];

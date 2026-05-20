@@ -1,5 +1,5 @@
 // src/parser.ts
-import { TokenType } from "./lexer.js";
+import { TokenType, Lexer } from "./lexer.js";
 export class Parser {
     tokens;
     pos = 0;
@@ -22,6 +22,10 @@ export class Parser {
             return this.parseReturn();
         if (this.match(TokenType.WHILE))
             return this.parseWhile();
+        if (this.match(TokenType.DO))
+            return this.parseDoWhile();
+        if (this.match(TokenType.FOR))
+            return this.parseFor();
         if (this.match(TokenType.IF))
             return this.parseIf();
         if (this.match(TokenType.NEWLINE))
@@ -90,6 +94,49 @@ export class Parser {
         }
         this.consume(TokenType.DEDENT, "Expect dedent after while body");
         return { type: "While", condition, body };
+    }
+    parseFor() {
+        const iterator = this.consume(TokenType.IDENTIFIER, "Expect iterator name").value;
+        let iterable;
+        let start;
+        let stop;
+        if (this.match(TokenType.IN)) {
+            iterable = this.parseExpression();
+        }
+        else if (this.match(TokenType.FROM)) {
+            start = this.parseExpression();
+            this.consume(TokenType.TO, "Expect 'to' after 'from'");
+            stop = this.parseExpression();
+        }
+        else {
+            throw new Error("Expect 'in' or 'from' after for iterator");
+        }
+        this.consume(TokenType.COLON, "Expect ':' after for header");
+        this.consume(TokenType.NEWLINE, "Expect newline after ':'");
+        this.consume(TokenType.INDENT, "Expect indent after for");
+        const body = [];
+        while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
+            const node = this.parseStatement();
+            if (node)
+                body.push(node);
+        }
+        this.consume(TokenType.DEDENT, "Expect dedent after for body");
+        return { type: "For", iterator, iterable, start, stop, body };
+    }
+    parseDoWhile() {
+        this.consume(TokenType.COLON, "Expect ':' after do");
+        this.consume(TokenType.NEWLINE, "Expect newline after ':'");
+        this.consume(TokenType.INDENT, "Expect indent after do");
+        const body = [];
+        while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
+            const node = this.parseStatement();
+            if (node)
+                body.push(node);
+        }
+        this.consume(TokenType.DEDENT, "Expect dedent after do body");
+        this.consume(TokenType.WHILE, "Expect 'while' after do body");
+        const condition = this.parseExpression();
+        return { type: "DoWhile", condition, body };
     }
     parseCall() {
         const callee = this.consume(TokenType.IDENTIFIER, "Expect function name").value;
@@ -209,6 +256,9 @@ export class Parser {
         else if (this.match(TokenType.STRING)) {
             expr = { type: "Literal", value: this.previous().value };
         }
+        else if (this.match(TokenType.FSTRING)) {
+            expr = this.parseFString(this.previous().value);
+        }
         else if (this.match(TokenType.TRUE)) {
             expr = { type: "Literal", value: 1 };
         }
@@ -244,6 +294,38 @@ export class Parser {
             expr = this.parseSubscript(expr);
         }
         return expr;
+    }
+    parseFString(value) {
+        const parts = [];
+        let current = "";
+        for (let i = 0; i < value.length; i++) {
+            if (value[i] === "{") {
+                if (current)
+                    parts.push(current);
+                current = "";
+                let exprStr = "";
+                let braces = 1;
+                i++;
+                while (i < value.length && braces > 0) {
+                    if (value[i] === "{")
+                        braces++;
+                    if (value[i] === "}")
+                        braces--;
+                    if (braces > 0)
+                        exprStr += value[i++];
+                }
+                const lexer = new Lexer(exprStr);
+                const tokens = lexer.tokenize();
+                const parser = new Parser(tokens);
+                parts.push(parser.parseExpression());
+            }
+            else {
+                current += value[i];
+            }
+        }
+        if (current)
+            parts.push(current);
+        return { type: "FString", parts };
     }
     parseList() {
         if (this.check(TokenType.RSQUARE)) {

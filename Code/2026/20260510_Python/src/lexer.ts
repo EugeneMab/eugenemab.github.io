@@ -39,6 +39,10 @@ export enum TokenType {
   LBRACE = "LBRACE",
   RBRACE = "RBRACE",
   STRING = "STRING",
+  FSTRING = "FSTRING",
+  DO = "DO",
+  FROM = "FROM",
+  TO = "TO",
 }
 
 export interface Token {
@@ -104,6 +108,13 @@ export class Lexer {
 
     // Identifiers and Keywords
     if (this.isAlpha(char)) {
+      if (
+        (char === "f" || char === "F") &&
+        (this.peekNext() === '"' || this.peekNext() === "'")
+      ) {
+        this.advance(); // consume 'f'
+        return this.handleString(this.advance(), true); // consume quote
+      }
       return this.handleIdentifier();
     }
 
@@ -114,6 +125,7 @@ export class Lexer {
 
     // Strings
     if (char === '"' || char === "'") {
+      this.advance(); // Skip opening quote
       return this.handleString(char);
     }
 
@@ -239,6 +251,9 @@ export class Lexer {
       def: TokenType.DEF,
       return: TokenType.RETURN,
       while: TokenType.WHILE,
+      do: TokenType.DO,
+      from: TokenType.FROM,
+      to: TokenType.TO,
       if: TokenType.IF,
       elif: TokenType.ELIF,
       else: TokenType.ELSE,
@@ -269,9 +284,8 @@ export class Lexer {
     return { type: TokenType.NUMBER, value, line: this.line, col: startCol };
   }
 
-  private handleString(quote: string): Token {
+  private handleString(quote: string, isFString: boolean = false): Token {
     const startCol = this.col;
-    this.advance(); // Skip opening quote
     let value = "";
     while (this.pos < this.source.length && this.peek() !== quote) {
       if (this.peek() === "\n") {
@@ -285,7 +299,12 @@ export class Lexer {
     }
 
     this.advance(); // Skip closing quote
-    return { type: TokenType.STRING, value, line: this.line, col: startCol };
+    return {
+      type: isFString ? TokenType.FSTRING : TokenType.STRING,
+      value,
+      line: this.line,
+      col: startCol,
+    };
   }
 
   private skipWhitespaceAndComments() {
@@ -309,6 +328,11 @@ export class Lexer {
 
   private peek(): string {
     return this.source[this.pos];
+  }
+
+  private peekNext(): string {
+    if (this.pos + 1 >= this.source.length) return "";
+    return this.source[this.pos + 1];
   }
 
   private advance(): string {
