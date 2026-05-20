@@ -19,6 +19,8 @@ export enum TokenType {
   IF = "IF",
   ELIF = "ELIF",
   ELSE = "ELSE",
+  FOR = "FOR",
+  IN = "IN",
   AND = "AND",
   OR = "OR",
   NOT = "NOT",
@@ -31,6 +33,12 @@ export enum TokenType {
   EOF = "EOF",
   LPAREN = "LPAREN",
   RPAREN = "RPAREN",
+  COMMA = "COMMA",
+  LSQUARE = "LSQUARE",
+  RSQUARE = "RSQUARE",
+  LBRACE = "LBRACE",
+  RBRACE = "RBRACE",
+  STRING = "STRING",
 }
 
 export interface Token {
@@ -104,6 +112,11 @@ export class Lexer {
       return this.handleNumber();
     }
 
+    // Strings
+    if (char === '"' || char === "'") {
+      return this.handleString(char);
+    }
+
     // Operators and Punctuation
     this.advance();
     switch (char) {
@@ -137,6 +150,16 @@ export class Lexer {
         return this.createToken(TokenType.LPAREN, "(");
       case ")":
         return this.createToken(TokenType.RPAREN, ")");
+      case ",":
+        return this.createToken(TokenType.COMMA, ",");
+      case "[":
+        return this.createToken(TokenType.LSQUARE, "[");
+      case "]":
+        return this.createToken(TokenType.RSQUARE, "]");
+      case "{":
+        return this.createToken(TokenType.LBRACE, "{");
+      case "}":
+        return this.createToken(TokenType.RBRACE, "}");
       default:
         throw new Error(
           `Unexpected character: ${char} at line ${this.line}, col ${this.col}`,
@@ -219,6 +242,8 @@ export class Lexer {
       if: TokenType.IF,
       elif: TokenType.ELIF,
       else: TokenType.ELSE,
+      for: TokenType.FOR,
+      in: TokenType.IN,
       and: TokenType.AND,
       or: TokenType.OR,
       not: TokenType.NOT,
@@ -227,6 +252,11 @@ export class Lexer {
     };
 
     const type = keywords[value] || TokenType.IDENTIFIER;
+    if (type === TokenType.IDENTIFIER && value.startsWith("__tmp")) {
+      throw new Error(
+        `User-defined identifiers starting with '__tmp' are reserved at line ${this.line}, col ${startCol}`,
+      );
+    }
     return { type, value, line: this.line, col: startCol };
   }
 
@@ -237,6 +267,25 @@ export class Lexer {
       value += this.advance();
     }
     return { type: TokenType.NUMBER, value, line: this.line, col: startCol };
+  }
+
+  private handleString(quote: string): Token {
+    const startCol = this.col;
+    this.advance(); // Skip opening quote
+    let value = "";
+    while (this.pos < this.source.length && this.peek() !== quote) {
+      if (this.peek() === "\n") {
+        throw new Error(`Unterminated string at line ${this.line}`);
+      }
+      value += this.advance();
+    }
+
+    if (this.pos >= this.source.length) {
+      throw new Error(`Unterminated string at line ${this.line}`);
+    }
+
+    this.advance(); // Skip closing quote
+    return { type: TokenType.STRING, value, line: this.line, col: startCol };
   }
 
   private skipWhitespaceAndComments() {
