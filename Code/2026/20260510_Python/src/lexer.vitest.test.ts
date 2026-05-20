@@ -114,4 +114,11 @@ describe("Lexer Legacy Tests", () => {
     const lexer = new Lexer("@");
     expect(() => lexer.tokenize()).toThrow();
   });
+
+  it("should throw error on reserved identifier __tmp", () => {
+    const lexer = new Lexer("__tmp0 = 1");
+    expect(() => lexer.tokenize()).toThrow(
+      /User-defined identifiers starting with '__tmp' are reserved/,
+    );
+  });
 });
