@@ -340,7 +340,7 @@ export class Compiler {
         node.body.forEach(scanNode);
         // Add generic locals for WAT emission of complex structures
         for (let i = 0; i < 10; i++) {
-            localDecls.push(`(local $t${i} i32)`);
+            localDecls.push(`(local $__tmp${i} i32)`);
         }
         const bodyLines = [];
         for (const stmt of node.body) {
@@ -405,13 +405,13 @@ export class Compiler {
             case "Literal":
                 if (typeof node.value === "string") {
                     const str = node.value;
-                    let wat = `global.get $heap_ptr\nlocal.set $t0\n`;
-                    wat += `local.get $t0\ni32.const ${str.length}\ni32.store\n`;
+                    let wat = `global.get $heap_ptr\nlocal.set $__tmp0\n`;
+                    wat += `local.get $__tmp0\ni32.const ${str.length}\ni32.store\n`;
                     for (let i = 0; i < str.length; i++) {
-                        wat += `local.get $t0\ni32.const ${(i + 1) * 4}\ni32.add\ni32.const ${str.charCodeAt(i)}\ni32.store\n`;
+                        wat += `local.get $__tmp0\ni32.const ${(i + 1) * 4}\ni32.add\ni32.const ${str.charCodeAt(i)}\ni32.store\n`;
                     }
                     wat += `global.get $heap_ptr\ni32.const ${(str.length + 1) * 4}\ni32.add\nglobal.set $heap_ptr\n`;
-                    wat += `local.get $t0`;
+                    wat += `local.get $__tmp0`;
                     return wat;
                 }
                 return `i32.const ${node.value === true ? 1 : node.value === false ? 0 : node.value}`;
@@ -472,17 +472,17 @@ export class Compiler {
                 return (node.args.map((a) => this.emitExpressionWAT(a)).join("\n") +
                     `\ncall $${node.callee}`);
             case "List": {
-                let wat = `global.get $heap_ptr\nlocal.set $t0\n`;
+                let wat = `global.get $heap_ptr\nlocal.set $__tmp0\n`;
                 const len = node.elements.length;
-                wat += `local.get $t0\ni32.const ${len}\ni32.store\n`;
+                wat += `local.get $__tmp0\ni32.const ${len}\ni32.store\n`;
                 node.elements.forEach((el, i) => {
                     wat +=
-                        `local.get $t0\ni32.const ${(i + 1) * 4}\ni32.add\n` +
+                        `local.get $__tmp0\ni32.const ${(i + 1) * 4}\ni32.add\n` +
                             this.emitExpressionWAT(el) +
                             `\ni32.store\n`;
                 });
                 wat += `global.get $heap_ptr\ni32.const ${(len + 1) * 4}\ni32.add\nglobal.set $heap_ptr\n`;
-                wat += `local.get $t0`;
+                wat += `local.get $__tmp0`;
                 return wat;
             }
             case "Subscript": {
@@ -512,21 +512,21 @@ export class Compiler {
                     "\ncall $_get_item");
             }
             case "ListComprehension": {
-                // Use $t1: iter_ptr, $t2: iter_len, $t3: res_ptr, $t4: count, $t5: i
-                let wat = this.emitExpressionWAT(node.iterable) + `\nlocal.set $t1\n`;
-                wat += `local.get $t1\ni32.load\nlocal.set $t2\n`;
-                wat += `global.get $heap_ptr\nlocal.set $t3\n`;
-                wat += `local.get $t3\ni32.const 0\ni32.store\n`;
+                // Use $__tmp1: iter_ptr, $__tmp2: iter_len, $__tmp3: res_ptr, $__tmp4: count, $__tmp5: i
+                let wat = this.emitExpressionWAT(node.iterable) + `\nlocal.set $__tmp1\n`;
+                wat += `local.get $__tmp1\ni32.load\nlocal.set $__tmp2\n`;
+                wat += `global.get $heap_ptr\nlocal.set $__tmp3\n`;
+                wat += `local.get $__tmp3\ni32.const 0\ni32.store\n`;
                 wat += `global.get $heap_ptr\ni32.const 4\ni32.add\nglobal.set $heap_ptr\n`;
-                wat += `i32.const 0\nlocal.set $t4\n`;
-                wat += `i32.const 0\nlocal.set $t5\n`;
-                let loopBody = `local.get $t5\nlocal.get $t2\ni32.ge_s\nbr_if 1\n`;
-                loopBody += `local.get $t1\nlocal.get $t5\ni32.const 4\ni32.mul\ni32.add\ni32.const 4\ni32.add\ni32.load\nlocal.set $${node.item}\n`;
+                wat += `i32.const 0\nlocal.set $__tmp4\n`;
+                wat += `i32.const 0\nlocal.set $__tmp5\n`;
+                let loopBody = `local.get $__tmp5\nlocal.get $__tmp2\ni32.ge_s\nbr_if 1\n`;
+                loopBody += `local.get $__tmp1\nlocal.get $__tmp5\ni32.const 4\ni32.mul\ni32.add\ni32.const 4\ni32.add\ni32.load\nlocal.set $${node.item}\n`;
                 let action = `global.get $heap_ptr\n` +
                     this.emitExpressionWAT(node.expression) +
                     `\ni32.store\n`;
                 action += `global.get $heap_ptr\ni32.const 4\ni32.add\nglobal.set $heap_ptr\n`;
-                action += `local.get $t4\ni32.const 1\ni32.add\nlocal.set $t4`;
+                action += `local.get $__tmp4\ni32.const 1\ni32.add\nlocal.set $__tmp4`;
                 if (node.condition) {
                     loopBody +=
                         this.emitExpressionWAT(node.condition) +
@@ -537,22 +537,22 @@ export class Compiler {
                 else {
                     loopBody += action + `\n`;
                 }
-                loopBody += `local.get $t5\ni32.const 1\ni32.add\nlocal.set $t5\nbr 0`;
+                loopBody += `local.get $__tmp5\ni32.const 1\ni32.add\nlocal.set $__tmp5\nbr 0`;
                 wat += `block\n  loop\n${this.indent(this.indent(loopBody))}\n  end\nend\n`;
-                wat += `local.get $t3\nlocal.get $t4\ni32.store\n`;
-                wat += `local.get $t3`;
+                wat += `local.get $__tmp3\nlocal.get $__tmp4\ni32.store\n`;
+                wat += `local.get $__tmp3`;
                 return wat;
             }
             case "DictComprehension": {
-                let wat = this.emitExpressionWAT(node.iterable) + `\nlocal.set $t1\n`;
-                wat += `local.get $t1\ni32.load\nlocal.set $t2\n`;
-                wat += `global.get $heap_ptr\nlocal.set $t3\n`;
-                wat += `local.get $t3\ni32.const 0\ni32.store\n`;
+                let wat = this.emitExpressionWAT(node.iterable) + `\nlocal.set $__tmp1\n`;
+                wat += `local.get $__tmp1\ni32.load\nlocal.set $__tmp2\n`;
+                wat += `global.get $heap_ptr\nlocal.set $__tmp3\n`;
+                wat += `local.get $__tmp3\ni32.const 0\ni32.store\n`;
                 wat += `global.get $heap_ptr\ni32.const 4\ni32.add\nglobal.set $heap_ptr\n`;
-                wat += `i32.const 0\nlocal.set $t4\n`;
-                wat += `i32.const 0\nlocal.set $t5\n`;
-                let loopBody = `local.get $t5\nlocal.get $t2\ni32.ge_s\nbr_if 1\n`;
-                loopBody += `local.get $t1\nlocal.get $t5\ni32.const 4\ni32.mul\ni32.add\ni32.const 4\ni32.add\ni32.load\nlocal.set $${node.item}\n`;
+                wat += `i32.const 0\nlocal.set $__tmp4\n`;
+                wat += `i32.const 0\nlocal.set $__tmp5\n`;
+                let loopBody = `local.get $__tmp5\nlocal.get $__tmp2\ni32.ge_s\nbr_if 1\n`;
+                loopBody += `local.get $__tmp1\nlocal.get $__tmp5\ni32.const 4\ni32.mul\ni32.add\ni32.const 4\ni32.add\ni32.load\nlocal.set $${node.item}\n`;
                 let action = `global.get $heap_ptr\n` +
                     this.emitExpressionWAT(node.key) +
                     `\ni32.store\n`;
@@ -562,7 +562,7 @@ export class Compiler {
                         this.emitExpressionWAT(node.value) +
                         `\ni32.store\n`;
                 action += `global.get $heap_ptr\ni32.const 4\ni32.add\nglobal.set $heap_ptr\n`;
-                action += `local.get $t4\ni32.const 1\ni32.add\nlocal.set $t4`;
+                action += `local.get $__tmp4\ni32.const 1\ni32.add\nlocal.set $__tmp4`;
                 if (node.condition) {
                     loopBody +=
                         this.emitExpressionWAT(node.condition) +
@@ -573,10 +573,10 @@ export class Compiler {
                 else {
                     loopBody += action + `\n`;
                 }
-                loopBody += `local.get $t5\ni32.const 1\ni32.add\nlocal.set $t5\nbr 0`;
+                loopBody += `local.get $__tmp5\ni32.const 1\ni32.add\nlocal.set $__tmp5\nbr 0`;
                 wat += `block\n  loop\n${this.indent(this.indent(loopBody))}\n  end\nend\n`;
-                wat += `local.get $t3\nlocal.get $t4\ni32.store\n`;
-                wat += `local.get $t3`;
+                wat += `local.get $__tmp3\nlocal.get $__tmp4\ni32.store\n`;
+                wat += `local.get $__tmp3`;
                 return wat;
             }
             default:

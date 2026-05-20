@@ -25,31 +25,25 @@ async function run() {
             print: (val) => {
                 console.log(`Node Print: ${val}`);
                 iterations++;
+                if (iterations >= 5) {
+                    throw new Error("TERMINATE_FOR_VERIFICATION");
+                }
+                return 0;
             },
             sleep: (ms) => {
                 // Simple busy wait in Node for verification
                 const start = Date.now();
                 while (Date.now() - start < ms)
                     ;
+                return 0;
             },
         },
     };
     console.log("Instantiating WASM...");
     const { instance } = (await WebAssembly.instantiate(wasm, importObject));
     console.log("Starting Execution (will terminate after 5 iterations)...");
-    // We run the function in a way that we can "interrupt" it?
-    // No, WASM execution is synchronous.
-    // But our 'print' callback can throw an error to stop it!
     try {
         const main = instance.exports.main;
-        // Patch print to throw after 5
-        const originalPrint = importObject.env.print;
-        importObject.env.print = (val) => {
-            originalPrint(val);
-            if (iterations >= 5) {
-                throw new Error("TERMINATE_FOR_VERIFICATION");
-            }
-        };
         main();
     }
     catch (err) {
