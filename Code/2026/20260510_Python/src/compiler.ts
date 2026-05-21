@@ -504,12 +504,20 @@ export class Compiler {
         return `i32.const ${node.value === true ? 1 : node.value === false ? 0 : node.value}`;
       case "Identifier":
         return `local.get $${node.name}`;
-      case "BinaryExpression":
+      case "BinaryExpression": {
+        const leftWAT = this.emitExpressionWAT(node.left);
+        const rightWAT = this.emitExpressionWAT(node.right);
+        if (node.operator === "+") {
+          const isString = (n: ASTNode) =>
+            (n.type === "Literal" && typeof n.value === "string") ||
+            n.type === "FString";
+          if (isString(node.left) || isString(node.right)) {
+            return `${leftWAT}\n${rightWAT}\ncall $concat`;
+          }
+          return `${leftWAT}\n${rightWAT}\ni32.add`;
+        }
         let op = "";
         switch (node.operator) {
-          case "+":
-            op = "i32.add";
-            break;
           case "-":
             op = "i32.sub";
             break;
@@ -533,26 +541,21 @@ export class Compiler {
             break;
           case "and":
             return (
-              this.emitExpressionWAT(node.left) +
+              leftWAT +
               `\ni32.const 0\ni32.ne\n` +
-              this.emitExpressionWAT(node.right) +
+              rightWAT +
               `\ni32.const 0\ni32.ne\ni32.and`
             );
           case "or":
             return (
-              this.emitExpressionWAT(node.left) +
+              leftWAT +
               `\ni32.const 0\ni32.ne\n` +
-              this.emitExpressionWAT(node.right) +
+              rightWAT +
               `\ni32.const 0\ni32.ne\ni32.or`
             );
         }
-        return (
-          this.emitExpressionWAT(node.left) +
-          "\n" +
-          this.emitExpressionWAT(node.right) +
-          "\n" +
-          op
-        );
+        return leftWAT + "\n" + rightWAT + "\n" + op;
+      }
       case "UnaryExpression":
         if (node.operator === "-")
           return (
@@ -1423,9 +1426,12 @@ export class Compiler {
           ];
         } else if (node.iterable) {
           const iterIdx = this.locals.get(node.iterator)!;
-          const iterPtr = this.localIndex;
-          const iterLen = this.localIndex + 1;
-          const idxLocal = this.localIndex + 2;
+          const iterPtrLocal = this.allocateTempLocal();
+          const iterPtr = this.getTempLocalIndex(iterPtrLocal);
+          const iterLenLocal = this.allocateTempLocal();
+          const iterLen = this.getTempLocalIndex(iterLenLocal);
+          const idxLocalName = this.allocateTempLocal();
+          const idxLocal = this.getTempLocalIndex(idxLocalName);
           return [
             ...this.emitExpressionBinary(node.iterable),
             0x21,
@@ -1914,7 +1920,20 @@ export class Compiler {
           ...this.encodeUnsignedLEB128(resLocalIdx),
         ];
       }
-      case "BinaryExpression":
+      case "BinaryExpression": {
+        if (node.operator === "+") {
+          const isString = (n: ASTNode) =>
+            (n.type === "Literal" && typeof n.value === "string") ||
+            n.type === "FString";
+          if (isString(node.left) || isString(node.right)) {
+            return [
+              ...this.emitExpressionBinary(node.left),
+              ...this.emitExpressionBinary(node.right),
+              0x10,
+              ...this.encodeUnsignedLEB128(this.functionMap.get("concat")!),
+            ];
+          }
+        }
         let opByte = 0;
         switch (node.operator) {
           case "+":
@@ -1971,6 +1990,7 @@ export class Compiler {
           ...this.emitExpressionBinary(node.right),
           opByte,
         ];
+      }
       case "UnaryExpression":
         if (node.operator === "-")
           return [0x41, 0, ...this.emitExpressionBinary(node.argument), 0x6b];

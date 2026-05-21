@@ -489,6 +489,9 @@ export class Parser {
           if (value[i] === "}") braces--;
           if (braces > 0) exprStr += value[i++];
         }
+        if (braces > 0) {
+          throw new Error("Unterminated f-string expression");
+        }
         const lexer = new Lexer(exprStr);
         const tokens = lexer.tokenize();
         const parser = new Parser(tokens);

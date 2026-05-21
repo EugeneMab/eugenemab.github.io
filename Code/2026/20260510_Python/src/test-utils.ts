@@ -50,6 +50,7 @@ export function getImportObject(
         const view = new Int32Array(instanceRef.instance.exports.memory.buffer);
         const len = view[ptr / 4];
         if (index < 0) index += len;
+        if (index < 0 || index >= len) throw new Error("Index out of bounds");
         return view[ptr / 4 + 1 + index];
       },
       _slice: (ptr: number, start: number, stop: number, step: number) => {
