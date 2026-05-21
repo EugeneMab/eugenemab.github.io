@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Lexer } from "./lexer.ts";
 import { Parser } from "./parser.ts";
 import { Compiler } from "./compiler.ts";
+import { getImportObject } from "./test-utils.ts";
 
 describe("Step 9: Comprehensions (Parser)", () => {
   it("should parse list comprehension", () => {
@@ -58,18 +59,11 @@ describe("Step 9: Comprehensions (Parser)", () => {
       const compiler = new Compiler();
       const wasm = compiler.compileWASM(ast);
 
-      const importObject = {
-        env: {
-          print: (val: number) => {
-            console.log("WASM print:", val);
-            return 0;
-          },
-          sleep: (ms: number) =>
-            new Promise((resolve) => setTimeout(() => resolve(0), ms)),
-        },
-      };
+      const instanceRef = { instance: null as any };
+      const importObject = getImportObject(instanceRef);
 
       const { instance } = await WebAssembly.instantiate(wasm, importObject);
+      instanceRef.instance = instance;
       const func = instance.exports[funcName] as Function;
       return {
         result: func(...args),

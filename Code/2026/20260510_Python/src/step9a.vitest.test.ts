@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Lexer } from "./lexer.ts";
 import { Parser } from "./parser.ts";
 import { Compiler } from "./compiler.ts";
+import { getImportObject } from "./test-utils.ts";
 
 describe("Step 9a & 9b: Loops and Strings", () => {
   describe("Execution (Multiplication Table)", () => {
@@ -14,56 +15,15 @@ describe("Step 9a & 9b: Loops and Strings", () => {
       const wasm = compiler.compileWASM(ast);
 
       const logs: any[] = [];
-      let instance: any;
-      const importObject = {
-        env: {
-          print: (val: number) => {
-            logs.push(val);
-            return 0;
-          },
-          print_str: (ptr: number) => {
-            const view = new Int32Array(instance.exports.memory.buffer);
-            const len = view[ptr / 4];
-            let str = "";
-            for (let i = 0; i < len; i++) {
-              str += String.fromCharCode(view[ptr / 4 + 1 + i]);
-            }
-            logs.push(str);
-            return 0;
-          },
-          itoa: (val: number) => {
-            const s = String(val);
-            const ptr = instance.exports.heap_ptr.value;
-            const view = new Int32Array(instance.exports.memory.buffer);
-            view[ptr / 4] = s.length;
-            for (let i = 0; i < s.length; i++) {
-              view[ptr / 4 + 1 + i] = s.charCodeAt(i);
-            }
-            instance.exports.heap_ptr.value += (s.length + 1) * 4;
-            return ptr;
-          },
-          concat: (ptr1: number, ptr2: number) => {
-            const view = new Int32Array(instance.exports.memory.buffer);
-            const len1 = view[ptr1 / 4];
-            const len2 = view[ptr2 / 4];
-            const ptr = instance.exports.heap_ptr.value;
-            view[ptr / 4] = len1 + len2;
-            for (let i = 0; i < len1; i++) {
-              view[ptr / 4 + 1 + i] = view[ptr1 / 4 + 1 + i];
-            }
-            for (let i = 0; i < len2; i++) {
-              view[ptr / 4 + 1 + len1 + i] = view[ptr2 / 4 + 1 + i];
-            }
-            instance.exports.heap_ptr.value += (len1 + len2 + 1) * 4;
-            return ptr;
-          },
-          sleep: () => 0,
-        },
-      };
+      const instanceRef = { instance: null as any };
+      const importObject = getImportObject(instanceRef, logs);
 
-      const { instance: inst } = await WebAssembly.instantiate(wasm, importObject);
-      instance = inst;
-      const func = instance.exports[funcName] as Function;
+      const { instance: inst } = await WebAssembly.instantiate(
+        wasm,
+        importObject,
+      );
+      instanceRef.instance = inst;
+      const func = instanceRef.instance.exports[funcName] as Function;
       const result = func();
       return { result, logs };
     };

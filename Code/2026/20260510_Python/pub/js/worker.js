@@ -74,6 +74,47 @@ self.onmessage = async (e) => {
                         instance.exports.heap_ptr.value += (len1 + len2 + 1) * 4;
                         return ptr;
                     },
+                    _get_item: (ptr, index) => {
+                        const view = new Int32Array(instance.exports.memory.buffer);
+                        const len = view[ptr / 4];
+                        if (index < 0)
+                            index += len;
+                        if (index < 0 || index >= len)
+                            throw new Error("Index out of bounds");
+                        return view[ptr / 4 + 1 + index];
+                    },
+                    _slice: (ptr, start, stop, step) => {
+                        const view = new Int32Array(instance.exports.memory.buffer);
+                        const len = view[ptr / 4];
+                        if (step === 0x7fffffff)
+                            step = 1;
+                        if (start === 0x7fffffff)
+                            start = step > 0 ? 0 : len - 1;
+                        if (stop === 0x7fffffff)
+                            stop = step > 0 ? len : -1;
+                        if (start < 0)
+                            start += len;
+                        if (stop < 0)
+                            stop += len;
+                        const res = [];
+                        if (step > 0) {
+                            for (let i = start; i < stop; i += step)
+                                if (i >= 0 && i < len)
+                                    res.push(view[ptr / 4 + 1 + i]);
+                        }
+                        else {
+                            for (let i = start; i > stop; i += step)
+                                if (i >= 0 && i < len)
+                                    res.push(view[ptr / 4 + 1 + i]);
+                        }
+                        const newPtr = instance.exports.heap_ptr.value;
+                        view[newPtr / 4] = res.length;
+                        for (let i = 0; i < res.length; i++) {
+                            view[newPtr / 4 + 1 + i] = res[i];
+                        }
+                        instance.exports.heap_ptr.value += (res.length + 1) * 4;
+                        return newPtr;
+                    },
                     sleep: (ms) => {
                         if (typeof SharedArrayBuffer !== "undefined") {
                             const shared = new Int32Array(new SharedArrayBuffer(4));
