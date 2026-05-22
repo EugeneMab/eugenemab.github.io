@@ -112,8 +112,9 @@ export class Lexer {
         (char === "f" || char === "F") &&
         (this.peekNext() === '"' || this.peekNext() === "'")
       ) {
+        const startCol = this.col;
         this.advance(); // consume 'f'
-        return this.handleString(this.advance(), true); // consume quote
+        return this.handleString(this.advance(), true, startCol); // consume quote
       }
       return this.handleIdentifier();
     }
@@ -125,8 +126,9 @@ export class Lexer {
 
     // Strings
     if (char === '"' || char === "'") {
+      const startCol = this.col;
       this.advance(); // Skip opening quote
-      return this.handleString(char);
+      return this.handleString(char, false, startCol);
     }
 
     // Operators and Punctuation
@@ -284,8 +286,11 @@ export class Lexer {
     return { type: TokenType.NUMBER, value, line: this.line, col: startCol };
   }
 
-  private handleString(quote: string, isFString: boolean = false): Token {
-    const startCol = this.col;
+  private handleString(
+    quote: string,
+    isFString: boolean = false,
+    startCol: number = this.col,
+  ): Token {
     let value = "";
     while (this.pos < this.source.length && this.peek() !== quote) {
       if (this.peek() === "\n") {

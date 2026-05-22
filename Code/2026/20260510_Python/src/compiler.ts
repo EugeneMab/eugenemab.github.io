@@ -586,15 +586,16 @@ export class Compiler {
         let wat = "";
         node.parts.forEach((part, i) => {
           if (typeof part === "string") {
-            wat += this.emitExpressionWAT({
-              type: "Literal",
-              value: part,
-            } as any);
+            wat +=
+              this.emitExpressionWAT({
+                type: "Literal",
+                value: part,
+              } as any) + "\n";
           } else {
-            wat += this.emitExpressionWAT(part) + "\ncall $itoa";
+            wat += this.emitExpressionWAT(part) + "\ncall $itoa\n";
           }
           if (i > 0) {
-            wat += "\ncall $concat";
+            wat += "call $concat\n";
           }
         });
         return wat;
@@ -1438,9 +1439,9 @@ export class Compiler {
             ...this.encodeUnsignedLEB128(iterPtr),
             0x20,
             ...this.encodeUnsignedLEB128(iterPtr),
-            0x2d,
+            0x28, // i32.load
             2,
-            0, // i32.load
+            0,
             0x21,
             ...this.encodeUnsignedLEB128(iterLen),
             0x41,
@@ -1469,9 +1470,9 @@ export class Compiler {
             4,
             0x6c, // mul 4
             0x6a, // add
-            0x2d,
+            0x28, // load
             2,
-            0, // load
+            0,
             0x21,
             ...this.encodeUnsignedLEB128(iterIdx),
             ...node.body.map((s) => this.emitStatementBinary(s)).flat(),

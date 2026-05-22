@@ -32,6 +32,7 @@ self.onmessage = async (e) => {
             });
             // 4. Execution
             // We provide print, sleep, etc. to the WASM instance
+            // eslint-disable-next-line prefer-const
             let instance;
             const importObject = {
                 env: {
