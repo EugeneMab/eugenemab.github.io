@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Lexer, TokenType } from "./lexer.js";
 import { Parser } from "./parser.js";
 import { Compiler } from "./compiler.js";
+import { getImportObject } from "./test-utils.ts";
 
 describe("Lexer", () => {
   it("should tokenize basic function", () => {
@@ -189,16 +190,13 @@ describe("Compiler", () => {
       const parser = new Parser(lexer.tokenize());
       const compiler = new Compiler();
       const wasm = compiler.compileWASM(parser.parse());
-      const importObject = {
-        env: {
-          print: () => {},
-          sleep: () => {},
-        },
-      };
+      const instanceRef = { instance: null as any };
+      const importObject = getImportObject(instanceRef);
       const { instance } = (await WebAssembly.instantiate(
         wasm,
         importObject,
       )) as any;
+      instanceRef.instance = instance;
       expect(instance.exports.main()).toBe(c.expected);
     }
   });

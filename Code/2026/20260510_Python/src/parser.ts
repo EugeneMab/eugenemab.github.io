@@ -1,5 +1,5 @@
 // src/parser.ts
-import { TokenType, Token } from "./lexer.js";
+import { TokenType, Token, Lexer } from "./lexer.js";
 
 export type ASTNode =
   | ProgramNode
@@ -17,7 +17,30 @@ export type ASTNode =
   | ListComprehensionNode
   | DictComprehensionNode
   | SubscriptNode
-  | SliceNode;
+  | SliceNode
+  | ForNode
+  | DoWhileNode
+  | FStringNode;
+
+export interface ForNode {
+  type: "For";
+  iterator: string;
+  iterable?: ASTNode;
+  start?: ASTNode;
+  stop?: ASTNode;
+  body: ASTNode[];
+}
+
+export interface DoWhileNode {
+  type: "DoWhile";
+  condition: ASTNode;
+  body: ASTNode[];
+}
+
+export interface FStringNode {
+  type: "FString";
+  parts: (string | ASTNode)[];
+}
 
 export interface ProgramNode {
   type: "Program";
@@ -140,6 +163,8 @@ export class Parser {
     if (this.match(TokenType.DEF)) return this.parseFunctionDef();
     if (this.match(TokenType.RETURN)) return this.parseReturn();
     if (this.match(TokenType.WHILE)) return this.parseWhile();
+    if (this.match(TokenType.DO)) return this.parseDoWhile();
+    if (this.match(TokenType.FOR)) return this.parseFor();
     if (this.match(TokenType.IF)) return this.parseIf();
 
     if (this.match(TokenType.NEWLINE)) return null;
@@ -215,6 +240,52 @@ export class Parser {
     }
     this.consume(TokenType.DEDENT, "Expect dedent after while body");
     return { type: "While", condition, body };
+  }
+
+  private parseFor(): ForNode {
+    const iterator = this.consume(
+      TokenType.IDENTIFIER,
+      "Expect iterator name",
+    ).value;
+    let iterable: ASTNode | undefined;
+    let start: ASTNode | undefined;
+    let stop: ASTNode | undefined;
+
+    if (this.match(TokenType.IN)) {
+      iterable = this.parseExpression();
+    } else if (this.match(TokenType.FROM)) {
+      start = this.parseExpression();
+      this.consume(TokenType.TO, "Expect 'to' after 'from'");
+      stop = this.parseExpression();
+    } else {
+      throw new Error("Expect 'in' or 'from' after for iterator");
+    }
+
+    this.consume(TokenType.COLON, "Expect ':' after for header");
+    this.consume(TokenType.NEWLINE, "Expect newline after ':'");
+    this.consume(TokenType.INDENT, "Expect indent after for");
+    const body: ASTNode[] = [];
+    while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
+      const node = this.parseStatement();
+      if (node) body.push(node);
+    }
+    this.consume(TokenType.DEDENT, "Expect dedent after for body");
+    return { type: "For", iterator, iterable, start, stop, body };
+  }
+
+  private parseDoWhile(): DoWhileNode {
+    this.consume(TokenType.COLON, "Expect ':' after do");
+    this.consume(TokenType.NEWLINE, "Expect newline after ':'");
+    this.consume(TokenType.INDENT, "Expect indent after do");
+    const body: ASTNode[] = [];
+    while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
+      const node = this.parseStatement();
+      if (node) body.push(node);
+    }
+    this.consume(TokenType.DEDENT, "Expect dedent after do body");
+    this.consume(TokenType.WHILE, "Expect 'while' after do body");
+    const condition = this.parseExpression();
+    return { type: "DoWhile", condition, body };
   }
 
   private parseCall(): CallExpressionNode {
@@ -367,6 +438,8 @@ export class Parser {
       expr = { type: "Literal", value: parseInt(this.previous().value) };
     } else if (this.match(TokenType.STRING)) {
       expr = { type: "Literal", value: this.previous().value };
+    } else if (this.match(TokenType.FSTRING)) {
+      expr = this.parseFString(this.previous().value);
     } else if (this.match(TokenType.TRUE)) {
       expr = { type: "Literal", value: 1 };
     } else if (this.match(TokenType.FALSE)) {
@@ -399,6 +472,36 @@ export class Parser {
     }
 
     return expr;
+  }
+
+  private parseFString(value: string): FStringNode {
+    const parts: (string | ASTNode)[] = [];
+    let current = "";
+    for (let i = 0; i < value.length; i++) {
+      if (value[i] === "{") {
+        if (current) parts.push(current);
+        current = "";
+        let exprStr = "";
+        let braces = 1;
+        i++;
+        while (i < value.length && braces > 0) {
+          if (value[i] === "{") braces++;
+          if (value[i] === "}") braces--;
+          if (braces > 0) exprStr += value[i++];
+        }
+        if (braces > 0) {
+          throw new Error("Unterminated f-string expression");
+        }
+        const lexer = new Lexer(exprStr);
+        const tokens = lexer.tokenize();
+        const parser = new Parser(tokens);
+        parts.push(parser.parseExpression());
+      } else {
+        current += value[i];
+      }
+    }
+    if (current) parts.push(current);
+    return { type: "FString", parts };
   }
 
   private parseList(): ListNode | ListComprehensionNode {

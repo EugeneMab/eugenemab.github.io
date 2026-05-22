@@ -6,7 +6,7 @@
   "main": "main.js",
   "scripts": {
     "test": "vitest run --coverage",
-    "test:ui": "npx playwright test src/ui.test.ts src/infinite.test.ts src/diagnose.test.ts",
+    "test:ui": "npx playwright test src/ui.test.ts src/infinite.test.ts src/diagnose.test.ts src/test_loops_ui.test.ts",
     "serve": "node src/serve.js",
     "coverage": "c8 report --reporter=text"
   },

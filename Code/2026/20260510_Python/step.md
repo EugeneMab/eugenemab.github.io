@@ -46,13 +46,24 @@
         - [x] `test_list_slicing_step`: `[::2]` every second element.
         - [x] `test_negative_indexing`: `list[-1]` for last element.
         - [x] `test_string_slicing`: Slicing characters in a string literal.
-- [ ] **Step 9: Comprehensions**
-    - [ ] Implement List and Dict comprehensions (`[x for x in list]`).
-    - [ ] **Granular Testing:** 
-        - [ ] `test_list_comp`: Basic transform `[x * 2 for x in range(5)]`.
-        - [ ] `test_list_comp_if`: Filtering `[x for x in range(10) if x % 2 == 0]`.
-        - [ ] `test_dict_comp`: Key-value generation `{x: x*x for x in range(3)}`.
-        - [ ] `test_nested_comp`: Multi-loop comprehensions.
+- [x] **Step 9: Comprehensions**
+    - [x] Implement List and Dict comprehensions (`[x for x in list]`).
+    - [x] **Granular Testing:** 
+        - [x] `test_list_comp`: Basic transform `[x * 2 for x in range(5)]`.
+        - [x] `test_list_comp_if`: Filtering `[x for x in range(10) if x % 2 == 0]`.
+        - [x] `test_dict_comp`: Key-value generation `{x: x*x for x in range(3)}`.
+        - [x] `test_nested_comp`: Multi-loop comprehensions.
+- [x] **Step 9a: Loops (For / Do / While)**
+    - [x] Implement standalone `for` and `while` loop statements.
+    - [x] Support `do...while` syntax for loop-first execution.
+    - [x] **Granular Testing:** `test_for_range`, `test_while_basic`, `test_do_while_logic`.
+- [x] **Step 9b: String Concatenation & Interpolation**
+    - [x] Support string concatenation using the `+` operator.
+    - [x] Implement string interpolation (f-strings) for dynamic values.
+    - [x] **Granular Testing:** 
+        - [x] `test_string_concat`: `"Hello " + name`.
+        - [x] `test_string_interpolation`: `f"Val: {x}"`.
+        - [x] `test_multiplication_table`: Multiplication table test (1-9) using nested loops and interpolation.
 - [ ] **Step 10: Iterators & Generators**
     - [ ] Implement `yield`, `next()`, and `StopIteration` exception.
     - [ ] **Granular Testing:** 

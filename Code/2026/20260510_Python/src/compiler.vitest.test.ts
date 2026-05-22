@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Lexer } from "./lexer.ts";
 import { Parser } from "./parser.ts";
 import { Compiler } from "./compiler.ts";
+import { getImportObject } from "./test-utils.ts";
 
 describe("Compiler Integration", () => {
   const cases = [
@@ -38,18 +39,15 @@ describe("Compiler Integration", () => {
       compiler.compileWAT(ast);
       const wasm = compiler.compileWASM(ast);
 
-      const importObject = {
-        env: {
-          print: () => {},
-          sleep: () => {},
-        },
-      };
+      const instanceRef = { instance: null as any };
+      const importObject = getImportObject(instanceRef);
 
       // Verify by running in WASM runtime
       const { instance } = (await WebAssembly.instantiate(
         wasm,
         importObject,
       )) as any;
+      instanceRef.instance = instance;
       const result = (instance.exports.main as Function)();
 
       expect(result).toBe(c.expectedResult);

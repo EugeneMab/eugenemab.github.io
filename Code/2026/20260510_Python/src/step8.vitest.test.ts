@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Lexer } from "./lexer.ts";
 import { Parser } from "./parser.ts";
 import { Compiler } from "./compiler.ts";
+import { getImportObject } from "./test-utils.ts";
 
 describe("Step 8: Slicing & Advanced Indexing (Parser)", () => {
   it("should parse list literals", () => {
@@ -116,15 +117,11 @@ describe("Step 8: Slicing & Advanced Indexing (Parser)", () => {
       const compiler = new Compiler();
       const wasm = compiler.compileWASM(ast);
 
-      const importObject = {
-        env: {
-          print: (val: number) => console.log("WASM print:", val),
-          sleep: (ms: number) =>
-            new Promise((resolve) => setTimeout(resolve, ms)),
-        },
-      };
+      const instanceRef = { instance: null as any };
+      const importObject = getImportObject(instanceRef);
 
       const { instance } = await WebAssembly.instantiate(wasm, importObject);
+      instanceRef.instance = instance;
       const func = instance.exports[funcName] as Function;
       return {
         result: func(...args),

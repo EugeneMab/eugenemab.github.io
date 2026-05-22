@@ -2,24 +2,45 @@ export class Compiler {
     locals = new Map();
     localIndex = 0;
     functionMap = new Map();
-    tempLocal = 0;
-    comprehensionLocals = new Map();
+    tempLocals = [];
     watLocalCount = 0;
+    allocateTempLocal() {
+        let candidateIndex = this.tempLocals.length;
+        let name = `__tmp${candidateIndex}`;
+        while (this.locals.has(name) || this.tempLocals.includes(name)) {
+            candidateIndex++;
+            name = `__tmp${candidateIndex}`;
+        }
+        this.tempLocals.push(name);
+        return name;
+    }
+    getTempLocalIndex(name) {
+        const idx = this.tempLocals.indexOf(name);
+        if (idx === -1)
+            throw new Error(`Unknown temp local: ${name}`);
+        return this.localIndex + idx;
+    }
     compileWAT(program) {
         this.functionMap.clear();
         this.functionMap.set("print", 0);
         this.functionMap.set("sleep", 1);
-        this.functionMap.set("_get_item", 2);
-        this.functionMap.set("_slice", 3);
+        this.functionMap.set("print_str", 2);
+        this.functionMap.set("itoa", 3);
+        this.functionMap.set("concat", 4);
+        this.functionMap.set("_get_item", 5);
+        this.functionMap.set("_slice", 6);
         const userFunctions = program.body.filter((n) => n.type === "FunctionDef");
-        userFunctions.forEach((f, i) => this.functionMap.set(f.name, 4 + i));
+        userFunctions.forEach((f, i) => this.functionMap.set(f.name, 7 + i));
         let wat = `(module\n`;
         wat += `  (import "env" "print" (func $print (param i32) (result i32)))\n`;
         wat += `  (import "env" "sleep" (func $sleep (param i32) (result i32)))\n`;
+        wat += `  (import "env" "print_str" (func $print_str (param i32) (result i32)))\n`;
+        wat += `  (import "env" "itoa" (func $itoa (param i32) (result i32)))\n`;
+        wat += `  (import "env" "concat" (func $concat (param i32 i32) (result i32)))\n`;
+        wat += `  (import "env" "_get_item" (func $_get_item (param i32 i32) (result i32)))\n`;
+        wat += `  (import "env" "_slice" (func $_slice (param i32 i32 i32 i32) (result i32)))\n`;
         wat += `  (memory (export "memory") 1)\n`;
-        wat += `  (global $heap_ptr (mut i32) (i32.const 1024))\n`;
-        wat += this.emitGetItemWAT();
-        wat += this.emitSliceWAT();
+        wat += `  (global $heap_ptr (export "heap_ptr") (mut i32) (i32.const 1024))\n`;
         for (const node of program.body) {
             if (node.type === "FunctionDef") {
                 wat += this.emitFunctionWAT(node);
@@ -261,9 +282,9 @@ export class Compiler {
     }
     emitFunctionWAT(node) {
         this.locals.clear();
-        this.comprehensionLocals.clear();
         this.localIndex = 0;
         this.watLocalCount = 0;
+        this.tempLocals = [];
         const paramsWAT = node.params
             .map((p) => {
             this.locals.set(p, this.localIndex++);
@@ -278,12 +299,15 @@ export class Compiler {
                 this.locals.set(n.target, this.localIndex++);
                 localDecls.push(`(local $${n.target} i32)`);
             }
+            if (n.type === "For" && !this.locals.has(n.iterator)) {
+                this.locals.set(n.iterator, this.localIndex++);
+                localDecls.push(`(local $${n.iterator} i32)`);
+            }
             if (n.type === "ListComprehension" || n.type === "DictComprehension") {
                 if (!this.locals.has(n.item)) {
                     this.locals.set(n.item, this.localIndex++);
                     localDecls.push(`(local $${n.item} i32)`);
                 }
-                // Add some unnamed locals for WAT if needed, but we'll use a count
             }
             // Recursively scan
             switch (n.type) {
@@ -301,6 +325,19 @@ export class Compiler {
                         n.elseBranch.forEach(scanNode);
                     break;
                 case "While":
+                    scanNode(n.condition);
+                    n.body.forEach(scanNode);
+                    break;
+                case "For":
+                    if (n.iterable)
+                        scanNode(n.iterable);
+                    if (n.start)
+                        scanNode(n.start);
+                    if (n.stop)
+                        scanNode(n.stop);
+                    n.body.forEach(scanNode);
+                    break;
+                case "DoWhile":
                     scanNode(n.condition);
                     n.body.forEach(scanNode);
                     break;
@@ -338,16 +375,16 @@ export class Compiler {
             }
         };
         node.body.forEach(scanNode);
-        // Add generic locals for WAT emission of complex structures
-        for (let i = 0; i < 10; i++) {
-            localDecls.push(`(local $__tmp${i} i32)`);
-        }
         const bodyLines = [];
         for (const stmt of node.body) {
             const stmtWat = this.emitStatementWAT(stmt);
             if (stmtWat)
                 bodyLines.push(...stmtWat.split("\n"));
         }
+        // Add generic locals for WAT emission based on usage
+        this.tempLocals.forEach((name) => {
+            localDecls.push(`(local $${name} i32)`);
+        });
         const allLines = [...localDecls, ...bodyLines].filter((line) => line.trim().length > 0);
         const paramsPart = paramsWAT ? " " + paramsWAT : "";
         return (`  (func $${node.name}${paramsPart} (result i32)\n` +
@@ -385,6 +422,41 @@ export class Compiler {
                     : "";
                 return `${this.emitExpressionWAT(node.condition)}\nif\n${thenBranch}\n${elseBranch}end`;
             }
+            case "For": {
+                if (node.start && node.stop) {
+                    const init = `${this.emitExpressionWAT(node.start)}\nlocal.set $${node.iterator}`;
+                    const condition = `local.get $${node.iterator}\n${this.emitExpressionWAT(node.stop)}\ni32.ge_s\nbr_if 1`;
+                    const body = node.body
+                        .map((s) => this.emitStatementWAT(s))
+                        .filter((s) => s)
+                        .join("\n");
+                    const step = `local.get $${node.iterator}\ni32.const 1\ni32.add\nlocal.set $${node.iterator}`;
+                    return `${init}\nblock\n  loop\n${this.indent(this.indent(condition + "\n" + body + "\n" + step + "\nbr 0"))}\n  end\nend`;
+                }
+                else if (node.iterable) {
+                    const iterPtr = this.allocateTempLocal();
+                    const iterLen = this.allocateTempLocal();
+                    const iterIdx = this.allocateTempLocal();
+                    const init = `${this.emitExpressionWAT(node.iterable)}\nlocal.set $${iterPtr}\nlocal.get $${iterPtr}\ni32.load\nlocal.set $${iterLen}\ni32.const 0\nlocal.set $${iterIdx}`;
+                    const condition = `local.get $${iterIdx}\nlocal.get $${iterLen}\ni32.ge_s\nbr_if 1`;
+                    const updateIter = `local.get $${iterPtr}\ni32.const 4\ni32.add\nlocal.get $${iterIdx}\ni32.const 4\ni32.mul\ni32.add\ni32.load\nlocal.set $${node.iterator}`;
+                    const body = node.body
+                        .map((s) => this.emitStatementWAT(s))
+                        .filter((s) => s)
+                        .join("\n");
+                    const step = `local.get $${iterIdx}\ni32.const 1\ni32.add\nlocal.set $${iterIdx}`;
+                    return `${init}\nblock\n  loop\n${this.indent(this.indent(condition + "\n" + updateIter + "\n" + body + "\n" + step + "\nbr 0"))}\n  end\nend`;
+                }
+                return "";
+            }
+            case "DoWhile": {
+                const body = node.body
+                    .map((s) => this.emitStatementWAT(s))
+                    .filter((s) => s)
+                    .join("\n");
+                const condition = `${this.emitExpressionWAT(node.condition)}\nbr_if 0`;
+                return `loop\n${this.indent(body + "\n" + condition)}\nend`;
+            }
             default:
                 const expr = this.emitExpressionWAT(node);
                 return expr ? expr + "\ndrop" : "";
@@ -403,24 +475,32 @@ export class Compiler {
             case "Literal":
                 if (typeof node.value === "string") {
                     const str = node.value;
-                    let wat = `global.get $heap_ptr\nlocal.set $__tmp0\n`;
+                    const tmp0 = this.allocateTempLocal();
+                    let wat = `global.get $heap_ptr\nlocal.set $${tmp0}\n`;
                     wat += `global.get $heap_ptr\ni32.const ${(str.length + 1) * 4}\ni32.add\nglobal.set $heap_ptr\n`;
-                    wat += `local.get $__tmp0\ni32.const ${str.length}\ni32.store\n`;
+                    wat += `local.get $${tmp0}\ni32.const ${str.length}\ni32.store\n`;
                     for (let i = 0; i < str.length; i++) {
-                        wat += `local.get $__tmp0\ni32.const ${(i + 1) * 4}\ni32.add\ni32.const ${str.charCodeAt(i)}\ni32.store\n`;
+                        wat += `local.get $${tmp0}\ni32.const ${(i + 1) * 4}\ni32.add\ni32.const ${str.charCodeAt(i)}\ni32.store\n`;
                     }
-                    wat += `local.get $__tmp0`;
+                    wat += `local.get $${tmp0}`;
                     return wat;
                 }
                 return `i32.const ${node.value === true ? 1 : node.value === false ? 0 : node.value}`;
             case "Identifier":
                 return `local.get $${node.name}`;
-            case "BinaryExpression":
+            case "BinaryExpression": {
+                const leftWAT = this.emitExpressionWAT(node.left);
+                const rightWAT = this.emitExpressionWAT(node.right);
+                if (node.operator === "+") {
+                    const isString = (n) => (n.type === "Literal" && typeof n.value === "string") ||
+                        n.type === "FString";
+                    if (isString(node.left) || isString(node.right)) {
+                        return `${leftWAT}\n${rightWAT}\ncall $concat`;
+                    }
+                    return `${leftWAT}\n${rightWAT}\ni32.add`;
+                }
                 let op = "";
                 switch (node.operator) {
-                    case "+":
-                        op = "i32.add";
-                        break;
                     case "-":
                         op = "i32.sub";
                         break;
@@ -443,21 +523,18 @@ export class Compiler {
                         op = "i32.gt_s";
                         break;
                     case "and":
-                        return (this.emitExpressionWAT(node.left) +
+                        return (leftWAT +
                             `\ni32.const 0\ni32.ne\n` +
-                            this.emitExpressionWAT(node.right) +
+                            rightWAT +
                             `\ni32.const 0\ni32.ne\ni32.and`);
                     case "or":
-                        return (this.emitExpressionWAT(node.left) +
+                        return (leftWAT +
                             `\ni32.const 0\ni32.ne\n` +
-                            this.emitExpressionWAT(node.right) +
+                            rightWAT +
                             `\ni32.const 0\ni32.ne\ni32.or`);
                 }
-                return (this.emitExpressionWAT(node.left) +
-                    "\n" +
-                    this.emitExpressionWAT(node.right) +
-                    "\n" +
-                    op);
+                return leftWAT + "\n" + rightWAT + "\n" + op;
+            }
             case "UnaryExpression":
                 if (node.operator === "-")
                     return (`i32.const 0\n` +
@@ -466,21 +543,52 @@ export class Compiler {
                 if (node.operator === "not")
                     return this.emitExpressionWAT(node.argument) + `\ni32.eqz`;
                 return this.emitExpressionWAT(node.argument);
-            case "CallExpression":
-                return (node.args.map((a) => this.emitExpressionWAT(a)).join("\n") +
-                    `\ncall $${node.callee}`);
+            case "CallExpression": {
+                const argWAT = node.args
+                    .map((a) => this.emitExpressionWAT(a))
+                    .join("\n");
+                if (node.callee === "print" && node.args.length === 1) {
+                    const arg = node.args[0];
+                    // Heuristic: If it's a string literal or f-string, use print_str
+                    if ((arg.type === "Literal" && typeof arg.value === "string") ||
+                        arg.type === "FString") {
+                        return argWAT + "\ncall $print_str";
+                    }
+                }
+                return argWAT + `\ncall $${node.callee}`;
+            }
+            case "FString": {
+                let wat = "";
+                node.parts.forEach((part, i) => {
+                    if (typeof part === "string") {
+                        wat +=
+                            this.emitExpressionWAT({
+                                type: "Literal",
+                                value: part,
+                            }) + "\n";
+                    }
+                    else {
+                        wat += this.emitExpressionWAT(part) + "\ncall $itoa\n";
+                    }
+                    if (i > 0) {
+                        wat += "call $concat\n";
+                    }
+                });
+                return wat;
+            }
             case "List": {
-                let wat = `global.get $heap_ptr\nlocal.set $__tmp0\n`;
+                const tmp0 = this.allocateTempLocal();
+                let wat = `global.get $heap_ptr\nlocal.set $${tmp0}\n`;
                 const len = node.elements.length;
                 wat += `global.get $heap_ptr\ni32.const ${(len + 1) * 4}\ni32.add\nglobal.set $heap_ptr\n`;
-                wat += `local.get $__tmp0\ni32.const ${len}\ni32.store\n`;
+                wat += `local.get $${tmp0}\ni32.const ${len}\ni32.store\n`;
                 node.elements.forEach((el, i) => {
                     wat +=
-                        `local.get $__tmp0\ni32.const ${(i + 1) * 4}\ni32.add\n` +
+                        `local.get $${tmp0}\ni32.const ${(i + 1) * 4}\ni32.add\n` +
                             this.emitExpressionWAT(el) +
                             `\ni32.store\n`;
                 });
-                wat += `local.get $__tmp0`;
+                wat += `local.get $${tmp0}`;
                 return wat;
             }
             case "Subscript": {
@@ -510,22 +618,27 @@ export class Compiler {
                     "\ncall $_get_item");
             }
             case "ListComprehension": {
-                // Use $__tmp1: iter_ptr, $__tmp2: iter_len, $__tmp3: res_ptr, $__tmp4: count, $__tmp5: i
-                let wat = this.emitExpressionWAT(node.iterable) + `\nlocal.set $__tmp1\n`;
-                wat += `local.get $__tmp1\ni32.load\nlocal.set $__tmp2\n`;
-                wat += `global.get $heap_ptr\nlocal.set $__tmp3\n`;
-                wat += `local.get $__tmp3\ni32.const 0\ni32.store\n`;
+                const iterPtr = this.allocateTempLocal();
+                const iterLen = this.allocateTempLocal();
+                const resPtr = this.allocateTempLocal();
+                const count = this.allocateTempLocal();
+                const iIdx = this.allocateTempLocal();
+                const resItemPtr = this.allocateTempLocal();
+                let wat = this.emitExpressionWAT(node.iterable) + `\nlocal.set $${iterPtr}\n`;
+                wat += `local.get $${iterPtr}\ni32.load\nlocal.set $${iterLen}\n`;
+                wat += `global.get $heap_ptr\nlocal.set $${resPtr}\n`;
+                wat += `local.get $${resPtr}\ni32.const 0\ni32.store\n`;
                 wat += `global.get $heap_ptr\ni32.const 4\ni32.add\nglobal.set $heap_ptr\n`;
-                wat += `i32.const 0\nlocal.set $__tmp4\n`;
-                wat += `i32.const 0\nlocal.set $__tmp5\n`;
-                let loopBody = `local.get $__tmp5\nlocal.get $__tmp2\ni32.ge_s\nbr_if 1\n`;
-                loopBody += `local.get $__tmp1\nlocal.get $__tmp5\ni32.const 4\ni32.mul\ni32.add\ni32.const 4\ni32.add\ni32.load\nlocal.set $${node.item}\n`;
-                let action = `global.get $heap_ptr\nlocal.set $__tmp6\n` +
+                wat += `i32.const 0\nlocal.set $${count}\n`;
+                wat += `i32.const 0\nlocal.set $${iIdx}\n`;
+                let loopBody = `local.get $${iIdx}\nlocal.get $${iterLen}\ni32.ge_s\nbr_if 1\n`;
+                loopBody += `local.get $${iterPtr}\nlocal.get $${iIdx}\ni32.const 4\ni32.mul\ni32.add\ni32.const 4\ni32.add\ni32.load\nlocal.set $${node.item}\n`;
+                let action = `global.get $heap_ptr\nlocal.set $${resItemPtr}\n` +
                     `global.get $heap_ptr\ni32.const 4\ni32.add\nglobal.set $heap_ptr\n` +
-                    `local.get $__tmp6\n` +
+                    `local.get $${resItemPtr}\n` +
                     this.emitExpressionWAT(node.expression) +
                     `\ni32.store\n`;
-                action += `local.get $__tmp4\ni32.const 1\ni32.add\nlocal.set $__tmp4`;
+                action += `local.get $${count}\ni32.const 1\ni32.add\nlocal.set $${count}`;
                 if (node.condition) {
                     loopBody +=
                         this.emitExpressionWAT(node.condition) +
@@ -536,34 +649,40 @@ export class Compiler {
                 else {
                     loopBody += action + `\n`;
                 }
-                loopBody += `local.get $__tmp5\ni32.const 1\ni32.add\nlocal.set $__tmp5\nbr 0`;
+                loopBody += `local.get $${iIdx}\ni32.const 1\ni32.add\nlocal.set $${iIdx}\nbr 0`;
                 wat += `block\n  loop\n${this.indent(this.indent(loopBody))}\n  end\nend\n`;
-                wat += `local.get $__tmp3\nlocal.get $__tmp4\ni32.store\n`;
-                wat += `local.get $__tmp3`;
+                wat += `local.get $${resPtr}\nlocal.get $${count}\ni32.store\n`;
+                wat += `local.get $${resPtr}`;
                 return wat;
             }
             case "DictComprehension": {
-                let wat = this.emitExpressionWAT(node.iterable) + `\nlocal.set $__tmp1\n`;
-                wat += `local.get $__tmp1\ni32.load\nlocal.set $__tmp2\n`;
-                wat += `global.get $heap_ptr\nlocal.set $__tmp3\n`;
-                wat += `local.get $__tmp3\ni32.const 0\ni32.store\n`;
+                const iterPtr = this.allocateTempLocal();
+                const iterLen = this.allocateTempLocal();
+                const resPtr = this.allocateTempLocal();
+                const count = this.allocateTempLocal();
+                const iIdx = this.allocateTempLocal();
+                const resItemPtr = this.allocateTempLocal();
+                let wat = this.emitExpressionWAT(node.iterable) + `\nlocal.set $${iterPtr}\n`;
+                wat += `local.get $${iterPtr}\ni32.load\nlocal.set $${iterLen}\n`;
+                wat += `global.get $heap_ptr\nlocal.set $${resPtr}\n`;
+                wat += `local.get $${resPtr}\ni32.const 0\ni32.store\n`;
                 wat += `global.get $heap_ptr\ni32.const 4\ni32.add\nglobal.set $heap_ptr\n`;
-                wat += `i32.const 0\nlocal.set $__tmp4\n`;
-                wat += `i32.const 0\nlocal.set $__tmp5\n`;
-                let loopBody = `local.get $__tmp5\nlocal.get $__tmp2\ni32.ge_s\nbr_if 1\n`;
-                loopBody += `local.get $__tmp1\nlocal.get $__tmp5\ni32.const 4\ni32.mul\ni32.add\ni32.const 4\ni32.add\ni32.load\nlocal.set $${node.item}\n`;
-                let action = `global.get $heap_ptr\nlocal.set $__tmp6\n` +
+                wat += `i32.const 0\nlocal.set $${count}\n`;
+                wat += `i32.const 0\nlocal.set $${iIdx}\n`;
+                let loopBody = `local.get $${iIdx}\nlocal.get $${iterLen}\ni32.ge_s\nbr_if 1\n`;
+                loopBody += `local.get $${iterPtr}\nlocal.get $${iIdx}\ni32.const 4\ni32.mul\ni32.add\ni32.const 4\ni32.add\ni32.load\nlocal.set $${node.item}\n`;
+                let action = `global.get $heap_ptr\nlocal.set $${resItemPtr}\n` +
                     `global.get $heap_ptr\ni32.const 4\ni32.add\nglobal.set $heap_ptr\n` +
-                    `local.get $__tmp6\n` +
+                    `local.get $${resItemPtr}\n` +
                     this.emitExpressionWAT(node.key) +
                     `\ni32.store\n`;
                 action +=
-                    `global.get $heap_ptr\nlocal.set $__tmp6\n` +
+                    `global.get $heap_ptr\nlocal.set $${resItemPtr}\n` +
                         `global.get $heap_ptr\ni32.const 4\ni32.add\nglobal.set $heap_ptr\n` +
-                        `local.get $__tmp6\n` +
+                        `local.get $${resItemPtr}\n` +
                         this.emitExpressionWAT(node.value) +
                         `\ni32.store\n`;
-                action += `local.get $__tmp4\ni32.const 1\ni32.add\nlocal.set $__tmp4`;
+                action += `local.get $${count}\ni32.const 1\ni32.add\nlocal.set $${count}`;
                 if (node.condition) {
                     loopBody +=
                         this.emitExpressionWAT(node.condition) +
@@ -574,10 +693,10 @@ export class Compiler {
                 else {
                     loopBody += action + `\n`;
                 }
-                loopBody += `local.get $__tmp5\ni32.const 1\ni32.add\nlocal.set $__tmp5\nbr 0`;
+                loopBody += `local.get $${iIdx}\ni32.const 1\ni32.add\nlocal.set $${iIdx}\nbr 0`;
                 wat += `block\n  loop\n${this.indent(this.indent(loopBody))}\n  end\nend\n`;
-                wat += `local.get $__tmp3\nlocal.get $__tmp4\ni32.store\n`;
-                wat += `local.get $__tmp3`;
+                wat += `local.get $${resPtr}\nlocal.get $${count}\ni32.store\n`;
+                wat += `local.get $${resPtr}`;
                 return wat;
             }
             default:
@@ -591,14 +710,18 @@ export class Compiler {
         this.functionMap.clear();
         this.functionMap.set("print", 0);
         this.functionMap.set("sleep", 1);
-        this.functionMap.set("_get_item", 2);
-        this.functionMap.set("_slice", 3);
+        this.functionMap.set("print_str", 2);
+        this.functionMap.set("itoa", 3);
+        this.functionMap.set("concat", 4);
+        this.functionMap.set("_get_item", 5);
+        this.functionMap.set("_slice", 6);
         const userFunctions = program.body.filter((n) => n.type === "FunctionDef");
-        userFunctions.forEach((f, i) => this.functionMap.set(f.name, 4 + i));
+        userFunctions.forEach((f, i) => this.functionMap.set(f.name, 7 + i));
         const types = [];
-        types.push([0x60, 1, 0x7f, 1, 0x7f]);
-        types.push([0x60, 2, 0x7f, 0x7f, 1, 0x7f]);
-        types.push([0x60, 4, 0x7f, 0x7f, 0x7f, 0x7f, 1, 0x7f]);
+        types.push([0x60, 1, 0x7f, 1, 0x7f]); // index 0: (i32) -> i32
+        types.push([0x60, 2, 0x7f, 0x7f, 1, 0x7f]); // index 1: (i32, i32) -> i32
+        types.push([0x60, 3, 0x7f, 0x7f, 0x7f, 1, 0x7f]); // index 2: (i32, i32, i32) -> i32
+        types.push([0x60, 4, 0x7f, 0x7f, 0x7f, 0x7f, 1, 0x7f]); // index 3
         const userFuncTypeIndices = [];
         for (const f of userFunctions) {
             const type = [
@@ -620,10 +743,25 @@ export class Compiler {
             this.encodeVector([
                 [...this.encodeString("env"), ...this.encodeString("print"), 0x00, 0],
                 [...this.encodeString("env"), ...this.encodeString("sleep"), 0x00, 0],
+                [
+                    ...this.encodeString("env"),
+                    ...this.encodeString("print_str"),
+                    0x00,
+                    0,
+                ],
+                [...this.encodeString("env"), ...this.encodeString("itoa"), 0x00, 0],
+                [...this.encodeString("env"), ...this.encodeString("concat"), 0x00, 1],
+                [
+                    ...this.encodeString("env"),
+                    ...this.encodeString("_get_item"),
+                    0x00,
+                    1,
+                ],
+                [...this.encodeString("env"), ...this.encodeString("_slice"), 0x00, 3],
             ]),
         ]);
         const funcSection = this.createSection(3, [
-            this.encodeVector([1, 2, ...userFuncTypeIndices].map((i) => [i])),
+            this.encodeVector(userFuncTypeIndices.map((i) => [i])),
         ]);
         const memorySection = this.createSection(5, [
             this.encodeVector([[0x00, 1]]),
@@ -637,15 +775,12 @@ export class Compiler {
         userFunctions.forEach((f, i) => exports.push([
             ...this.encodeString(f.name),
             0x00,
-            ...this.encodeUnsignedLEB128(4 + i),
+            ...this.encodeUnsignedLEB128(7 + i),
         ]));
         exports.push([...this.encodeString("memory"), 0x02, 0]);
+        exports.push([...this.encodeString("heap_ptr"), 0x03, 0]);
         const exportSection = this.createSection(7, [this.encodeVector(exports)]);
-        const codes = [
-            this.emitGetItemBinary(),
-            this.emitSliceBinary(),
-            ...userFunctions.map((f) => this.emitFunctionBinary(f)),
-        ];
+        const codes = [...userFunctions.map((f) => this.emitFunctionBinary(f))];
         const codeSection = this.createSection(10, [this.encodeVector(codes)]);
         return new Uint8Array([
             ...magic,
@@ -1053,8 +1188,8 @@ export class Compiler {
     }
     emitFunctionBinary(node) {
         this.locals.clear();
-        this.comprehensionLocals.clear();
         this.localIndex = 0;
+        this.tempLocals = [];
         for (const p of node.params)
             this.locals.set(p, this.localIndex++);
         const localTypes = [];
@@ -1070,10 +1205,6 @@ export class Compiler {
                     this.locals.set(n.item, this.localIndex++);
                     localTypes.push(0x7f);
                 }
-                this.comprehensionLocals.set(n, this.localIndex);
-                this.localIndex += 5;
-                for (let i = 0; i < 5; i++)
-                    localTypes.push(0x7f);
             }
             switch (n.type) {
                 case "Assignment":
@@ -1096,8 +1227,31 @@ export class Compiler {
                     scanNode(n.condition);
                     n.body.forEach(scanNode);
                     break;
+                case "For":
+                    if (!this.locals.has(n.iterator)) {
+                        this.locals.set(n.iterator, this.localIndex++);
+                        localTypes.push(0x7f);
+                    }
+                    if (n.iterable)
+                        scanNode(n.iterable);
+                    if (n.start)
+                        scanNode(n.start);
+                    if (n.stop)
+                        scanNode(n.stop);
+                    n.body.forEach(scanNode);
+                    break;
+                case "DoWhile":
+                    scanNode(n.condition);
+                    n.body.forEach(scanNode);
+                    break;
                 case "Return":
                     scanNode(n.value);
+                    break;
+                case "FString":
+                    n.parts.forEach((p) => {
+                        if (typeof p !== "string")
+                            scanNode(p);
+                    });
                     break;
                 case "UnaryExpression":
                     scanNode(n.argument);
@@ -1133,9 +1287,12 @@ export class Compiler {
             }
         };
         node.body.forEach(scanNode);
-        this.tempLocal = this.localIndex;
-        this.localIndex += 2;
-        localTypes.push(0x7f, 0x7f);
+        const body = [];
+        for (const stmt of node.body)
+            body.push(...this.emitStatementBinary(stmt));
+        body.push(0x41, 0, 0x0b);
+        // After emission, we know how many tempLocals were allocated
+        this.tempLocals.forEach(() => localTypes.push(0x7f));
         const localDecls = localTypes.length > 0
             ? [
                 ...this.encodeUnsignedLEB128(1),
@@ -1143,10 +1300,6 @@ export class Compiler {
                 0x7f,
             ]
             : [...this.encodeUnsignedLEB128(0)];
-        const body = [];
-        for (const stmt of node.body)
-            body.push(...this.emitStatementBinary(stmt));
-        body.push(0x41, 0, 0x0b);
         const fullFunc = [...localDecls, ...body];
         return [...this.encodeUnsignedLEB128(fullFunc.length), ...fullFunc];
     }
@@ -1194,6 +1347,114 @@ export class Compiler {
                     ...elseBytes,
                     0x0b,
                 ];
+            case "For": {
+                if (node.start && node.stop) {
+                    const iterIdx = this.locals.get(node.iterator);
+                    return [
+                        ...this.emitExpressionBinary(node.start),
+                        0x21,
+                        ...this.encodeUnsignedLEB128(iterIdx),
+                        0x02,
+                        0x40, // block
+                        0x03,
+                        0x40, // loop
+                        0x20,
+                        ...this.encodeUnsignedLEB128(iterIdx),
+                        ...this.emitExpressionBinary(node.stop),
+                        0x4e, // i32.ge_s
+                        0x0d,
+                        1, // br_if 1
+                        ...node.body.map((s) => this.emitStatementBinary(s)).flat(),
+                        0x20,
+                        ...this.encodeUnsignedLEB128(iterIdx),
+                        0x41,
+                        1,
+                        0x6a, // i32.add
+                        0x21,
+                        ...this.encodeUnsignedLEB128(iterIdx),
+                        0x0c,
+                        0, // br 0
+                        0x0b,
+                        0x0b,
+                    ];
+                }
+                else if (node.iterable) {
+                    const iterIdx = this.locals.get(node.iterator);
+                    const iterPtrLocal = this.allocateTempLocal();
+                    const iterPtr = this.getTempLocalIndex(iterPtrLocal);
+                    const iterLenLocal = this.allocateTempLocal();
+                    const iterLen = this.getTempLocalIndex(iterLenLocal);
+                    const idxLocalName = this.allocateTempLocal();
+                    const idxLocal = this.getTempLocalIndex(idxLocalName);
+                    return [
+                        ...this.emitExpressionBinary(node.iterable),
+                        0x21,
+                        ...this.encodeUnsignedLEB128(iterPtr),
+                        0x20,
+                        ...this.encodeUnsignedLEB128(iterPtr),
+                        0x28, // i32.load
+                        2,
+                        0,
+                        0x21,
+                        ...this.encodeUnsignedLEB128(iterLen),
+                        0x41,
+                        0,
+                        0x21,
+                        ...this.encodeUnsignedLEB128(idxLocal),
+                        0x02,
+                        0x40, // block
+                        0x03,
+                        0x40, // loop
+                        0x20,
+                        ...this.encodeUnsignedLEB128(idxLocal),
+                        0x20,
+                        ...this.encodeUnsignedLEB128(iterLen),
+                        0x4e, // i32.ge_s
+                        0x0d,
+                        1, // br_if 1
+                        0x20,
+                        ...this.encodeUnsignedLEB128(iterPtr),
+                        0x41,
+                        4,
+                        0x6a, // add 4
+                        0x20,
+                        ...this.encodeUnsignedLEB128(idxLocal),
+                        0x41,
+                        4,
+                        0x6c, // mul 4
+                        0x6a, // add
+                        0x28, // load
+                        2,
+                        0,
+                        0x21,
+                        ...this.encodeUnsignedLEB128(iterIdx),
+                        ...node.body.map((s) => this.emitStatementBinary(s)).flat(),
+                        0x20,
+                        ...this.encodeUnsignedLEB128(idxLocal),
+                        0x41,
+                        1,
+                        0x6a, // i32.add
+                        0x21,
+                        ...this.encodeUnsignedLEB128(idxLocal),
+                        0x0c,
+                        0, // br 0
+                        0x0b,
+                        0x0b,
+                    ];
+                }
+                return [];
+            }
+            case "DoWhile": {
+                return [
+                    0x03,
+                    0x40, // loop
+                    ...node.body.map((s) => this.emitStatementBinary(s)).flat(),
+                    ...this.emitExpressionBinary(node.condition),
+                    0x0d,
+                    0, // br_if 0
+                    0x0b,
+                ];
+            }
             default:
                 const expr = this.emitExpressionBinary(node);
                 return expr.length > 0 ? [...expr, 0x1a] : [];
@@ -1209,11 +1470,13 @@ export class Compiler {
                 if (typeof node.value === "string") {
                     const str = node.value;
                     const size = (str.length + 1) * 4;
+                    const tmp0 = this.allocateTempLocal();
+                    const tmp0Idx = this.getTempLocalIndex(tmp0);
                     const bytes = [
                         0x23, // global.get 0
                         0,
-                        0x21, // local.set this.tempLocal
-                        ...this.encodeUnsignedLEB128(this.tempLocal),
+                        0x21, // local.set tmp0
+                        ...this.encodeUnsignedLEB128(tmp0Idx),
                         0x23, // global.get 0
                         0,
                         0x41, // i32.const size
@@ -1221,8 +1484,8 @@ export class Compiler {
                         0x6a, // i32.add
                         0x24, // global.set 0
                         0,
-                        0x20, // local.get this.tempLocal
-                        ...this.encodeUnsignedLEB128(this.tempLocal),
+                        0x20, // local.get tmp0
+                        ...this.encodeUnsignedLEB128(tmp0Idx),
                         0x41, // i32.const str.length
                         ...this.encodeSignedLEB128(str.length),
                         0x36, // i32.store
@@ -1230,25 +1493,27 @@ export class Compiler {
                         0,
                     ];
                     for (let i = 0; i < str.length; i++)
-                        bytes.push(0x20, // local.get this.tempLocal
-                        ...this.encodeUnsignedLEB128(this.tempLocal), 0x41, // i32.const (i+1)*4
+                        bytes.push(0x20, // local.get tmp0
+                        ...this.encodeUnsignedLEB128(tmp0Idx), 0x41, // i32.const (i+1)*4
                         ...this.encodeSignedLEB128((i + 1) * 4), 0x6a, // i32.add
                         0x41, // i32.const charCode
                         ...this.encodeSignedLEB128(str.charCodeAt(i)), 0x36, // i32.store
                         2, 0);
-                    bytes.push(0x20, // local.get this.tempLocal
-                    ...this.encodeUnsignedLEB128(this.tempLocal));
+                    bytes.push(0x20, // local.get tmp0
+                    ...this.encodeUnsignedLEB128(tmp0Idx));
                     return bytes;
                 }
                 return [];
-            case "List":
+            case "List": {
                 const length = node.elements.length;
                 const size = (length + 1) * 4;
+                const tmp0 = this.allocateTempLocal();
+                const tmp0Idx = this.getTempLocalIndex(tmp0);
                 const listBytes = [
                     0x23, // global.get 0
                     0,
-                    0x21, // local.set this.tempLocal
-                    ...this.encodeUnsignedLEB128(this.tempLocal),
+                    0x21, // local.set tmp0
+                    ...this.encodeUnsignedLEB128(tmp0Idx),
                     0x23, // global.get 0
                     0,
                     0x41, // i32.const size
@@ -1256,8 +1521,8 @@ export class Compiler {
                     0x6a, // i32.add
                     0x24, // global.set 0
                     0,
-                    0x20, // local.get this.tempLocal
-                    ...this.encodeUnsignedLEB128(this.tempLocal),
+                    0x20, // local.get tmp0
+                    ...this.encodeUnsignedLEB128(tmp0Idx),
                     0x41, // i32.const length
                     ...this.encodeSignedLEB128(length),
                     0x36, // i32.store
@@ -1265,16 +1530,17 @@ export class Compiler {
                     0,
                 ];
                 node.elements.forEach((el, i) => {
-                    listBytes.push(0x20, // local.get this.tempLocal
-                    ...this.encodeUnsignedLEB128(this.tempLocal), 0x41, // i32.const (i+1)*4
+                    listBytes.push(0x20, // local.get tmp0
+                    ...this.encodeUnsignedLEB128(tmp0Idx), 0x41, // i32.const (i+1)*4
                     ...this.encodeSignedLEB128((i + 1) * 4), 0x6a);
                     listBytes.push(...this.emitExpressionBinary(el));
                     listBytes.push(0x36, // i32.store
                     2, 0);
                 });
-                listBytes.push(0x20, // local.get this.tempLocal
-                ...this.encodeUnsignedLEB128(this.tempLocal));
+                listBytes.push(0x20, // local.get tmp0
+                ...this.encodeUnsignedLEB128(tmp0Idx));
                 return listBytes;
+            }
             case "Subscript":
                 const base = this.emitExpressionBinary(node.value);
                 if (node.index.type === "Slice") {
@@ -1294,14 +1560,14 @@ export class Compiler {
                         ...stop,
                         ...step,
                         0x10,
-                        ...this.encodeUnsignedLEB128(3),
+                        ...this.encodeUnsignedLEB128(this.functionMap.get("_slice")),
                     ];
                 }
                 return [
                     ...base,
                     ...this.emitExpressionBinary(node.index),
                     0x10,
-                    ...this.encodeUnsignedLEB128(2),
+                    ...this.encodeUnsignedLEB128(this.functionMap.get("_get_item")),
                 ];
             case "Identifier":
                 return [
@@ -1310,84 +1576,26 @@ export class Compiler {
                 ];
             case "ListComprehension": {
                 const itemLocalIdx = this.locals.get(node.item);
-                const baseLocalIdx = this.comprehensionLocals.get(node);
-                const resLocalIdx = baseLocalIdx;
-                const countLocalIdx = baseLocalIdx + 1;
-                const iterPtrLocalIdx = baseLocalIdx + 2;
-                const iterLenLocalIdx = baseLocalIdx + 3;
-                const iLocalIdx = baseLocalIdx + 4;
-                return [
-                    ...this.emitExpressionBinary(node.iterable),
-                    0x21,
-                    ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
-                    0x20,
-                    ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
-                    0x28,
-                    2,
-                    0,
-                    0x21,
-                    ...this.encodeUnsignedLEB128(iterLenLocalIdx),
-                    0x23,
-                    0,
-                    0x21,
-                    ...this.encodeUnsignedLEB128(resLocalIdx),
-                    0x20,
-                    ...this.encodeUnsignedLEB128(resLocalIdx),
-                    0x41,
-                    0,
-                    0x36,
-                    2,
-                    0,
-                    0x23,
-                    0,
-                    0x41,
-                    4,
-                    0x6a,
-                    0x24,
-                    0,
-                    0x41,
-                    0,
-                    0x21,
-                    ...this.encodeUnsignedLEB128(countLocalIdx),
-                    0x41,
-                    0,
-                    0x21,
-                    ...this.encodeUnsignedLEB128(iLocalIdx),
-                    0x02,
-                    0x40,
-                    0x03,
-                    0x40,
-                    0x20,
-                    ...this.encodeUnsignedLEB128(iLocalIdx),
-                    0x20,
-                    ...this.encodeUnsignedLEB128(iterLenLocalIdx),
-                    0x48,
-                    0x45,
-                    0x0d,
-                    1,
-                    0x20,
-                    ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
-                    0x20,
-                    ...this.encodeUnsignedLEB128(iLocalIdx),
-                    0x41,
-                    4,
-                    0x6c,
-                    0x6a,
-                    0x41,
-                    4,
-                    0x6a,
-                    0x28,
-                    2,
-                    0,
-                    0x21,
-                    ...this.encodeUnsignedLEB128(itemLocalIdx),
+                const resLocal = this.allocateTempLocal();
+                const resLocalIdx = this.getTempLocalIndex(resLocal);
+                const countLocal = this.allocateTempLocal();
+                const countLocalIdx = this.getTempLocalIndex(countLocal);
+                const iterPtrLocal = this.allocateTempLocal();
+                const iterPtrLocalIdx = this.getTempLocalIndex(iterPtrLocal);
+                const iterLenLocal = this.allocateTempLocal();
+                const iterLenLocalIdx = this.getTempLocalIndex(iterLenLocal);
+                const iLocal = this.allocateTempLocal();
+                const iLocalIdx = this.getTempLocalIndex(iLocal);
+                const resItemPtr = this.allocateTempLocal();
+                const resItemPtrIdx = this.getTempLocalIndex(resItemPtr);
+                const actionBytes = [
                     ...(node.condition
                         ? [...this.emitExpressionBinary(node.condition), 0x04, 0x40]
                         : []),
                     0x23, // global.get 0
                     0,
-                    0x21, // local.set this.tempLocal
-                    ...this.encodeUnsignedLEB128(this.tempLocal),
+                    0x21, // local.set resItemPtr
+                    ...this.encodeUnsignedLEB128(resItemPtrIdx),
                     0x23, // global.get 0
                     0,
                     0x41, // i32.const 4
@@ -1395,8 +1603,8 @@ export class Compiler {
                     0x6a, // i32.add
                     0x24, // global.set 0
                     0,
-                    0x20, // local.get this.tempLocal
-                    ...this.encodeUnsignedLEB128(this.tempLocal),
+                    0x20, // local.get resItemPtr
+                    ...this.encodeUnsignedLEB128(resItemPtrIdx),
                     ...this.emitExpressionBinary(node.expression),
                     0x36, // i32.store
                     2,
@@ -1409,48 +1617,19 @@ export class Compiler {
                     0x21,
                     ...this.encodeUnsignedLEB128(countLocalIdx),
                     ...(node.condition ? [0x0b] : []),
-                    0x20,
-                    ...this.encodeUnsignedLEB128(iLocalIdx),
-                    0x41,
-                    1,
-                    0x6a,
-                    0x21,
-                    ...this.encodeUnsignedLEB128(iLocalIdx),
-                    0x0c,
-                    0,
-                    0x0b,
-                    0x0b,
-                    0x20,
-                    ...this.encodeUnsignedLEB128(resLocalIdx),
-                    0x20,
-                    ...this.encodeUnsignedLEB128(countLocalIdx),
-                    0x36,
-                    2,
-                    0,
-                    0x20,
-                    ...this.encodeUnsignedLEB128(resLocalIdx),
                 ];
-            }
-            case "DictComprehension": {
-                const itemLocalIdx = this.locals.get(node.item);
-                const baseLocalIdx = this.comprehensionLocals.get(node);
-                const resLocalIdx = baseLocalIdx;
-                const countLocalIdx = baseLocalIdx + 1;
-                const iterPtrLocalIdx = baseLocalIdx + 2;
-                const iterLenLocalIdx = baseLocalIdx + 3;
-                const iLocalIdx = baseLocalIdx + 4;
                 return [
                     ...this.emitExpressionBinary(node.iterable),
                     0x21,
                     ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
                     0x20,
                     ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
-                    0x28,
+                    0x28, // i32.load
                     2,
                     0,
                     0x21,
                     ...this.encodeUnsignedLEB128(iterLenLocalIdx),
-                    0x23,
+                    0x23, // global.get 0
                     0,
                     0x21,
                     ...this.encodeUnsignedLEB128(resLocalIdx),
@@ -1458,15 +1637,15 @@ export class Compiler {
                     ...this.encodeUnsignedLEB128(resLocalIdx),
                     0x41,
                     0,
-                    0x36,
+                    0x36, // i32.store count 0
                     2,
                     0,
-                    0x23,
+                    0x23, // global.get 0
                     0,
                     0x41,
                     4,
                     0x6a,
-                    0x24,
+                    0x24, // global.set 0
                     0,
                     0x41,
                     0,
@@ -1484,10 +1663,9 @@ export class Compiler {
                     ...this.encodeUnsignedLEB128(iLocalIdx),
                     0x20,
                     ...this.encodeUnsignedLEB128(iterLenLocalIdx),
-                    0x48,
-                    0x45,
+                    0x4e, // i32.ge_s
                     0x0d,
-                    1,
+                    1, // br_if 1
                     0x20,
                     ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
                     0x20,
@@ -1499,56 +1677,12 @@ export class Compiler {
                     0x41,
                     4,
                     0x6a,
-                    0x28,
+                    0x28, // i32.load
                     2,
                     0,
                     0x21,
                     ...this.encodeUnsignedLEB128(itemLocalIdx),
-                    ...(node.condition
-                        ? [...this.emitExpressionBinary(node.condition), 0x04, 0x40]
-                        : []),
-                    0x23, // global.get 0
-                    0,
-                    0x21, // local.set this.tempLocal
-                    ...this.encodeUnsignedLEB128(this.tempLocal),
-                    0x23, // global.get 0
-                    0,
-                    0x41, // i32.const 4
-                    4,
-                    0x6a, // i32.add
-                    0x24, // global.set 0
-                    0,
-                    0x20, // local.get this.tempLocal
-                    ...this.encodeUnsignedLEB128(this.tempLocal),
-                    ...this.emitExpressionBinary(node.key),
-                    0x36, // i32.store
-                    2,
-                    0,
-                    0x23, // global.get 0
-                    0,
-                    0x21, // local.set this.tempLocal
-                    ...this.encodeUnsignedLEB128(this.tempLocal),
-                    0x23, // global.get 0
-                    0,
-                    0x41, // i32.const 4
-                    4,
-                    0x6a, // i32.add
-                    0x24, // global.set 0
-                    0,
-                    0x20, // local.get this.tempLocal
-                    ...this.encodeUnsignedLEB128(this.tempLocal),
-                    ...this.emitExpressionBinary(node.value),
-                    0x36, // i32.store
-                    2,
-                    0,
-                    0x20,
-                    ...this.encodeUnsignedLEB128(countLocalIdx),
-                    0x41,
-                    1,
-                    0x6a,
-                    0x21,
-                    ...this.encodeUnsignedLEB128(countLocalIdx),
-                    ...(node.condition ? [0x0b] : []),
+                    ...actionBytes,
                     0x20,
                     ...this.encodeUnsignedLEB128(iLocalIdx),
                     0x41,
@@ -1564,14 +1698,174 @@ export class Compiler {
                     ...this.encodeUnsignedLEB128(resLocalIdx),
                     0x20,
                     ...this.encodeUnsignedLEB128(countLocalIdx),
-                    0x36,
+                    0x36, // store final count
                     2,
                     0,
                     0x20,
                     ...this.encodeUnsignedLEB128(resLocalIdx),
                 ];
             }
-            case "BinaryExpression":
+            case "DictComprehension": {
+                const itemLocalIdx = this.locals.get(node.item);
+                const resLocal = this.allocateTempLocal();
+                const resLocalIdx = this.getTempLocalIndex(resLocal);
+                const countLocal = this.allocateTempLocal();
+                const countLocalIdx = this.getTempLocalIndex(countLocal);
+                const iterPtrLocal = this.allocateTempLocal();
+                const iterPtrLocalIdx = this.getTempLocalIndex(iterPtrLocal);
+                const iterLenLocal = this.allocateTempLocal();
+                const iterLenLocalIdx = this.getTempLocalIndex(iterLenLocal);
+                const iLocal = this.allocateTempLocal();
+                const iLocalIdx = this.getTempLocalIndex(iLocal);
+                const resItemPtr = this.allocateTempLocal();
+                const resItemPtrIdx = this.getTempLocalIndex(resItemPtr);
+                const actionBytes = [
+                    ...(node.condition
+                        ? [...this.emitExpressionBinary(node.condition), 0x04, 0x40]
+                        : []),
+                    0x23, // global.get 0
+                    0,
+                    0x21, // local.set resItemPtr
+                    ...this.encodeUnsignedLEB128(resItemPtrIdx),
+                    0x23, // global.get 0
+                    0,
+                    0x41, // i32.const 4
+                    4,
+                    0x6a, // i32.add
+                    0x24, // global.set 0
+                    0,
+                    0x20, // local.get resItemPtr
+                    ...this.encodeUnsignedLEB128(resItemPtrIdx),
+                    ...this.emitExpressionBinary(node.key),
+                    0x36, // i32.store
+                    2,
+                    0,
+                    0x23, // global.get 0
+                    0,
+                    0x21, // local.set resItemPtr
+                    ...this.encodeUnsignedLEB128(resItemPtrIdx),
+                    0x23, // global.get 0
+                    0,
+                    0x41, // i32.const 4
+                    4,
+                    0x6a, // i32.add
+                    0x24, // global.set 0
+                    0,
+                    0x20, // local.get resItemPtr
+                    ...this.encodeUnsignedLEB128(resItemPtrIdx),
+                    ...this.emitExpressionBinary(node.value),
+                    0x36, // i32.store
+                    2,
+                    0,
+                    0x20,
+                    ...this.encodeUnsignedLEB128(countLocalIdx),
+                    0x41,
+                    1,
+                    0x6a,
+                    0x21,
+                    ...this.encodeUnsignedLEB128(countLocalIdx),
+                    ...(node.condition ? [0x0b] : []),
+                ];
+                return [
+                    ...this.emitExpressionBinary(node.iterable),
+                    0x21,
+                    ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
+                    0x20,
+                    ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
+                    0x28, // i32.load
+                    2,
+                    0,
+                    0x21,
+                    ...this.encodeUnsignedLEB128(iterLenLocalIdx),
+                    0x23, // global.get 0
+                    0,
+                    0x21,
+                    ...this.encodeUnsignedLEB128(resLocalIdx),
+                    0x20,
+                    ...this.encodeUnsignedLEB128(resLocalIdx),
+                    0x41,
+                    0,
+                    0x36, // i32.store count 0
+                    2,
+                    0,
+                    0x23, // global.get 0
+                    0,
+                    0x41,
+                    4,
+                    0x6a,
+                    0x24, // global.set 0
+                    0,
+                    0x41,
+                    0,
+                    0x21,
+                    ...this.encodeUnsignedLEB128(countLocalIdx),
+                    0x41,
+                    0,
+                    0x21,
+                    ...this.encodeUnsignedLEB128(iLocalIdx),
+                    0x02,
+                    0x40,
+                    0x03,
+                    0x40,
+                    0x20,
+                    ...this.encodeUnsignedLEB128(iLocalIdx),
+                    0x20,
+                    ...this.encodeUnsignedLEB128(iterLenLocalIdx),
+                    0x4e, // i32.ge_s
+                    0x0d,
+                    1, // br_if 1
+                    0x20,
+                    ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
+                    0x20,
+                    ...this.encodeUnsignedLEB128(iLocalIdx),
+                    0x41,
+                    4,
+                    0x6c,
+                    0x6a,
+                    0x41,
+                    4,
+                    0x6a,
+                    0x28, // i32.load
+                    2,
+                    0,
+                    0x21,
+                    ...this.encodeUnsignedLEB128(itemLocalIdx),
+                    ...actionBytes,
+                    0x20,
+                    ...this.encodeUnsignedLEB128(iLocalIdx),
+                    0x41,
+                    1,
+                    0x6a,
+                    0x21,
+                    ...this.encodeUnsignedLEB128(iLocalIdx),
+                    0x0c,
+                    0,
+                    0x0b,
+                    0x0b,
+                    0x20,
+                    ...this.encodeUnsignedLEB128(resLocalIdx),
+                    0x20,
+                    ...this.encodeUnsignedLEB128(countLocalIdx),
+                    0x36, // store final count
+                    2,
+                    0,
+                    0x20,
+                    ...this.encodeUnsignedLEB128(resLocalIdx),
+                ];
+            }
+            case "BinaryExpression": {
+                if (node.operator === "+") {
+                    const isString = (n) => (n.type === "Literal" && typeof n.value === "string") ||
+                        n.type === "FString";
+                    if (isString(node.left) || isString(node.right)) {
+                        return [
+                            ...this.emitExpressionBinary(node.left),
+                            ...this.emitExpressionBinary(node.right),
+                            0x10,
+                            ...this.encodeUnsignedLEB128(this.functionMap.get("concat")),
+                        ];
+                    }
+                }
                 let opByte = 0;
                 switch (node.operator) {
                     case "+":
@@ -1628,22 +1922,52 @@ export class Compiler {
                     ...this.emitExpressionBinary(node.right),
                     opByte,
                 ];
+            }
             case "UnaryExpression":
                 if (node.operator === "-")
                     return [0x41, 0, ...this.emitExpressionBinary(node.argument), 0x6b];
                 if (node.operator === "not")
                     return [...this.emitExpressionBinary(node.argument), 0x45];
                 return this.emitExpressionBinary(node.argument);
-            case "CallExpression":
+            case "CallExpression": {
                 const calleeIdx = this.functionMap.get(node.callee);
                 if (calleeIdx === undefined) {
                     throw new Error(`Undefined function: ${node.callee}`);
                 }
-                return [
-                    ...node.args.map((a) => this.emitExpressionBinary(a)).flat(),
-                    0x10,
-                    ...this.encodeUnsignedLEB128(calleeIdx),
-                ];
+                const argsBytes = node.args
+                    .map((a) => this.emitExpressionBinary(a))
+                    .flat();
+                if (node.callee === "print" && node.args.length === 1) {
+                    const arg = node.args[0];
+                    if ((arg.type === "Literal" && typeof arg.value === "string") ||
+                        arg.type === "FString") {
+                        return [
+                            ...argsBytes,
+                            0x10,
+                            ...this.encodeUnsignedLEB128(this.functionMap.get("print_str")),
+                        ];
+                    }
+                }
+                return [...argsBytes, 0x10, ...this.encodeUnsignedLEB128(calleeIdx)];
+            }
+            case "FString": {
+                const bytes = [];
+                node.parts.forEach((part, i) => {
+                    if (typeof part === "string") {
+                        bytes.push(...this.emitExpressionBinary({
+                            type: "Literal",
+                            value: part,
+                        }));
+                    }
+                    else {
+                        bytes.push(...this.emitExpressionBinary(part), 0x10, ...this.encodeUnsignedLEB128(this.functionMap.get("itoa")));
+                    }
+                    if (i > 0) {
+                        bytes.push(0x10, ...this.encodeUnsignedLEB128(this.functionMap.get("concat")));
+                    }
+                });
+                return bytes;
+            }
             default:
                 return [];
         }
