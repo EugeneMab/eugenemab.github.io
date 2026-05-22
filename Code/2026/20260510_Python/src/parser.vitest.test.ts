@@ -45,6 +45,18 @@ describe("Parser Legacy Tests", () => {
         );
       },
     },
+    {
+      name: "Pass Statement AST",
+      code: "if x == 42:\n    pass\nelse:\n    pass",
+      validate: (ast: any) => {
+        const ifNode = ast.body[0];
+        return (
+          ifNode.type === "If" &&
+          ifNode.thenBranch[0].type === "Pass" &&
+          ifNode.elseBranch[0].type === "Pass"
+        );
+      },
+    },
   ];
 
   for (const c of cases) {
