@@ -5,7 +5,12 @@ export class Compiler {
     tempLocals = [];
     watLocalCount = 0;
     allocateTempLocal() {
-        const name = `__tmp${this.tempLocals.length}`;
+        let candidateIndex = this.tempLocals.length;
+        let name = `__tmp${candidateIndex}`;
+        while (this.locals.has(name) || this.tempLocals.includes(name)) {
+            candidateIndex++;
+            name = `__tmp${candidateIndex}`;
+        }
         this.tempLocals.push(name);
         return name;
     }

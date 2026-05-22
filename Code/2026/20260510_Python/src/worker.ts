@@ -44,6 +44,7 @@ self.onmessage = async (e) => {
         env: {
           print: (val: number) => {
             self.postMessage({ type: "log", payload: val });
+            return 0;
           },
           print_str: (ptr: number) => {
             const view = new Int32Array(instance.exports.memory.buffer);
@@ -127,6 +128,7 @@ self.onmessage = async (e) => {
                 // Spinning...
               }
             }
+            return 0;
           },
         },
       };
