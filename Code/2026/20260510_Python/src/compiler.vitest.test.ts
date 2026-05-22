@@ -26,6 +26,11 @@ describe("Compiler Integration", () => {
       code: "def main():\n    return (10 + 5) - (2 + 3)",
       expectedResult: 10,
     },
+    {
+      name: "Pass Statement Integration",
+      code: "def main():\n    x = 42\n    if x == 42:\n        pass\n    else:\n        x = 0\n    return x",
+      expectedResult: 42,
+    },
   ];
 
   for (const c of cases) {

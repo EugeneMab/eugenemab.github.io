@@ -26,6 +26,7 @@ export var TokenType;
     TokenType["NOT"] = "NOT";
     TokenType["TRUE"] = "TRUE";
     TokenType["FALSE"] = "FALSE";
+    TokenType["PASS"] = "PASS";
     TokenType["NEWLINE"] = "NEWLINE";
     TokenType["INDENT"] = "INDENT";
     TokenType["DEDENT"] = "DEDENT";
@@ -224,6 +225,7 @@ export class Lexer {
             and: TokenType.AND,
             or: TokenType.OR,
             not: TokenType.NOT,
+            pass: TokenType.PASS,
             True: TokenType.TRUE,
             False: TokenType.FALSE,
         };

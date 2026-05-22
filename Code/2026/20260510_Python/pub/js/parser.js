@@ -28,6 +28,10 @@ export class Parser {
             return this.parseFor();
         if (this.match(TokenType.IF))
             return this.parseIf();
+        if (this.match(TokenType.PASS)) {
+            this.consumeStatementEnd();
+            return { type: "Pass" };
+        }
         if (this.match(TokenType.NEWLINE))
             return null;
         const expr = this.parseExpression();

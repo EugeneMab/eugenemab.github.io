@@ -3,6 +3,11 @@ def main():
     x = 42
     is_valid = x > 0 and x < 100
     
+    if x == 42:
+        print("yes")
+    else:
+        pass
+    
     if not is_valid:
         return 0
     elif x == 42 or x == 7:
