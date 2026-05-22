@@ -20,7 +20,12 @@ export type ASTNode =
   | SliceNode
   | ForNode
   | DoWhileNode
-  | FStringNode;
+  | FStringNode
+  | PassNode;
+
+export interface PassNode {
+  type: "Pass";
+}
 
 export interface ForNode {
   type: "For";
@@ -166,6 +171,10 @@ export class Parser {
     if (this.match(TokenType.DO)) return this.parseDoWhile();
     if (this.match(TokenType.FOR)) return this.parseFor();
     if (this.match(TokenType.IF)) return this.parseIf();
+    if (this.match(TokenType.PASS)) {
+      this.consumeStatementEnd();
+      return { type: "Pass" };
+    }
 
     if (this.match(TokenType.NEWLINE)) return null;
 

@@ -26,6 +26,7 @@ export enum TokenType {
   NOT = "NOT",
   TRUE = "TRUE",
   FALSE = "FALSE",
+  PASS = "PASS",
 
   NEWLINE = "NEWLINE",
   INDENT = "INDENT",
@@ -264,6 +265,7 @@ export class Lexer {
       and: TokenType.AND,
       or: TokenType.OR,
       not: TokenType.NOT,
+      pass: TokenType.PASS,
       True: TokenType.TRUE,
       False: TokenType.FALSE,
     };

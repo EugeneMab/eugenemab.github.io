@@ -1,6 +1,55 @@
 // src/compiler.ts
 import { ProgramNode, ASTNode, FunctionDefNode, SliceNode } from "./parser.js";
 
+const SECTION_TYPE = 0x01;
+const SECTION_IMPORT = 0x02;
+const SECTION_FUNCTION = 0x03;
+const SECTION_MEMORY = 0x05;
+const SECTION_GLOBAL = 0x06;
+const SECTION_EXPORT = 0x07;
+const SECTION_CODE = 0x0a;
+
+const TYPE_I32 = 0x7f;
+const TYPE_FUNC = 0x60;
+const TYPE_EMPTY = 0x40;
+
+const EXT_KIND_FUNC = 0x00;
+const EXT_KIND_MEMORY = 0x02;
+const EXT_KIND_GLOBAL = 0x03;
+
+const MUTABILITY_VAR = 0x01;
+
+const OP_NOP = 0x01;
+const OP_BLOCK = 0x02;
+const OP_LOOP = 0x03;
+const OP_IF = 0x04;
+const OP_ELSE = 0x05;
+const OP_END = 0x0b;
+const OP_BR = 0x0c;
+const OP_BR_IF = 0x0d;
+const OP_RETURN = 0x0f;
+const OP_CALL = 0x10;
+const OP_DROP = 0x1a;
+const OP_LOCAL_GET = 0x20;
+const OP_LOCAL_SET = 0x21;
+const OP_GLOBAL_GET = 0x23;
+const OP_GLOBAL_SET = 0x24;
+const OP_I32_LOAD = 0x28;
+const OP_I32_STORE = 0x36;
+const OP_I32_CONST = 0x41;
+const OP_I32_EQZ = 0x45;
+const OP_I32_EQ = 0x46;
+const OP_I32_NE = 0x47;
+const OP_I32_LT_S = 0x48;
+const OP_I32_GT_S = 0x4a;
+const OP_I32_GE_S = 0x4e;
+const OP_I32_ADD = 0x6a;
+const OP_I32_SUB = 0x6b;
+const OP_I32_MUL = 0x6c;
+const OP_I32_DIV_S = 0x6d;
+const OP_I32_AND = 0x71;
+const OP_I32_OR = 0x72;
+
 export class Compiler {
   private locals: Map<string, number> = new Map();
   private localIndex: number = 0;
@@ -58,239 +107,6 @@ export class Compiler {
     }
     wat += `)\n`;
     return wat;
-  }
-
-  private emitGetItemWAT(): string {
-    return `  (func $_get_item (param $base i32) (param $index i32) (result i32)
-    (local $len i32)
-    local.get $base
-    i32.load
-    local.set $len
-    local.get $index
-    i32.const 0
-    i32.lt_s
-    if (result i32)
-      local.get $len
-      local.get $index
-      i32.add
-    else
-      local.get $index
-    end
-    local.set $index
-    local.get $index
-    i32.const 0
-    i32.lt_s
-    local.get $index
-    local.get $len
-    i32.ge_s
-    i32.or
-    if
-      unreachable
-    end
-    local.get $base
-    local.get $index
-    i32.const 4
-    i32.mul
-    i32.add
-    i32.const 4
-    i32.add
-    i32.load
-  )\n`;
-  }
-
-  private emitSliceWAT(): string {
-    return `  (func $_slice (param $base i32) (param $start i32) (param $stop i32) (param $step i32) (result i32)
-    (local $len i32) (local $new_len i32) (local $i i32) (local $new_ptr i32) (local $cur i32)
-    local.get $base
-    i32.load
-    local.set $len
-    ;; Step default
-    local.get $step
-    i32.const 2147483647
-    i32.eq
-    if
-      i32.const 1
-      local.set $step
-    end
-    ;; Start default
-    local.get $start
-    i32.const 2147483647
-    i32.eq
-    if
-      local.get $step
-      i32.const 0
-      i32.gt_s
-      if
-        i32.const 0
-        local.set $start
-      else
-        local.get $len
-        i32.const 1
-        i32.sub
-        local.set $start
-      end
-    end
-    ;; Stop default
-    local.get $stop
-    i32.const 2147483647
-    i32.eq
-    if
-      local.get $step
-      i32.const 0
-      i32.gt_s
-      if
-        local.get $len
-        local.set $stop
-      else
-        i32.const -1
-        local.set $stop
-      end
-    end
-    ;; Normalize
-    local.get $start
-    i32.const 0
-    i32.lt_s
-    if
-      local.get $start
-      local.get $len
-      i32.add
-      local.set $start
-    end
-    local.get $stop
-    i32.const 0
-    i32.lt_s
-    if
-      local.get $stop
-      local.get $len
-      i32.add
-      local.set $stop
-    end
-    ;; Clamp
-    local.get $start
-    i32.const 0
-    i32.lt_s
-    if
-      i32.const 0
-      local.set $start
-    end
-    local.get $start
-    local.get $len
-    i32.gt_s
-    if
-      local.get $len
-      local.set $start
-    end
-    local.get $stop
-    i32.const -1
-    i32.lt_s
-    if
-      i32.const -1
-      local.set $stop
-    end
-    local.get $stop
-    local.get $len
-    i32.gt_s
-    if
-      local.get $len
-      local.set $stop
-    end
-    ;; Calculate new_len
-    i32.const 0
-    local.set $new_len
-    local.get $step
-    i32.const 0
-    i32.gt_s
-    if
-      local.get $stop
-      local.get $start
-      i32.gt_s
-      if
-        local.get $stop
-        local.get $start
-        i32.sub
-        local.get $step
-        i32.add
-        i32.const 1
-        i32.sub
-        local.get $step
-        i32.div_s
-        local.set $new_len
-      end
-    else
-      local.get $start
-      local.get $stop
-      i32.gt_s
-      if
-        local.get $start
-        local.get $stop
-        i32.sub
-        i32.const 0
-        local.get $step
-        i32.sub
-        i32.add
-        i32.const 1
-        i32.sub
-        i32.const 0
-        local.get $step
-        i32.sub
-        i32.div_s
-        local.set $new_len
-      end
-    end
-    ;; Alloc
-    global.get $heap_ptr
-    local.set $new_ptr
-    global.get $heap_ptr
-    local.get $new_len
-    i32.const 1
-    i32.add
-    i32.const 4
-    i32.mul
-    i32.add
-    global.set $heap_ptr
-    local.get $new_ptr
-    local.get $new_len
-    i32.store
-    ;; Copy
-    i32.const 0
-    local.set $i
-    local.get $start
-    local.set $cur
-    block
-      loop
-        local.get $i
-        local.get $new_len
-        i32.ge_s
-        br_if 1
-        local.get $new_ptr
-        local.get $i
-        i32.const 4
-        i32.mul
-        i32.add
-        i32.const 4
-        i32.add
-        local.get $base
-        local.get $cur
-        i32.const 4
-        i32.mul
-        i32.add
-        i32.const 4
-        i32.add
-        i32.load
-        i32.store
-        local.get $i
-        i32.const 1
-        i32.add
-        local.set $i
-        local.get $cur
-        local.get $step
-        i32.add
-        local.set $cur
-        br 0
-      end
-    end
-    local.get $new_ptr
-  )\n`;
   }
 
   private emitFunctionWAT(node: FunctionDefNode): string {
@@ -470,13 +286,16 @@ export class Compiler {
         return "";
       }
       case "DoWhile": {
-        const body = node.body
-          .map((s) => this.emitStatementWAT(s))
-          .filter((s) => s)
-          .join("\n");
+        const body =
+          node.body
+            .map((s) => this.emitStatementWAT(s))
+            .filter((s) => s)
+            .join("\n") + "\n";
         const condition = `${this.emitExpressionWAT(node.condition)}\nbr_if 0`;
-        return `loop\n${this.indent(body + "\n" + condition)}\nend`;
+        return `loop\n${this.indent(body + condition)}\nend`;
       }
+      case "Pass":
+        return "nop";
       default:
         const expr = this.emitExpressionWAT(node);
         return expr ? expr + "\ndrop" : "";
@@ -768,18 +587,27 @@ export class Compiler {
     userFunctions.forEach((f, i) => this.functionMap.set(f.name, 7 + i));
 
     const types: number[][] = [];
-    types.push([0x60, 1, 0x7f, 1, 0x7f]); // index 0: (i32) -> i32
-    types.push([0x60, 2, 0x7f, 0x7f, 1, 0x7f]); // index 1: (i32, i32) -> i32
-    types.push([0x60, 3, 0x7f, 0x7f, 0x7f, 1, 0x7f]); // index 2: (i32, i32, i32) -> i32
-    types.push([0x60, 4, 0x7f, 0x7f, 0x7f, 0x7f, 1, 0x7f]); // index 3
+    types.push([TYPE_FUNC, 1, TYPE_I32, 1, TYPE_I32]); // index 0: (i32) -> i32
+    types.push([TYPE_FUNC, 2, TYPE_I32, TYPE_I32, 1, TYPE_I32]); // index 1: (i32, i32) -> i32
+    types.push([TYPE_FUNC, 3, TYPE_I32, TYPE_I32, TYPE_I32, 1, TYPE_I32]); // index 2: (i32, i32, i32) -> i32
+    types.push([
+      TYPE_FUNC,
+      4,
+      TYPE_I32,
+      TYPE_I32,
+      TYPE_I32,
+      TYPE_I32,
+      1,
+      TYPE_I32,
+    ]); // index 3
     const userFuncTypeIndices: number[] = [];
     for (const f of userFunctions) {
       const type = [
-        0x60,
+        TYPE_FUNC,
         ...this.encodeUnsignedLEB128(f.params.length),
-        ...new Array(f.params.length).fill(0x7f),
+        ...new Array(f.params.length).fill(TYPE_I32),
         1,
-        0x7f,
+        TYPE_I32,
       ];
       let idx = types.findIndex(
         (t) => JSON.stringify(t) === JSON.stringify(type),
@@ -790,52 +618,89 @@ export class Compiler {
       }
       userFuncTypeIndices.push(idx);
     }
-    const typeSection = this.createSection(1, [this.encodeVector(types)]);
-    const importSection = this.createSection(2, [
+    const typeSection = this.createSection(SECTION_TYPE, [
+      this.encodeVector(types),
+    ]);
+    const importSection = this.createSection(SECTION_IMPORT, [
       this.encodeVector([
-        [...this.encodeString("env"), ...this.encodeString("print"), 0x00, 0],
-        [...this.encodeString("env"), ...this.encodeString("sleep"), 0x00, 0],
+        [
+          ...this.encodeString("env"),
+          ...this.encodeString("print"),
+          EXT_KIND_FUNC,
+          0,
+        ],
+        [
+          ...this.encodeString("env"),
+          ...this.encodeString("sleep"),
+          EXT_KIND_FUNC,
+          0,
+        ],
         [
           ...this.encodeString("env"),
           ...this.encodeString("print_str"),
-          0x00,
+          EXT_KIND_FUNC,
           0,
         ],
-        [...this.encodeString("env"), ...this.encodeString("itoa"), 0x00, 0],
-        [...this.encodeString("env"), ...this.encodeString("concat"), 0x00, 1],
+        [
+          ...this.encodeString("env"),
+          ...this.encodeString("itoa"),
+          EXT_KIND_FUNC,
+          0,
+        ],
+        [
+          ...this.encodeString("env"),
+          ...this.encodeString("concat"),
+          EXT_KIND_FUNC,
+          1,
+        ],
         [
           ...this.encodeString("env"),
           ...this.encodeString("_get_item"),
-          0x00,
+          EXT_KIND_FUNC,
           1,
         ],
-        [...this.encodeString("env"), ...this.encodeString("_slice"), 0x00, 3],
+        [
+          ...this.encodeString("env"),
+          ...this.encodeString("_slice"),
+          EXT_KIND_FUNC,
+          3,
+        ],
       ]),
     ]);
-    const funcSection = this.createSection(3, [
+    const funcSection = this.createSection(SECTION_FUNCTION, [
       this.encodeVector(userFuncTypeIndices.map((i) => [i])),
     ]);
-    const memorySection = this.createSection(5, [
-      this.encodeVector([[0x00, 1]]),
+    const memorySection = this.createSection(SECTION_MEMORY, [
+      this.encodeVector([[0, 1]]),
     ]);
-    const globalSection = this.createSection(6, [
+    const globalSection = this.createSection(SECTION_GLOBAL, [
       this.encodeVector([
-        [0x7f, 0x01, 0x41, ...this.encodeSignedLEB128(1024), 0x0b],
+        [
+          TYPE_I32,
+          MUTABILITY_VAR,
+          OP_I32_CONST,
+          ...this.encodeSignedLEB128(1024),
+          OP_END,
+        ],
       ]),
     ]);
     const exports: number[][] = [];
     userFunctions.forEach((f, i) =>
       exports.push([
         ...this.encodeString(f.name),
-        0x00,
+        EXT_KIND_FUNC,
         ...this.encodeUnsignedLEB128(7 + i),
       ]),
     );
-    exports.push([...this.encodeString("memory"), 0x02, 0]);
-    exports.push([...this.encodeString("heap_ptr"), 0x03, 0]);
-    const exportSection = this.createSection(7, [this.encodeVector(exports)]);
+    exports.push([...this.encodeString("memory"), EXT_KIND_MEMORY, 0]);
+    exports.push([...this.encodeString("heap_ptr"), EXT_KIND_GLOBAL, 0]);
+    const exportSection = this.createSection(SECTION_EXPORT, [
+      this.encodeVector(exports),
+    ]);
     const codes = [...userFunctions.map((f) => this.emitFunctionBinary(f))];
-    const codeSection = this.createSection(10, [this.encodeVector(codes)]);
+    const codeSection = this.createSection(SECTION_CODE, [
+      this.encodeVector(codes),
+    ]);
 
     return new Uint8Array([
       ...magic,
@@ -865,388 +730,6 @@ export class Compiler {
     return [...this.encodeUnsignedLEB128(bytes.length), ...Array.from(bytes)];
   }
 
-  private emitGetItemBinary(): number[] {
-    const body: number[] = [
-      ...this.encodeUnsignedLEB128(1),
-      ...this.encodeUnsignedLEB128(1),
-      0x7f,
-      0x20,
-      0,
-      0x28,
-      2,
-      0,
-      0x21,
-      2,
-      0x20,
-      1,
-      0x41,
-      0,
-      0x48,
-      0x04,
-      0x7f,
-      0x20,
-      2,
-      0x20,
-      1,
-      0x6a,
-      0x05,
-      0x20,
-      1,
-      0x0b,
-      0x21,
-      1,
-      0x20,
-      1,
-      0x41,
-      0,
-      0x48,
-      0x20,
-      1,
-      0x20,
-      2,
-      0x4e,
-      0x72,
-      0x04,
-      0x40,
-      0x00,
-      0x0b,
-      0x20,
-      0,
-      0x20,
-      1,
-      0x41,
-      4,
-      0x6c,
-      0x6a,
-      0x41,
-      4,
-      0x6a,
-      0x28,
-      2,
-      0,
-      0x0b,
-    ];
-    return [...this.encodeUnsignedLEB128(body.length), ...body];
-  }
-
-  private emitSliceBinary(): number[] {
-    const body: number[] = [
-      ...this.encodeUnsignedLEB128(1),
-      ...this.encodeUnsignedLEB128(5),
-      0x7f,
-      0x20,
-      0,
-      0x28,
-      2,
-      0,
-      0x21,
-      4,
-      0x20,
-      3,
-      0x41,
-      ...this.encodeSignedLEB128(0x7fffffff),
-      0x46,
-      0x04,
-      0x40,
-      0x41,
-      1,
-      0x21,
-      3,
-      0x0b,
-      0x20,
-      1,
-      0x41,
-      ...this.encodeSignedLEB128(0x7fffffff),
-      0x46,
-      0x04,
-      0x40,
-      0x20,
-      3,
-      0x41,
-      0,
-      0x4a,
-      0x04,
-      0x40,
-      0x41,
-      0,
-      0x21,
-      1,
-      0x05,
-      0x20,
-      4,
-      0x41,
-      1,
-      0x6b,
-      0x21,
-      1,
-      0x0b,
-      0x0b,
-      0x20,
-      2,
-      0x41,
-      ...this.encodeSignedLEB128(0x7fffffff),
-      0x46,
-      0x04,
-      0x40,
-      0x20,
-      3,
-      0x41,
-      0,
-      0x4a,
-      0x04,
-      0x40,
-      0x20,
-      4,
-      0x21,
-      2,
-      0x05,
-      0x41,
-      ...this.encodeSignedLEB128(-1),
-      0x21,
-      2,
-      0x0b,
-      0x0b,
-      0x20,
-      1,
-      0x41,
-      0,
-      0x48,
-      0x04,
-      0x40,
-      0x20,
-      1,
-      0x20,
-      4,
-      0x6a,
-      0x21,
-      1,
-      0x0b,
-      0x20,
-      2,
-      0x41,
-      0,
-      0x48,
-      0x04,
-      0x40,
-      0x20,
-      2,
-      0x20,
-      4,
-      0x6a,
-      0x21,
-      2,
-      0x0b,
-      0x20,
-      1,
-      0x41,
-      0,
-      0x48,
-      0x04,
-      0x40,
-      0x41,
-      0,
-      0x21,
-      1,
-      0x0b,
-      0x20,
-      1,
-      0x20,
-      4,
-      0x4a,
-      0x04,
-      0x40,
-      0x20,
-      4,
-      0x21,
-      1,
-      0x0b,
-      0x20,
-      2,
-      0x41,
-      0,
-      0x48,
-      0x04,
-      0x40,
-      0x41,
-      ...this.encodeSignedLEB128(-1),
-      0x21,
-      2,
-      0x0b,
-      0x20,
-      2,
-      0x20,
-      4,
-      0x4a,
-      0x04,
-      0x40,
-      0x20,
-      4,
-      0x21,
-      2,
-      0x0b,
-      0x41,
-      0,
-      0x21,
-      5,
-      0x20,
-      3,
-      0x41,
-      0,
-      0x4a,
-      0x04,
-      0x40,
-      0x20,
-      2,
-      0x20,
-      1,
-      0x4a,
-      0x04,
-      0x40,
-      0x20,
-      2,
-      0x20,
-      1,
-      0x6b,
-      0x20,
-      3,
-      0x6a,
-      0x41,
-      1,
-      0x6b,
-      0x20,
-      3,
-      0x6d,
-      0x21,
-      5,
-      0x0b,
-      0x05,
-      0x20,
-      1,
-      0x20,
-      2,
-      0x4a,
-      0x04,
-      0x40,
-      0x20,
-      1,
-      0x20,
-      2,
-      0x6b,
-      0x41,
-      0,
-      0x20,
-      3,
-      0x6b,
-      0x6a,
-      0x41,
-      1,
-      0x6b,
-      0x41,
-      0,
-      0x20,
-      3,
-      0x6b,
-      0x6d,
-      0x21,
-      5,
-      0x0b,
-      0x0b,
-      0x23,
-      0,
-      0x21,
-      7,
-      0x23,
-      0,
-      0x20,
-      5,
-      0x41,
-      1,
-      0x6a,
-      0x41,
-      4,
-      0x6c,
-      0x6a,
-      0x24,
-      0,
-      0x20,
-      7,
-      0x20,
-      5,
-      0x36,
-      2,
-      0,
-      0x41,
-      0,
-      0x21,
-      6,
-      0x20,
-      1,
-      0x21,
-      8,
-      0x02,
-      0x40,
-      0x03,
-      0x40,
-      0x20,
-      6,
-      0x20,
-      5,
-      0x4e,
-      0x0d,
-      1,
-      0x20,
-      7,
-      0x20,
-      6,
-      0x41,
-      4,
-      0x6c,
-      0x6a,
-      0x41,
-      4,
-      0x6a,
-      0x20,
-      0,
-      0x20,
-      8,
-      0x41,
-      4,
-      0x6c,
-      0x6a,
-      0x41,
-      4,
-      0x6a,
-      0x28,
-      2,
-      0,
-      0x36,
-      2,
-      0,
-      0x20,
-      6,
-      0x41,
-      1,
-      0x6a,
-      0x21,
-      6,
-      0x20,
-      8,
-      0x20,
-      3,
-      0x6a,
-      0x21,
-      8,
-      0x0c,
-      0,
-      0x0b,
-      0x0b,
-      0x20,
-      7,
-      0x0b,
-    ];
-    return [...this.encodeUnsignedLEB128(body.length), ...body];
-  }
-
   private emitFunctionBinary(node: FunctionDefNode): number[] {
     this.locals.clear();
     this.localIndex = 0;
@@ -1257,12 +740,12 @@ export class Compiler {
       if (!n) return;
       if (n.type === "Assignment" && !this.locals.has(n.target)) {
         this.locals.set(n.target, this.localIndex++);
-        localTypes.push(0x7f);
+        localTypes.push(TYPE_I32);
       }
       if (n.type === "ListComprehension" || n.type === "DictComprehension") {
         if (!this.locals.has(n.item)) {
           this.locals.set(n.item, this.localIndex++);
-          localTypes.push(0x7f);
+          localTypes.push(TYPE_I32);
         }
       }
       switch (n.type) {
@@ -1288,7 +771,7 @@ export class Compiler {
         case "For":
           if (!this.locals.has(n.iterator)) {
             this.locals.set(n.iterator, this.localIndex++);
-            localTypes.push(0x7f);
+            localTypes.push(TYPE_I32);
           }
           if (n.iterable) scanNode(n.iterable);
           if (n.start) scanNode(n.start);
@@ -1338,17 +821,17 @@ export class Compiler {
     node.body.forEach(scanNode);
     const body: number[] = [];
     for (const stmt of node.body) body.push(...this.emitStatementBinary(stmt));
-    body.push(0x41, 0, 0x0b);
+    body.push(OP_I32_CONST, 0, OP_END);
 
     // After emission, we know how many tempLocals were allocated
-    this.tempLocals.forEach(() => localTypes.push(0x7f));
+    this.tempLocals.forEach(() => localTypes.push(TYPE_I32));
 
     const localDecls =
       localTypes.length > 0
         ? [
             ...this.encodeUnsignedLEB128(1),
             ...this.encodeUnsignedLEB128(localTypes.length),
-            0x7f,
+            TYPE_I32,
           ]
         : [...this.encodeUnsignedLEB128(0)];
 
@@ -1359,28 +842,28 @@ export class Compiler {
   private emitStatementBinary(node: ASTNode): number[] {
     switch (node.type) {
       case "Return":
-        return [...this.emitExpressionBinary(node.value), 0x0f];
+        return [...this.emitExpressionBinary(node.value), OP_RETURN];
       case "Assignment":
         return [
           ...this.emitExpressionBinary(node.value),
-          0x21,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(this.locals.get(node.target)!),
         ];
       case "While":
         return [
-          0x02,
-          0x40,
-          0x03,
-          0x40,
+          OP_BLOCK,
+          TYPE_EMPTY,
+          OP_LOOP,
+          TYPE_EMPTY,
           ...this.emitExpressionBinary(node.condition),
-          0x45,
-          0x0d,
+          OP_I32_EQZ,
+          OP_BR_IF,
           1,
           ...node.body.map((s) => this.emitStatementBinary(s)).flat(),
-          0x0c,
+          OP_BR,
           0,
-          0x0b,
-          0x0b,
+          OP_END,
+          OP_END,
         ];
       case "If":
         const thenBytes = node.thenBranch
@@ -1388,47 +871,49 @@ export class Compiler {
           .flat();
         const elseBytes = node.elseBranch
           ? [
-              0x05,
+              OP_ELSE,
               ...node.elseBranch.map((s) => this.emitStatementBinary(s)).flat(),
             ]
           : [];
         return [
           ...this.emitExpressionBinary(node.condition),
-          0x04,
-          0x40,
+          OP_IF,
+          TYPE_EMPTY,
           ...thenBytes,
           ...elseBytes,
-          0x0b,
+          OP_END,
         ];
+      case "Pass":
+        return [OP_NOP];
       case "For": {
         if (node.start && node.stop) {
           const iterIdx = this.locals.get(node.iterator)!;
           return [
             ...this.emitExpressionBinary(node.start),
-            0x21,
+            OP_LOCAL_SET,
             ...this.encodeUnsignedLEB128(iterIdx),
-            0x02,
-            0x40, // block
-            0x03,
-            0x40, // loop
-            0x20,
+            OP_BLOCK,
+            TYPE_EMPTY, // block
+            OP_LOOP,
+            TYPE_EMPTY, // loop
+            OP_LOCAL_GET,
             ...this.encodeUnsignedLEB128(iterIdx),
             ...this.emitExpressionBinary(node.stop),
-            0x4e, // i32.ge_s
-            0x0d,
+            OP_I32_GE_S, // i32.ge_s
+            OP_BR_IF,
             1, // br_if 1
             ...node.body.map((s) => this.emitStatementBinary(s)).flat(),
-            0x20,
+            OP_LOCAL_GET,
             ...this.encodeUnsignedLEB128(iterIdx),
-            0x41,
+            OP_I32_CONST,
             1,
-            0x6a, // i32.add
-            0x21,
+            OP_I32_ADD, // i32.add
+            OP_LOCAL_SET,
             ...this.encodeUnsignedLEB128(iterIdx),
-            0x0c,
+            OP_BR,
             0, // br 0
-            0x0b,
-            0x0b,
+            OP_END,
+            OP_END,
           ];
         } else if (node.iterable) {
           const iterIdx = this.locals.get(node.iterator)!;
@@ -1440,76 +925,76 @@ export class Compiler {
           const idxLocal = this.getTempLocalIndex(idxLocalName);
           return [
             ...this.emitExpressionBinary(node.iterable),
-            0x21,
+            OP_LOCAL_SET,
             ...this.encodeUnsignedLEB128(iterPtr),
-            0x20,
+            OP_LOCAL_GET,
             ...this.encodeUnsignedLEB128(iterPtr),
-            0x28, // i32.load
+            OP_I32_LOAD, // i32.load
             2,
             0,
-            0x21,
+            OP_LOCAL_SET,
             ...this.encodeUnsignedLEB128(iterLen),
-            0x41,
+            OP_I32_CONST,
             0,
-            0x21,
+            OP_LOCAL_SET,
             ...this.encodeUnsignedLEB128(idxLocal),
-            0x02,
-            0x40, // block
-            0x03,
-            0x40, // loop
-            0x20,
+            OP_BLOCK,
+            TYPE_EMPTY, // block
+            OP_LOOP,
+            TYPE_EMPTY, // loop
+            OP_LOCAL_GET,
             ...this.encodeUnsignedLEB128(idxLocal),
-            0x20,
+            OP_LOCAL_GET,
             ...this.encodeUnsignedLEB128(iterLen),
-            0x4e, // i32.ge_s
-            0x0d,
+            OP_I32_GE_S, // i32.ge_s
+            OP_BR_IF,
             1, // br_if 1
-            0x20,
+            OP_LOCAL_GET,
             ...this.encodeUnsignedLEB128(iterPtr),
-            0x41,
+            OP_I32_CONST,
             4,
-            0x6a, // add 4
-            0x20,
+            OP_I32_ADD, // add 4
+            OP_LOCAL_GET,
             ...this.encodeUnsignedLEB128(idxLocal),
-            0x41,
+            OP_I32_CONST,
             4,
-            0x6c, // mul 4
-            0x6a, // add
-            0x28, // load
+            OP_I32_MUL, // mul 4
+            OP_I32_ADD, // add
+            OP_I32_LOAD, // load
             2,
             0,
-            0x21,
+            OP_LOCAL_SET,
             ...this.encodeUnsignedLEB128(iterIdx),
             ...node.body.map((s) => this.emitStatementBinary(s)).flat(),
-            0x20,
+            OP_LOCAL_GET,
             ...this.encodeUnsignedLEB128(idxLocal),
-            0x41,
+            OP_I32_CONST,
             1,
-            0x6a, // i32.add
-            0x21,
+            OP_I32_ADD, // i32.add
+            OP_LOCAL_SET,
             ...this.encodeUnsignedLEB128(idxLocal),
-            0x0c,
+            OP_BR,
             0, // br 0
-            0x0b,
-            0x0b,
+            OP_END,
+            OP_END,
           ];
         }
         return [];
       }
       case "DoWhile": {
         return [
-          0x03,
-          0x40, // loop
+          OP_LOOP,
+          TYPE_EMPTY, // loop
           ...node.body.map((s) => this.emitStatementBinary(s)).flat(),
           ...this.emitExpressionBinary(node.condition),
-          0x0d,
+          OP_BR_IF,
           0, // br_if 0
-          0x0b,
+          OP_END,
         ];
       }
       default:
         const expr = this.emitExpressionBinary(node);
-        return expr.length > 0 ? [...expr, 0x1a] : [];
+        return expr.length > 0 ? [...expr, OP_DROP] : [];
     }
   }
 
@@ -1517,48 +1002,49 @@ export class Compiler {
     switch (node.type) {
       case "Literal":
         if (typeof node.value === "number")
-          return [0x41, ...this.encodeSignedLEB128(node.value)];
-        if (typeof node.value === "boolean") return [0x41, node.value ? 1 : 0];
+          return [OP_I32_CONST, ...this.encodeSignedLEB128(node.value)];
+        if (typeof node.value === "boolean")
+          return [OP_I32_CONST, node.value ? 1 : 0];
         if (typeof node.value === "string") {
           const str = node.value;
           const size = (str.length + 1) * 4;
           const tmp0 = this.allocateTempLocal();
           const tmp0Idx = this.getTempLocalIndex(tmp0);
           const bytes: number[] = [
-            0x23, // global.get 0
+            OP_GLOBAL_GET, // global.get 0
             0,
-            0x21, // local.set tmp0
+            OP_LOCAL_SET, // local.set tmp0
             ...this.encodeUnsignedLEB128(tmp0Idx),
-            0x23, // global.get 0
+            OP_GLOBAL_GET, // global.get 0
             0,
-            0x41, // i32.const size
+            OP_I32_CONST, // i32.const size
             ...this.encodeSignedLEB128(size),
-            0x6a, // i32.add
-            0x24, // global.set 0
+            OP_I32_ADD, // i32.add
+            OP_GLOBAL_SET, // global.set 0
             0,
-            0x20, // local.get tmp0
+            OP_LOCAL_GET, // local.get tmp0
             ...this.encodeUnsignedLEB128(tmp0Idx),
-            0x41, // i32.const str.length
+            OP_I32_CONST, // i32.const str.length
             ...this.encodeSignedLEB128(str.length),
-            0x36, // i32.store
+            OP_I32_STORE, // i32.store
             2,
             0,
           ];
           for (let i = 0; i < str.length; i++)
             bytes.push(
-              0x20, // local.get tmp0
+              OP_LOCAL_GET, // local.get tmp0
               ...this.encodeUnsignedLEB128(tmp0Idx),
-              0x41, // i32.const (i+1)*4
+              OP_I32_CONST, // i32.const (i+1)*4
               ...this.encodeSignedLEB128((i + 1) * 4),
-              0x6a, // i32.add
-              0x41, // i32.const charCode
+              OP_I32_ADD, // i32.add
+              OP_I32_CONST, // i32.const charCode
               ...this.encodeSignedLEB128(str.charCodeAt(i)),
-              0x36, // i32.store
+              OP_I32_STORE, // i32.store
               2,
               0,
             );
           bytes.push(
-            0x20, // local.get tmp0
+            OP_LOCAL_GET, // local.get tmp0
             ...this.encodeUnsignedLEB128(tmp0Idx),
           );
           return bytes;
@@ -1570,42 +1056,42 @@ export class Compiler {
         const tmp0 = this.allocateTempLocal();
         const tmp0Idx = this.getTempLocalIndex(tmp0);
         const listBytes: number[] = [
-          0x23, // global.get 0
+          OP_GLOBAL_GET, // global.get 0
           0,
-          0x21, // local.set tmp0
+          OP_LOCAL_SET, // local.set tmp0
           ...this.encodeUnsignedLEB128(tmp0Idx),
-          0x23, // global.get 0
+          OP_GLOBAL_GET, // global.get 0
           0,
-          0x41, // i32.const size
+          OP_I32_CONST, // i32.const size
           ...this.encodeSignedLEB128(size),
-          0x6a, // i32.add
-          0x24, // global.set 0
+          OP_I32_ADD, // i32.add
+          OP_GLOBAL_SET, // global.set 0
           0,
-          0x20, // local.get tmp0
+          OP_LOCAL_GET, // local.get tmp0
           ...this.encodeUnsignedLEB128(tmp0Idx),
-          0x41, // i32.const length
+          OP_I32_CONST, // i32.const length
           ...this.encodeSignedLEB128(length),
-          0x36, // i32.store
+          OP_I32_STORE, // i32.store
           2,
           0,
         ];
         node.elements.forEach((el, i) => {
           listBytes.push(
-            0x20, // local.get tmp0
+            OP_LOCAL_GET, // local.get tmp0
             ...this.encodeUnsignedLEB128(tmp0Idx),
-            0x41, // i32.const (i+1)*4
+            OP_I32_CONST, // i32.const (i+1)*4
             ...this.encodeSignedLEB128((i + 1) * 4),
-            0x6a, // i32.add
+            OP_I32_ADD, // i32.add
           );
           listBytes.push(...this.emitExpressionBinary(el));
           listBytes.push(
-            0x36, // i32.store
+            OP_I32_STORE, // i32.store
             2,
             0,
           );
         });
         listBytes.push(
-          0x20, // local.get tmp0
+          OP_LOCAL_GET, // local.get tmp0
           ...this.encodeUnsignedLEB128(tmp0Idx),
         );
         return listBytes;
@@ -1616,31 +1102,31 @@ export class Compiler {
           const slice = node.index as SliceNode;
           const start = slice.start
             ? this.emitExpressionBinary(slice.start)
-            : [0x41, ...this.encodeSignedLEB128(0x7fffffff)];
+            : [OP_I32_CONST, ...this.encodeSignedLEB128(0x7fffffff)];
           const stop = slice.stop
             ? this.emitExpressionBinary(slice.stop)
-            : [0x41, ...this.encodeSignedLEB128(0x7fffffff)];
+            : [OP_I32_CONST, ...this.encodeSignedLEB128(0x7fffffff)];
           const step = slice.step
             ? this.emitExpressionBinary(slice.step)
-            : [0x41, ...this.encodeSignedLEB128(0x7fffffff)];
+            : [OP_I32_CONST, ...this.encodeSignedLEB128(0x7fffffff)];
           return [
             ...base,
             ...start,
             ...stop,
             ...step,
-            0x10,
+            OP_CALL,
             ...this.encodeUnsignedLEB128(this.functionMap.get("_slice")!),
           ];
         }
         return [
           ...base,
           ...this.emitExpressionBinary(node.index),
-          0x10,
+          OP_CALL,
           ...this.encodeUnsignedLEB128(this.functionMap.get("_get_item")!),
         ];
       case "Identifier":
         return [
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(this.locals.get(node.name)!),
         ];
       case "ListComprehension": {
@@ -1660,119 +1146,119 @@ export class Compiler {
 
         const actionBytes = [
           ...(node.condition
-            ? [...this.emitExpressionBinary(node.condition), 0x04, 0x40]
+            ? [...this.emitExpressionBinary(node.condition), OP_IF, TYPE_EMPTY]
             : []),
-          0x23, // global.get 0
+          OP_GLOBAL_GET, // global.get 0
           0,
-          0x21, // local.set resItemPtr
+          OP_LOCAL_SET, // local.set resItemPtr
           ...this.encodeUnsignedLEB128(resItemPtrIdx),
-          0x23, // global.get 0
+          OP_GLOBAL_GET, // global.get 0
           0,
-          0x41, // i32.const 4
+          OP_I32_CONST, // i32.const 4
           4,
-          0x6a, // i32.add
-          0x24, // global.set 0
+          OP_I32_ADD, // i32.add
+          OP_GLOBAL_SET, // global.set 0
           0,
-          0x20, // local.get resItemPtr
+          OP_LOCAL_GET, // local.get resItemPtr
           ...this.encodeUnsignedLEB128(resItemPtrIdx),
           ...this.emitExpressionBinary(node.expression),
-          0x36, // i32.store
+          OP_I32_STORE, // i32.store
           2,
           0,
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(countLocalIdx),
-          0x41,
+          OP_I32_CONST,
           1,
-          0x6a,
-          0x21,
+          OP_I32_ADD,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(countLocalIdx),
-          ...(node.condition ? [0x0b] : []),
+          ...(node.condition ? [OP_END] : []),
         ];
 
         return [
           ...this.emitExpressionBinary(node.iterable),
-          0x21,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
-          0x28, // i32.load
+          OP_I32_LOAD, // i32.load
           2,
           0,
-          0x21,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(iterLenLocalIdx),
-          0x23, // global.get 0
+          OP_GLOBAL_GET, // global.get 0
           0,
-          0x21,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(resLocalIdx),
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(resLocalIdx),
-          0x41,
+          OP_I32_CONST,
           0,
-          0x36, // i32.store count 0
+          OP_I32_STORE, // i32.store count 0
           2,
           0,
-          0x23, // global.get 0
+          OP_GLOBAL_GET, // global.get 0
           0,
-          0x41,
+          OP_I32_CONST,
           4,
-          0x6a,
-          0x24, // global.set 0
+          OP_I32_ADD,
+          OP_GLOBAL_SET, // global.set 0
           0,
-          0x41,
+          OP_I32_CONST,
           0,
-          0x21,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(countLocalIdx),
-          0x41,
+          OP_I32_CONST,
           0,
-          0x21,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(iLocalIdx),
-          0x02,
-          0x40,
-          0x03,
-          0x40,
-          0x20,
+          OP_BLOCK,
+          TYPE_EMPTY,
+          OP_LOOP,
+          TYPE_EMPTY,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(iLocalIdx),
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(iterLenLocalIdx),
-          0x4e, // i32.ge_s
-          0x0d,
+          OP_I32_GE_S, // i32.ge_s
+          OP_BR_IF,
           1, // br_if 1
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(iLocalIdx),
-          0x41,
+          OP_I32_CONST,
           4,
-          0x6c,
-          0x6a,
-          0x41,
+          OP_I32_MUL,
+          OP_I32_ADD,
+          OP_I32_CONST,
           4,
-          0x6a,
-          0x28, // i32.load
+          OP_I32_ADD,
+          OP_I32_LOAD, // i32.load
           2,
           0,
-          0x21,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(itemLocalIdx),
           ...actionBytes,
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(iLocalIdx),
-          0x41,
+          OP_I32_CONST,
           1,
-          0x6a,
-          0x21,
+          OP_I32_ADD,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(iLocalIdx),
-          0x0c,
+          OP_BR,
           0,
-          0x0b,
-          0x0b,
-          0x20,
+          OP_END,
+          OP_END,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(resLocalIdx),
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(countLocalIdx),
-          0x36, // store final count
+          OP_I32_STORE, // store final count
           2,
           0,
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(resLocalIdx),
         ];
       }
@@ -1793,136 +1279,136 @@ export class Compiler {
 
         const actionBytes = [
           ...(node.condition
-            ? [...this.emitExpressionBinary(node.condition), 0x04, 0x40]
+            ? [...this.emitExpressionBinary(node.condition), OP_IF, TYPE_EMPTY]
             : []),
-          0x23, // global.get 0
+          OP_GLOBAL_GET, // global.get 0
           0,
-          0x21, // local.set resItemPtr
+          OP_LOCAL_SET, // local.set resItemPtr
           ...this.encodeUnsignedLEB128(resItemPtrIdx),
-          0x23, // global.get 0
+          OP_GLOBAL_GET, // global.get 0
           0,
-          0x41, // i32.const 4
+          OP_I32_CONST, // i32.const 4
           4,
-          0x6a, // i32.add
-          0x24, // global.set 0
+          OP_I32_ADD, // i32.add
+          OP_GLOBAL_SET, // global.set 0
           0,
-          0x20, // local.get resItemPtr
+          OP_LOCAL_GET, // local.get resItemPtr
           ...this.encodeUnsignedLEB128(resItemPtrIdx),
           ...this.emitExpressionBinary(node.key),
-          0x36, // i32.store
+          OP_I32_STORE, // i32.store
           2,
           0,
-          0x23, // global.get 0
+          OP_GLOBAL_GET, // global.get 0
           0,
-          0x21, // local.set resItemPtr
+          OP_LOCAL_SET, // local.set resItemPtr
           ...this.encodeUnsignedLEB128(resItemPtrIdx),
-          0x23, // global.get 0
+          OP_GLOBAL_GET, // global.get 0
           0,
-          0x41, // i32.const 4
+          OP_I32_CONST, // i32.const 4
           4,
-          0x6a, // i32.add
-          0x24, // global.set 0
+          OP_I32_ADD, // i32.add
+          OP_GLOBAL_SET, // global.set 0
           0,
-          0x20, // local.get resItemPtr
+          OP_LOCAL_GET, // local.get resItemPtr
           ...this.encodeUnsignedLEB128(resItemPtrIdx),
           ...this.emitExpressionBinary(node.value),
-          0x36, // i32.store
+          OP_I32_STORE, // i32.store
           2,
           0,
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(countLocalIdx),
-          0x41,
+          OP_I32_CONST,
           1,
-          0x6a,
-          0x21,
+          OP_I32_ADD,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(countLocalIdx),
-          ...(node.condition ? [0x0b] : []),
+          ...(node.condition ? [OP_END] : []),
         ];
 
         return [
           ...this.emitExpressionBinary(node.iterable),
-          0x21,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
-          0x28, // i32.load
+          OP_I32_LOAD, // i32.load
           2,
           0,
-          0x21,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(iterLenLocalIdx),
-          0x23, // global.get 0
+          OP_GLOBAL_GET, // global.get 0
           0,
-          0x21,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(resLocalIdx),
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(resLocalIdx),
-          0x41,
+          OP_I32_CONST,
           0,
-          0x36, // i32.store count 0
+          OP_I32_STORE, // i32.store count 0
           2,
           0,
-          0x23, // global.get 0
+          OP_GLOBAL_GET, // global.get 0
           0,
-          0x41,
+          OP_I32_CONST,
           4,
-          0x6a,
-          0x24, // global.set 0
+          OP_I32_ADD,
+          OP_GLOBAL_SET, // global.set 0
           0,
-          0x41,
+          OP_I32_CONST,
           0,
-          0x21,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(countLocalIdx),
-          0x41,
+          OP_I32_CONST,
           0,
-          0x21,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(iLocalIdx),
-          0x02,
-          0x40,
-          0x03,
-          0x40,
-          0x20,
+          OP_BLOCK,
+          TYPE_EMPTY,
+          OP_LOOP,
+          TYPE_EMPTY,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(iLocalIdx),
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(iterLenLocalIdx),
-          0x4e, // i32.ge_s
-          0x0d,
+          OP_I32_GE_S, // i32.ge_s
+          OP_BR_IF,
           1, // br_if 1
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(iterPtrLocalIdx),
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(iLocalIdx),
-          0x41,
+          OP_I32_CONST,
           4,
-          0x6c,
-          0x6a,
-          0x41,
+          OP_I32_MUL,
+          OP_I32_ADD,
+          OP_I32_CONST,
           4,
-          0x6a,
-          0x28, // i32.load
+          OP_I32_ADD,
+          OP_I32_LOAD, // i32.load
           2,
           0,
-          0x21,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(itemLocalIdx),
           ...actionBytes,
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(iLocalIdx),
-          0x41,
+          OP_I32_CONST,
           1,
-          0x6a,
-          0x21,
+          OP_I32_ADD,
+          OP_LOCAL_SET,
           ...this.encodeUnsignedLEB128(iLocalIdx),
-          0x0c,
+          OP_BR,
           0,
-          0x0b,
-          0x0b,
-          0x20,
+          OP_END,
+          OP_END,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(resLocalIdx),
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(countLocalIdx),
-          0x36, // store final count
+          OP_I32_STORE, // store final count
           2,
           0,
-          0x20,
+          OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(resLocalIdx),
         ];
       }
@@ -1935,7 +1421,7 @@ export class Compiler {
             return [
               ...this.emitExpressionBinary(node.left),
               ...this.emitExpressionBinary(node.right),
-              0x10,
+              OP_CALL,
               ...this.encodeUnsignedLEB128(this.functionMap.get("concat")!),
             ];
           }
@@ -1943,52 +1429,52 @@ export class Compiler {
         let opByte = 0;
         switch (node.operator) {
           case "+":
-            opByte = 0x6a;
+            opByte = OP_I32_ADD;
             break;
           case "-":
-            opByte = 0x6b;
+            opByte = OP_I32_SUB;
             break;
           case "*":
-            opByte = 0x6c;
+            opByte = OP_I32_MUL;
             break;
           case "/":
-            opByte = 0x6d;
+            opByte = OP_I32_DIV_S;
             break;
           case "==":
-            opByte = 0x46;
+            opByte = OP_I32_EQ;
             break;
           case "!=":
-            opByte = 0x47;
+            opByte = OP_I32_NE;
             break;
           case "<":
-            opByte = 0x48;
+            opByte = OP_I32_LT_S;
             break;
           case ">":
-            opByte = 0x4a;
+            opByte = OP_I32_GT_S;
             break;
           case "and":
             return [
               ...this.emitExpressionBinary(node.left),
-              0x41,
+              OP_I32_CONST,
               0,
-              0x47,
+              OP_I32_NE,
               ...this.emitExpressionBinary(node.right),
-              0x41,
+              OP_I32_CONST,
               0,
-              0x47,
-              0x71,
+              OP_I32_NE,
+              OP_I32_AND,
             ];
           case "or":
             return [
               ...this.emitExpressionBinary(node.left),
-              0x41,
+              OP_I32_CONST,
               0,
-              0x47,
+              OP_I32_NE,
               ...this.emitExpressionBinary(node.right),
-              0x41,
+              OP_I32_CONST,
               0,
-              0x47,
-              0x72,
+              OP_I32_NE,
+              OP_I32_OR,
             ];
         }
         return [
@@ -1999,9 +1485,14 @@ export class Compiler {
       }
       case "UnaryExpression":
         if (node.operator === "-")
-          return [0x41, 0, ...this.emitExpressionBinary(node.argument), 0x6b];
+          return [
+            OP_I32_CONST,
+            0,
+            ...this.emitExpressionBinary(node.argument),
+            OP_I32_SUB,
+          ];
         if (node.operator === "not")
-          return [...this.emitExpressionBinary(node.argument), 0x45];
+          return [...this.emitExpressionBinary(node.argument), OP_I32_EQZ];
         return this.emitExpressionBinary(node.argument);
       case "CallExpression": {
         const calleeIdx = this.functionMap.get(node.callee);
@@ -2020,13 +1511,13 @@ export class Compiler {
           ) {
             return [
               ...argsBytes,
-              0x10,
+              OP_CALL,
               ...this.encodeUnsignedLEB128(this.functionMap.get("print_str")!),
             ];
           }
         }
 
-        return [...argsBytes, 0x10, ...this.encodeUnsignedLEB128(calleeIdx)];
+        return [...argsBytes, OP_CALL, ...this.encodeUnsignedLEB128(calleeIdx)];
       }
       case "FString": {
         const bytes: number[] = [];
@@ -2041,13 +1532,13 @@ export class Compiler {
           } else {
             bytes.push(
               ...this.emitExpressionBinary(part),
-              0x10,
+              OP_CALL,
               ...this.encodeUnsignedLEB128(this.functionMap.get("itoa")!),
             );
           }
           if (i > 0) {
             bytes.push(
-              0x10,
+              OP_CALL,
               ...this.encodeUnsignedLEB128(this.functionMap.get("concat")!),
             );
           }
