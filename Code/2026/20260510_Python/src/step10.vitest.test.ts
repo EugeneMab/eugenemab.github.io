@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Lexer } from "./lexer.ts";
 import { Parser } from "./parser.ts";
 import { Compiler } from "./compiler.ts";
+import { getImportObject } from "./test-utils.ts";
 
 describe("Step 10: Iterators & Generators (Parser)", () => {
   it("should parse yield statement", () => {
@@ -45,29 +46,8 @@ describe("Step 10: Iterators & Generators (Parser)", () => {
       const wasm = compiler.compileWASM(ast);
 
       const instanceRef = { instance: null as any };
-      const importObject = {
-        env: {
-          print: () => {
-            return 0;
-          },
-          print_str: () => {
-            return 0;
-          },
-          itoa: () => {
-            return 0;
-          },
-          concat: () => {
-            return 0;
-          },
-          _get_item: () => {
-            return 0;
-          },
-          _slice: () => {
-            return 0;
-          },
-          sleep: () => 0,
-        },
-      };
+      const logs: any[] = [];
+      const importObject = getImportObject(instanceRef, logs);
 
       const { instance } = await WebAssembly.instantiate(wasm, importObject);
       instanceRef.instance = instance;
@@ -77,6 +57,7 @@ describe("Step 10: Iterators & Generators (Parser)", () => {
         result: func(...args),
         next: (ptr: number) => next(ptr),
         instance,
+        logs,
       };
     };
 

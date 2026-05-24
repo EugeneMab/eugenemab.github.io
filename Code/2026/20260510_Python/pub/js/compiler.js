@@ -48,9 +48,7 @@ export class Compiler {
     functionMap = new Map();
     generatorIds = [];
     isCompilingGenerator = false;
-    generatorPtrLocal = "";
     localOffsets = new Map();
-    yieldLabelCount = 0;
     tempLocals = [];
     watLocalCount = 0;
     allocateTempLocal() {
@@ -427,11 +425,11 @@ export class Compiler {
     }
     emitGeneratorWorkerWAT(node) {
         this.isCompilingGenerator = true;
-        this.generatorPtrLocal = "gen_ptr";
         this.nextStateId = 0;
         this.nodeToStateId.clear();
         this.stateAfterId.clear();
         this.preScanStates(node.body);
+        this.tempLocals = [];
         const flatStatements = [];
         const collect = (nodes) => {
             for (const n of nodes) {
@@ -455,17 +453,21 @@ export class Compiler {
             }
         };
         collect(node.body);
-        const localDecls = `(local $state i32)`;
-        let body = "loop $main_loop\n";
+        const bodyLines = [];
+        bodyLines.push("loop $main_loop");
         flatStatements.forEach((stmt) => {
-            body += this.indent(this.emitStatementWAT(stmt)) + "\n";
+            bodyLines.push(this.indent(this.emitStatementWAT(stmt)));
         });
-        body += "end\n";
+        bodyLines.push("end");
+        const localDecls = [`(local $state i32)`];
+        this.tempLocals.forEach((name) => {
+            localDecls.push(`(local $${name} i32)`);
+        });
         this.isCompilingGenerator = false;
         return (`  (func $${node.name}_worker (param $gen_ptr i32) (result i32)\n` +
-            `    ${localDecls}\n` +
+            `    ${localDecls.join("\n    ")}\n` +
             `    local.get $gen_ptr\n    i32.const 4\n    i32.add\n    i32.load\n    local.set $state\n` +
-            this.indent(this.indent(body)) +
+            this.indent(this.indent(bodyLines.join("\n"))) +
             "\n" +
             `    local.get $gen_ptr\n    i32.const 4\n    i32.add\n    i32.const -1\n    i32.store\n` +
             `    i32.const 0\n  )\n`);
@@ -507,14 +509,28 @@ export class Compiler {
                             `\nif\ni32.const ${thenId}\nlocal.set $state\nelse\ni32.const ${elseId}\nlocal.set $state\nend\nbr $main_loop`;
                     break;
                 }
+                case "Pass":
+                    inner = `i32.const ${afterId}\nlocal.set $state\nbr $main_loop`;
+                    break;
+                case "Return":
+                    inner = `local.get $gen_ptr\ni32.const 4\ni32.add\ni32.const -1\ni32.store\ni32.const 0\nreturn`;
+                    break;
+                case "For":
+                case "DoWhile":
+                    throw new Error(`Generator functions do not yet support ${node.type} loops. Use while loops instead.`);
                 default:
-                    inner =
-                        this.emitExpressionWAT(node) +
-                            `\ndrop\ni32.const ${afterId}\nlocal.set $state\nbr $main_loop`;
+                    const expr = this.emitExpressionWAT(node);
+                    if (expr) {
+                        inner =
+                            expr +
+                                `\ndrop\ni32.const ${afterId}\nlocal.set $state\nbr $main_loop`;
+                    }
+                    else {
+                        // Unhandled statement type in generator
+                        throw new Error(`Unhandled statement type in generator: ${node.type}`);
+                    }
             }
             wat += this.indent(inner) + "\nend";
-            // Special handling for end of loops: they need to jump back to the header
-            // But we handle that by setting the state and 'br 1' (restart the loop).
             return wat;
         }
         switch (node.type) {
@@ -1170,11 +1186,11 @@ export class Compiler {
     }
     emitGeneratorWorkerBinary(node) {
         this.isCompilingGenerator = true;
-        this.tempLocals = ["gen_ptr", "state"];
         this.nextStateId = 0;
         this.nodeToStateId.clear();
         this.stateAfterId.clear();
         this.preScanStates(node.body);
+        this.tempLocals = ["gen_ptr", "state"];
         this.localIndex = 0; // gen_ptr is 0, state is 1
         const flatStatements = [];
         const collect = (nodes) => {
@@ -1201,7 +1217,7 @@ export class Compiler {
         collect(node.body);
         const bodyBytes = [
             OP_LOCAL_GET,
-            0,
+            0, // gen_ptr
             OP_I32_CONST,
             4,
             OP_I32_ADD,
@@ -1209,7 +1225,7 @@ export class Compiler {
             2,
             0,
             OP_LOCAL_SET,
-            1,
+            1, // state
             OP_LOOP,
             TYPE_EMPTY,
         ];
@@ -1220,7 +1236,12 @@ export class Compiler {
         bodyBytes.push(OP_LOCAL_GET, 0, OP_I32_CONST, 4, OP_I32_ADD, OP_I32_CONST, ...this.encodeSignedLEB128(-1), OP_I32_STORE, 2, 0, OP_I32_CONST, 0, OP_END);
         const localDecls = [];
         if (this.tempLocals.length > 1) {
-            localDecls.push([this.tempLocals.length - 1, TYPE_I32]); // skip gen_ptr which is param
+            // Local 0 is state, Local 1+ are temps.
+            // Total locals = tempLocals.length - 1 (skipping gen_ptr which is param 0)
+            localDecls.push([
+                ...this.encodeUnsignedLEB128(this.tempLocals.length - 1),
+                TYPE_I32,
+            ]);
         }
         this.isCompilingGenerator = false;
         const localPart = this.encodeVector(localDecls);
@@ -1364,7 +1385,9 @@ export class Compiler {
             ];
             switch (node.type) {
                 case "Yield":
-                    bytes.push(OP_LOCAL_GET, ...this.encodeUnsignedLEB128(genPtrIdx), OP_I32_CONST, 4, OP_I32_ADD, OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_I32_STORE, 2, 0, ...this.emitExpressionBinary(node.value), OP_RETURN);
+                    const tmp = this.allocateTempLocal();
+                    const tmpIdx = this.getTempLocalIndex(tmp);
+                    bytes.push(...this.emitExpressionBinary(node.value), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(tmpIdx), OP_LOCAL_GET, ...this.encodeUnsignedLEB128(genPtrIdx), OP_I32_CONST, 4, OP_I32_ADD, OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_I32_STORE, 2, 0, OP_LOCAL_GET, ...this.encodeUnsignedLEB128(tmpIdx), OP_RETURN);
                     break;
                 case "Assignment":
                     const offset = this.localOffsets.get(node.target);
@@ -1383,8 +1406,23 @@ export class Compiler {
                     bytes.push(...this.emitExpressionBinary(node.condition), OP_IF, TYPE_EMPTY, OP_I32_CONST, ...this.encodeSignedLEB128(thenId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_ELSE, OP_I32_CONST, ...this.encodeSignedLEB128(elseId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_END, OP_BR, 1);
                     break;
                 }
+                case "Pass":
+                    bytes.push(OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_BR, 1);
+                    break;
+                case "Return":
+                    bytes.push(OP_LOCAL_GET, ...this.encodeUnsignedLEB128(genPtrIdx), OP_I32_CONST, 4, OP_I32_ADD, OP_I32_CONST, ...this.encodeSignedLEB128(-1), OP_I32_STORE, 2, 0, OP_I32_CONST, 0, OP_RETURN);
+                    break;
+                case "For":
+                case "DoWhile":
+                    throw new Error(`Generator functions do not yet support ${node.type} loops. Use while loops instead.`);
                 default:
-                    bytes.push(...this.emitExpressionBinary(node), OP_DROP, OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_BR, 1);
+                    const expr = this.emitExpressionBinary(node);
+                    if (expr.length > 0) {
+                        bytes.push(...expr, OP_DROP, OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_BR, 1);
+                    }
+                    else {
+                        throw new Error(`Unhandled statement type in generator: ${node.type}`);
+                    }
             }
             bytes.push(OP_END);
             return bytes;

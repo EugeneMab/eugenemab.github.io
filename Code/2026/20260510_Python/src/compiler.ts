@@ -543,6 +543,11 @@ export class Compiler {
         case "Return":
           inner = `local.get $gen_ptr\ni32.const 4\ni32.add\ni32.const -1\ni32.store\ni32.const 0\nreturn`;
           break;
+        case "For":
+        case "DoWhile":
+          throw new Error(
+            `Generator functions do not yet support ${node.type} loops. Use while loops instead.`,
+          );
         default:
           const expr = this.emitExpressionWAT(node);
           if (expr) {
@@ -551,7 +556,9 @@ export class Compiler {
               `\ndrop\ni32.const ${afterId}\nlocal.set $state\nbr $main_loop`;
           } else {
             // Unhandled statement type in generator
-            throw new Error(`Unhandled statement type in generator: ${node.type}`);
+            throw new Error(
+              `Unhandled statement type in generator: ${node.type}`,
+            );
           }
       }
       wat += this.indent(inner) + "\nend";
@@ -1352,7 +1359,7 @@ export class Compiler {
 
     const localDecls: number[][] = [];
     if (this.tempLocals.length > 1) {
-      // Local 0 is state, Local 1+ are temps. 
+      // Local 0 is state, Local 1+ are temps.
       // Total locals = tempLocals.length - 1 (skipping gen_ptr which is param 0)
       localDecls.push([
         ...this.encodeUnsignedLEB128(this.tempLocals.length - 1),
@@ -1611,6 +1618,11 @@ export class Compiler {
             OP_RETURN,
           );
           break;
+        case "For":
+        case "DoWhile":
+          throw new Error(
+            `Generator functions do not yet support ${node.type} loops. Use while loops instead.`,
+          );
         default:
           const expr = this.emitExpressionBinary(node);
           if (expr.length > 0) {
@@ -1625,7 +1637,9 @@ export class Compiler {
               1, // restart loop
             );
           } else {
-            throw new Error(`Unhandled statement type in generator: ${node.type}`);
+            throw new Error(
+              `Unhandled statement type in generator: ${node.type}`,
+            );
           }
       }
       bytes.push(OP_END);
