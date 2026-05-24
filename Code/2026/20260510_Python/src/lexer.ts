@@ -44,6 +44,7 @@ export enum TokenType {
   DO = "DO",
   FROM = "FROM",
   TO = "TO",
+  YIELD = "YIELD",
 }
 
 export interface Token {
@@ -257,6 +258,7 @@ export class Lexer {
       do: TokenType.DO,
       from: TokenType.FROM,
       to: TokenType.TO,
+      yield: TokenType.YIELD,
       if: TokenType.IF,
       elif: TokenType.ELIF,
       else: TokenType.ELSE,

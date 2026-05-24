@@ -20,6 +20,8 @@ export class Parser {
             return this.parseFunctionDef();
         if (this.match(TokenType.RETURN))
             return this.parseReturn();
+        if (this.match(TokenType.YIELD))
+            return this.parseYield();
         if (this.match(TokenType.WHILE))
             return this.parseWhile();
         if (this.match(TokenType.DO))
@@ -187,6 +189,11 @@ export class Parser {
         const value = this.parseExpression();
         this.consumeStatementEnd();
         return { type: "Return", value };
+    }
+    parseYield() {
+        const value = this.parseExpression();
+        this.consumeStatementEnd();
+        return { type: "Yield", value };
     }
     parseExpression() {
         return this.parseOr();

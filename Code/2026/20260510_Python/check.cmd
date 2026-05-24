@@ -25,7 +25,7 @@ echo Running UI Tests...
 set PORT=7895
 start /B node src/serve.js > test_output\server.log 2>&1
 :: Wait for server to start
-timeout /t 2 > nul
+ping 127.0.0.1 -n 3 > nul
 call npm run test:ui > test_output\ui.log 2>&1
 set UI_RESULT=%ERRORLEVEL%
 echo UI test log: test_output\ui.log
