@@ -65,7 +65,7 @@
         - [x] `test_string_interpolation`: `f"Val: {x}"`.
         - [x] `test_multiplication_table`: Multiplication table test (1-9) using nested loops and interpolation.
 - [x] **Step 10: Iterators & Generators**
-    - [x] Implement `yield`, `next()`, and `StopIteration` exception.
+    - [x] Implement `yield`, `next()`, and exhaustion signaling (returns 0).
     - [x] **Granular Testing:** 
         - [x] `test_generator_basic`: Generator function with multiple `yield`s.
         - [x] `test_infinite_sequence`: Fibonacci generator.
