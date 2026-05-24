@@ -452,11 +452,34 @@ export class Compiler {
     this.stateAfterId.clear();
     this.preScanStates(node.body);
 
+    const flatStatements: ASTNode[] = [];
+    const collect = (nodes: ASTNode[]) => {
+      for (const n of nodes) {
+        flatStatements.push(n);
+        switch (n.type) {
+          case "If":
+            collect(n.thenBranch);
+            if (n.elseBranch) collect(n.elseBranch);
+            break;
+          case "While":
+            collect(n.body);
+            break;
+          case "For":
+            collect(n.body);
+            break;
+          case "DoWhile":
+            collect(n.body);
+            break;
+        }
+      }
+    };
+    collect(node.body);
+
     const localDecls = `(local $state i32)`;
 
     let body = "loop $main_loop\n";
-    node.body.forEach((stmt) => {
-      body += this.emitStatementWAT(stmt) + "\n";
+    flatStatements.forEach((stmt) => {
+      body += this.indent(this.emitStatementWAT(stmt)) + "\n";
     });
     body += "end\n";
 
@@ -466,7 +489,8 @@ export class Compiler {
       `  (func $${node.name}_worker (param $gen_ptr i32) (result i32)\n` +
       `    ${localDecls}\n` +
       `    local.get $gen_ptr\n    i32.const 4\n    i32.add\n    i32.load\n    local.set $state\n` +
-      `    ${this.indent(body)}\n` +
+      this.indent(this.indent(body)) +
+      "\n" +
       `    local.get $gen_ptr\n    i32.const 4\n    i32.add\n    i32.const -1\n    i32.store\n` +
       `    i32.const 0\n  )\n`
     );
@@ -490,14 +514,14 @@ export class Compiler {
           inner =
             `local.get $gen_ptr\ni32.const ${offset}\ni32.add\n` +
             this.emitExpressionWAT(node.value) +
-            `\ni32.store\ni32.const ${afterId}\nlocal.set $state\nbr 0`;
+            `\ni32.store\ni32.const ${afterId}\nlocal.set $state\nbr $main_loop`;
           break;
         }
         case "While": {
           const firstInBodyId = this.nodeToStateId.get(node.body[0]) ?? afterId;
           inner =
             this.emitExpressionWAT(node.condition) +
-            `\nif\ni32.const ${firstInBodyId}\nlocal.set $state\nelse\ni32.const ${afterId}\nlocal.set $state\nend\nbr 0`;
+            `\nif\ni32.const ${firstInBodyId}\nlocal.set $state\nelse\ni32.const ${afterId}\nlocal.set $state\nend\nbr $main_loop`;
           break;
         }
         case "If": {
@@ -508,13 +532,13 @@ export class Compiler {
               : afterId;
           inner =
             this.emitExpressionWAT(node.condition) +
-            `\nif\ni32.const ${thenId}\nlocal.set $state\nelse\ni32.const ${elseId}\nlocal.set $state\nend\nbr 0`;
+            `\nif\ni32.const ${thenId}\nlocal.set $state\nelse\ni32.const ${elseId}\nlocal.set $state\nend\nbr $main_loop`;
           break;
         }
         default:
           inner =
             this.emitExpressionWAT(node) +
-            `\ndrop\ni32.const ${afterId}\nlocal.set $state\nbr 0`;
+            `\ndrop\ni32.const ${afterId}\nlocal.set $state\nbr $main_loop`;
       }
       wat += this.indent(inner) + "\nend";
 
@@ -1258,6 +1282,29 @@ export class Compiler {
 
     this.localIndex = 0; // gen_ptr is 0, state is 1
 
+    const flatStatements: ASTNode[] = [];
+    const collect = (nodes: ASTNode[]) => {
+      for (const n of nodes) {
+        flatStatements.push(n);
+        switch (n.type) {
+          case "If":
+            collect(n.thenBranch);
+            if (n.elseBranch) collect(n.elseBranch);
+            break;
+          case "While":
+            collect(n.body);
+            break;
+          case "For":
+            collect(n.body);
+            break;
+          case "DoWhile":
+            collect(n.body);
+            break;
+        }
+      }
+    };
+    collect(node.body);
+
     const bodyBytes: number[] = [
       OP_LOCAL_GET,
       0,
@@ -1272,7 +1319,7 @@ export class Compiler {
       OP_LOOP,
       TYPE_EMPTY,
     ];
-    node.body.forEach((stmt) => {
+    flatStatements.forEach((stmt) => {
       bodyBytes.push(...this.emitStatementBinary(stmt));
     });
     bodyBytes.push(OP_END); // loop
@@ -1466,7 +1513,7 @@ export class Compiler {
             OP_LOCAL_SET,
             ...this.encodeUnsignedLEB128(stateIdx),
             OP_BR,
-            0, // restart loop
+            1, // restart loop
           );
           break;
         case "While": {
@@ -1486,7 +1533,7 @@ export class Compiler {
             ...this.encodeUnsignedLEB128(stateIdx),
             OP_END,
             OP_BR,
-            0, // restart loop
+            1, // restart loop
           );
           break;
         }
@@ -1511,7 +1558,7 @@ export class Compiler {
             ...this.encodeUnsignedLEB128(stateIdx),
             OP_END,
             OP_BR,
-            0, // restart loop
+            1, // restart loop
           );
           break;
         }
@@ -1524,7 +1571,7 @@ export class Compiler {
             OP_LOCAL_SET,
             ...this.encodeUnsignedLEB128(stateIdx),
             OP_BR,
-            0, // restart loop
+            1, // restart loop
           );
       }
       bytes.push(OP_END);

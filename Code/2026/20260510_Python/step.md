@@ -69,7 +69,7 @@
     - [x] **Granular Testing:** 
         - [x] `test_generator_basic`: Generator function with multiple `yield`s.
         - [x] `test_infinite_sequence`: Fibonacci generator.
-        - [ ] `test_stop_iteration`: Manual `next()` calls until exhaustion.
+        - [x] `test_stop_iteration`: Manual `next()` calls until exhaustion.
 - [ ] **Step 11: Context Managers**
     - [ ] Implement `with` statement and `__enter__`/`__exit__` protocol.
     - [ ] **Granular Testing:** 

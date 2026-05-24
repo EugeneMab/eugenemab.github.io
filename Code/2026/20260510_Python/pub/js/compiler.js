@@ -432,17 +432,41 @@ export class Compiler {
         this.nodeToStateId.clear();
         this.stateAfterId.clear();
         this.preScanStates(node.body);
+        const flatStatements = [];
+        const collect = (nodes) => {
+            for (const n of nodes) {
+                flatStatements.push(n);
+                switch (n.type) {
+                    case "If":
+                        collect(n.thenBranch);
+                        if (n.elseBranch)
+                            collect(n.elseBranch);
+                        break;
+                    case "While":
+                        collect(n.body);
+                        break;
+                    case "For":
+                        collect(n.body);
+                        break;
+                    case "DoWhile":
+                        collect(n.body);
+                        break;
+                }
+            }
+        };
+        collect(node.body);
         const localDecls = `(local $state i32)`;
         let body = "loop $main_loop\n";
-        node.body.forEach((stmt) => {
-            body += this.emitStatementWAT(stmt) + "\n";
+        flatStatements.forEach((stmt) => {
+            body += this.indent(this.emitStatementWAT(stmt)) + "\n";
         });
         body += "end\n";
         this.isCompilingGenerator = false;
         return (`  (func $${node.name}_worker (param $gen_ptr i32) (result i32)\n` +
             `    ${localDecls}\n` +
             `    local.get $gen_ptr\n    i32.const 4\n    i32.add\n    i32.load\n    local.set $state\n` +
-            `    ${this.indent(body)}\n` +
+            this.indent(this.indent(body)) +
+            "\n" +
             `    local.get $gen_ptr\n    i32.const 4\n    i32.add\n    i32.const -1\n    i32.store\n` +
             `    i32.const 0\n  )\n`);
     }
@@ -463,14 +487,14 @@ export class Compiler {
                     inner =
                         `local.get $gen_ptr\ni32.const ${offset}\ni32.add\n` +
                             this.emitExpressionWAT(node.value) +
-                            `\ni32.store\ni32.const ${afterId}\nlocal.set $state\nbr 0`;
+                            `\ni32.store\ni32.const ${afterId}\nlocal.set $state\nbr $main_loop`;
                     break;
                 }
                 case "While": {
                     const firstInBodyId = this.nodeToStateId.get(node.body[0]) ?? afterId;
                     inner =
                         this.emitExpressionWAT(node.condition) +
-                            `\nif\ni32.const ${firstInBodyId}\nlocal.set $state\nelse\ni32.const ${afterId}\nlocal.set $state\nend\nbr 0`;
+                            `\nif\ni32.const ${firstInBodyId}\nlocal.set $state\nelse\ni32.const ${afterId}\nlocal.set $state\nend\nbr $main_loop`;
                     break;
                 }
                 case "If": {
@@ -480,13 +504,13 @@ export class Compiler {
                         : afterId;
                     inner =
                         this.emitExpressionWAT(node.condition) +
-                            `\nif\ni32.const ${thenId}\nlocal.set $state\nelse\ni32.const ${elseId}\nlocal.set $state\nend\nbr 0`;
+                            `\nif\ni32.const ${thenId}\nlocal.set $state\nelse\ni32.const ${elseId}\nlocal.set $state\nend\nbr $main_loop`;
                     break;
                 }
                 default:
                     inner =
                         this.emitExpressionWAT(node) +
-                            `\ndrop\ni32.const ${afterId}\nlocal.set $state\nbr 0`;
+                            `\ndrop\ni32.const ${afterId}\nlocal.set $state\nbr $main_loop`;
             }
             wat += this.indent(inner) + "\nend";
             // Special handling for end of loops: they need to jump back to the header
@@ -1152,6 +1176,29 @@ export class Compiler {
         this.stateAfterId.clear();
         this.preScanStates(node.body);
         this.localIndex = 0; // gen_ptr is 0, state is 1
+        const flatStatements = [];
+        const collect = (nodes) => {
+            for (const n of nodes) {
+                flatStatements.push(n);
+                switch (n.type) {
+                    case "If":
+                        collect(n.thenBranch);
+                        if (n.elseBranch)
+                            collect(n.elseBranch);
+                        break;
+                    case "While":
+                        collect(n.body);
+                        break;
+                    case "For":
+                        collect(n.body);
+                        break;
+                    case "DoWhile":
+                        collect(n.body);
+                        break;
+                }
+            }
+        };
+        collect(node.body);
         const bodyBytes = [
             OP_LOCAL_GET,
             0,
@@ -1166,7 +1213,7 @@ export class Compiler {
             OP_LOOP,
             TYPE_EMPTY,
         ];
-        node.body.forEach((stmt) => {
+        flatStatements.forEach((stmt) => {
             bodyBytes.push(...this.emitStatementBinary(stmt));
         });
         bodyBytes.push(OP_END); // loop
@@ -1321,11 +1368,11 @@ export class Compiler {
                     break;
                 case "Assignment":
                     const offset = this.localOffsets.get(node.target);
-                    bytes.push(OP_LOCAL_GET, ...this.encodeUnsignedLEB128(genPtrIdx), OP_I32_CONST, ...this.encodeSignedLEB128(offset), OP_I32_ADD, ...this.emitExpressionBinary(node.value), OP_I32_STORE, 2, 0, OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_BR, 0);
+                    bytes.push(OP_LOCAL_GET, ...this.encodeUnsignedLEB128(genPtrIdx), OP_I32_CONST, ...this.encodeSignedLEB128(offset), OP_I32_ADD, ...this.emitExpressionBinary(node.value), OP_I32_STORE, 2, 0, OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_BR, 1);
                     break;
                 case "While": {
                     const firstInBodyId = this.nodeToStateId.get(node.body[0]) ?? afterId;
-                    bytes.push(...this.emitExpressionBinary(node.condition), OP_IF, TYPE_EMPTY, OP_I32_CONST, ...this.encodeSignedLEB128(firstInBodyId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_ELSE, OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_END, OP_BR, 0);
+                    bytes.push(...this.emitExpressionBinary(node.condition), OP_IF, TYPE_EMPTY, OP_I32_CONST, ...this.encodeSignedLEB128(firstInBodyId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_ELSE, OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_END, OP_BR, 1);
                     break;
                 }
                 case "If": {
@@ -1333,11 +1380,11 @@ export class Compiler {
                     const elseId = node.elseBranch && node.elseBranch.length > 0
                         ? this.nodeToStateId.get(node.elseBranch[0])
                         : afterId;
-                    bytes.push(...this.emitExpressionBinary(node.condition), OP_IF, TYPE_EMPTY, OP_I32_CONST, ...this.encodeSignedLEB128(thenId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_ELSE, OP_I32_CONST, ...this.encodeSignedLEB128(elseId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_END, OP_BR, 0);
+                    bytes.push(...this.emitExpressionBinary(node.condition), OP_IF, TYPE_EMPTY, OP_I32_CONST, ...this.encodeSignedLEB128(thenId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_ELSE, OP_I32_CONST, ...this.encodeSignedLEB128(elseId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_END, OP_BR, 1);
                     break;
                 }
                 default:
-                    bytes.push(...this.emitExpressionBinary(node), OP_DROP, OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_BR, 0);
+                    bytes.push(...this.emitExpressionBinary(node), OP_DROP, OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_BR, 1);
             }
             bytes.push(OP_END);
             return bytes;

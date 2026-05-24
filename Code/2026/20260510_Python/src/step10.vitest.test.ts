@@ -99,5 +99,14 @@ describe("Step 10: Iterators & Generators (Parser)", () => {
       expect(next(result)).toBe(3);
       expect(next(result)).toBe(5);
     });
+
+    it("test_stop_iteration: Manual next() calls until exhaustion", async () => {
+      const code = "def gen():\n    yield 5\n    yield 10\n";
+      const { result, next } = await run(code, "gen");
+      expect(next(result)).toBe(5);
+      expect(next(result)).toBe(10);
+      expect(next(result)).toBe(0); // Exhausted returns 0 in our implementation
+      expect(next(result)).toBe(0); // Remains 0
+    });
   });
 });
