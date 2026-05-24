@@ -46,6 +46,11 @@ export class Compiler {
     locals = new Map();
     localIndex = 0;
     functionMap = new Map();
+    generatorIds = [];
+    isCompilingGenerator = false;
+    generatorPtrLocal = "";
+    localOffsets = new Map();
+    yieldLabelCount = 0;
     tempLocals = [];
     watLocalCount = 0;
     allocateTempLocal() {
@@ -73,8 +78,22 @@ export class Compiler {
         this.functionMap.set("concat", 4);
         this.functionMap.set("_get_item", 5);
         this.functionMap.set("_slice", 6);
+        this.functionMap.set("next", 7);
+        this.generatorIds = [];
         const userFunctions = program.body.filter((n) => n.type === "FunctionDef");
-        userFunctions.forEach((f, i) => this.functionMap.set(f.name, 7 + i));
+        let currentId = 8;
+        userFunctions.forEach((f) => {
+            this.functionMap.set(f.name, currentId);
+            if (this.isGenerator(f)) {
+                this.generatorIds.push(currentId);
+                // Worker ID will be the one after factory
+                this.functionMap.set(f.name + "_worker", currentId + 1);
+                currentId += 2;
+            }
+            else {
+                currentId += 1;
+            }
+        });
         let wat = `(module\n`;
         wat += `  (import "env" "print" (func $print (param i32) (result i32)))\n`;
         wat += `  (import "env" "sleep" (func $sleep (param i32) (result i32)))\n`;
@@ -90,10 +109,67 @@ export class Compiler {
                 wat += this.emitFunctionWAT(node);
             }
         }
+        // Dispatcher for next()
+        wat += `  (func $next (param $ptr i32) (result i32)\n`;
+        wat += `    (local $id i32)\n`;
+        if (this.generatorIds.length > 0) {
+            wat += `    local.get $ptr\n    i32.load\n    local.set $id\n`;
+            this.generatorIds.forEach((id) => {
+                const funcName = Array.from(this.functionMap.entries()).find(([, v]) => v === id)[0];
+                wat += `    local.get $id\n    i32.const ${id}\n    i32.eq\n    if\n      local.get $ptr\n      call $${funcName}_worker\n      return\n    end\n`;
+            });
+        }
+        wat += `    i32.const 0\n  )\n`;
+        wat += `  (export "next" (func $next))\n`;
         wat += `)\n`;
         return wat;
     }
+    isGenerator(node) {
+        let found = false;
+        const scan = (n) => {
+            if (!n || found)
+                return;
+            if (n.type === "Yield") {
+                found = true;
+                return;
+            }
+            switch (n.type) {
+                case "If":
+                    n.thenBranch.forEach(scan);
+                    if (n.elseBranch)
+                        n.elseBranch.forEach(scan);
+                    break;
+                case "While":
+                    n.body.forEach(scan);
+                    break;
+                case "For":
+                    n.body.forEach(scan);
+                    break;
+                case "DoWhile":
+                    n.body.forEach(scan);
+                    break;
+                case "FunctionDef":
+                    // Don't recurse into nested functions (if we support them)
+                    break;
+                default:
+                    // Check children if any
+                    for (const key in n) {
+                        const val = n[key];
+                        if (Array.isArray(val))
+                            val.forEach(scan);
+                        else if (val && typeof val === "object" && val.type)
+                            scan(val);
+                    }
+            }
+        };
+        node.body.forEach(scan);
+        return found;
+    }
     emitFunctionWAT(node) {
+        const isGen = this.isGenerator(node);
+        if (isGen) {
+            return this.emitGeneratorWAT(node);
+        }
         this.locals.clear();
         this.localIndex = 0;
         this.watLocalCount = 0;
@@ -157,6 +233,9 @@ export class Compiler {
                 case "Return":
                     scanNode(n.value);
                     break;
+                case "Yield":
+                    scanNode(n.value);
+                    break;
                 case "List":
                     n.elements.forEach(scanNode);
                     break;
@@ -206,7 +285,214 @@ export class Compiler {
             `  )\n` +
             `  (export "${node.name}" (func $${node.name}))\n`);
     }
+    emitGeneratorWAT(node) {
+        const funcId = this.functionMap.get(node.name);
+        const params = node.params;
+        this.locals.clear();
+        this.localIndex = 0;
+        this.tempLocals = [];
+        const scanNode = (n) => {
+            if (!n)
+                return;
+            if (n.type === "Assignment" && !this.locals.has(n.target)) {
+                this.locals.set(n.target, this.localIndex++);
+            }
+            if (n.type === "For" && !this.locals.has(n.iterator)) {
+                this.locals.set(n.iterator, this.localIndex++);
+            }
+            // ... recurse (truncated for brevity in thought, but I'll include it in the replace)
+            switch (n.type) {
+                case "Assignment":
+                    scanNode(n.value);
+                    break;
+                case "BinaryExpression":
+                    scanNode(n.left);
+                    scanNode(n.right);
+                    break;
+                case "If":
+                    scanNode(n.condition);
+                    n.thenBranch.forEach(scanNode);
+                    if (n.elseBranch)
+                        n.elseBranch.forEach(scanNode);
+                    break;
+                case "While":
+                    scanNode(n.condition);
+                    n.body.forEach(scanNode);
+                    break;
+                case "For":
+                    if (n.iterable)
+                        scanNode(n.iterable);
+                    if (n.start)
+                        scanNode(n.start);
+                    if (n.stop)
+                        scanNode(n.stop);
+                    n.body.forEach(scanNode);
+                    break;
+                case "DoWhile":
+                    scanNode(n.condition);
+                    n.body.forEach(scanNode);
+                    break;
+                case "Return":
+                    scanNode(n.value);
+                    break;
+                case "Yield":
+                    scanNode(n.value);
+                    break;
+                case "List":
+                    n.elements.forEach(scanNode);
+                    break;
+                case "ListComprehension":
+                    scanNode(n.iterable);
+                    scanNode(n.expression);
+                    if (n.condition)
+                        scanNode(n.condition);
+                    break;
+                case "DictComprehension":
+                    scanNode(n.iterable);
+                    scanNode(n.key);
+                    scanNode(n.value);
+                    if (n.condition)
+                        scanNode(n.condition);
+                    break;
+                case "Subscript":
+                    scanNode(n.value);
+                    scanNode(n.index);
+                    break;
+                case "Slice":
+                    if (n.start)
+                        scanNode(n.start);
+                    if (n.stop)
+                        scanNode(n.stop);
+                    if (n.step)
+                        scanNode(n.step);
+                    break;
+            }
+        };
+        node.body.forEach(scanNode);
+        this.localOffsets.clear();
+        params.forEach((p, i) => {
+            this.localOffsets.set(p, 8 + i * 4);
+        });
+        const paramCount = params.length;
+        Array.from(this.locals.keys()).forEach((name, i) => {
+            if (!this.localOffsets.has(name)) {
+                this.localOffsets.set(name, 8 + (paramCount + i) * 4);
+            }
+        });
+        const totalSize = (2 + this.localOffsets.size) * 4;
+        let factory = `  (func $${node.name} ${params.map((p) => `(param $${p} i32)`).join(" ")} (result i32)\n`;
+        factory += `    (local $ptr i32)\n`;
+        factory += `    global.get $heap_ptr\n    local.set $ptr\n`;
+        factory += `    global.get $heap_ptr\n    i32.const ${totalSize}\n    i32.add\n    global.set $heap_ptr\n`;
+        factory += `    local.get $ptr\n    i32.const ${funcId}\n    i32.store\n`;
+        factory += `    local.get $ptr\n    i32.const 4\n    i32.add\n    i32.const 0\n    i32.store\n`;
+        params.forEach((p) => {
+            factory += `    local.get $ptr\n    i32.const ${this.localOffsets.get(p)}\n    i32.add\n    local.get $${p}\n    i32.store\n`;
+        });
+        factory += `    local.get $ptr\n  )\n`;
+        factory += `  (export "${node.name}" (func $${node.name}))\n`;
+        return factory + this.emitGeneratorWorkerWAT(node);
+    }
+    nodeToStateId = new Map();
+    nextStateId = 0;
+    stateAfterId = new Map();
+    preScanStates(nodes, nextId = null) {
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i];
+            if (!this.nodeToStateId.has(node)) {
+                this.nodeToStateId.set(node, this.nextStateId++);
+            }
+        }
+        for (let i = 0; i < nodes.length; i++) {
+            const node = nodes[i];
+            const afterId = i < nodes.length - 1 ? this.nodeToStateId.get(nodes[i + 1]) : nextId;
+            this.stateAfterId.set(node, afterId ?? -1);
+            switch (node.type) {
+                case "If":
+                    this.preScanStates(node.thenBranch, afterId);
+                    if (node.elseBranch)
+                        this.preScanStates(node.elseBranch, afterId);
+                    break;
+                case "While":
+                    this.preScanStates(node.body, this.nodeToStateId.get(node));
+                    break;
+                case "For":
+                    this.preScanStates(node.body, this.nodeToStateId.get(node));
+                    break;
+                case "DoWhile":
+                    this.preScanStates(node.body, this.nodeToStateId.get(node));
+                    break;
+            }
+        }
+    }
+    emitGeneratorWorkerWAT(node) {
+        this.isCompilingGenerator = true;
+        this.generatorPtrLocal = "gen_ptr";
+        this.nextStateId = 0;
+        this.nodeToStateId.clear();
+        this.stateAfterId.clear();
+        this.preScanStates(node.body);
+        const localDecls = `(local $state i32)`;
+        let body = "loop $main_loop\n";
+        node.body.forEach((stmt) => {
+            body += this.emitStatementWAT(stmt) + "\n";
+        });
+        body += "end\n";
+        this.isCompilingGenerator = false;
+        return (`  (func $${node.name}_worker (param $gen_ptr i32) (result i32)\n` +
+            `    ${localDecls}\n` +
+            `    local.get $gen_ptr\n    i32.const 4\n    i32.add\n    i32.load\n    local.set $state\n` +
+            `    ${this.indent(body)}\n` +
+            `    local.get $gen_ptr\n    i32.const 4\n    i32.add\n    i32.const -1\n    i32.store\n` +
+            `    i32.const 0\n  )\n`);
+    }
     emitStatementWAT(node) {
+        if (this.isCompilingGenerator) {
+            const myId = this.nodeToStateId.get(node);
+            const afterId = this.stateAfterId.get(node);
+            let wat = `local.get $state\ni32.const ${myId}\ni32.eq\nif\n`;
+            let inner;
+            switch (node.type) {
+                case "Yield":
+                    inner =
+                        this.emitExpressionWAT(node.value) +
+                            `\nlocal.get $gen_ptr\ni32.const 4\ni32.add\ni32.const ${afterId}\ni32.store\nreturn`;
+                    break;
+                case "Assignment": {
+                    const offset = this.localOffsets.get(node.target);
+                    inner =
+                        `local.get $gen_ptr\ni32.const ${offset}\ni32.add\n` +
+                            this.emitExpressionWAT(node.value) +
+                            `\ni32.store\ni32.const ${afterId}\nlocal.set $state\nbr 0`;
+                    break;
+                }
+                case "While": {
+                    const firstInBodyId = this.nodeToStateId.get(node.body[0]) ?? afterId;
+                    inner =
+                        this.emitExpressionWAT(node.condition) +
+                            `\nif\ni32.const ${firstInBodyId}\nlocal.set $state\nelse\ni32.const ${afterId}\nlocal.set $state\nend\nbr 0`;
+                    break;
+                }
+                case "If": {
+                    const thenId = this.nodeToStateId.get(node.thenBranch[0]) ?? afterId;
+                    const elseId = node.elseBranch && node.elseBranch.length > 0
+                        ? this.nodeToStateId.get(node.elseBranch[0])
+                        : afterId;
+                    inner =
+                        this.emitExpressionWAT(node.condition) +
+                            `\nif\ni32.const ${thenId}\nlocal.set $state\nelse\ni32.const ${elseId}\nlocal.set $state\nend\nbr 0`;
+                    break;
+                }
+                default:
+                    inner =
+                        this.emitExpressionWAT(node) +
+                            `\ndrop\ni32.const ${afterId}\nlocal.set $state\nbr 0`;
+            }
+            wat += this.indent(inner) + "\nend";
+            // Special handling for end of loops: they need to jump back to the header
+            // But we handle that by setting the state and 'br 1' (restart the loop).
+            return wat;
+        }
         switch (node.type) {
             case "Return":
                 return this.emitExpressionWAT(node.value) + "\nreturn";
@@ -302,6 +588,10 @@ export class Compiler {
                 }
                 return `i32.const ${node.value === true ? 1 : node.value === false ? 0 : node.value}`;
             case "Identifier":
+                if (this.isCompilingGenerator && this.localOffsets.has(node.name)) {
+                    const offset = this.localOffsets.get(node.name);
+                    return `local.get $gen_ptr\ni32.const ${offset}\ni32.add\ni32.load`;
+                }
                 return `local.get $${node.name}`;
             case "BinaryExpression": {
                 const leftWAT = this.emitExpressionWAT(node.left);
@@ -359,6 +649,9 @@ export class Compiler {
                     return this.emitExpressionWAT(node.argument) + `\ni32.eqz`;
                 return this.emitExpressionWAT(node.argument);
             case "CallExpression": {
+                if (node.callee === "next" && node.args.length === 1) {
+                    return this.emitExpressionWAT(node.args[0]) + "\ncall $next";
+                }
                 const argWAT = node.args
                     .map((a) => this.emitExpressionWAT(a))
                     .join("\n");
@@ -530,8 +823,21 @@ export class Compiler {
         this.functionMap.set("concat", 4);
         this.functionMap.set("_get_item", 5);
         this.functionMap.set("_slice", 6);
+        this.functionMap.set("next", 7);
+        this.generatorIds = [];
         const userFunctions = program.body.filter((n) => n.type === "FunctionDef");
-        userFunctions.forEach((f, i) => this.functionMap.set(f.name, 7 + i));
+        let currentId = 8;
+        userFunctions.forEach((f) => {
+            this.functionMap.set(f.name, currentId);
+            if (this.isGenerator(f)) {
+                this.generatorIds.push(currentId);
+                this.functionMap.set(f.name + "_worker", currentId + 1);
+                currentId += 2;
+            }
+            else {
+                currentId += 1;
+            }
+        });
         const types = [];
         types.push([TYPE_FUNC, 1, TYPE_I32, 1, TYPE_I32]); // index 0: (i32) -> i32
         types.push([TYPE_FUNC, 2, TYPE_I32, TYPE_I32, 1, TYPE_I32]); // index 1: (i32, i32) -> i32
@@ -561,6 +867,10 @@ export class Compiler {
                 types.push(type);
             }
             userFuncTypeIndices.push(idx);
+            if (this.isGenerator(f)) {
+                // Worker type is always (i32) -> i32 (index 0)
+                userFuncTypeIndices.push(0);
+            }
         }
         const typeSection = this.createSection(SECTION_TYPE, [
             this.encodeVector(types),
@@ -612,7 +922,7 @@ export class Compiler {
             ]),
         ]);
         const funcSection = this.createSection(SECTION_FUNCTION, [
-            this.encodeVector(userFuncTypeIndices.map((i) => [i])),
+            this.encodeVector([[0], ...userFuncTypeIndices.map((i) => [i])]),
         ]);
         const memorySection = this.createSection(SECTION_MEMORY, [
             this.encodeVector([[0, 1]]),
@@ -629,17 +939,35 @@ export class Compiler {
             ]),
         ]);
         const exports = [];
-        userFunctions.forEach((f, i) => exports.push([
+        userFunctions.forEach((f) => exports.push([
             ...this.encodeString(f.name),
             EXT_KIND_FUNC,
-            ...this.encodeUnsignedLEB128(7 + i),
+            ...this.encodeUnsignedLEB128(this.functionMap.get(f.name)),
         ]));
+        exports.push([
+            ...this.encodeString("next"),
+            EXT_KIND_FUNC,
+            ...this.encodeUnsignedLEB128(7),
+        ]);
         exports.push([...this.encodeString("memory"), EXT_KIND_MEMORY, 0]);
         exports.push([...this.encodeString("heap_ptr"), EXT_KIND_GLOBAL, 0]);
         const exportSection = this.createSection(SECTION_EXPORT, [
             this.encodeVector(exports),
         ]);
-        const codes = [...userFunctions.map((f) => this.emitFunctionBinary(f))];
+        // Dispatcher for next()
+        const nextDispatcher = this.emitNextDispatcherBinary();
+        const codes = [
+            nextDispatcher,
+            ...userFunctions.flatMap((f) => {
+                if (this.isGenerator(f)) {
+                    return [
+                        this.emitGeneratorFactoryBinary(f),
+                        this.emitGeneratorWorkerBinary(f),
+                    ];
+                }
+                return [this.emitFunctionBinary(f)];
+            }),
+        ];
         const codeSection = this.createSection(SECTION_CODE, [
             this.encodeVector(codes),
         ]);
@@ -663,9 +991,197 @@ export class Compiler {
         const flatItems = items.flat();
         return [...this.encodeUnsignedLEB128(items.length), ...flatItems];
     }
+    emitNextDispatcherBinary() {
+        const locals = [[1, TYPE_I32]]; // (local $id i32)
+        const bytes = [];
+        if (this.generatorIds.length > 0) {
+            bytes.push(OP_LOCAL_GET, 0, OP_I32_LOAD, 2, 0, OP_LOCAL_SET, 1);
+            this.generatorIds.forEach((id) => {
+                bytes.push(OP_LOCAL_GET, 1, OP_I32_CONST, ...this.encodeSignedLEB128(id), OP_I32_EQ, OP_IF, TYPE_EMPTY, OP_LOCAL_GET, 0, OP_CALL, ...this.encodeUnsignedLEB128(id + 1), OP_RETURN, OP_END);
+            });
+        }
+        bytes.push(OP_I32_CONST, 0, OP_END);
+        const localPart = this.encodeVector(locals);
+        return [
+            ...this.encodeUnsignedLEB128(localPart.length + bytes.length),
+            ...localPart,
+            ...bytes,
+        ];
+    }
     encodeString(s) {
         const bytes = new TextEncoder().encode(s);
         return [...this.encodeUnsignedLEB128(bytes.length), ...Array.from(bytes)];
+    }
+    emitGeneratorFactoryBinary(node) {
+        const funcId = this.functionMap.get(node.name);
+        const params = node.params;
+        this.locals.clear();
+        this.localIndex = 0;
+        this.tempLocals = [];
+        const scanNode = (n) => {
+            if (!n)
+                return;
+            if (n.type === "Assignment" && !this.locals.has(n.target))
+                this.locals.set(n.target, this.localIndex++);
+            if (n.type === "For" && !this.locals.has(n.iterator))
+                this.locals.set(n.iterator, this.localIndex++);
+            switch (n.type) {
+                case "Assignment":
+                    scanNode(n.value);
+                    break;
+                case "BinaryExpression":
+                    scanNode(n.left);
+                    scanNode(n.right);
+                    break;
+                case "If":
+                    scanNode(n.condition);
+                    n.thenBranch.forEach(scanNode);
+                    if (n.elseBranch)
+                        n.elseBranch.forEach(scanNode);
+                    break;
+                case "While":
+                    scanNode(n.condition);
+                    n.body.forEach(scanNode);
+                    break;
+                case "For":
+                    if (n.iterable)
+                        scanNode(n.iterable);
+                    if (n.start)
+                        scanNode(n.start);
+                    if (n.stop)
+                        scanNode(n.stop);
+                    n.body.forEach(scanNode);
+                    break;
+                case "DoWhile":
+                    scanNode(n.condition);
+                    n.body.forEach(scanNode);
+                    break;
+                case "Return":
+                    scanNode(n.value);
+                    break;
+                case "Yield":
+                    scanNode(n.value);
+                    break;
+                case "List":
+                    n.elements.forEach(scanNode);
+                    break;
+                case "ListComprehension":
+                    scanNode(n.iterable);
+                    scanNode(n.expression);
+                    if (n.condition)
+                        scanNode(n.condition);
+                    break;
+                case "DictComprehension":
+                    scanNode(n.iterable);
+                    scanNode(n.key);
+                    scanNode(n.value);
+                    if (n.condition)
+                        scanNode(n.condition);
+                    break;
+                case "Subscript":
+                    scanNode(n.value);
+                    scanNode(n.index);
+                    break;
+                case "Slice":
+                    if (n.start)
+                        scanNode(n.start);
+                    if (n.stop)
+                        scanNode(n.stop);
+                    if (n.step)
+                        scanNode(n.step);
+                    break;
+            }
+        };
+        node.body.forEach(scanNode);
+        this.localOffsets.clear();
+        params.forEach((p, i) => this.localOffsets.set(p, 8 + i * 4));
+        const paramCount = params.length;
+        Array.from(this.locals.keys()).forEach((name, i) => {
+            if (!this.localOffsets.has(name))
+                this.localOffsets.set(name, 8 + (paramCount + i) * 4);
+        });
+        const totalSize = (2 + this.localOffsets.size) * 4;
+        const locals = [[1, TYPE_I32]]; // (local $ptr i32)
+        const ptrIdx = params.length;
+        const bytes = [
+            OP_GLOBAL_GET,
+            0,
+            OP_LOCAL_SET,
+            ...this.encodeUnsignedLEB128(ptrIdx),
+            OP_GLOBAL_GET,
+            0,
+            OP_I32_CONST,
+            ...this.encodeSignedLEB128(totalSize),
+            OP_I32_ADD,
+            OP_GLOBAL_SET,
+            0,
+            OP_LOCAL_GET,
+            ...this.encodeUnsignedLEB128(ptrIdx),
+            OP_I32_CONST,
+            ...this.encodeSignedLEB128(funcId),
+            OP_I32_STORE,
+            2,
+            0,
+            OP_LOCAL_GET,
+            ...this.encodeUnsignedLEB128(ptrIdx),
+            OP_I32_CONST,
+            4,
+            OP_I32_ADD,
+            OP_I32_CONST,
+            0,
+            OP_I32_STORE,
+            2,
+            0,
+        ];
+        params.forEach((p, i) => {
+            bytes.push(OP_LOCAL_GET, ...this.encodeUnsignedLEB128(ptrIdx), OP_I32_CONST, ...this.encodeSignedLEB128(this.localOffsets.get(p)), OP_I32_ADD, OP_LOCAL_GET, ...this.encodeUnsignedLEB128(i), OP_I32_STORE, 2, 0);
+        });
+        bytes.push(OP_LOCAL_GET, ...this.encodeUnsignedLEB128(ptrIdx), OP_END);
+        const localPart = this.encodeVector(locals);
+        return [
+            ...this.encodeUnsignedLEB128(localPart.length + bytes.length),
+            ...localPart,
+            ...bytes,
+        ];
+    }
+    emitGeneratorWorkerBinary(node) {
+        this.isCompilingGenerator = true;
+        this.tempLocals = ["gen_ptr", "state"];
+        this.nextStateId = 0;
+        this.nodeToStateId.clear();
+        this.stateAfterId.clear();
+        this.preScanStates(node.body);
+        this.localIndex = 0; // gen_ptr is 0, state is 1
+        const bodyBytes = [
+            OP_LOCAL_GET,
+            0,
+            OP_I32_CONST,
+            4,
+            OP_I32_ADD,
+            OP_I32_LOAD,
+            2,
+            0,
+            OP_LOCAL_SET,
+            1,
+            OP_LOOP,
+            TYPE_EMPTY,
+        ];
+        node.body.forEach((stmt) => {
+            bodyBytes.push(...this.emitStatementBinary(stmt));
+        });
+        bodyBytes.push(OP_END); // loop
+        bodyBytes.push(OP_LOCAL_GET, 0, OP_I32_CONST, 4, OP_I32_ADD, OP_I32_CONST, ...this.encodeSignedLEB128(-1), OP_I32_STORE, 2, 0, OP_I32_CONST, 0, OP_END);
+        const localDecls = [];
+        if (this.tempLocals.length > 1) {
+            localDecls.push([this.tempLocals.length - 1, TYPE_I32]); // skip gen_ptr which is param
+        }
+        this.isCompilingGenerator = false;
+        const localPart = this.encodeVector(localDecls);
+        return [
+            ...this.encodeUnsignedLEB128(localPart.length + bodyBytes.length),
+            ...localPart,
+            ...bodyBytes,
+        ];
     }
     emitFunctionBinary(node) {
         this.locals.clear();
@@ -785,6 +1301,47 @@ export class Compiler {
         return [...this.encodeUnsignedLEB128(fullFunc.length), ...fullFunc];
     }
     emitStatementBinary(node) {
+        if (this.isCompilingGenerator) {
+            const myId = this.nodeToStateId.get(node);
+            const afterId = this.stateAfterId.get(node);
+            const genPtrIdx = 0; // parameter
+            const stateIdx = 1; // local
+            const bytes = [
+                OP_LOCAL_GET,
+                ...this.encodeUnsignedLEB128(stateIdx),
+                OP_I32_CONST,
+                ...this.encodeSignedLEB128(myId),
+                OP_I32_EQ,
+                OP_IF,
+                TYPE_EMPTY,
+            ];
+            switch (node.type) {
+                case "Yield":
+                    bytes.push(OP_LOCAL_GET, ...this.encodeUnsignedLEB128(genPtrIdx), OP_I32_CONST, 4, OP_I32_ADD, OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_I32_STORE, 2, 0, ...this.emitExpressionBinary(node.value), OP_RETURN);
+                    break;
+                case "Assignment":
+                    const offset = this.localOffsets.get(node.target);
+                    bytes.push(OP_LOCAL_GET, ...this.encodeUnsignedLEB128(genPtrIdx), OP_I32_CONST, ...this.encodeSignedLEB128(offset), OP_I32_ADD, ...this.emitExpressionBinary(node.value), OP_I32_STORE, 2, 0, OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_BR, 0);
+                    break;
+                case "While": {
+                    const firstInBodyId = this.nodeToStateId.get(node.body[0]) ?? afterId;
+                    bytes.push(...this.emitExpressionBinary(node.condition), OP_IF, TYPE_EMPTY, OP_I32_CONST, ...this.encodeSignedLEB128(firstInBodyId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_ELSE, OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_END, OP_BR, 0);
+                    break;
+                }
+                case "If": {
+                    const thenId = this.nodeToStateId.get(node.thenBranch[0]) ?? afterId;
+                    const elseId = node.elseBranch && node.elseBranch.length > 0
+                        ? this.nodeToStateId.get(node.elseBranch[0])
+                        : afterId;
+                    bytes.push(...this.emitExpressionBinary(node.condition), OP_IF, TYPE_EMPTY, OP_I32_CONST, ...this.encodeSignedLEB128(thenId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_ELSE, OP_I32_CONST, ...this.encodeSignedLEB128(elseId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_END, OP_BR, 0);
+                    break;
+                }
+                default:
+                    bytes.push(...this.emitExpressionBinary(node), OP_DROP, OP_I32_CONST, ...this.encodeSignedLEB128(afterId), OP_LOCAL_SET, ...this.encodeUnsignedLEB128(stateIdx), OP_BR, 0);
+            }
+            bytes.push(OP_END);
+            return bytes;
+        }
         switch (node.type) {
             case "Return":
                 return [...this.emitExpressionBinary(node.value), OP_RETURN];
@@ -1053,6 +1610,19 @@ export class Compiler {
                     ...this.encodeUnsignedLEB128(this.functionMap.get("_get_item")),
                 ];
             case "Identifier":
+                if (this.isCompilingGenerator && this.localOffsets.has(node.name)) {
+                    const offset = this.localOffsets.get(node.name);
+                    return [
+                        OP_LOCAL_GET,
+                        0, // gen_ptr is param 0
+                        OP_I32_CONST,
+                        ...this.encodeSignedLEB128(offset),
+                        OP_I32_ADD,
+                        OP_I32_LOAD,
+                        2,
+                        0,
+                    ];
+                }
                 return [
                     OP_LOCAL_GET,
                     ...this.encodeUnsignedLEB128(this.locals.get(node.name)),
@@ -1419,6 +1989,13 @@ export class Compiler {
                 return this.emitExpressionBinary(node.argument);
             case "CallExpression": {
                 const calleeIdx = this.functionMap.get(node.callee);
+                if (node.callee === "next" && node.args.length === 1) {
+                    return [
+                        ...this.emitExpressionBinary(node.args[0]),
+                        OP_CALL,
+                        7, // next dispatcher is at 7
+                    ];
+                }
                 if (calleeIdx === undefined) {
                     throw new Error(`Undefined function: ${node.callee}`);
                 }

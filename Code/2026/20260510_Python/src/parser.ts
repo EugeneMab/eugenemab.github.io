@@ -21,7 +21,13 @@ export type ASTNode =
   | ForNode
   | DoWhileNode
   | FStringNode
+  | YieldNode
   | PassNode;
+
+export interface YieldNode {
+  type: "Yield";
+  value: ASTNode;
+}
 
 export interface PassNode {
   type: "Pass";
@@ -167,6 +173,7 @@ export class Parser {
   private parseStatement(): ASTNode | null {
     if (this.match(TokenType.DEF)) return this.parseFunctionDef();
     if (this.match(TokenType.RETURN)) return this.parseReturn();
+    if (this.match(TokenType.YIELD)) return this.parseYield();
     if (this.match(TokenType.WHILE)) return this.parseWhile();
     if (this.match(TokenType.DO)) return this.parseDoWhile();
     if (this.match(TokenType.FOR)) return this.parseFor();
@@ -360,6 +367,12 @@ export class Parser {
     const value = this.parseExpression();
     this.consumeStatementEnd();
     return { type: "Return", value };
+  }
+
+  private parseYield(): YieldNode {
+    const value = this.parseExpression();
+    this.consumeStatementEnd();
+    return { type: "Yield", value };
   }
 
   private parseExpression(): ASTNode {

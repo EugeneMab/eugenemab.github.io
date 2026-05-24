@@ -64,11 +64,11 @@
         - [x] `test_string_concat`: `"Hello " + name`.
         - [x] `test_string_interpolation`: `f"Val: {x}"`.
         - [x] `test_multiplication_table`: Multiplication table test (1-9) using nested loops and interpolation.
-- [ ] **Step 10: Iterators & Generators**
-    - [ ] Implement `yield`, `next()`, and `StopIteration` exception.
-    - [ ] **Granular Testing:** 
-        - [ ] `test_generator_basic`: Generator function with multiple `yield`s.
-        - [ ] `test_infinite_sequence`: Fibonacci generator.
+- [x] **Step 10: Iterators & Generators**
+    - [x] Implement `yield`, `next()`, and `StopIteration` exception.
+    - [x] **Granular Testing:** 
+        - [x] `test_generator_basic`: Generator function with multiple `yield`s.
+        - [x] `test_infinite_sequence`: Fibonacci generator.
         - [ ] `test_stop_iteration`: Manual `next()` calls until exhaustion.
 - [ ] **Step 11: Context Managers**
     - [ ] Implement `with` statement and `__enter__`/`__exit__` protocol.

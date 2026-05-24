@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Python-WASM Port (PYTH)
 const PORT = process.env.PORT || 7984;
 const PUBLIC_DIR = path.join(__dirname, '../pub');
 

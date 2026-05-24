@@ -43,6 +43,7 @@ export var TokenType;
     TokenType["DO"] = "DO";
     TokenType["FROM"] = "FROM";
     TokenType["TO"] = "TO";
+    TokenType["YIELD"] = "YIELD";
 })(TokenType || (TokenType = {}));
 export class Lexer {
     source;
@@ -217,6 +218,7 @@ export class Lexer {
             do: TokenType.DO,
             from: TokenType.FROM,
             to: TokenType.TO,
+            yield: TokenType.YIELD,
             if: TokenType.IF,
             elif: TokenType.ELIF,
             else: TokenType.ELSE,
