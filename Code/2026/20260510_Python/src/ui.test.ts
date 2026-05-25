@@ -34,7 +34,7 @@ const samples = [
 ];
 
 test("verify all samples in UI including WAT", async ({ page }) => {
-  await page.goto("http://localhost:7895");
+  await page.goto("http://localhost:17984");
 
   // Monitor for console errors
   const errors: string[] = [];

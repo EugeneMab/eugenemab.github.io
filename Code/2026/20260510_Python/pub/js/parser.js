@@ -30,6 +30,8 @@ export class Parser {
             return this.parseFor();
         if (this.match(TokenType.IF))
             return this.parseIf();
+        if (this.match(TokenType.WITH))
+            return this.parseWith();
         if (this.match(TokenType.PASS)) {
             this.consumeStatementEnd();
             return { type: "Pass" };
@@ -143,6 +145,24 @@ export class Parser {
         this.consume(TokenType.WHILE, "Expect 'while' after do body");
         const condition = this.parseExpression();
         return { type: "DoWhile", condition, body };
+    }
+    parseWith() {
+        const expression = this.parseExpression();
+        let target = null;
+        if (this.match(TokenType.AS)) {
+            target = this.consume(TokenType.IDENTIFIER, "Expect identifier after 'as'").value;
+        }
+        this.consume(TokenType.COLON, "Expect ':' after with expression");
+        this.consume(TokenType.NEWLINE, "Expect newline after ':'");
+        this.consume(TokenType.INDENT, "Expect indent after with");
+        const body = [];
+        while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
+            const node = this.parseStatement();
+            if (node)
+                body.push(node);
+        }
+        this.consume(TokenType.DEDENT, "Expect dedent after with body");
+        return { type: "With", expression, target, body };
     }
     parseCall() {
         const callee = this.consume(TokenType.IDENTIFIER, "Expect function name").value;
@@ -277,14 +297,7 @@ export class Parser {
             expr = { type: "Literal", value: 0 };
         }
         else if (this.match(TokenType.IDENTIFIER)) {
-            const name = this.previous().value;
-            if (this.check(TokenType.LPAREN)) {
-                this.pos--; // Backtrack identifier
-                expr = this.parseCall();
-            }
-            else {
-                expr = { type: "Identifier", name };
-            }
+            expr = { type: "Identifier", name: this.previous().value };
         }
         else if (this.match(TokenType.LPAREN)) {
             expr = this.parseExpression();
@@ -300,11 +313,35 @@ export class Parser {
             const token = this.peek();
             throw new Error(`Expect expression at line ${token.line}, col ${token.col}`);
         }
-        // Handle post-primary: subscripts
-        while (this.match(TokenType.LSQUARE)) {
-            expr = this.parseSubscript(expr);
+        while (true) {
+            if (this.match(TokenType.LPAREN)) {
+                expr = this.parseCallArgs(expr);
+            }
+            else if (this.match(TokenType.LSQUARE)) {
+                expr = this.parseSubscript(expr);
+            }
+            else if (this.match(TokenType.DOT)) {
+                const member = this.consume(TokenType.IDENTIFIER, "Expect member name").value;
+                expr = { type: "MemberAccess", object: expr, member };
+            }
+            else {
+                break;
+            }
         }
         return expr;
+    }
+    parseCallArgs(callee) {
+        const args = [];
+        if (!this.check(TokenType.RPAREN)) {
+            do {
+                args.push(this.parseExpression());
+            } while (this.match(TokenType.COMMA));
+        }
+        this.consume(TokenType.RPAREN, "Expect ')'");
+        if (callee.type === "Identifier") {
+            return { type: "CallExpression", callee: callee.name, args };
+        }
+        return { type: "CallExpression", callee, args };
     }
     parseFString(value) {
         const parts = [];

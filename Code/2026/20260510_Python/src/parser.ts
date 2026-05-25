@@ -22,7 +22,22 @@ export type ASTNode =
   | DoWhileNode
   | FStringNode
   | YieldNode
-  | PassNode;
+  | PassNode
+  | WithNode
+  | MemberAccessNode;
+
+export interface WithNode {
+  type: "With";
+  expression: ASTNode;
+  target: string | null;
+  body: ASTNode[];
+}
+
+export interface MemberAccessNode {
+  type: "MemberAccess";
+  object: ASTNode;
+  member: string;
+}
 
 export interface YieldNode {
   type: "Yield";
@@ -149,7 +164,7 @@ export interface WhileNode {
 
 export interface CallExpressionNode {
   type: "CallExpression";
-  callee: string;
+  callee: string | ASTNode;
   args: ASTNode[];
 }
 
@@ -178,6 +193,7 @@ export class Parser {
     if (this.match(TokenType.DO)) return this.parseDoWhile();
     if (this.match(TokenType.FOR)) return this.parseFor();
     if (this.match(TokenType.IF)) return this.parseIf();
+    if (this.match(TokenType.WITH)) return this.parseWith();
     if (this.match(TokenType.PASS)) {
       this.consumeStatementEnd();
       return { type: "Pass" };
@@ -302,6 +318,27 @@ export class Parser {
     this.consume(TokenType.WHILE, "Expect 'while' after do body");
     const condition = this.parseExpression();
     return { type: "DoWhile", condition, body };
+  }
+
+  private parseWith(): WithNode {
+    const expression = this.parseExpression();
+    let target: string | null = null;
+    if (this.match(TokenType.AS)) {
+      target = this.consume(
+        TokenType.IDENTIFIER,
+        "Expect identifier after 'as'",
+      ).value;
+    }
+    this.consume(TokenType.COLON, "Expect ':' after with expression");
+    this.consume(TokenType.NEWLINE, "Expect newline after ':'");
+    this.consume(TokenType.INDENT, "Expect indent after with");
+    const body: ASTNode[] = [];
+    while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
+      const node = this.parseStatement();
+      if (node) body.push(node);
+    }
+    this.consume(TokenType.DEDENT, "Expect dedent after with body");
+    return { type: "With", expression, target, body };
   }
 
   private parseCall(): CallExpressionNode {
@@ -467,13 +504,7 @@ export class Parser {
     } else if (this.match(TokenType.FALSE)) {
       expr = { type: "Literal", value: 0 };
     } else if (this.match(TokenType.IDENTIFIER)) {
-      const name = this.previous().value;
-      if (this.check(TokenType.LPAREN)) {
-        this.pos--; // Backtrack identifier
-        expr = this.parseCall();
-      } else {
-        expr = { type: "Identifier", name };
-      }
+      expr = { type: "Identifier", name: this.previous().value };
     } else if (this.match(TokenType.LPAREN)) {
       expr = this.parseExpression();
       this.consume(TokenType.RPAREN, "Expect ')' after expression");
@@ -488,12 +519,37 @@ export class Parser {
       );
     }
 
-    // Handle post-primary: subscripts
-    while (this.match(TokenType.LSQUARE)) {
-      expr = this.parseSubscript(expr);
+    while (true) {
+      if (this.match(TokenType.LPAREN)) {
+        expr = this.parseCallArgs(expr);
+      } else if (this.match(TokenType.LSQUARE)) {
+        expr = this.parseSubscript(expr);
+      } else if (this.match(TokenType.DOT)) {
+        const member = this.consume(
+          TokenType.IDENTIFIER,
+          "Expect member name",
+        ).value;
+        expr = { type: "MemberAccess", object: expr, member };
+      } else {
+        break;
+      }
     }
 
     return expr;
+  }
+
+  private parseCallArgs(callee: ASTNode): CallExpressionNode {
+    const args: ASTNode[] = [];
+    if (!this.check(TokenType.RPAREN)) {
+      do {
+        args.push(this.parseExpression());
+      } while (this.match(TokenType.COMMA));
+    }
+    this.consume(TokenType.RPAREN, "Expect ')'");
+    if (callee.type === "Identifier") {
+      return { type: "CallExpression", callee: callee.name, args };
+    }
+    return { type: "CallExpression", callee, args };
   }
 
   private parseFString(value: string): FStringNode {

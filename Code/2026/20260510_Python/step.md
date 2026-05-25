@@ -70,12 +70,12 @@
         - [x] `test_generator_basic`: Generator function with multiple `yield`s.
         - [x] `test_infinite_sequence`: Fibonacci generator.
         - [x] `test_stop_iteration`: Manual `next()` calls until exhaustion.
-- [ ] **Step 11: Context Managers**
-    - [ ] Implement `with` statement and `__enter__`/`__exit__` protocol.
-    - [ ] **Granular Testing:** 
-        - [ ] `test_with_basic`: Successful enter and exit.
-        - [ ] `test_with_cleanup`: Ensuring `__exit__` runs even on failure.
-        - [ ] `test_with_exception`: Handling exceptions raised inside `with` block.
+- [x] **Step 11: Context Managers**
+    - [x] Implement `with` statement and `__enter__`/`__exit__` protocol.
+    - [x] **Granular Testing:** 
+        - [x] `test_with_basic`: Successful enter and exit.
+        - [x] `test_with_cleanup`: Ensuring `__exit__` runs even on failure.
+        - [x] `test_with_exception`: Handling exceptions raised inside `with` block.
 
 ## 🌟 Level 2: Object Model & Types
 - [ ] **Step 12: Memory Management & Tagged Unions**
