@@ -77,7 +77,7 @@ def test():
     expect(logs[2]).toBe("exit");
   });
 
-  it("test_with_exception: Handling exceptions (simulated by early return)", async () => {
+  it("test_with_early_return: Ensuring cleanup runs on early return / abort inside with block", async () => {
     const code = `
 def __enter__(mgr):
     print(mgr)

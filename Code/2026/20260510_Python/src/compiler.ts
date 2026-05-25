@@ -66,7 +66,7 @@ export class Compiler {
   private localOffsets: Map<string, number> = new Map();
   private tempLocals: string[] = [];
   private watLocalCount: number = 0;
-  private withStack: number[] = [];
+  private withStack: string[] = [];
 
   private allocateTempLocal(): string {
     let candidateIndex = this.tempLocals.length;
@@ -574,8 +574,24 @@ export class Compiler {
     }
 
     switch (node.type) {
-      case "Return":
-        return this.emitExpressionWAT(node.value) + "\nreturn";
+      case "Return": {
+        let wat = "";
+        if (this.withStack.length > 0) {
+          const tmp = this.allocateTempLocal();
+          wat += this.emitExpressionWAT(node.value) + `\nlocal.set $${tmp}\n`;
+          for (let i = this.withStack.length - 1; i >= 0; i--) {
+            const mgrName = this.withStack[i];
+            wat +=
+              `local.get $${mgrName}\n` +
+              `i32.const 0\ni32.const 0\ni32.const 0\n` +
+              `call $__exit__\ndrop\n`;
+          }
+          wat += `local.get $${tmp}\n`;
+        } else {
+          wat += this.emitExpressionWAT(node.value) + "\n";
+        }
+        return wat + "return";
+      }
       case "Assignment":
         return (
           this.emitExpressionWAT(node.value) + `\nlocal.set $${node.target}`
@@ -642,6 +658,29 @@ export class Compiler {
             .join("\n") + "\n";
         const condition = `${this.emitExpressionWAT(node.condition)}\nbr_if 0`;
         return `loop\n${this.indent(body + condition)}\nend`;
+      }
+      case "With": {
+        const withNode = node as WithNode;
+        const mgrLocal = this.allocateTempLocal();
+        this.withStack.push(mgrLocal);
+        const init =
+          this.emitExpressionWAT(withNode.expression) +
+          `\nlocal.set $${mgrLocal}`;
+
+        const enterCall = `local.get $${mgrLocal}\ncall $__enter__`;
+        const targetSet = withNode.target
+          ? `local.set $${withNode.target}`
+          : "drop";
+
+        const body = withNode.body
+          .map((s) => this.emitStatementWAT(s))
+          .filter((s) => s)
+          .join("\n");
+
+        const exitCall = `local.get $${mgrLocal}\ni32.const 0\ni32.const 0\ni32.const 0\ncall $__exit__\ndrop`;
+
+        this.withStack.pop();
+        return `${init}\n${enterCall}\n${targetSet}\n${body}\n${exitCall}`;
       }
       case "Pass":
         return "nop";
@@ -744,23 +783,38 @@ export class Compiler {
           return this.emitExpressionWAT(node.argument) + `\ni32.eqz`;
         return this.emitExpressionWAT(node.argument);
       case "CallExpression": {
-        if (node.callee === "next" && node.args.length === 1) {
-          return this.emitExpressionWAT(node.args[0]) + "\ncall $next";
-        }
         const argWAT = node.args
           .map((a) => this.emitExpressionWAT(a))
           .join("\n");
-        if (node.callee === "print" && node.args.length === 1) {
-          const arg = node.args[0];
-          // Heuristic: If it's a string literal or f-string, use print_str
-          if (
-            (arg.type === "Literal" && typeof arg.value === "string") ||
-            arg.type === "FString"
-          ) {
-            return argWAT + "\ncall $print_str";
+
+        if (typeof node.callee === "string") {
+          if (node.callee === "next" && node.args.length === 1) {
+            return this.emitExpressionWAT(node.args[0]) + "\ncall $next";
           }
+          if (node.callee === "print" && node.args.length === 1) {
+            const arg = node.args[0];
+            if (
+              (arg.type === "Literal" && typeof arg.value === "string") ||
+              arg.type === "FString"
+            ) {
+              return argWAT + "\ncall $print_str";
+            }
+          }
+          return (argWAT ? argWAT + "\n" : "") + `call $${node.callee}`;
+        } else {
+          if (node.callee.type === "MemberAccess") {
+            const ma = node.callee as MemberAccessNode;
+            return (
+              this.emitExpressionWAT(ma.object) +
+              "\n" +
+              (argWAT ? argWAT + "\n" : "") +
+              `call $${ma.member}`
+            );
+          }
+          throw new Error(
+            `Dynamic calls on ${node.callee.type} are not yet supported in WAT`,
+          );
         }
-        return argWAT + `\ncall $${node.callee}`;
       }
       case "FString": {
         let wat = "";
@@ -1412,6 +1466,7 @@ export class Compiler {
           scanNode(n.right);
           break;
         case "CallExpression":
+          if (typeof n.callee !== "string") scanNode(n.callee);
           n.args.forEach(scanNode);
           break;
         case "If":
@@ -1676,9 +1731,10 @@ export class Compiler {
           for (let i = this.withStack.length - 1; i >= 0; i--) {
             const exitIdx = this.functionMap.get("__exit__");
             if (exitIdx !== undefined) {
+              const mgrIdx = this.getTempLocalIndex(this.withStack[i]);
               bytes.push(
                 OP_LOCAL_GET,
-                ...this.encodeUnsignedLEB128(this.withStack[i]),
+                ...this.encodeUnsignedLEB128(mgrIdx),
                 OP_I32_CONST,
                 0,
                 OP_I32_CONST,
@@ -1700,7 +1756,7 @@ export class Compiler {
         const withNode = node as WithNode;
         const mgrLocal = this.allocateTempLocal();
         const mgrIdx = this.getTempLocalIndex(mgrLocal);
-        this.withStack.push(mgrIdx);
+        this.withStack.push(mgrLocal);
         const bytes = [
           ...this.emitExpressionBinary(withNode.expression),
           OP_LOCAL_SET,

@@ -75,7 +75,7 @@
     - [x] **Granular Testing:** 
         - [x] `test_with_basic`: Successful enter and exit.
         - [x] `test_with_cleanup`: Ensuring `__exit__` runs even on failure.
-        - [x] `test_with_exception`: Handling exceptions raised inside `with` block.
+        - [x] `test_with_early_return`: Ensuring cleanup runs on early return / abort inside `with` block.
 
 ## 🌟 Level 2: Object Model & Types
 - [ ] **Step 12: Memory Management & Tagged Unions**
