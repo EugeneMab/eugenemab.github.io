@@ -22,7 +22,7 @@ if %TEST_RESULT% neq 0 (
 
 echo Running UI Tests...
 :: Start server in background on test port
-set PORT=7895
+set PORT=17984
 start /B node src/serve.js > test_output\server.log 2>&1
 :: Wait for server to start
 ping 127.0.0.1 -n 3 > nul
@@ -31,7 +31,7 @@ set UI_RESULT=%ERRORLEVEL%
 echo UI test log: test_output\ui.log
 
 :: Kill background server
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr LISTENING ^| findstr /C:":7895 "') do taskkill /F /PID %%a > nul 2>&1
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr LISTENING ^| findstr /C:":17984 "') do taskkill /F /PID %%a > nul 2>&1
 
 if %UI_RESULT% neq 0 (
     echo [ERROR] UI tests failed.

@@ -39,12 +39,15 @@ export enum TokenType {
   RSQUARE = "RSQUARE",
   LBRACE = "LBRACE",
   RBRACE = "RBRACE",
+  DOT = "DOT",
   STRING = "STRING",
   FSTRING = "FSTRING",
   DO = "DO",
   FROM = "FROM",
   TO = "TO",
   YIELD = "YIELD",
+  WITH = "WITH",
+  AS = "AS",
 }
 
 export interface Token {
@@ -162,6 +165,8 @@ export class Lexer {
         return this.createToken(TokenType.SLASH, "/");
       case ":":
         return this.createToken(TokenType.COLON, ":");
+      case ".":
+        return this.createToken(TokenType.DOT, ".");
       case "(":
         return this.createToken(TokenType.LPAREN, "(");
       case ")":
@@ -268,6 +273,8 @@ export class Lexer {
       or: TokenType.OR,
       not: TokenType.NOT,
       pass: TokenType.PASS,
+      with: TokenType.WITH,
+      as: TokenType.AS,
       True: TokenType.TRUE,
       False: TokenType.FALSE,
     };

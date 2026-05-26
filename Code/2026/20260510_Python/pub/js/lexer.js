@@ -38,12 +38,15 @@ export var TokenType;
     TokenType["RSQUARE"] = "RSQUARE";
     TokenType["LBRACE"] = "LBRACE";
     TokenType["RBRACE"] = "RBRACE";
+    TokenType["DOT"] = "DOT";
     TokenType["STRING"] = "STRING";
     TokenType["FSTRING"] = "FSTRING";
     TokenType["DO"] = "DO";
     TokenType["FROM"] = "FROM";
     TokenType["TO"] = "TO";
     TokenType["YIELD"] = "YIELD";
+    TokenType["WITH"] = "WITH";
+    TokenType["AS"] = "AS";
 })(TokenType || (TokenType = {}));
 export class Lexer {
     source;
@@ -139,6 +142,8 @@ export class Lexer {
                 return this.createToken(TokenType.SLASH, "/");
             case ":":
                 return this.createToken(TokenType.COLON, ":");
+            case ".":
+                return this.createToken(TokenType.DOT, ".");
             case "(":
                 return this.createToken(TokenType.LPAREN, "(");
             case ")":
@@ -228,6 +233,8 @@ export class Lexer {
             or: TokenType.OR,
             not: TokenType.NOT,
             pass: TokenType.PASS,
+            with: TokenType.WITH,
+            as: TokenType.AS,
             True: TokenType.TRUE,
             False: TokenType.FALSE,
         };
