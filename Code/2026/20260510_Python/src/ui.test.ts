@@ -31,6 +31,11 @@ const samples = [
     value: "sample/comprehensions.py",
     wat: ["loop", "i32.store", "local.get $i"],
   },
+  {
+    name: "Context Managers",
+    value: "sample/context_managers.py",
+    wat: ["call $__enter__", "call $__exit__", "local.set $mgr"],
+  },
 ];
 
 test("verify all samples in UI including WAT", async ({ page }) => {
