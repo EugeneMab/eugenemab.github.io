@@ -18,12 +18,15 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer((req, res) => {
-    console.log(`${req.method} ${req.url}`);
+    const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
+    const pathname = decodeURIComponent(url.pathname);
+    console.log(`${req.method} ${pathname}`);
 
-    let filePath = path.join(PUBLIC_DIR, req.url === '/' ? 'index.html' : req.url);
+    let filePath = path.join(PUBLIC_DIR, pathname === '/' ? 'index.html' : pathname);
+    filePath = path.resolve(filePath);
     
     // Safety check
-    if (!filePath.startsWith(PUBLIC_DIR)) {
+    if (!filePath.startsWith(path.resolve(PUBLIC_DIR))) {
         res.statusCode = 403;
         res.end('Forbidden');
         return;

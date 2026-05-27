@@ -22,39 +22,53 @@ async function run() {
 
   console.log("Compiling...");
   const compiler = new Compiler();
-  const wasm = compiler.compileWASM(ast);
+  const jsCode = compiler.compileJS(ast);
 
   let iterations = 0;
-  const importObject = {
-    env: {
-      print: (val: number) => {
-        console.log(`Node Print: ${val}`);
-        iterations++;
-        if (iterations >= 5) {
-          throw new Error("TERMINATE_FOR_VERIFICATION");
-        }
-        return 0;
-      },
-      sleep: (ms: number) => {
-        // Simple busy wait in Node for verification
-        const start = Date.now();
-        while (Date.now() - start < ms);
-        return 0;
-      },
+  const runtime = {
+    print: (val: any) => {
+      console.log(`Node Print: ${val}`);
+      iterations++;
+      if (iterations >= 5) {
+        throw new Error("TERMINATE_FOR_VERIFICATION");
+      }
+      return 0;
+    },
+    sleep: (ms: number) => new Promise((resolve) => setTimeout(resolve, ms)),
+    range: (start: number, stop?: number, step: number = 1) => {
+      if (stop === undefined) {
+        stop = start;
+        start = 0;
+      }
+      const res = [];
+      for (let i = start; i < stop; i += step) res.push(i);
+      return res;
+    },
+    len: (obj: any) => obj.length,
+    abs: Math.abs,
+    math: Math,
+    _slice: (obj: any, start: any, stop: any, _step: any) => {
+      // Basic slice implementation for verification script
+      return obj.slice(start, stop);
     },
   };
 
-  console.log("Instantiating WASM...");
-  const { instance } = (await WebAssembly.instantiate(
-    wasm,
-    importObject,
-  )) as any;
-
   console.log("Starting Execution (will terminate after 5 iterations)...");
 
+  const wrappedJs = jsCode.replace(
+    "export async function main_wrapper",
+    "async function main_wrapper",
+  );
+  const execute = new Function(
+    "runtime",
+    `
+        ${wrappedJs}
+        return main_wrapper(runtime);
+    `,
+  );
+
   try {
-    const main = instance.exports.main as Function;
-    main();
+    await execute(runtime);
   } catch (err: any) {
     if (err.message === "TERMINATE_FOR_VERIFICATION") {
       console.log(

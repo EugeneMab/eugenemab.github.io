@@ -15,5 +15,6 @@ echo Cleaning up...
 del /q pub\js\*.js.map >nul 2>nul
 del /q pub\js\*.test.js >nul 2>nul
 del /q pub\js\vitest.* >nul 2>nul
+del /q pub\js\*.vitest.test.js >nul 2>nul
 
 echo Build successful.

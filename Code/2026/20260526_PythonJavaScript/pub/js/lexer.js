@@ -59,15 +59,12 @@ export class Lexer {
         this.source = source;
     }
     tokenize() {
-        console.log("Lexer: Starting tokenization of source length:", this.source.length);
         const tokens = [];
         let token;
         do {
             token = this.nextToken();
-            console.log(`Lexer: Produced token [${token.type}] "${token.value}"`);
             tokens.push(token);
         } while (token.type !== TokenType.EOF);
-        console.log("Lexer: Tokenization complete. Total tokens:", tokens.length);
         return tokens;
     }
     nextToken() {

@@ -11,5 +11,11 @@
     "lib": ["ESNext", "DOM", "WebWorker"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "src/**/*.test.ts", "vitest.config.ts", "src/vitest.setup.ts"]
+  "exclude": [
+    "node_modules",
+    "src/**/*.test.ts",
+    "src/**/*.vitest.test.ts",
+    "vitest.config.ts",
+    "src/vitest.setup.ts"
+  ]
 }

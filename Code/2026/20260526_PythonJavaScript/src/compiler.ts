@@ -337,12 +337,17 @@ export class Compiler {
     if (node.callee.type === "MemberAccess") {
       const obj = this.compileNode(node.callee.object);
       const member = node.callee.member;
-      // Handle fallback to runtime for member calls
+      // Handle fallback to runtime for member calls (Python-style methods)
       return `(await (async () => {
         const _obj = ${obj};
-        const _fn = typeof _obj.${member} === 'function' ? _obj.${member}.bind(_obj) : runtime.${member};
-        if (typeof _fn !== 'function') throw new Error("${member} is not a function");
-        return await _fn(_obj, ${args});
+        if (typeof _obj.${member} === 'function') {
+          return await _obj.${member}(${args});
+        }
+        const _fallback = runtime.${member};
+        if (typeof _fallback === 'function') {
+          return await _fallback(_obj${args ? ", " + args : ""});
+        }
+        throw new Error("${member} is not a function");
       })())`;
     }
 
@@ -431,14 +436,5 @@ export class Compiler {
     this.indentLevel--;
     js += `${this.indent()}}`;
     return js;
-  }
-
-  // Compatibility methods
-  compileWAT(program: ProgramNode): string {
-    return this.compileJS(program);
-  }
-
-  compileWASM(program: ProgramNode): Uint8Array {
-    return new TextEncoder().encode(this.compileJS(program));
   }
 }

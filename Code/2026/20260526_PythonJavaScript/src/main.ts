@@ -157,11 +157,24 @@ async function compileAndRun() {
             "####" +
             errorLineText.substring(c - 1);
 
-          errorLine.innerHTML =
-            `<div style="color: #f44747; font-family: monospace; white-space: pre-wrap;">` +
-            `Error: ${msg}<br/>` +
-            `line: ${errorLineText}<br/>` +
-            `line with marker: ${highlightedLine}</div>`;
+          const container = document.createElement("div");
+          container.style.color = "#f44747";
+          container.style.fontFamily = "monospace";
+          container.style.whiteSpace = "pre-wrap";
+
+          const errorText = document.createElement("div");
+          errorText.textContent = `Error: ${msg}`;
+
+          const lineText = document.createElement("div");
+          lineText.textContent = `line: ${errorLineText}`;
+
+          const markerText = document.createElement("div");
+          markerText.textContent = `line with marker: ${highlightedLine}`;
+
+          container.appendChild(errorText);
+          container.appendChild(lineText);
+          container.appendChild(markerText);
+          errorLine.appendChild(container);
         } else {
           errorLine.textContent = `Error: #### ${payload} ####`;
         }
