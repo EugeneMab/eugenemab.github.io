@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test("verify loops and strings sample in UI", async ({ page }) => {
-  await page.goto("http://localhost:17984");
+  await page.goto("http://localhost:17957");
 
   // Select the "Loops & Strings" sample
   await page.selectOption("#sample-select", "sample/loops_and_strings.py");
@@ -30,7 +30,7 @@ test("verify loops and strings sample in UI", async ({ page }) => {
 });
 
 test("verify comprehensions sample in UI", async ({ page }) => {
-  await page.goto("http://localhost:17984");
+  await page.goto("http://localhost:17957");
 
   // Select the "Comprehensions" sample
   await page.selectOption("#sample-select", "sample/comprehensions.py");

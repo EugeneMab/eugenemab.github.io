@@ -4,42 +4,42 @@ const samples = [
   {
     name: "Basic Return",
     value: "sample/basic.py",
-    wat: ["func $main", "i32.const 42"],
+    js: ["async function main", "return 42"],
   },
   {
     name: "Variables & Math",
     value: "sample/variables.py",
-    wat: ["local.set $x", "local.get $x"],
+    js: ["x = 10", "y = 20"],
   },
   {
     name: "Complex Math",
     value: "sample/complex.py",
-    wat: ["i32.add", "i32.mul"],
+    js: ["+", "*", "/"],
   },
   {
     name: "Function Parameters",
     value: "sample/params.py",
-    wat: ["param $a", "param $b", "call $add"],
+    js: ["async function add(a, b)", "await add(10, 32)"],
   },
   {
     name: "Lists & Slicing",
     value: "sample/slicing.py",
-    wat: ["call $_slice", "call $_get_item"],
+    js: ["runtime._slice", "[10, 20, 30, 40, 50]"],
   },
   {
     name: "Comprehensions",
     value: "sample/comprehensions.py",
-    wat: ["loop", "i32.store", "local.get $i"],
+    js: ["for await", "res.push", "const i"],
   },
   {
     name: "Context Managers",
     value: "sample/context_managers.py",
-    wat: ["call $__enter__", "call $__exit__", "local.set $mgr"],
+    js: ["__enter__", "__exit__", "try", "finally"],
   },
 ];
 
-test("verify all samples in UI including WAT", async ({ page }) => {
-  await page.goto("http://localhost:17984");
+test("verify all samples in UI including JS", async ({ page }) => {
+  await page.goto("http://localhost:17957");
 
   // Monitor for console errors
   const errors: string[] = [];
@@ -68,15 +68,15 @@ test("verify all samples in UI including WAT", async ({ page }) => {
 
     // Check outputs
     const resultOutput = page.locator("#result-output");
-    const watOutput = page.locator("#wat-output");
+    const jsOutput = page.locator("#js-output");
 
     // Wait for result box to contain "Result:"
     await expect(resultOutput).toContainText("Result:");
 
-    // Verify WAT content
-    const watText = (await watOutput.textContent()) || "";
-    for (const marker of sample.wat) {
-      expect(watText).toContain(marker);
+    // Verify JS content
+    const jsText = (await jsOutput.textContent()) || "";
+    for (const marker of sample.js) {
+      expect(jsText).toContain(marker);
     }
 
     console.log(`✅ Sample ${sample.name} passed.`);

@@ -6,8 +6,7 @@ const setupDOM = () => {
     <textarea id="editor"></textarea>
     <div id="lex-output"></div>
     <div id="ast-output"></div>
-    <div id="wat-output"></div>
-    <div id="wasm-output"></div>
+    <div id="js-output"></div>
     <div id="result-output"></div>
     <div id="info-output"></div>
     <div id="status-line"></div>
@@ -66,10 +65,7 @@ describe("main.ts", () => {
             } else {
               this.onmessage({ data: { type: "lex", payload: "tokens" } });
               this.onmessage({ data: { type: "ast", payload: "{}" } });
-              this.onmessage({ data: { type: "wat", payload: "(module)" } });
-              this.onmessage({
-                data: { type: "wasm", payload: "00 61 73 6d" },
-              });
+              this.onmessage({ data: { type: "js", payload: "console.log('test')" } });
               this.onmessage({
                 data: { type: "result", payload: "Result: 42" },
               });

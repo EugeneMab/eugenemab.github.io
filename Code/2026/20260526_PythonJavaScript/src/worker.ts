@@ -25,125 +25,70 @@ self.onmessage = async (e) => {
 
       // 3. Compiling
       const compiler = new Compiler();
-      const wat = compiler.compileWAT(ast);
-      self.postMessage({ type: "wat", payload: wat });
-
-      const wasm = compiler.compileWASM(ast);
-      self.postMessage({
-        type: "wasm",
-        payload: Array.from(wasm)
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join(" "),
-      });
+      const jsCode = compiler.compileJS(ast);
+      self.postMessage({ type: "js", payload: jsCode });
 
       // 4. Execution
-      // We provide print, sleep, etc. to the WASM instance
-      // eslint-disable-next-line prefer-const
-      let instance: any;
-      const importObject = {
-        env: {
-          print: (val: number) => {
-            self.postMessage({ type: "log", payload: val });
-            return 0;
-          },
-          print_str: (ptr: number) => {
-            const view = new Int32Array(instance.exports.memory.buffer);
-            const len = view[ptr / 4];
-            let str = "";
-            for (let i = 0; i < len; i++) {
-              str += String.fromCharCode(view[ptr / 4 + 1 + i]);
-            }
-            self.postMessage({ type: "log", payload: str });
-            return 0;
-          },
-          itoa: (val: number) => {
-            const s = String(val);
-            const ptr = instance.exports.heap_ptr.value;
-            const view = new Int32Array(instance.exports.memory.buffer);
-            view[ptr / 4] = s.length;
-            for (let i = 0; i < s.length; i++) {
-              view[ptr / 4 + 1 + i] = s.charCodeAt(i);
-            }
-            instance.exports.heap_ptr.value += (s.length + 1) * 4;
-            return ptr;
-          },
-          concat: (ptr1: number, ptr2: number) => {
-            const view = new Int32Array(instance.exports.memory.buffer);
-            const len1 = view[ptr1 / 4];
-            const len2 = view[ptr2 / 4];
-            const ptr = instance.exports.heap_ptr.value;
-            view[ptr / 4] = len1 + len2;
-            for (let i = 0; i < len1; i++) {
-              view[ptr / 4 + 1 + i] = view[ptr1 / 4 + 1 + i];
-            }
-            for (let i = 0; i < len2; i++) {
-              view[ptr / 4 + 1 + len1 + i] = view[ptr2 / 4 + 1 + i];
-            }
-            instance.exports.heap_ptr.value += (len1 + len2 + 1) * 4;
-            return ptr;
-          },
-          _get_item: (ptr: number, index: number) => {
-            const view = new Int32Array(instance.exports.memory.buffer);
-            const len = view[ptr / 4];
-            if (index < 0) index += len;
-            if (index < 0 || index >= len)
-              throw new Error("Index out of bounds");
-            return view[ptr / 4 + 1 + index];
-          },
-          _slice: (ptr: number, start: number, stop: number, step: number) => {
-            const view = new Int32Array(instance.exports.memory.buffer);
-            const len = view[ptr / 4];
-            if (step === 0x7fffffff) step = 1;
-            if (start === 0x7fffffff) start = step > 0 ? 0 : len - 1;
-            if (stop === 0x7fffffff) stop = step > 0 ? len : -1;
+      const runtime = {
+        print: (val: any) => {
+          self.postMessage({ type: "log", payload: String(val) });
+          return 0;
+        },
+        sleep: (ms: number) => {
+          return new Promise((resolve) => setTimeout(resolve, ms));
+        },
+        range: (start: number, stop?: number, step: number = 1) => {
+          if (stop === undefined) {
+            stop = start;
+            start = 0;
+          }
+          const res = [];
+          for (let i = start; i < stop; i += step) res.push(i);
+          return res;
+        },
+        len: (obj: any) => {
+          if (Array.isArray(obj) || typeof obj === "string") return obj.length;
+          if (typeof obj === "object") return Object.keys(obj).length;
+          return 0;
+        },
+        abs: (val: number) => Math.abs(val),
+        math: Math,
+        _slice: (obj: any, start: any, stop: any, step: any) => {
+          const len = obj.length;
+          if (step === undefined || step === null) step = 1;
+          if (start === undefined || start === null)
+            start = step > 0 ? 0 : len - 1;
+          if (stop === undefined || stop === null)
+            stop = step > 0 ? len : -1;
 
-            if (start < 0) start += len;
-            if (stop < 0) stop += len;
+          if (start < 0) start += len;
+          if (stop < 0) stop += len;
 
-            const res: number[] = [];
-            if (step > 0) {
-              for (let i = start; i < stop; i += step)
-                if (i >= 0 && i < len) res.push(view[ptr / 4 + 1 + i]);
-            } else {
-              for (let i = start; i > stop; i += step)
-                if (i >= 0 && i < len) res.push(view[ptr / 4 + 1 + i]);
-            }
-
-            const newPtr = instance.exports.heap_ptr.value;
-            view[newPtr / 4] = res.length;
-            for (let i = 0; i < res.length; i++) {
-              view[newPtr / 4 + 1 + i] = res[i];
-            }
-            instance.exports.heap_ptr.value += (res.length + 1) * 4;
-            return newPtr;
-          },
-          sleep: (ms: number) => {
-            if (typeof SharedArrayBuffer !== "undefined") {
-              const shared = new Int32Array(new SharedArrayBuffer(4));
-              Atomics.wait(shared, 0, 0, ms);
-            } else {
-              // Fallback to busy-wait if SharedArrayBuffer is not available
-              const start = Date.now();
-              while (Date.now() - start < ms) {
-                // Spinning...
-              }
-            }
-            return 0;
-          },
+          const res = [];
+          if (step > 0) {
+            for (let i = start; i < stop; i += step)
+              if (i >= 0 && i < len) res.push(obj[i]);
+          } else {
+            for (let i = start; i > stop; i += step)
+              if (i >= 0 && i < len) res.push(obj[i]);
+          }
+          return typeof obj === "string" ? res.join("") : res;
         },
       };
 
-      const { instance: inst } = (await WebAssembly.instantiate(
-        wasm,
-        importObject,
-      )) as any;
-      instance = inst;
-
-      // If the code is an infinite loop, this will never return
-      // unless the worker is terminated.
-      const result = (instance.exports.main as Function)();
-
-      self.postMessage({ type: "result", payload: `Result: ${result}` });
+      // Use a data URL to import the generated JS code as a module
+      const blob = new Blob([jsCode], { type: "text/javascript" });
+      const url = URL.createObjectURL(blob);
+      try {
+        const module = await import(url);
+        const result = await module.main_wrapper(runtime);
+        self.postMessage({
+          type: "result",
+          payload: `Result: ${result === undefined ? "None" : result}`,
+        });
+      } finally {
+        URL.revokeObjectURL(url);
+      }
     } catch (err: any) {
       self.postMessage({ type: "error", payload: err.message || String(err) });
     }

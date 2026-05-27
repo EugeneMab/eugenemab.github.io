@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Python to WASM Compiler</title>
+    <title>Python-to-JavaScript</title>
     <link rel="stylesheet" href="./style.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Python ⮕ WASM</h1>
+            <h1>Python ⮕ JavaScript</h1>
         </header>
         
         <main class="main-layout">
@@ -62,8 +62,7 @@
                     <button class="tab-btn" data-tab="info">Info</button>
                     <button class="tab-btn" data-tab="lex">Lexicon</button>
                     <button class="tab-btn" data-tab="ast">AST</button>
-                    <button class="tab-btn" data-tab="wat">WAT (Text)</button>
-                    <button class="tab-btn" data-tab="wasm">WASM (Hex)</button>
+                    <button class="tab-btn" data-tab="js">JS (Code)</button>
                     <button class="tab-btn active" data-tab="exec">Execution</button>
                 </div>
                 
@@ -76,11 +75,8 @@
                 <div class="tab-content hidden" id="ast-content">
                     <pre id="ast-output"></pre>
                 </div>
-                <div class="tab-content hidden" id="wat-content">
-                    <pre id="wat-output"></pre>
-                </div>
-                <div class="tab-content hidden" id="wasm-content">
-                    <pre id="wasm-output"></pre>
+                <div class="tab-content hidden" id="js-content">
+                    <pre id="js-output"></pre>
                 </div>
                 <div class="tab-content" id="exec-content">
                     <div id="result-output" class="result-box"></div>

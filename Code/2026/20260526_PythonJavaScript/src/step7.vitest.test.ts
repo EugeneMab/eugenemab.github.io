@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Lexer } from "./lexer.ts";
 import { Parser } from "./parser.ts";
 import { Compiler } from "./compiler.ts";
-import { getImportObject } from "./test-utils.ts";
+import { getJSRuntime, runJS } from "./test-utils.ts";
 
 describe("Step 7: Parameters & Scoping", () => {
   describe("Lexer & Parser", () => {
@@ -35,22 +35,19 @@ describe("Step 7: Parameters & Scoping", () => {
     });
   });
 
-  describe("Execution (WASM Binary)", () => {
-    const run = async (code: string, funcName: string, args: number[] = []) => {
+  describe("Execution (JS Runtime)", () => {
+    const run = async (code: string, funcName: string, args: any[] = []) => {
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
       const parser = new Parser(tokens);
       const ast = parser.parse();
       const compiler = new Compiler();
-      const wasm = compiler.compileWASM(ast);
+      const jsCode = compiler.compileJS(ast);
 
-      const instanceRef = { instance: null as any };
-      const importObject = getImportObject(instanceRef);
-
-      const { instance } = await WebAssembly.instantiate(wasm, importObject);
-      instanceRef.instance = instance;
-      const func = instance.exports[funcName] as Function;
-      return func(...args);
+      const runtime = getJSRuntime();
+      await runJS(jsCode, runtime);
+      const func = (runtime as any)[funcName];
+      return await func(...args);
     };
 
     it("test_params: should handle multiple arguments (0, 1, 2, 5)", async () => {

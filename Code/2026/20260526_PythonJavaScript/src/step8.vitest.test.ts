@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Lexer } from "./lexer.ts";
 import { Parser } from "./parser.ts";
 import { Compiler } from "./compiler.ts";
-import { getImportObject } from "./test-utils.ts";
+import { getJSRuntime, runJS } from "./test-utils.ts";
 
 describe("Step 8: Slicing & Advanced Indexing (Parser)", () => {
   it("should parse list literals", () => {
@@ -108,36 +108,26 @@ describe("Step 8: Slicing & Advanced Indexing (Parser)", () => {
     expect(assignment.value.value).toBe("hello");
   });
 
-  describe("Execution (WASM Binary)", () => {
-    const run = async (code: string, funcName: string, args: number[] = []) => {
+  describe("Execution (JS Runtime)", () => {
+    const run = async (code: string, funcName: string, args: any[] = []) => {
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
       const parser = new Parser(tokens);
       const ast = parser.parse();
       const compiler = new Compiler();
-      const wasm = compiler.compileWASM(ast);
+      const jsCode = compiler.compileJS(ast);
 
-      const instanceRef = { instance: null as any };
-      const importObject = getImportObject(instanceRef);
-
-      const { instance } = await WebAssembly.instantiate(wasm, importObject);
-      instanceRef.instance = instance;
-      const func = instance.exports[funcName] as Function;
-      return {
-        result: func(...args),
-        memory: (instance.exports.memory as WebAssembly.Memory).buffer,
-      };
+      const runtime = getJSRuntime();
+      await runJS(jsCode, runtime);
+      const func = (runtime as any)[funcName];
+      const result = await func(...args);
+      return { result };
     };
 
-    it("test_list_creation: should return the pointer to the list", async () => {
+    it("test_list_creation: should return the list", async () => {
       const code = "def main():\n    x = [10, 20, 30]\n    return x";
-      const { result, memory } = await run(code, "main");
-      const view = new Int32Array(memory);
-      const ptr = result / 4;
-      expect(view[ptr]).toBe(3); // length
-      expect(view[ptr + 1]).toBe(10);
-      expect(view[ptr + 2]).toBe(20);
-      expect(view[ptr + 3]).toBe(30);
+      const { result } = await run(code, "main");
+      expect(result).toEqual([10, 20, 30]);
     });
 
     it("test_indexing_basic: should return element at index", async () => {
@@ -155,36 +145,22 @@ describe("Step 8: Slicing & Advanced Indexing (Parser)", () => {
     it("test_list_slicing_basic: [1:3]", async () => {
       const code =
         "def main():\n    x = [10, 20, 30, 40, 50]\n    s = x[1:3]\n    return s";
-      const { result, memory } = await run(code, "main");
-      const view = new Int32Array(memory);
-      const ptr = result / 4;
-      expect(view[ptr]).toBe(2); // length of [20, 30]
-      expect(view[ptr + 1]).toBe(20);
-      expect(view[ptr + 2]).toBe(30);
+      const { result } = await run(code, "main");
+      expect(result).toEqual([20, 30]);
     });
 
     it("test_list_slicing_step: [::2]", async () => {
       const code =
         "def main():\n    x = [10, 20, 30, 40, 50]\n    s = x[::2]\n    return s";
-      const { result, memory } = await run(code, "main");
-      const view = new Int32Array(memory);
-      const ptr = result / 4;
-      expect(view[ptr]).toBe(3); // [10, 30, 50]
-      expect(view[ptr + 1]).toBe(10);
-      expect(view[ptr + 2]).toBe(30);
-      expect(view[ptr + 3]).toBe(50);
+      const { result } = await run(code, "main");
+      expect(result).toEqual([10, 30, 50]);
     });
 
     it("test_string_slicing: slicing characters", async () => {
       const code =
         'def main():\n    s = "hello"\n    sub = s[1:4]\n    return sub';
-      const { result, memory } = await run(code, "main");
-      const view = new Int32Array(memory);
-      const ptr = result / 4;
-      expect(view[ptr]).toBe(3); // "ell"
-      expect(view[ptr + 1]).toBe("e".charCodeAt(0));
-      expect(view[ptr + 2]).toBe("l".charCodeAt(0));
-      expect(view[ptr + 3]).toBe("l".charCodeAt(0));
+      const { result } = await run(code, "main");
+      expect(result).toBe("ell");
     });
   });
 });

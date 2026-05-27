@@ -2,9 +2,8 @@ import { describe, it, expect } from "vitest";
 import { Lexer } from "./lexer.ts";
 import { Parser } from "./parser.ts";
 import { Compiler } from "./compiler.ts";
-import { getImportObject } from "./test-utils.ts";
 
-describe("Compiler Integration", () => {
+describe("Compiler Integration (JavaScript)", () => {
   const cases = [
     {
       name: "Basic Return",
@@ -33,6 +32,38 @@ describe("Compiler Integration", () => {
     },
   ];
 
+  const runtime = {
+    print: () => {},
+    sleep: async () => {},
+    range: (start: number, stop?: number, step: number = 1) => {
+      if (stop === undefined) {
+        stop = start;
+        start = 0;
+      }
+      const res = [];
+      for (let i = start; i < stop; i += step) res.push(i);
+      return res;
+    },
+    len: (obj: any) => obj.length,
+    abs: Math.abs,
+    math: Math,
+    _slice: (obj: any, start: any, stop: any, step: any) => {
+      const len = obj.length;
+      if (step === undefined || step === null) step = 1;
+      if (start === undefined || start === null) start = step > 0 ? 0 : len - 1;
+      if (stop === undefined || stop === null) stop = step > 0 ? len : -1;
+      if (start < 0) start += len;
+      if (stop < 0) stop += len;
+      const res = [];
+      if (step > 0) {
+        for (let i = start; i < stop; i += step) if (i >= 0 && i < len) res.push(obj[i]);
+      } else {
+        for (let i = start; i > stop; i += step) if (i >= 0 && i < len) res.push(obj[i]);
+      }
+      return typeof obj === "string" ? res.join("") : res;
+    },
+  };
+
   for (const c of cases) {
     it(`should pass case: ${c.name}`, async () => {
       const lexer = new Lexer(c.code);
@@ -41,20 +72,21 @@ describe("Compiler Integration", () => {
       const ast = parser.parse();
       const compiler = new Compiler();
 
-      compiler.compileWAT(ast);
-      const wasm = compiler.compileWASM(ast);
+      const jsCode = compiler.compileJS(ast);
+      
+      // Execute using data URL or eval
+      // For Node.js (Vitest), we can use eval if we wrap it
+      // but dynamic import with data URL is cleaner if supported.
+      // However, data URLs in Node require certain flags.
+      // Let's use a simpler approach for tests: eval with a wrapper.
+      
+      const wrappedJs = jsCode.replace("export async function main_wrapper", "async function main_wrapper");
+      const execute = new Function("runtime", `
+        ${wrappedJs}
+        return main_wrapper(runtime);
+      `);
 
-      const instanceRef = { instance: null as any };
-      const importObject = getImportObject(instanceRef);
-
-      // Verify by running in WASM runtime
-      const { instance } = (await WebAssembly.instantiate(
-        wasm,
-        importObject,
-      )) as any;
-      instanceRef.instance = instance;
-      const result = (instance.exports.main as Function)();
-
+      const result = await execute(runtime);
       expect(result).toBe(c.expectedResult);
     });
   }

@@ -71,8 +71,7 @@ async function compileAndRun() {
   const editor = document.getElementById("editor") as HTMLTextAreaElement;
   const lexOutput = document.getElementById("lex-output")!;
   const astOutput = document.getElementById("ast-output")!;
-  const watOutput = document.getElementById("wat-output")!;
-  const wasmOutput = document.getElementById("wasm-output")!;
+  const jsOutput = document.getElementById("js-output")!;
   const resultOutput = document.getElementById("result-output")!;
   const infoOutput = document.getElementById("info-output")!;
   const timeoutInput = document.getElementById(
@@ -90,8 +89,7 @@ async function compileAndRun() {
   updateStatus(); // Reset status
   lexOutput.textContent = "";
   astOutput.textContent = "";
-  watOutput.textContent = "";
-  wasmOutput.textContent = "";
+  jsOutput.textContent = "";
   resultOutput.textContent = "";
 
   startTime = new Date();
@@ -123,11 +121,8 @@ async function compileAndRun() {
       case "ast":
         astOutput.textContent = payload;
         break;
-      case "wat":
-        watOutput.textContent = payload;
-        break;
-      case "wasm":
-        wasmOutput.textContent = payload;
+      case "js":
+        jsOutput.textContent = payload;
         break;
       case "log":
         const logLine = document.createElement("div");
@@ -425,7 +420,7 @@ if (win._pythonKeydown) {
 window.addEventListener("keydown", handleGlobalKeydown);
 win._pythonKeydown = handleGlobalKeydown;
 
-console.log(`[${VERSION}] Python-to-WASM Compiler Initialized`);
+console.log(`[${VERSION}] Python-to-JavaScript Compiler Initialized`);
 
 // Ensure the initial active tab is shown
 const initialTab = document.querySelector(".tab-btn.active") as HTMLElement;

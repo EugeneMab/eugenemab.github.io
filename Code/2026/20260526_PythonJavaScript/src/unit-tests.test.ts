@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Lexer, TokenType } from "./lexer.js";
 import { Parser } from "./parser.js";
 import { Compiler } from "./compiler.js";
-import { getImportObject } from "./test-utils.ts";
+import { getJSRuntime, runJS } from "./test-utils.ts";
 
 describe("Lexer", () => {
   it("should tokenize basic function", () => {
@@ -129,15 +129,14 @@ describe("Parser", () => {
 });
 
 describe("Compiler", () => {
-  it("should compile to WAT", () => {
+  it("should compile to JS", () => {
     const code = "def main():\n    return 42";
     const lexer = new Lexer(code);
     const parser = new Parser(lexer.tokenize());
     const compiler = new Compiler();
-    const wat = compiler.compileWAT(parser.parse());
-    expect(wat).toContain("(module");
-    expect(wat).toContain("(func $main");
-    expect(wat).toContain("i32.const 42");
+    const js = compiler.compileJS(parser.parse());
+    expect(js).toContain("async function main()");
+    expect(js).toContain("return 42");
   });
 
   it("should compile subtraction and multiple locals", () => {
@@ -145,13 +144,13 @@ describe("Compiler", () => {
     const lexer = new Lexer(code);
     const parser = new Parser(lexer.tokenize());
     const compiler = new Compiler();
-    const wat = compiler.compileWAT(parser.parse());
-    expect(wat).toContain("local.set $a");
-    expect(wat).toContain("local.get $b");
-    expect(wat).toContain("i32.sub");
+    const js = compiler.compileJS(parser.parse());
+    expect(js).toContain("a = 100");
+    expect(js).toContain("b = 30");
+    expect(js).toContain("return (a - b)");
   });
 
-  it("should compile to WASM and execute", async () => {
+  it("should execute JS and return result", async () => {
     const cases = [
       { code: "def main():\n    return 42", expected: 42 },
       {
@@ -189,15 +188,10 @@ describe("Compiler", () => {
       const lexer = new Lexer(c.code);
       const parser = new Parser(lexer.tokenize());
       const compiler = new Compiler();
-      const wasm = compiler.compileWASM(parser.parse());
-      const instanceRef = { instance: null as any };
-      const importObject = getImportObject(instanceRef);
-      const { instance } = (await WebAssembly.instantiate(
-        wasm,
-        importObject,
-      )) as any;
-      instanceRef.instance = instance;
-      expect(instance.exports.main()).toBe(c.expected);
+      const jsCode = compiler.compileJS(parser.parse());
+      const runtime = getJSRuntime();
+      const result = await runJS(jsCode, runtime);
+      expect(result).toBe(c.expected);
     }
   });
 });

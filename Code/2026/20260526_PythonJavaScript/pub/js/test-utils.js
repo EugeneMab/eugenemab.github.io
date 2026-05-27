@@ -1,89 +1,64 @@
 // src/test-utils.ts
-export function getImportObject(instanceRef, logs = []) {
+export function getJSRuntime(logs = []) {
     return {
-        env: {
-            print: (val) => {
-                logs.push(val);
-                return 0;
-            },
-            print_str: (ptr) => {
-                const view = new Int32Array(instanceRef.instance.exports.memory.buffer);
-                const len = view[ptr / 4];
-                let str = "";
-                for (let i = 0; i < len; i++) {
-                    str += String.fromCharCode(view[ptr / 4 + 1 + i]);
-                }
-                logs.push(str);
-                return 0;
-            },
-            itoa: (val) => {
-                const s = String(val);
-                const ptr = instanceRef.instance.exports.heap_ptr.value;
-                const view = new Int32Array(instanceRef.instance.exports.memory.buffer);
-                view[ptr / 4] = s.length;
-                for (let i = 0; i < s.length; i++) {
-                    view[ptr / 4 + 1 + i] = s.charCodeAt(i);
-                }
-                instanceRef.instance.exports.heap_ptr.value += (s.length + 1) * 4;
-                return ptr;
-            },
-            concat: (ptr1, ptr2) => {
-                const view = new Int32Array(instanceRef.instance.exports.memory.buffer);
-                const len1 = view[ptr1 / 4];
-                const len2 = view[ptr2 / 4];
-                const ptr = instanceRef.instance.exports.heap_ptr.value;
-                view[ptr / 4] = len1 + len2;
-                for (let i = 0; i < len1; i++) {
-                    view[ptr / 4 + 1 + i] = view[ptr1 / 4 + 1 + i];
-                }
-                for (let i = 0; i < len2; i++) {
-                    view[ptr / 4 + 1 + len1 + i] = view[ptr2 / 4 + 1 + i];
-                }
-                instanceRef.instance.exports.heap_ptr.value += (len1 + len2 + 1) * 4;
-                return ptr;
-            },
-            _get_item: (ptr, index) => {
-                const view = new Int32Array(instanceRef.instance.exports.memory.buffer);
-                const len = view[ptr / 4];
-                if (index < 0)
-                    index += len;
-                if (index < 0 || index >= len)
-                    throw new Error("Index out of bounds");
-                return view[ptr / 4 + 1 + index];
-            },
-            _slice: (ptr, start, stop, step) => {
-                const view = new Int32Array(instanceRef.instance.exports.memory.buffer);
-                const len = view[ptr / 4];
-                if (step === 0x7fffffff)
-                    step = 1;
-                if (start === 0x7fffffff)
-                    start = step > 0 ? 0 : len - 1;
-                if (stop === 0x7fffffff)
-                    stop = step > 0 ? len : -1;
-                if (start < 0)
-                    start += len;
-                if (stop < 0)
-                    stop += len;
-                const res = [];
-                if (step > 0) {
-                    for (let i = start; i < stop; i += step)
-                        if (i >= 0 && i < len)
-                            res.push(view[ptr / 4 + 1 + i]);
-                }
-                else {
-                    for (let i = start; i > stop; i += step)
-                        if (i >= 0 && i < len)
-                            res.push(view[ptr / 4 + 1 + i]);
-                }
-                const newPtr = instanceRef.instance.exports.heap_ptr.value;
-                view[newPtr / 4] = res.length;
-                for (let i = 0; i < res.length; i++) {
-                    view[newPtr / 4 + 1 + i] = res[i];
-                }
-                instanceRef.instance.exports.heap_ptr.value += (res.length + 1) * 4;
-                return newPtr;
-            },
-            sleep: () => 0,
+        print: (val) => {
+            logs.push(String(val));
+            return 0;
+        },
+        sleep: async (ms) => {
+            return new Promise((resolve) => setTimeout(resolve, ms));
+        },
+        range: (start, stop, step = 1) => {
+            if (stop === undefined) {
+                stop = start;
+                start = 0;
+            }
+            const res = [];
+            for (let i = start; i < stop; i += step)
+                res.push(i);
+            return res;
+        },
+        len: (obj) => {
+            if (Array.isArray(obj) || typeof obj === "string")
+                return obj.length;
+            if (typeof obj === "object")
+                return Object.keys(obj).length;
+            return 0;
+        },
+        abs: (val) => Math.abs(val),
+        math: Math,
+        _slice: (obj, start, stop, step) => {
+            const len = obj.length;
+            if (step === undefined || step === null)
+                step = 1;
+            if (start === undefined || start === null)
+                start = step > 0 ? 0 : len - 1;
+            if (stop === undefined || stop === null)
+                stop = step > 0 ? len : -1;
+            if (start < 0)
+                start += len;
+            if (stop < 0)
+                stop += len;
+            const res = [];
+            if (step > 0) {
+                for (let i = start; i < stop; i += step)
+                    if (i >= 0 && i < len)
+                        res.push(obj[i]);
+            }
+            else {
+                for (let i = start; i > stop; i += step)
+                    if (i >= 0 && i < len)
+                        res.push(obj[i]);
+            }
+            return typeof obj === "string" ? res.join("") : res;
         },
     };
+}
+export async function runJS(jsCode, runtime) {
+    const wrappedJs = jsCode.replace("export async function main_wrapper", "async function main_wrapper");
+    const execute = new Function("runtime", `
+    ${wrappedJs}
+    return main_wrapper(runtime);
+  `);
+    return await execute(runtime);
 }

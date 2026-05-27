@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test("verify infinite loop and abort", async ({ page }) => {
-  await page.goto("http://localhost:17984");
+  await page.goto("http://localhost:17957");
 
   console.log("Testing Infinite Loop Sample");
 
