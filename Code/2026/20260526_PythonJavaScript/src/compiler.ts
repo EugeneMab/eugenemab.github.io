@@ -48,16 +48,35 @@ export class Compiler {
     }
 
     // Second pass: compile top-level statements
-    for (const node of program.body) {
-      if (node.type !== "FunctionDef") {
-        js += this.compileNode(node) + ";\n";
+    let mainCalled = false;
+    const statements = program.body.filter((n) => n.type !== "FunctionDef");
+    for (let i = 0; i < statements.length; i++) {
+      const node = statements[i];
+      const isLast = i === statements.length - 1;
+      const isMainCall =
+        node.type === "CallExpression" &&
+        (typeof node.callee === "string" ? node.callee === "main" : false);
+
+      if (isMainCall) {
+        mainCalled = true;
+        if (isLast) {
+          js += `${this.indent()}return ${this.compileNode(node)};\n`;
+          continue;
+        }
+      }
+
+      const compiled = this.compileNode(node);
+      if (compiled) {
+        js += `${this.indent()}${compiled};\n`;
       }
     }
 
-    // Try to call main() if it exists
-    js += `\n${this.indent()}if (typeof main === 'function') {\n`;
-    js += `${this.indent()}  return await main();\n`;
-    js += `${this.indent()}}\n`;
+    // Try to call main() if it exists and hasn't been called
+    if (!mainCalled) {
+      js += `\n${this.indent()}if (typeof main === 'function') {\n`;
+      js += `${this.indent()}  return await main();\n`;
+      js += `${this.indent()}}\n`;
+    }
 
     this.indentLevel--;
     js += "}\n";

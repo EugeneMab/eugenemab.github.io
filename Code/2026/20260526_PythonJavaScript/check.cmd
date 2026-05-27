@@ -40,7 +40,7 @@ ping 127.0.0.1 -n 5 > nul
 
 call npm run test:ui > test_output\ui.log 2>&1
 set UI_RESULT=%ERRORLEVEL%
-type test_output\ui.log
+findstr src\ test_output\ui.log
 
 :: Kill background server
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr LISTENING ^| findstr /C:":17957 "') do taskkill /F /PID %%a > nul 2>&1
