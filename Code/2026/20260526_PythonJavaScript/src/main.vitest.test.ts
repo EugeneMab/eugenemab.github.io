@@ -65,7 +65,9 @@ describe("main.ts", () => {
             } else {
               this.onmessage({ data: { type: "lex", payload: "tokens" } });
               this.onmessage({ data: { type: "ast", payload: "{}" } });
-              this.onmessage({ data: { type: "js", payload: "console.log('test')" } });
+              this.onmessage({
+                data: { type: "js", payload: "console.log('test')" },
+              });
               this.onmessage({
                 data: { type: "result", payload: "Result: 42" },
               });

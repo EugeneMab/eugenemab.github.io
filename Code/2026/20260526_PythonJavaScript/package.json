@@ -1,8 +1,8 @@
 {
-  "name": "python-to-wasm-src",
+  "name": "python-to-javascript-src",
   "version": "1.0.0",
   "type": "module",
-  "description": "Python to WASM compiler source",
+  "description": "Python to JavaScript transpiler source",
   "main": "main.js",
   "scripts": {
     "test": "vitest run --coverage",

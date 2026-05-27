@@ -5,23 +5,6 @@ import { Compiler } from "./compiler.ts";
 import { getJSRuntime, runJS } from "./test-utils.ts";
 
 describe("Step 11: Context Managers", () => {
-  const run = async (code: string) => {
-    const lexer = new Lexer(code);
-    const tokens = lexer.tokenize();
-    const parser = new Parser(tokens);
-    const ast = parser.parse();
-    const compiler = new Compiler();
-    const jsCode = compiler.compileJS(ast);
-
-    const logs: any[] = [];
-    const runtime = getJSRuntime(logs);
-    const result = await runJS(jsCode, runtime);
-    return {
-      result,
-      logs,
-    };
-  };
-
   it("test_with_basic: Successful enter and exit", async () => {
     const code = `
 def __enter__(mgr):

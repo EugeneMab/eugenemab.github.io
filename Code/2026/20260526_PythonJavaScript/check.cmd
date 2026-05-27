@@ -20,15 +20,27 @@ if %TEST_RESULT% neq 0 (
     exit /b %TEST_RESULT%
 )
 
+echo Building project...
+call build.cmd
+if %ERRORLEVEL% neq 0 (
+    echo [ERROR] Build failed.
+    exit /b %ERRORLEVEL%
+)
+
 echo Running UI Tests...
+:: Ensure port is clear before starting
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr LISTENING ^| findstr /C:":17957 "') do taskkill /F /PID %%a > nul 2>&1
+
 :: Start server in background on test port
 set PORT=17957
 start /B node src/serve.js > test_output\server.log 2>&1
+
 :: Wait for server to start
-ping 127.0.0.1 -n 3 > nul
+ping 127.0.0.1 -n 5 > nul
+
 call npm run test:ui > test_output\ui.log 2>&1
 set UI_RESULT=%ERRORLEVEL%
-echo UI test log: test_output\ui.log
+type test_output\ui.log
 
 :: Kill background server
 for /f "tokens=5" %%a in ('netstat -aon ^| findstr LISTENING ^| findstr /C:":17957 "') do taskkill /F /PID %%a > nul 2>&1

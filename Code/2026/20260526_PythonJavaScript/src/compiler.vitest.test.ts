@@ -56,9 +56,11 @@ describe("Compiler Integration (JavaScript)", () => {
       if (stop < 0) stop += len;
       const res = [];
       if (step > 0) {
-        for (let i = start; i < stop; i += step) if (i >= 0 && i < len) res.push(obj[i]);
+        for (let i = start; i < stop; i += step)
+          if (i >= 0 && i < len) res.push(obj[i]);
       } else {
-        for (let i = start; i > stop; i += step) if (i >= 0 && i < len) res.push(obj[i]);
+        for (let i = start; i > stop; i += step)
+          if (i >= 0 && i < len) res.push(obj[i]);
       }
       return typeof obj === "string" ? res.join("") : res;
     },
@@ -73,18 +75,24 @@ describe("Compiler Integration (JavaScript)", () => {
       const compiler = new Compiler();
 
       const jsCode = compiler.compileJS(ast);
-      
+
       // Execute using data URL or eval
       // For Node.js (Vitest), we can use eval if we wrap it
       // but dynamic import with data URL is cleaner if supported.
       // However, data URLs in Node require certain flags.
       // Let's use a simpler approach for tests: eval with a wrapper.
-      
-      const wrappedJs = jsCode.replace("export async function main_wrapper", "async function main_wrapper");
-      const execute = new Function("runtime", `
+
+      const wrappedJs = jsCode.replace(
+        "export async function main_wrapper",
+        "async function main_wrapper",
+      );
+      const execute = new Function(
+        "runtime",
+        `
         ${wrappedJs}
         return main_wrapper(runtime);
-      `);
+      `,
+      );
 
       const result = await execute(runtime);
       expect(result).toBe(c.expectedResult);

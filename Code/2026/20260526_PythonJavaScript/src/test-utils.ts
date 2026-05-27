@@ -34,9 +34,11 @@ export function getJSRuntime(logs: any[] = []) {
       if (stop < 0) stop += len;
       const res = [];
       if (step > 0) {
-        for (let i = start; i < stop; i += step) if (i >= 0 && i < len) res.push(obj[i]);
+        for (let i = start; i < stop; i += step)
+          if (i >= 0 && i < len) res.push(obj[i]);
       } else {
-        for (let i = start; i > stop; i += step) if (i >= 0 && i < len) res.push(obj[i]);
+        for (let i = start; i > stop; i += step)
+          if (i >= 0 && i < len) res.push(obj[i]);
       }
       return typeof obj === "string" ? res.join("") : res;
     },
@@ -46,11 +48,14 @@ export function getJSRuntime(logs: any[] = []) {
 export async function runJS(jsCode: string, runtime: any) {
   const wrappedJs = jsCode.replace(
     "export async function main_wrapper",
-    "async function main_wrapper"
+    "async function main_wrapper",
   );
-  const execute = new Function("runtime", `
+  const execute = new Function(
+    "runtime",
+    `
     ${wrappedJs}
     return main_wrapper(runtime);
-  `);
+  `,
+  );
   return await execute(runtime);
 }

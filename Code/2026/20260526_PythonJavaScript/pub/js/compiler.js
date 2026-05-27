@@ -60,7 +60,8 @@ export class Compiler {
             else if (node.type === "While" || node.type === "DoWhile") {
                 stack.push(...node.body);
             }
-            else if (node.type === "ListComprehension" || node.type === "DictComprehension") {
+            else if (node.type === "ListComprehension" ||
+                node.type === "DictComprehension") {
                 // Comprehension variables are local to the comprehension in Python 3
                 // and our transpilation uses an IIFE which has its own 'const item'
             }

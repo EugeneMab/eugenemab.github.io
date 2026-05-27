@@ -58,8 +58,7 @@ self.onmessage = async (e) => {
           if (step === undefined || step === null) step = 1;
           if (start === undefined || start === null)
             start = step > 0 ? 0 : len - 1;
-          if (stop === undefined || stop === null)
-            stop = step > 0 ? len : -1;
+          if (stop === undefined || stop === null) stop = step > 0 ? len : -1;
 
           if (start < 0) start += len;
           if (stop < 0) stop += len;
