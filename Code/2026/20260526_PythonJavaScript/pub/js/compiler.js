@@ -364,7 +364,13 @@ export class Compiler {
         js += `${this.indent()}const _is_method = typeof ${mgrVar}.__enter__ === 'function';\n`;
         js += `${this.indent()}const _enter = _is_method ? ${mgrVar}.__enter__.bind(${mgrVar}) : runtime.__enter__;\n`;
         js += `${this.indent()}const _exit = typeof ${mgrVar}.__exit__ === 'function' ? ${mgrVar}.__exit__.bind(${mgrVar}) : runtime.__exit__;\n`;
-        js += `${this.indent()}${target || "_unused"} = await (_is_method ? _enter() : _enter(${mgrVar}));\n`;
+        const enterCall = `await (_is_method ? _enter() : _enter(${mgrVar}))`;
+        if (target) {
+            js += `${this.indent()}${target} = ${enterCall};\n`;
+        }
+        else {
+            js += `${this.indent()}${enterCall};\n`;
+        }
         js += `${this.indent()}try {\n`;
         this.indentLevel++;
         for (const stmt of node.body) {

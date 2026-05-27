@@ -22,7 +22,10 @@ const server = http.createServer((req, res) => {
     const pathname = decodeURIComponent(url.pathname);
     console.log(`${req.method} ${pathname}`);
 
-    let filePath = path.join(PUBLIC_DIR, pathname === '/' ? 'index.html' : pathname);
+    let relativePath = pathname === '/' ? 'index.html' : pathname;
+    if (relativePath.startsWith('/')) relativePath = relativePath.slice(1);
+
+    let filePath = path.join(PUBLIC_DIR, relativePath);
     filePath = path.resolve(filePath);
     
     // Safety check
