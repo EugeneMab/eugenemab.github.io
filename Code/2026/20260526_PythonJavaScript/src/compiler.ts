@@ -418,9 +418,10 @@ export class Compiler {
     let js = `{\n`;
     this.indentLevel++;
     js += `${this.indent()}const ${mgrVar} = ${expr};\n`;
-    js += `${this.indent()}const _enter = typeof ${mgrVar}.__enter__ === 'function' ? ${mgrVar}.__enter__.bind(${mgrVar}) : runtime.__enter__;\n`;
+    js += `${this.indent()}const _is_method = typeof ${mgrVar}.__enter__ === 'function';\n`;
+    js += `${this.indent()}const _enter = _is_method ? ${mgrVar}.__enter__.bind(${mgrVar}) : runtime.__enter__;\n`;
     js += `${this.indent()}const _exit = typeof ${mgrVar}.__exit__ === 'function' ? ${mgrVar}.__exit__.bind(${mgrVar}) : runtime.__exit__;\n`;
-    js += `${this.indent()}const ${target || "_unused"} = await _enter(${mgrVar});\n`;
+    js += `${this.indent()}${target || "_unused"} = await (_is_method ? _enter() : _enter(${mgrVar}));\n`;
     js += `${this.indent()}try {\n`;
     this.indentLevel++;
     for (const stmt of node.body) {
@@ -430,7 +431,7 @@ export class Compiler {
     this.indentLevel--;
     js += `${this.indent()}} finally {\n`;
     this.indentLevel++;
-    js += `${this.indent()}await _exit(${mgrVar}, null, null, null);\n`;
+    js += `${this.indent()}await (_is_method ? _exit(null, null, null) : _exit(${mgrVar}, null, null, null));\n`;
     this.indentLevel--;
     js += `${this.indent()}}\n`;
     this.indentLevel--;

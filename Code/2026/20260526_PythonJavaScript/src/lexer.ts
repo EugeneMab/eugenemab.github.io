@@ -131,53 +131,54 @@ export class Lexer {
     }
 
     // Operators and Punctuation
+    const startCol = this.col;
     this.advance();
     switch (char) {
       case "=":
         if (this.peek() === "=") {
           this.advance();
-          return this.createToken(TokenType.EQUALS_EQUALS, "==");
+          return this.createToken(TokenType.EQUALS_EQUALS, "==", startCol);
         }
-        return this.createToken(TokenType.EQUALS, "=");
+        return this.createToken(TokenType.EQUALS, "=", startCol);
       case "!":
         if (this.peek() === "=") {
           this.advance();
-          return this.createToken(TokenType.NOT_EQUALS, "!=");
+          return this.createToken(TokenType.NOT_EQUALS, "!=", startCol);
         }
         throw new Error(`Unexpected character: ! at line ${this.line}`);
       case "<":
-        return this.createToken(TokenType.LESS, "<");
+        return this.createToken(TokenType.LESS, "<", startCol);
       case ">":
-        return this.createToken(TokenType.GREATER, ">");
+        return this.createToken(TokenType.GREATER, ">", startCol);
       case "+":
-        return this.createToken(TokenType.PLUS, "+");
+        return this.createToken(TokenType.PLUS, "+", startCol);
       case "-":
-        return this.createToken(TokenType.MINUS, "-");
+        return this.createToken(TokenType.MINUS, "-", startCol);
       case "*":
-        return this.createToken(TokenType.STAR, "*");
+        return this.createToken(TokenType.STAR, "*", startCol);
       case "/":
-        return this.createToken(TokenType.SLASH, "/");
+        return this.createToken(TokenType.SLASH, "/", startCol);
       case ":":
-        return this.createToken(TokenType.COLON, ":");
+        return this.createToken(TokenType.COLON, ":", startCol);
       case ".":
-        return this.createToken(TokenType.DOT, ".");
+        return this.createToken(TokenType.DOT, ".", startCol);
       case "(":
-        return this.createToken(TokenType.LPAREN, "(");
+        return this.createToken(TokenType.LPAREN, "(", startCol);
       case ")":
-        return this.createToken(TokenType.RPAREN, ")");
+        return this.createToken(TokenType.RPAREN, ")", startCol);
       case ",":
-        return this.createToken(TokenType.COMMA, ",");
+        return this.createToken(TokenType.COMMA, ",", startCol);
       case "[":
-        return this.createToken(TokenType.LSQUARE, "[");
+        return this.createToken(TokenType.LSQUARE, "[", startCol);
       case "]":
-        return this.createToken(TokenType.RSQUARE, "]");
+        return this.createToken(TokenType.RSQUARE, "]", startCol);
       case "{":
-        return this.createToken(TokenType.LBRACE, "{");
+        return this.createToken(TokenType.LBRACE, "{", startCol);
       case "}":
-        return this.createToken(TokenType.RBRACE, "}");
+        return this.createToken(TokenType.RBRACE, "}", startCol);
       default:
         throw new Error(
-          `Unexpected character: ${char} at line ${this.line}, col ${this.col}`,
+          `Unexpected character: ${char} at line ${this.line}, col ${startCol}`,
         );
     }
   }
@@ -351,8 +352,12 @@ export class Lexer {
     return char;
   }
 
-  private createToken(type: TokenType, value: string): Token {
-    return { type, value, line: this.line, col: this.col };
+  private createToken(
+    type: TokenType,
+    value: string,
+    col: number = this.col,
+  ): Token {
+    return { type, value, line: this.line, col };
   }
 
   private isAlpha(char: string): boolean {
