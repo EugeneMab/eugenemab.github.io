@@ -94,8 +94,8 @@ describe("Compiler Integration (JavaScript)", () => {
       `,
       );
 
-      const result = await execute(runtime);
-      expect(result).toBe(c.expectedResult);
+      const globals = await execute(runtime);
+      expect(globals.__result__).toBe(c.expectedResult);
     });
   }
 });

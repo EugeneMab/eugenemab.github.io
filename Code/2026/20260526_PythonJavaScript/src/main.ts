@@ -415,10 +415,10 @@ const handleGlobalKeydown = (e: KeyboardEvent) => {
   if (e.key === "F8") {
     e.preventDefault();
     compileAndRun();
-  } else if (e.ctrlKey && e.key === "o") {
+  } else if (e.ctrlKey && e.key.toLowerCase() === "o") {
     e.preventDefault();
     openFile();
-  } else if (e.ctrlKey && e.key === "s") {
+  } else if (e.ctrlKey && e.key.toLowerCase() === "s") {
     e.preventDefault();
     saveFile();
   } else {

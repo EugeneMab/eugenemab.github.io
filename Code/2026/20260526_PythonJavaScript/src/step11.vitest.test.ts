@@ -29,8 +29,8 @@ def test():
 
     const logs: any[] = [];
     const runtime = getJSRuntime(logs);
-    await runJS(jsCode, runtime);
-    const result = await (runtime as any).test();
+    const globals = await runJS(jsCode, runtime);
+    const result = await globals.test();
 
     expect(result).toBe(1);
     expect(logs).toContain("enter");
@@ -66,8 +66,8 @@ def test():
 
     const logs: any[] = [];
     const runtime = getJSRuntime(logs);
-    await runJS(jsCode, runtime);
-    const result = await (runtime as any).test();
+    const globals = await runJS(jsCode, runtime);
+    const result = await globals.test();
 
     expect(result).toBe(42);
     expect(logs).toContain("enter");
@@ -103,8 +103,8 @@ def test():
 
     const logs: any[] = [];
     const runtime = getJSRuntime(logs);
-    await runJS(jsCode, runtime);
-    const result = await (runtime as any).test();
+    const globals = await runJS(jsCode, runtime);
+    const result = await globals.test();
 
     expect(result).toBe(3);
     expect(logs[0]).toBe("1");
@@ -141,8 +141,8 @@ def test():
 
     const logs: any[] = [];
     const runtime = getJSRuntime(logs);
-    await runJS(jsCode, runtime);
-    const result = await (runtime as any).test();
+    const globals = await runJS(jsCode, runtime);
+    const result = await globals.test();
 
     expect(result).toBe(1);
     expect(logs[0]).toBe("enter");

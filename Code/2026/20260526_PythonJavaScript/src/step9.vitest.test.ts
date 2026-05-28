@@ -60,7 +60,8 @@ describe("Step 9: Comprehensions (Parser)", () => {
       const jsCode = compiler.compileJS(ast);
 
       const runtime = getJSRuntime();
-      return await runJS(jsCode, runtime);
+      const globals = await runJS(jsCode, runtime);
+      return globals.__result__;
     };
 
     it("test_list_comp: should transform list elements", async () => {

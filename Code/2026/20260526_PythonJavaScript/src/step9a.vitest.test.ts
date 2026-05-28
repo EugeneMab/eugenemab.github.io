@@ -16,8 +16,8 @@ describe("Step 9a & 9b: Loops and Strings", () => {
 
       const logs: any[] = [];
       const runtime = getJSRuntime(logs);
-      const result = await runJS(jsCode, runtime);
-      return { result, logs };
+      const globals = await runJS(jsCode, runtime);
+      return { result: globals.__result__, logs };
     };
 
     it("should execute multiplication table 1-9", async () => {

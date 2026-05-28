@@ -187,8 +187,8 @@ describe("Compiler", () => {
       const compiler = new Compiler();
       const jsCode = compiler.compileJS(parser.parse());
       const runtime = getJSRuntime();
-      const result = await runJS(jsCode, runtime);
-      expect(result).toBe(c.expected);
+      const globals = await runJS(jsCode, runtime);
+      expect(globals.__result__).toBe(c.expected);
     }
   });
 });

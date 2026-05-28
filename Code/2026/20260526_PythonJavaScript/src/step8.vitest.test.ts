@@ -118,8 +118,8 @@ describe("Step 8: Slicing & Advanced Indexing (Parser)", () => {
       const jsCode = compiler.compileJS(ast);
 
       const runtime = getJSRuntime();
-      await runJS(jsCode, runtime);
-      const func = (runtime as any)[funcName];
+      const globals = await runJS(jsCode, runtime);
+      const func = globals[funcName];
       const result = await func(...args);
       return { result };
     };

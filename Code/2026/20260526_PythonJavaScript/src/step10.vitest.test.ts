@@ -44,8 +44,8 @@ describe("Step 10: Iterators & Generators (Parser)", () => {
       const jsCode = compiler.compileJS(ast);
 
       const runtime = getJSRuntime();
-      await runJS(jsCode, runtime);
-      const func = (runtime as any)[funcName];
+      const globals = await runJS(jsCode, runtime);
+      const func = globals[funcName];
       return await func(...args);
     };
 

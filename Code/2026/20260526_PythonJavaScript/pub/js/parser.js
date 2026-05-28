@@ -198,13 +198,6 @@ export class Parser {
         this.consume(TokenType.DEDENT, "Expect dedent after function body");
         return { type: "FunctionDef", name, params, body };
     }
-    parseAssignment() {
-        const target = this.consume(TokenType.IDENTIFIER, "Expect variable name").value;
-        this.consume(TokenType.EQUALS, "Expect '=' after variable name");
-        const value = this.parseExpression();
-        this.consumeStatementEnd();
-        return { type: "Assignment", target, value };
-    }
     parseReturn() {
         const value = this.parseExpression();
         this.consumeStatementEnd();
@@ -482,11 +475,6 @@ export class Parser {
     }
     peek() {
         return this.tokens[this.pos];
-    }
-    peekNext() {
-        if (this.pos + 1 >= this.tokens.length)
-            return null;
-        return this.tokens[this.pos + 1];
     }
     previous() {
         return this.tokens[this.pos - 1];

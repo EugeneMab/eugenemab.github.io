@@ -73,6 +73,13 @@ self.onmessage = async (e) => {
           }
           return typeof obj === "string" ? res.join("") : res;
         },
+        _iter: (obj: any) => {
+          // If it's already an async iterator, return as is
+          if (obj && obj[Symbol.asyncIterator]) return obj;
+          // If it's a sync iterable (like an Array), return its sync iterator
+          // JS 'for await' handles sync iterables, but we can be explicit
+          return obj;
+        },
       };
 
       // Use a data URL to import the generated JS code as a module
@@ -80,7 +87,8 @@ self.onmessage = async (e) => {
       const url = URL.createObjectURL(blob);
       try {
         const module = await import(url);
-        const result = await module.main_wrapper(runtime);
+        const globals = await module.main_wrapper(runtime);
+        const result = globals.__result__;
         self.postMessage({
           type: "result",
           payload: `Result: ${result === undefined ? "None" : result}`,

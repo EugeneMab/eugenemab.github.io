@@ -389,17 +389,6 @@ export class Parser {
     return { type: "FunctionDef", name, params, body };
   }
 
-  private parseAssignment(): AssignmentNode {
-    const target = this.consume(
-      TokenType.IDENTIFIER,
-      "Expect variable name",
-    ).value;
-    this.consume(TokenType.EQUALS, "Expect '=' after variable name");
-    const value = this.parseExpression();
-    this.consumeStatementEnd();
-    return { type: "Assignment", target, value };
-  }
-
   private parseReturn(): ReturnNode {
     const value = this.parseExpression();
     this.consumeStatementEnd();
@@ -702,11 +691,6 @@ export class Parser {
 
   private peek(): Token {
     return this.tokens[this.pos];
-  }
-
-  private peekNext(): Token | null {
-    if (this.pos + 1 >= this.tokens.length) return null;
-    return this.tokens[this.pos + 1];
   }
 
   private previous(): Token {
