@@ -2,47 +2,54 @@
 
 ## 🌟 Level 0: Foundations (Transpiler Basics)
 - [x] **Step 1: Infrastructure & UI Update**
-    - [x] Update title to "Python-to-JavaScript".
-    - [x] Change ports to 7957 (main) and 17957 (test).
-    - [x] Update `index.html` with JS (Code) tab.
 - [x] **Step 2: Lexer (Python Subset)**
-    - [x] Implement `src/lexer.ts`.
-    - [x] Handle keywords, identifiers, literals, and operators.
-    - [x] Support single-line comments (`#`).
-    - [x] Implement indentation tracking (INDENT/DEDENT).
 - [x] **Step 3: Parser (AST)**
-    - [x] Implement `src/parser.ts` with Recursive Descent.
-    - [x] Support parentheses `()` to override operator precedence.
-    - [x] Support unary operators.
-    - [x] Support Function definitions, Assignments, and Arithmetic.
 - [x] **Step 4: Emitter (JavaScript Generation)**
-    - [x] Generate human-readable JavaScript code.
-    - [x] All functions are `async` to support non-blocking `sleep`.
-    - [x] Use `await` for all function calls.
 - [x] **Step 5: Execution & Integration**
-    - [x] Execute generated JS in a Web Worker using Blob URLs and dynamic `import()`.
-    - [x] Provide a runtime bridge (print, sleep, range, etc.).
 
 ## 🌟 Level 1: Pythonic Thinking
 - [x] **Step 6: Control Flow & Booleans**
-    - [x] Implement `if`, `elif`, `else` statements.
-    - [x] Add boolean literals (`True`, `False`) and logic (`and`, `or`, `not`).
-    - [x] Implement comparison operators.
 - [x] **Step 7: Parameters & Scoping**
-    - [x] Support function parameters and multiple arguments.
-    - [x] Support local variable scoping in JS.
 - [x] **Step 8: Slicing & Advanced Indexing**
-    - [x] Support `list[start:stop:step]` using runtime helper.
 - [x] **Step 9: Comprehensions**
-    - [x] Implement List and Dict comprehensions using `async` IIFEs.
 - [x] **Step 10: Iterators & Generators**
-    - [x] Implement `yield` using JavaScript `async function*`.
-    - [x] Support `next()` and iteration using `for await`.
 - [x] **Step 11: Context Managers**
-    - [x] Implement `with` statement using inline functions and `try...finally`.
 
-## 🌟 Level 2: Object Model & Modern Features
-- [ ] **Step 12: Classes & Objects**
+## 🌟 Level 2: Consolidating the Data Model
+- [ ] **Step 12: Atomic Types & Casting**
+    - [ ] **Integers vs Floats:** Proper `int()`/`float()` distinction and truncation.
+    - [ ] **Strings:** Implement `chr()`, `ord()`, and raw strings (`r"..."`).
+    - [ ] **Booleans:** Strict `bool()` casting and truthiness evaluation (`_is_truthy` helper).
+    - [ ] **Large Numbers:** `BigInt` for arbitrary precision `long` semantics.
+- [ ] **Step 13: Core Collection Types**
+    - [ ] **Tuples:** Implement immutable `tuple` (using `Object.freeze` or specialized class).
+    - [ ] **Sets:** Implement `set` and `frozenset` using JS `Set`.
+    - [ ] **Bytes:** `bytes` and `bytearray` parity using `Uint8Array`.
+- [ ] **Step 14: Foundational Operators**
+    - [ ] **Arithmetic:** Floor division (`//`), Modulo (`%`), Exponentiation (`**`).
+    - [ ] **Bitwise:** `&`, `|`, `^`, `~`, `<<`, `>>`.
+    - [ ] **Membership:** `in` and `not in` for all collection types.
+
+## 🌟 Level 3: Consolidating the Runtime
+- [ ] **Step 15: Global Built-in Functions**
+    - [ ] **Aggregation:** `min()`, `max()`, `sum()`, `any()`, `all()`.
+    - [ ] **Iteration Helpers:** `enumerate()`, `zip()`, `reversed()`, `sorted()`.
+    - [ ] **Type Checkers:** `type()`, `isinstance()`, `callable()`.
+- [ ] **Step 16: Advanced Scoping & Assignment**
+    - [ ] **Scope Control:** `global` and `nonlocal` keywords for explicit variable binding.
+    - [ ] **Unpacking:** Multiple assignment (`x, y = 1, 2`) and star unpacking (`x, *y = [1, 2, 3]`).
+    - [ ] **Default Args:** Support default values and keyword arguments in function calls.
+- [ ] **Step 17: String & List API Parity**
+    - [ ] **Strings:** `split`, `join`, `strip`, `replace`, `find`, `upper`, `lower`.
+    - [ ] **Lists:** `append`, `extend`, `insert`, `remove`, `pop`, `sort`, `reverse`.
+
+## 🌟 Level 4: Architecture & Abstractions
+- [ ] **Step 18: Functional Programming**
+    - [ ] `lambda` expressions (anonymous functions).
+    - [ ] Higher-order functions: `map()`, `filter()`, `reduce()`.
+- [ ] **Step 19: Object Model (Classes)**
     - [ ] Map Python `class` to JavaScript `class`.
-- [ ] **Step 13: Standard Library Expansion**
-    - [ ] Add more built-in functions and modules.
+    - [ ] `__init__`, `self` binding, method dispatch, and single inheritance.
+- [ ] **Step 20: Basic System & IO**
+    - [ ] Basic `try...except...finally` block.
+    - [ ] Virtual `io` (e.g., `open()` to a memory-backed file registry).
