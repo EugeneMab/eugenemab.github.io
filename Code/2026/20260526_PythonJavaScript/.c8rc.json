@@ -1,0 +1,5 @@
+{
+  "all": true,
+  "include": ["./pub/js/lexer.js", "./pub/js/parser.js", "./pub/js/compiler.js"],
+  "reporter": ["text", "html"]
+}

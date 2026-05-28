@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python-to-JavaScript</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Python ⮕ JavaScript</h1>
+        </header>
+        
+        <main class="main-layout">
+            <!-- Left Side: Samples and Editor -->
+            <div class="left-panel">
+                <div class="sample-selector">
+                    <label for="sample-select">Load Sample:</label>
+                    <select id="sample-select">
+                        <option value="">-- Select a sample --</option>
+                        <option value="sample/basic.py">Basic Return</option>
+                        <option value="sample/variables.py">Variables & Math</option>
+                        <option value="sample/complex.py">Complex Math</option>
+                        <option value="sample/branching.py">Branching (If/Else)</option>
+                        <option value="sample/params.py">Function Parameters</option>
+                        <option value="sample/slicing.py">Lists & Slicing</option>
+                        <option value="sample/comprehensions.py">Comprehensions</option>
+                        <option value="sample/loops_and_strings.py">Loops & Strings</option>
+                        <option value="sample/generators.py">Generators & Iterators</option>
+                        <option value="sample/context_managers.py">Context Managers</option>
+                        <option value="sample/infinite.py">Infinite Loop</option>
+                    </select>
+                </div>
+                <h3>Python Source</h3>
+                <div class="controls">
+                    <button id="load-file-btn">Open File (Ctrl+O)</button>
+                    <button id="save-btn">Save File (Ctrl+S)</button>
+                    <button id="compile-btn">Compile & Run (F8)</button>
+                    <div class="timeout-control">
+                        <label for="timeout-input">Timeout:</label>
+                        <input type="number" id="timeout-input" list="timeout-options" value="10" min="1">
+                        <datalist id="timeout-options">
+                            <option value="1">1 second</option>
+                            <option value="10">10 seconds</option>
+                            <option value="60">1 minute</option>
+                            <option value="600">10 minutes</option>
+                            <option value="3600">1 hour</option>
+                        </datalist>
+                    </div>
+                    <button id="abort-btn" class="abort-btn">Abort</button>
+                    <span id="mode-indicator" class="mode-indicator"></span>
+                    <input type="file" id="file-input" hidden accept=".py">
+                </div>
+                <textarea id="editor" spellcheck="false"></textarea>
+            </div>
+
+            <!-- Right Side: Outputs -->
+            <div class="right-panel">
+                <div id="status-line" class="status-line">Ready</div>
+                <div class="output-tabs">
+                    <button class="tab-btn" data-tab="info">Info</button>
+                    <button class="tab-btn" data-tab="lex">Lexicon</button>
+                    <button class="tab-btn" data-tab="ast">AST</button>
+                    <button class="tab-btn" data-tab="js">JS (Code)</button>
+                    <button class="tab-btn active" data-tab="exec">Execution</button>
+                </div>
+                
+                <div class="tab-content hidden" id="info-content">
+                    <pre id="info-output"></pre>
+                </div>
+                <div class="tab-content hidden" id="lex-content">
+                    <pre id="lex-output"></pre>
+                </div>
+                <div class="tab-content hidden" id="ast-content">
+                    <pre id="ast-output"></pre>
+                </div>
+                <div class="tab-content hidden" id="js-content">
+                    <pre id="js-output"></pre>
+                </div>
+                <div class="tab-content" id="exec-content">
+                    <div id="result-output" class="result-box"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="./js/main.js"></script>
+</body>
+</html>
