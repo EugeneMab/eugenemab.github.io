@@ -500,9 +500,9 @@ export class Parser {
     } else if (this.match(TokenType.FSTRING)) {
       expr = this.parseFString(this.previous().value);
     } else if (this.match(TokenType.TRUE)) {
-      expr = { type: "Literal", value: 1 };
+      expr = { type: "Literal", value: true };
     } else if (this.match(TokenType.FALSE)) {
-      expr = { type: "Literal", value: 0 };
+      expr = { type: "Literal", value: false };
     } else if (this.match(TokenType.IDENTIFIER)) {
       expr = { type: "Identifier", name: this.previous().value };
     } else if (this.match(TokenType.LPAREN)) {

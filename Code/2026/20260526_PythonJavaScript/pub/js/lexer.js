@@ -256,7 +256,36 @@ export class Lexer {
             if (this.peek() === "\n") {
                 throw new Error(`Unterminated string at line ${this.line}`);
             }
-            value += this.advance();
+            if (this.peek() === "\\") {
+                this.advance(); // Skip backslash
+                const escaped = this.advance();
+                switch (escaped) {
+                    case "n":
+                        value += "\n";
+                        break;
+                    case "t":
+                        value += "\t";
+                        break;
+                    case "r":
+                        value += "\r";
+                        break;
+                    case "\\":
+                        value += "\\";
+                        break;
+                    case "'":
+                        value += "'";
+                        break;
+                    case '"':
+                        value += '"';
+                        break;
+                    default:
+                        value += "\\" + escaped;
+                        break;
+                }
+            }
+            else {
+                value += this.advance();
+            }
         }
         if (this.pos >= this.source.length) {
             throw new Error(`Unterminated string at line ${this.line}`);
