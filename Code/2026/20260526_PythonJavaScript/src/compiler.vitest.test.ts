@@ -64,6 +64,19 @@ describe("Compiler Integration (JavaScript)", () => {
       }
       return typeof obj === "string" ? res.join("") : res;
     },
+    _is_truthy: (val: any) => {
+      if (val === null || val === undefined) return false;
+      if (typeof val === "boolean") return val;
+      if (typeof val === "number") return val !== 0;
+      if (typeof val === "bigint") return val !== 0n;
+      if (typeof val === "string") return val.length > 0;
+      if (Array.isArray(val)) return val.length > 0;
+      if (typeof val === "object") {
+        if (Object.keys(val).length === 0) return false;
+        return true;
+      }
+      return true;
+    },
   };
 
   for (const c of cases) {

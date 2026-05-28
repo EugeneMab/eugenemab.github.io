@@ -19,7 +19,19 @@ import {
   AssignmentNode,
 } from "./parser.js";
 
-const BUILTINS = new Set(["print", "sleep", "range", "len", "abs", "math"]);
+const BUILTINS = new Set([
+  "print",
+  "sleep",
+  "range",
+  "len",
+  "abs",
+  "math",
+  "int",
+  "float",
+  "bool",
+  "chr",
+  "ord",
+]);
 
 export class Compiler {
   private indentLevel: number = 0;
@@ -160,6 +172,9 @@ export class Compiler {
         if (typeof node.value === "string") {
           return JSON.stringify(node.value);
         }
+        if (typeof node.value === "bigint") {
+          return node.value.toString() + "n";
+        }
         return node.value.toString();
 
       case "Identifier":
@@ -277,7 +292,7 @@ export class Compiler {
   }
 
   private compileIf(node: IfNode): string {
-    let js = `if (${this.compileNode(node.condition)}) {\n`;
+    let js = `if (runtime._is_truthy(${this.compileNode(node.condition)})) {\n`;
     this.indentLevel++;
     for (const stmt of node.thenBranch) {
       const compiled = this.compileNode(stmt);
@@ -300,7 +315,7 @@ export class Compiler {
   }
 
   private compileWhile(node: WhileNode): string {
-    let js = `while (${this.compileNode(node.condition)}) {\n`;
+    let js = `while (runtime._is_truthy(${this.compileNode(node.condition)})) {\n`;
     this.indentLevel++;
     for (const stmt of node.body) {
       const compiled = this.compileNode(stmt);
@@ -319,7 +334,7 @@ export class Compiler {
       if (compiled) js += `${this.indent()}${compiled};\n`;
     }
     this.indentLevel--;
-    js += `${this.indent()}} while (${this.compileNode(node.condition)})`;
+    js += `${this.indent()}} while (runtime._is_truthy(${this.compileNode(node.condition)}))`;
     return js;
   }
 
@@ -435,7 +450,9 @@ export class Compiler {
   private compileListComprehension(node: ListComprehensionNode): string {
     const expr = this.compileNode(node.expression);
     const iterable = this.compileNode(node.iterable);
-    const cond = node.condition ? this.compileNode(node.condition) : "true";
+    const cond = node.condition
+      ? `runtime._is_truthy(${this.compileNode(node.condition)})`
+      : "true";
     const tmpItem = this.nextTmp("item");
 
     return `(await (async () => {
@@ -452,7 +469,9 @@ export class Compiler {
     const key = this.compileNode(node.key);
     const value = this.compileNode(node.value);
     const iterable = this.compileNode(node.iterable);
-    const cond = node.condition ? this.compileNode(node.condition) : "true";
+    const cond = node.condition
+      ? `runtime._is_truthy(${this.compileNode(node.condition)})`
+      : "true";
     const tmpItem = this.nextTmp("item");
 
     return `(await (async () => {

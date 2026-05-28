@@ -92,11 +92,16 @@ export class Lexer {
         }
         // Identifiers and Keywords
         if (this.isAlpha(char)) {
-            if ((char === "f" || char === "F") &&
-                (this.peekNext() === '"' || this.peekNext() === "'")) {
+            const next = this.peekNext();
+            if ((char === "f" || char === "F") && (next === '"' || next === "'")) {
                 const startCol = this.col;
                 this.advance(); // consume 'f'
                 return this.handleString(this.advance(), true, startCol); // consume quote
+            }
+            if ((char === "r" || char === "R") && (next === '"' || next === "'")) {
+                const startCol = this.col;
+                this.advance(); // consume 'r'
+                return this.handleString(this.advance(), false, startCol, true); // consume quote
             }
             return this.handleIdentifier();
         }
@@ -248,15 +253,23 @@ export class Lexer {
         while (this.pos < this.source.length && this.isDigit(this.peek())) {
             value += this.advance();
         }
+        if (this.pos < this.source.length &&
+            this.peek() === "." &&
+            this.isDigit(this.peekNext())) {
+            value += this.advance(); // consume '.'
+            while (this.pos < this.source.length && this.isDigit(this.peek())) {
+                value += this.advance();
+            }
+        }
         return { type: TokenType.NUMBER, value, line: this.line, col: startCol };
     }
-    handleString(quote, isFString = false, startCol = this.col) {
+    handleString(quote, isFString = false, startCol = this.col, isRaw = false) {
         let value = "";
         while (this.pos < this.source.length && this.peek() !== quote) {
             if (this.peek() === "\n") {
                 throw new Error(`Unterminated string at line ${this.line}`);
             }
-            if (this.peek() === "\\") {
+            if (this.peek() === "\\" && !isRaw) {
                 this.advance(); // Skip backslash
                 const escaped = this.advance();
                 switch (escaped) {

@@ -18,7 +18,10 @@ self.onmessage = async (e) => {
             // 2. Parsing
             const parser = new Parser(tokens);
             const ast = parser.parse();
-            self.postMessage({ type: "ast", payload: JSON.stringify(ast, null, 2) });
+            self.postMessage({
+                type: "ast",
+                payload: JSON.stringify(ast, (key, value) => typeof value === "bigint" ? value.toString() + "n" : value, 2),
+            });
             // 3. Compiling
             const compiler = new Compiler();
             const jsCode = compiler.compileJS(ast);
@@ -51,6 +54,69 @@ self.onmessage = async (e) => {
                 },
                 abs: (val) => Math.abs(val),
                 math: Math,
+                int: (val) => {
+                    if (typeof val === "string") {
+                        try {
+                            const truncated = val.split(".")[0];
+                            const b = BigInt(truncated);
+                            if (b <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                                b >= BigInt(Number.MIN_SAFE_INTEGER)) {
+                                return Number(b);
+                            }
+                            return b;
+                        }
+                        catch {
+                            return 0;
+                        }
+                    }
+                    if (typeof val === "number")
+                        return Math.trunc(val);
+                    if (typeof val === "bigint")
+                        return val;
+                    if (typeof val === "boolean")
+                        return val ? 1 : 0;
+                    return 0;
+                },
+                float: (val) => {
+                    if (typeof val === "string")
+                        return parseFloat(val);
+                    if (typeof val === "number")
+                        return val;
+                    if (typeof val === "bigint")
+                        return Number(val);
+                    if (typeof val === "boolean")
+                        return val ? 1.0 : 0.0;
+                    return 0.0;
+                },
+                bool: (val) => {
+                    return runtime._is_truthy(val);
+                },
+                chr: (val) => String.fromCharCode(Number(val)),
+                ord: (val) => {
+                    if (typeof val === "string" && val.length > 0)
+                        return val.charCodeAt(0);
+                    throw new Error("ord() expected a string of length 1");
+                },
+                _is_truthy: (val) => {
+                    if (val === null || val === undefined)
+                        return false;
+                    if (typeof val === "boolean")
+                        return val;
+                    if (typeof val === "number")
+                        return val !== 0;
+                    if (typeof val === "bigint")
+                        return val !== 0n;
+                    if (typeof val === "string")
+                        return val.length > 0;
+                    if (Array.isArray(val))
+                        return val.length > 0;
+                    if (typeof val === "object") {
+                        if (Object.keys(val).length === 0)
+                            return false;
+                        return true;
+                    }
+                    return true;
+                },
                 _slice: (obj, start, stop, step) => {
                     const len = obj.length;
                     if (step === undefined || step === null)

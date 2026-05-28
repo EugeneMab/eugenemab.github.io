@@ -27,7 +27,7 @@ def main():
         return 0
 `;
     testIndentation(code, [
-      "    if ((x > 0)) {",
+      "    if (runtime._is_truthy((x > 0))) {",
       "      return 1;",
       "    } else {",
       "      return 0;",
@@ -42,7 +42,7 @@ def main():
         print(1)
 `;
     testIndentation(code, [
-      "    while (1) {",
+      "    while (runtime._is_truthy(1)) {",
       "      (await print(1));",
       "    };",
     ]);
@@ -56,8 +56,8 @@ def main():
             return 1
 `;
     testIndentation(code, [
-      "    if (1) {",
-      "      while (1) {",
+      "    if (runtime._is_truthy(1)) {",
+      "      while (runtime._is_truthy(1)) {",
       "        return 1;",
       "      };",
       "    };",
