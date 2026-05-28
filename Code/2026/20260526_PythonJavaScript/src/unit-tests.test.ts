@@ -60,7 +60,6 @@ describe("Lexer", () => {
 
   it("should handle nested indentation", () => {
     const code = "def f():\n    if 1:\n        return 1\n    return 0";
-    // subset doesn't support IF yet, but lexer should still produce tokens
     const lexer = new Lexer(code);
     const tokens = lexer.tokenize();
     expect(tokens.map((t) => t.type)).toContain(TokenType.INDENT);
@@ -104,8 +103,6 @@ describe("Parser", () => {
   });
 
   it("should handle parentheses", () => {
-    // wait, parser says while (this.match(TokenType.PLUS, TokenType.MINUS))
-    // so * is not supported. I'll use -
     const code2 = "def main():\n    return (5 - 3) + 1";
     const lexer = new Lexer(code2);
     const parser = new Parser(lexer.tokenize());
