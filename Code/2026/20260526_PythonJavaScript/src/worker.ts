@@ -69,8 +69,10 @@ self.onmessage = async (e) => {
         math: Math,
         int: (val: any) => {
           if (typeof val === "string") {
+            const trimmed = val.trim();
             try {
-              const truncated = val.split(".")[0];
+              if (trimmed === "") throw new Error("empty string");
+              const truncated = trimmed.split(".")[0];
               const b = BigInt(truncated);
               if (
                 b <= BigInt(Number.MAX_SAFE_INTEGER) &&
@@ -80,20 +82,34 @@ self.onmessage = async (e) => {
               }
               return b;
             } catch {
-              return 0;
+              throw new Error(
+                `invalid literal for int() with base 10: '${val}'`,
+              );
             }
           }
           if (typeof val === "number") return Math.trunc(val);
           if (typeof val === "bigint") return val;
           if (typeof val === "boolean") return val ? 1 : 0;
-          return 0;
+          throw new Error(
+            `int() argument must be a string, a bytes-like object or a real number, not '${typeof val}'`,
+          );
         },
         float: (val: any) => {
-          if (typeof val === "string") return parseFloat(val);
+          if (typeof val === "string") {
+            const trimmed = val.trim();
+            const floatLiteralPattern =
+              /^[+-]?(?:Infinity|NaN|(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)$/i;
+            if (!floatLiteralPattern.test(trimmed)) {
+              throw new Error(`could not convert string to float: '${val}'`);
+            }
+            return Number(trimmed);
+          }
           if (typeof val === "number") return val;
           if (typeof val === "bigint") return Number(val);
           if (typeof val === "boolean") return val ? 1.0 : 0.0;
-          return 0.0;
+          throw new Error(
+            `float() argument must be a string or a real number, not '${typeof val}'`,
+          );
         },
         bool: (val: any) => {
           return runtime._is_truthy(val);

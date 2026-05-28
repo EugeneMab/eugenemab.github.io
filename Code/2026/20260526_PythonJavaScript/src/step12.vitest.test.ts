@@ -18,6 +18,7 @@ async function runPython(code: string) {
 
   return { logs };
 }
+
 describe("Step 12: Atomic Types & Casting", () => {
   it("should handle int() and float() correctly", async () => {
     const code = `
@@ -46,11 +47,31 @@ def main():
 def main():
     s1 = "a\\nb"
     s2 = r"a\\nb"
+    s3 = r"a\\"b"
     print(len(s1))
     print(len(s2))
+    print(len(s3))
 `;
     const { logs } = await runPython(code);
-    expect(logs).toEqual(["3", "4"]);
+    expect(logs).toEqual(["3", "4", "4"]);
+  });
+
+  it("should throw error on invalid int() or float() casts", async () => {
+    const codeInt = `
+def main():
+    print(int("abc"))
+`;
+    await expect(runPython(codeInt)).rejects.toThrow(
+      "invalid literal for int()",
+    );
+
+    const codeFloat = `
+def main():
+    print(float("3.14abc"))
+`;
+    await expect(runPython(codeFloat)).rejects.toThrow(
+      "could not convert string to float",
+    );
   });
 
   it("should handle bool() and truthiness correctly", async () => {

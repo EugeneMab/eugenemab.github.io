@@ -269,31 +269,42 @@ export class Lexer {
             if (this.peek() === "\n") {
                 throw new Error(`Unterminated string at line ${this.line}`);
             }
-            if (this.peek() === "\\" && !isRaw) {
-                this.advance(); // Skip backslash
-                const escaped = this.advance();
-                switch (escaped) {
-                    case "n":
-                        value += "\n";
-                        break;
-                    case "t":
-                        value += "\t";
-                        break;
-                    case "r":
-                        value += "\r";
-                        break;
-                    case "\\":
-                        value += "\\";
-                        break;
-                    case "'":
-                        value += "'";
-                        break;
-                    case '"':
-                        value += '"';
-                        break;
-                    default:
-                        value += "\\" + escaped;
-                        break;
+            if (this.peek() === "\\") {
+                if (isRaw) {
+                    if (this.peekNext() === quote) {
+                        value += this.advance(); // consume '\'
+                        value += this.advance(); // consume quote
+                    }
+                    else {
+                        value += this.advance();
+                    }
+                }
+                else {
+                    this.advance(); // Skip backslash
+                    const escaped = this.advance();
+                    switch (escaped) {
+                        case "n":
+                            value += "\n";
+                            break;
+                        case "t":
+                            value += "\t";
+                            break;
+                        case "r":
+                            value += "\r";
+                            break;
+                        case "\\":
+                            value += "\\";
+                            break;
+                        case "'":
+                            value += "'";
+                            break;
+                        case '"':
+                            value += '"';
+                            break;
+                        default:
+                            value += "\\" + escaped;
+                            break;
+                    }
                 }
             }
             else {
