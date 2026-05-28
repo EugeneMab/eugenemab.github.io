@@ -223,21 +223,33 @@ export class Compiler {
         const left = this.compileNode(node.left);
         const right = this.compileNode(node.right);
         let op = node.operator;
-        if (op === "and")
-            op = "&&";
-        if (op === "or")
-            op = "||";
+        if (op === "and") {
+            const tmp = this.nextTmp("and");
+            return `(await (async () => {
+        const ${tmp} = ${left};
+        return runtime._is_truthy(${tmp}) ? ${right} : ${tmp};
+      })())`;
+        }
+        if (op === "or") {
+            const tmp = this.nextTmp("or");
+            return `(await (async () => {
+        const ${tmp} = ${left};
+        return runtime._is_truthy(${tmp}) ? ${tmp} : ${right};
+      })())`;
+        }
         if (op === "==")
             op = "===";
         if (op === "!=")
             op = "!==";
-        return `(${left} ${op} ${right})`;
+        // Use a runtime helper for other operators to handle BigInt mixing and Python-specific behaviors
+        return `(await runtime._binop("${op}", ${left}, ${right}))`;
     }
     compileUnaryExpression(node) {
         const arg = this.compileNode(node.argument);
-        let op = node.operator;
-        if (op === "not")
-            op = "!";
+        const op = node.operator;
+        if (op === "not") {
+            return `(!runtime._is_truthy(${arg}))`;
+        }
         return `${op}${arg}`;
     }
     compileIf(node) {

@@ -78,4 +78,42 @@ def main():
     const { logs } = await runPython(code);
     expect(logs).toEqual(["12345678901234567890"]);
   });
+
+  it("should handle mixed BigInt and Number arithmetic", async () => {
+    const code = `
+def main():
+    x = 12345678901234567890
+    print(x + 1)
+    print(x * 2)
+    print(x - 12345678901234567890)
+`;
+    const { logs } = await runPython(code);
+    expect(logs).toEqual(["12345678901234567891", "24691357802469135780", "0"]);
+  });
+
+  it("should handle Python-style boolean operators", async () => {
+    const code = `
+def main():
+    print([] or 1)
+    print([1] or 2)
+    print([] and 1)
+    print([1] and 2)
+    print(not [])
+    print(not [1])
+`;
+    const { logs } = await runPython(code);
+    expect(logs).toEqual(["1", "[1]", "[]", "2", "true", "false"]);
+  });
+
+  it("should handle Unicode code points with chr() and ord()", async () => {
+    const code = `
+def main():
+    # Emoji: Grinning Face (U+1F600)
+    smile = chr(128512)
+    print(smile)
+    print(ord(smile))
+`;
+    const { logs } = await runPython(code);
+    expect(logs).toEqual(["\u{1F600}", "128512"]);
+  });
 });

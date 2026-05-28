@@ -77,6 +77,76 @@ describe("Compiler Integration (JavaScript)", () => {
       }
       return true;
     },
+    _binop: (op: string, a: any, b: any) => {
+      const isAInt = typeof a === "bigint" || Number.isInteger(a);
+      const isBInt = typeof b === "bigint" || Number.isInteger(b);
+
+      if (isAInt && isBInt) {
+        const ba = BigInt(a);
+        const bb = BigInt(b);
+        let res;
+        switch (op) {
+          case "+":
+            res = ba + bb;
+            break;
+          case "-":
+            res = ba - bb;
+            break;
+          case "*":
+            res = ba * bb;
+            break;
+          case "/":
+            res = Number(ba) / Number(bb);
+            break;
+          case "===":
+            return ba === bb;
+          case "!==":
+            return ba !== bb;
+          case "<":
+            return ba < bb;
+          case ">":
+            return ba > bb;
+          case "<=":
+            return ba <= bb;
+          case ">=":
+            return ba >= bb;
+          default:
+            throw new Error(`Operator ${op} not implemented for integers`);
+        }
+        if (
+          res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+          res >= BigInt(Number.MIN_SAFE_INTEGER)
+        ) {
+          return Number(res);
+        }
+        return res;
+      }
+
+      switch (op) {
+        case "+":
+          return a + b;
+        case "-":
+          return a - b;
+        case "*":
+          return a * b;
+        case "/":
+          return a / b;
+        case "===":
+          return a === b;
+        case "!==":
+          return a !== b;
+        case "<":
+          return a < b;
+        case ">":
+          return a > b;
+        case "<=":
+          return a <= b;
+        case ">=":
+          return a >= b;
+        default:
+          throw new Error(`Operator ${op} not implemented`);
+      }
+    },
   };
 
   for (const c of cases) {

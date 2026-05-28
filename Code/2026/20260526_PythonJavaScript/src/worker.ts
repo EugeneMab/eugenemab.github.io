@@ -39,7 +39,13 @@ self.onmessage = async (e) => {
       // 4. Execution
       const runtime = {
         print: (val: any) => {
-          self.postMessage({ type: "log", payload: String(val) });
+          let payload;
+          if (Array.isArray(val)) {
+            payload = `[${val.map((v) => String(v)).join(", ")}]`;
+          } else {
+            payload = String(val);
+          }
+          self.postMessage({ type: "log", payload });
           return 0;
         },
         sleep: (ms: number) => {
@@ -92,10 +98,21 @@ self.onmessage = async (e) => {
         bool: (val: any) => {
           return runtime._is_truthy(val);
         },
-        chr: (val: any) => String.fromCharCode(Number(val)),
+        chr: (val: any) => {
+          const codePoint = Number(val);
+          if (
+            !Number.isInteger(codePoint) ||
+            codePoint < 0 ||
+            codePoint > 0x10ffff
+          ) {
+            throw new Error("chr() arg not in range(0x110000)");
+          }
+          return String.fromCodePoint(codePoint);
+        },
         ord: (val: any) => {
-          if (typeof val === "string" && val.length > 0)
-            return val.charCodeAt(0);
+          if (typeof val === "string" && Array.from(val).length === 1) {
+            return val.codePointAt(0);
+          }
           throw new Error("ord() expected a string of length 1");
         },
         _is_truthy: (val: any) => {
@@ -110,6 +127,76 @@ self.onmessage = async (e) => {
             return true;
           }
           return true;
+        },
+        _binop: (op: string, a: any, b: any) => {
+          const isAInt = typeof a === "bigint" || Number.isInteger(a);
+          const isBInt = typeof b === "bigint" || Number.isInteger(b);
+
+          if (isAInt && isBInt) {
+            const ba = BigInt(a);
+            const bb = BigInt(b);
+            let res;
+            switch (op) {
+              case "+":
+                res = ba + bb;
+                break;
+              case "-":
+                res = ba - bb;
+                break;
+              case "*":
+                res = ba * bb;
+                break;
+              case "/":
+                res = Number(ba) / Number(bb);
+                break;
+              case "===":
+                return ba === bb;
+              case "!==":
+                return ba !== bb;
+              case "<":
+                return ba < bb;
+              case ">":
+                return ba > bb;
+              case "<=":
+                return ba <= bb;
+              case ">=":
+                return ba >= bb;
+              default:
+                throw new Error(`Operator ${op} not implemented for integers`);
+            }
+            if (
+              res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+              res >= BigInt(Number.MIN_SAFE_INTEGER)
+            ) {
+              return Number(res);
+            }
+            return res;
+          }
+
+          switch (op) {
+            case "+":
+              return a + b;
+            case "-":
+              return a - b;
+            case "*":
+              return a * b;
+            case "/":
+              return a / b;
+            case "===":
+              return a === b;
+            case "!==":
+              return a !== b;
+            case "<":
+              return a < b;
+            case ">":
+              return a > b;
+            case "<=":
+              return a <= b;
+            case ">=":
+              return a >= b;
+            default:
+              throw new Error(`Operator ${op} not implemented`);
+          }
         },
         _slice: (obj: any, start: any, stop: any, step: any) => {
           const len = obj.length;

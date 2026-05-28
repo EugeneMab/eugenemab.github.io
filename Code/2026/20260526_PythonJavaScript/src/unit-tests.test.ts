@@ -144,7 +144,7 @@ describe("Compiler", () => {
     const js = compiler.compileJS(parser.parse());
     expect(js).toContain("a = 100");
     expect(js).toContain("b = 30");
-    expect(js).toContain("return (a - b)");
+    expect(js).toContain('return (await runtime._binop("-", a, b))');
   });
 
   it("should execute JS and return result", async () => {
