@@ -83,7 +83,7 @@ export interface PassNode {
 
 export interface ForNode {
   type: "For";
-  iterator: string;
+  iterators: string[];
   iterable?: ASTNode;
   start?: ASTNode;
   stop?: ASTNode;
@@ -308,10 +308,16 @@ export class Parser {
   }
 
   private parseFor(): ForNode {
-    const iterator = this.consume(
-      TokenType.IDENTIFIER,
-      "Expect iterator name",
-    ).value;
+    const iterators: string[] = [];
+    iterators.push(
+      this.consume(TokenType.IDENTIFIER, "Expect iterator name").value,
+    );
+    while (this.match(TokenType.COMMA)) {
+      iterators.push(
+        this.consume(TokenType.IDENTIFIER, "Expect iterator name").value,
+      );
+    }
+
     let iterable: ASTNode | undefined;
     let start: ASTNode | undefined;
     let stop: ASTNode | undefined;
@@ -319,6 +325,9 @@ export class Parser {
     if (this.match(TokenType.IN)) {
       iterable = this.parseExpression();
     } else if (this.match(TokenType.FROM)) {
+      if (iterators.length > 1) {
+        throw new Error("Multiple iterators not supported with 'from ... to'");
+      }
       start = this.parseExpression();
       this.consume(TokenType.TO, "Expect 'to' after 'from'");
       stop = this.parseExpression();
@@ -335,7 +344,7 @@ export class Parser {
       if (node) body.push(node);
     }
     this.consume(TokenType.DEDENT, "Expect dedent after for body");
-    return { type: "For", iterator, iterable, start, stop, body };
+    return { type: "For", iterators, iterable, start, stop, body };
   }
 
   private parseDoWhile(): DoWhileNode {

@@ -31,10 +31,10 @@
     - [x] **Membership:** `in` and `not in` for all collection types.
 
 ## 🌟 Level 3: Consolidating the Runtime
-- [ ] **Step 15: Global Built-in Functions**
-    - [ ] **Aggregation:** `min()`, `max()`, `sum()`, `any()`, `all()`.
-    - [ ] **Iteration Helpers:** `enumerate()`, `zip()`, `reversed()`, `sorted()`.
-    - [ ] **Type Checkers:** `type()`, `isinstance()`, `callable()`.
+- [x] **Step 15: Global Built-in Functions**
+    - [x] **Aggregation:** `min()`, `max()`, `sum()`, `any()`, `all()`.
+    - [x] **Iteration Helpers:** `enumerate()`, `zip()`, `reversed()`, `sorted()`.
+    - [x] **Type Checkers:** `type()`, `isinstance()`, `callable()`.
 - [ ] **Step 16: Advanced Scoping & Assignment**
     - [ ] **Scope Control:** `global` and `nonlocal` keywords for explicit variable binding.
     - [ ] **Unpacking:** Multiple assignment (`x, y = 1, 2`) and star unpacking (`x, *y = [1, 2, 3]`).

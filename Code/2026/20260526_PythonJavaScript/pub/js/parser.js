@@ -104,7 +104,11 @@ export class Parser {
         return { type: "While", condition, body };
     }
     parseFor() {
-        const iterator = this.consume(TokenType.IDENTIFIER, "Expect iterator name").value;
+        const iterators = [];
+        iterators.push(this.consume(TokenType.IDENTIFIER, "Expect iterator name").value);
+        while (this.match(TokenType.COMMA)) {
+            iterators.push(this.consume(TokenType.IDENTIFIER, "Expect iterator name").value);
+        }
         let iterable;
         let start;
         let stop;
@@ -112,6 +116,9 @@ export class Parser {
             iterable = this.parseExpression();
         }
         else if (this.match(TokenType.FROM)) {
+            if (iterators.length > 1) {
+                throw new Error("Multiple iterators not supported with 'from ... to'");
+            }
             start = this.parseExpression();
             this.consume(TokenType.TO, "Expect 'to' after 'from'");
             stop = this.parseExpression();
@@ -129,7 +136,7 @@ export class Parser {
                 body.push(node);
         }
         this.consume(TokenType.DEDENT, "Expect dedent after for body");
-        return { type: "For", iterator, iterable, start, stop, body };
+        return { type: "For", iterators, iterable, start, stop, body };
     }
     parseDoWhile() {
         this.consume(TokenType.COLON, "Expect ':' after do");

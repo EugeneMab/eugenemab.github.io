@@ -38,6 +38,18 @@ const BUILTINS = new Set([
   "bytes",
   "bytearray",
   "dict",
+  "min",
+  "max",
+  "sum",
+  "any",
+  "all",
+  "enumerate",
+  "zip",
+  "reversed",
+  "sorted",
+  "type",
+  "isinstance",
+  "callable",
 ]);
 
 const SYSTEM_HELPERS = [
@@ -238,6 +250,7 @@ export class Compiler {
         stack.push(...node.body);
       } else if (node.type === "For") {
         used.add("__iter");
+        if (node.iterators.length > 1) used.add("__item");
         if (node.iterable) stack.push(node.iterable);
         if (node.start) {
           stack.push(node.start);
@@ -314,7 +327,7 @@ export class Compiler {
       if (node.type === "Assignment") {
         vars.add(node.target);
       } else if (node.type === "For") {
-        vars.add(node.iterator);
+        for (const it of node.iterators) vars.add(it);
         stack.push(...node.body);
       } else if (node.type === "With") {
         if (node.target) vars.add(node.target);
@@ -556,7 +569,14 @@ export class Compiler {
       // Use a runtime helper to handle both sync and async iterators efficiently
       let js = `for await (const ${tmpItem} of __iter(${iterable})) {\n`;
       this.indentLevel++;
-      js += `${this.indent()}${node.iterator} = ${tmpItem};\n`;
+      if (node.iterators.length === 1) {
+        js += `${this.indent()}${node.iterators[0]} = ${tmpItem};\n`;
+      } else {
+        // Multi-iterator unpacking
+        for (let i = 0; i < node.iterators.length; i++) {
+          js += `${this.indent()}${node.iterators[i]} = __item(${tmpItem}, ${i});\n`;
+        }
+      }
       for (const stmt of node.body) {
         const compiled = this.compileNode(stmt);
         if (compiled) js += `${this.indent()}${compiled};\n`;
@@ -567,8 +587,9 @@ export class Compiler {
     } else if (node.start && node.stop) {
       const start = this.compileNode(node.start);
       const stop = this.compileNode(node.stop);
+      const iterator = node.iterators[0];
       // Use the already-declared iterator directly
-      let js = `for (${node.iterator} = ${start}; __lt(${node.iterator}, ${stop}); ${node.iterator} = __add(${node.iterator}, 1)) {\n`;
+      let js = `for (${iterator} = ${start}; __lt(${iterator}, ${stop}); ${iterator} = __add(${iterator}, 1)) {\n`;
       this.indentLevel++;
       for (const stmt of node.body) {
         const compiled = this.compileNode(stmt);

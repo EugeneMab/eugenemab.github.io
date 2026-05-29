@@ -62,6 +62,24 @@ const samples = [
       "__in",
     ],
   },
+  {
+    name: "Global Built-ins",
+    value: "sample/builtins.py",
+    js: [
+      "sum",
+      "min",
+      "max",
+      "any",
+      "all",
+      "enumerate",
+      "zip",
+      "reversed",
+      "sorted",
+      "type",
+      "isinstance",
+      "callable",
+    ],
+  },
 ];
 
 test("verify all samples in UI including JS", async ({ page }) => {

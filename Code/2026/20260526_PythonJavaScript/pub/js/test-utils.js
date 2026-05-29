@@ -137,6 +137,125 @@ export function getJSRuntime(logs = []) {
                 return new Uint8Array(val);
             return new Uint8Array();
         },
+        dict: (val) => {
+            if (val === undefined)
+                return {};
+            if (Array.isArray(val)) {
+                const res = {};
+                for (const item of val) {
+                    if (Array.isArray(item) && item.length === 2) {
+                        res[item[0]] = item[1];
+                    }
+                }
+                return res;
+            }
+            return { ...val };
+        },
+        sum: (iterable, start = 0) => {
+            let res = start;
+            for (const item of iterable) {
+                res = runtime.__add(res, item);
+            }
+            return res;
+        },
+        any: (iterable) => {
+            for (const item of iterable) {
+                if (runtime.__true(item))
+                    return true;
+            }
+            return false;
+        },
+        all: (iterable) => {
+            for (const item of iterable) {
+                if (!runtime.__true(item))
+                    return false;
+            }
+            return true;
+        },
+        max: (...args) => {
+            let iterable = args;
+            if (args.length === 1) {
+                iterable = args[0];
+            }
+            let res = undefined;
+            for (const item of iterable) {
+                if (res === undefined || runtime.__gt(item, res))
+                    res = item;
+            }
+            if (res === undefined)
+                throw new Error("max() arg is an empty sequence");
+            return res;
+        },
+        min: (...args) => {
+            let iterable = args;
+            if (args.length === 1) {
+                iterable = args[0];
+            }
+            let res = undefined;
+            for (const item of iterable) {
+                if (res === undefined || runtime.__lt(item, res))
+                    res = item;
+            }
+            if (res === undefined)
+                throw new Error("min() arg is an empty sequence");
+            return res;
+        },
+        enumerate: (iterable, start = 0) => {
+            const res = [];
+            let i = start;
+            for (const item of iterable) {
+                res.push(new Tuple([i++, item]));
+            }
+            return res;
+        },
+        zip: (...iterables) => {
+            const iters = iterables.map((it) => Array.from(it));
+            const minLen = Math.min(...iters.map((it) => it.length));
+            const res = [];
+            for (let i = 0; i < minLen; i++) {
+                res.push(new Tuple(iters.map((it) => it[i])));
+            }
+            return res;
+        },
+        reversed: (seq) => {
+            const arr = Array.from(seq);
+            arr.reverse();
+            return arr;
+        },
+        sorted: (iterable, _key, reverse = false) => {
+            const arr = Array.from(iterable);
+            arr.sort((a, b) => {
+                const va = a;
+                const vb = b;
+                if (runtime.__lt(va, vb))
+                    return reverse ? 1 : -1;
+                if (runtime.__gt(va, vb))
+                    return reverse ? -1 : 1;
+                return 0;
+            });
+            return arr;
+        },
+        type: (obj) => {
+            if (obj === null)
+                return "NoneType";
+            if (obj instanceof Tuple)
+                return "tuple";
+            if (obj instanceof Set)
+                return "set";
+            if (obj instanceof Uint8Array)
+                return "bytes";
+            if (Array.isArray(obj))
+                return "list";
+            return typeof obj;
+        },
+        isinstance: (obj, typeInfo) => {
+            const t = runtime.type(obj);
+            if (Array.isArray(typeInfo)) {
+                return typeInfo.some((ti) => t === ti);
+            }
+            return t === typeInfo;
+        },
+        callable: (obj) => typeof obj === "function",
         __true: (val) => {
             if (val === null || val === undefined)
                 return false;
