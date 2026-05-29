@@ -14,7 +14,7 @@ const samples = [
   {
     name: "Complex Math",
     value: "sample/complex.py",
-    js: ["+", "*", "/"],
+    js: ["__add", "__mul", "__div"],
   },
   {
     name: "Function Parameters",
@@ -24,12 +24,12 @@ const samples = [
   {
     name: "Lists & Slicing",
     value: "sample/slicing.py",
-    js: ["runtime._slice", "[10, 20, 30, 40, 50]"],
+    js: ["__slice", "[10, 20, 30, 40, 50]"],
   },
   {
     name: "Comprehensions",
     value: "sample/comprehensions.py",
-    js: ["for await", "res.push", "const i"],
+    js: ["__iter", "res.push", "const i"],
   },
   {
     name: "Context Managers",
@@ -39,7 +39,7 @@ const samples = [
   {
     name: "Types & Casting",
     value: "sample/types_casting.py",
-    js: ["int", "float", "bool", "chr", "ord", "runtime._is_truthy"],
+    js: ["int", "float", "bool", "chr", "ord", "__true"],
   },
 ];
 

@@ -278,9 +278,13 @@ export class Lexer {
     };
 
     const type = keywords[value] || TokenType.IDENTIFIER;
-    if (type === TokenType.IDENTIFIER && value.startsWith("__tmp")) {
+    if (
+      type === TokenType.IDENTIFIER &&
+      value.startsWith("__") &&
+      !value.endsWith("__")
+    ) {
       throw new Error(
-        `User-defined identifiers starting with '__tmp' are reserved at line ${this.line}, col ${startCol}`,
+        `User-defined identifiers starting with '__' (and not ending with '__') are reserved at line ${this.line}, col ${startCol}`,
       );
     }
     return { type, value, line: this.line, col: startCol };
