@@ -10,6 +10,12 @@ const BUILTINS = new Set([
     "bool",
     "chr",
     "ord",
+    "tuple",
+    "set",
+    "frozenset",
+    "bytes",
+    "bytearray",
+    "dict",
 ]);
 const SYSTEM_HELPERS = [
     "__add",
@@ -28,6 +34,10 @@ const SYSTEM_HELPERS = [
     "__item",
     "__iter",
     "__slice",
+    "__tuple",
+    "__set",
+    "__dict",
+    "__bytes",
 ];
 const OP_TO_HELPER = {
     "+": "__add",
@@ -199,6 +209,22 @@ export class Compiler {
             else if (node.type === "List") {
                 stack.push(...node.elements);
             }
+            else if (node.type === "Tuple") {
+                used.add("__tuple");
+                stack.push(...node.elements);
+            }
+            else if (node.type === "Set") {
+                used.add("__set");
+                stack.push(...node.elements);
+            }
+            else if (node.type === "Dict") {
+                used.add("__dict");
+                for (const e of node.entries)
+                    stack.push(e.key, e.value);
+            }
+            else if (node.type === "Bytes") {
+                used.add("__bytes");
+            }
             else if (node.type === "Subscript") {
                 used.add("__item");
                 stack.push(node.value, node.index);
@@ -213,6 +239,7 @@ export class Compiler {
                     stack.push(node.step);
             }
             else if (node.type === "ListComprehension" ||
+                node.type === "SetComprehension" ||
                 node.type === "DictComprehension") {
                 used.add("__iter");
                 stack.push(node.iterable);
@@ -220,7 +247,8 @@ export class Compiler {
                     used.add("__true");
                     stack.push(node.condition);
                 }
-                if (node.type === "ListComprehension") {
+                if (node.type === "ListComprehension" ||
+                    node.type === "SetComprehension") {
                     stack.push(node.expression);
                 }
                 else {
@@ -307,10 +335,20 @@ export class Compiler {
                 return this.compileCall(node);
             case "List":
                 return `[${node.elements.map((e) => this.compileNode(e)).join(", ")}]`;
+            case "Tuple":
+                return `__tuple([${node.elements.map((e) => this.compileNode(e)).join(", ")}])`;
+            case "Set":
+                return `__set([${node.elements.map((e) => this.compileNode(e)).join(", ")}])`;
+            case "Dict":
+                return `__dict([${node.entries.map((e) => `[${this.compileNode(e.key)}, ${this.compileNode(e.value)}]`).join(", ")}])`;
+            case "Bytes":
+                return `__bytes(${JSON.stringify(node.value)})`;
             case "Subscript":
                 return this.compileSubscript(node);
             case "ListComprehension":
                 return this.compileListComprehension(node);
+            case "SetComprehension":
+                return this.compileSetComprehension(node);
             case "DictComprehension":
                 return this.compileDictComprehension(node);
             case "FString":
@@ -550,6 +588,22 @@ export class Compiler {
       for await (const ${tmpItem} of __iter(${iterable})) {
         const ${node.item} = ${tmpItem};
         if (${cond}) res.push(${expr});
+      }
+      return res;
+    })())`;
+    }
+    compileSetComprehension(node) {
+        const expr = this.compileNode(node.expression);
+        const iterable = this.compileNode(node.iterable);
+        const cond = node.condition
+            ? `__true(${this.compileNode(node.condition)})`
+            : "true";
+        const tmpItem = this.nextTmp("item");
+        return `(await (async () => {
+      const res = new Set();
+      for await (const ${tmpItem} of __iter(${iterable})) {
+        const ${node.item} = ${tmpItem};
+        if (${cond}) res.add(${expr});
       }
       return res;
     })())`;

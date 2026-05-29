@@ -41,6 +41,11 @@ const samples = [
     value: "sample/types_casting.py",
     js: ["int", "float", "bool", "chr", "ord", "__true"],
   },
+  {
+    name: "Core Collection Types",
+    value: "sample/collections.py",
+    js: ["__tuple", "__set", "__dict", "__bytes"],
+  },
 ];
 
 test("verify all samples in UI including JS", async ({ page }) => {

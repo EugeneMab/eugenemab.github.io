@@ -42,6 +42,7 @@ export enum TokenType {
   DOT = "DOT",
   STRING = "STRING",
   FSTRING = "FSTRING",
+  BYTES = "BYTES",
   DO = "DO",
   FROM = "FROM",
   TO = "TO",
@@ -117,6 +118,11 @@ export class Lexer {
         const startCol = this.col;
         this.advance(); // consume 'r'
         return this.handleString(this.advance(), false, startCol, true); // consume quote
+      }
+      if ((char === "b" || char === "B") && (next === '"' || next === "'")) {
+        const startCol = this.col;
+        this.advance(); // consume 'b'
+        return this.handleString(this.advance(), false, startCol, false, true); // consume quote
       }
       return this.handleIdentifier();
     }
@@ -314,6 +320,7 @@ export class Lexer {
     isFString: boolean = false,
     startCol: number = this.col,
     isRaw: boolean = false,
+    isBytes: boolean = false,
   ): Token {
     let value = "";
     while (this.pos < this.source.length && this.peek() !== quote) {
@@ -365,8 +372,12 @@ export class Lexer {
     }
 
     this.advance(); // Skip closing quote
+    let type = TokenType.STRING;
+    if (isFString) type = TokenType.FSTRING;
+    else if (isBytes) type = TokenType.BYTES;
+
     return {
-      type: isFString ? TokenType.FSTRING : TokenType.STRING,
+      type,
       value,
       line: this.line,
       col: startCol,

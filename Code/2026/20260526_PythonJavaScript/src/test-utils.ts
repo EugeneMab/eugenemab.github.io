@@ -1,13 +1,41 @@
 // src/test-utils.ts
 
 export function getJSRuntime(logs: any[] = []) {
+  class Tuple extends Array {
+    constructor(...args: any[]) {
+      super();
+      const elements =
+        args.length === 1 && Array.isArray(args[0]) ? args[0] : args;
+      this.push(...elements);
+      Object.freeze(this);
+    }
+    toString() {
+      if (this.length === 1) return `(${this[0]},)`;
+      return `(${this.join(", ")})`;
+    }
+  }
+
   const runtime: any = {
     print: (val: any) => {
-      if (Array.isArray(val)) {
-        logs.push(`[${val.map((v) => String(v)).join(", ")}]`);
-      } else {
-        logs.push(String(val));
-      }
+      const format = (v: any): string => {
+        if (v instanceof Tuple) return v.toString();
+        if (v instanceof Set)
+          return `set([${Array.from(v)
+            .map((x) => format(x))
+            .join(", ")}])`;
+        if (v instanceof Uint8Array)
+          return `b'${Array.from(v)
+            .map((b) => "\\x" + b.toString(16).padStart(2, "0"))
+            .join("")}'`;
+        if (Array.isArray(v)) return `[${v.map((x) => format(x)).join(", ")}]`;
+        if (v !== null && typeof v === "object" && !(v instanceof Date)) {
+          return `{${Object.entries(v)
+            .map(([k, val]) => `${JSON.stringify(k)}: ${format(val)}`)
+            .join(", ")}}`;
+        }
+        return String(v);
+      };
+      logs.push(format(val));
       return 0;
     },
     sleep: async (ms: number) => {
@@ -24,6 +52,8 @@ export function getJSRuntime(logs: any[] = []) {
     },
     len: (obj: any) => {
       if (Array.isArray(obj) || typeof obj === "string") return obj.length;
+      if (obj instanceof Set || obj instanceof Map) return obj.size;
+      if (obj instanceof Uint8Array) return obj.length;
       if (typeof obj === "object") return Object.keys(obj).length;
       return 0;
     },
@@ -89,7 +119,19 @@ export function getJSRuntime(logs: any[] = []) {
       if (typeof val === "string" && Array.from(val).length === 1) {
         return val.codePointAt(0)!;
       }
-      throw new Error("ord() expected a string of length 1");
+      if (val instanceof Uint8Array && val.length === 1) {
+        return val[0];
+      }
+      throw new Error(
+        "ord() expected a string of length 1 or bytes of length 1",
+      );
+    },
+    tuple: (val: any) => new Tuple(val),
+    set: (val: any) => new Set(val),
+    bytes: (val: any) => {
+      if (typeof val === "string") return new TextEncoder().encode(val);
+      if (Array.isArray(val)) return new Uint8Array(val);
+      return new Uint8Array();
     },
     __true: (val: any) => {
       if (val === null || val === undefined) return false;
@@ -98,6 +140,8 @@ export function getJSRuntime(logs: any[] = []) {
       if (typeof val === "bigint") return val !== 0n;
       if (typeof val === "string") return val.length > 0;
       if (Array.isArray(val)) return val.length > 0;
+      if (val instanceof Set || val instanceof Map) return val.size > 0;
+      if (val instanceof Uint8Array) return val.length > 0;
       if (typeof val === "object") {
         if (Object.keys(val).length === 0) return false;
         return true;
@@ -116,7 +160,9 @@ export function getJSRuntime(logs: any[] = []) {
       if (
         typeof idx === "number" &&
         idx < 0 &&
-        (Array.isArray(obj) || typeof obj === "string")
+        (Array.isArray(obj) ||
+          typeof obj === "string" ||
+          obj instanceof Uint8Array)
       ) {
         return obj[obj.length + idx];
       }
@@ -233,9 +279,24 @@ export function getJSRuntime(logs: any[] = []) {
         for (let i = start; i > stop; i += step)
           if (i >= 0 && i < len) res.push(obj[i]);
       }
-      return typeof obj === "string" ? res.join("") : res;
+      if (typeof obj === "string") return res.join("");
+      if (obj instanceof Uint8Array) return new Uint8Array(res);
+      if (obj instanceof Tuple) return new Tuple(res);
+      return res;
     },
     __iter: (obj: any) => obj,
+    __tuple: (elements: any[]) => new Tuple(elements),
+    __set: (elements: any[]) => new Set(elements),
+    __dict: (entries: [any, any][]) => {
+      const res: any = {};
+      for (const [k, v] of entries) res[k] = v;
+      return res;
+    },
+    __bytes: (val: string) => {
+      const res = new Uint8Array(val.length);
+      for (let i = 0; i < val.length; i++) res[i] = val.charCodeAt(i);
+      return res;
+    },
   };
   return runtime;
 }

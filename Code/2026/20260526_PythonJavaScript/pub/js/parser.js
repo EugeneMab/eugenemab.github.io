@@ -293,6 +293,9 @@ export class Parser {
         else if (this.match(TokenType.STRING)) {
             expr = { type: "Literal", value: this.previous().value };
         }
+        else if (this.match(TokenType.BYTES)) {
+            expr = { type: "Bytes", value: this.previous().value };
+        }
         else if (this.match(TokenType.FSTRING)) {
             expr = this.parseFString(this.previous().value);
         }
@@ -306,14 +309,13 @@ export class Parser {
             expr = { type: "Identifier", name: this.previous().value };
         }
         else if (this.match(TokenType.LPAREN)) {
-            expr = this.parseExpression();
-            this.consume(TokenType.RPAREN, "Expect ')' after expression");
+            expr = this.parseTupleOrParenthesized();
         }
         else if (this.match(TokenType.LSQUARE)) {
             expr = this.parseList();
         }
         else if (this.match(TokenType.LBRACE)) {
-            expr = this.parseDict();
+            expr = this.parseDictOrSet();
         }
         else {
             const token = this.peek();
@@ -416,20 +418,90 @@ export class Parser {
         this.consume(TokenType.RSQUARE, "Expect ']' after list");
         return { type: "List", elements };
     }
-    parseDict() {
-        const key = this.parseExpression();
-        this.consume(TokenType.COLON, "Expect ':' after key in dict comprehension");
-        const value = this.parseExpression();
-        this.consume(TokenType.FOR, "Expect 'for' in dict comprehension");
-        const item = this.consume(TokenType.IDENTIFIER, "Expect variable name").value;
-        this.consume(TokenType.IN, "Expect 'in'");
-        const iterable = this.parseExpression();
-        let condition = null;
-        if (this.match(TokenType.IF)) {
-            condition = this.parseExpression();
+    parseTupleOrParenthesized() {
+        if (this.match(TokenType.RPAREN)) {
+            return { type: "Tuple", elements: [] };
         }
-        this.consume(TokenType.RBRACE, "Expect '}' after dict comprehension");
-        return { type: "DictComprehension", key, value, item, iterable, condition };
+        const expr = this.parseExpression();
+        if (this.match(TokenType.COMMA)) {
+            const elements = [expr];
+            while (!this.check(TokenType.RPAREN)) {
+                elements.push(this.parseExpression());
+                if (!this.match(TokenType.COMMA))
+                    break;
+            }
+            this.consume(TokenType.RPAREN, "Expect ')' after tuple");
+            return { type: "Tuple", elements };
+        }
+        this.consume(TokenType.RPAREN, "Expect ')' after expression");
+        return expr;
+    }
+    parseDictOrSet() {
+        if (this.match(TokenType.RBRACE)) {
+            return { type: "Dict", entries: [] };
+        }
+        const firstExpr = this.parseExpression();
+        if (this.match(TokenType.COLON)) {
+            const value = this.parseExpression();
+            if (this.match(TokenType.FOR)) {
+                const item = this.consume(TokenType.IDENTIFIER, "Expect variable name").value;
+                this.consume(TokenType.IN, "Expect 'in'");
+                const iterable = this.parseExpression();
+                let condition = null;
+                if (this.match(TokenType.IF)) {
+                    condition = this.parseExpression();
+                }
+                this.consume(TokenType.RBRACE, "Expect '}' after dict comprehension");
+                return {
+                    type: "DictComprehension",
+                    key: firstExpr,
+                    value,
+                    item,
+                    iterable,
+                    condition,
+                };
+            }
+            else {
+                const entries = [{ key: firstExpr, value }];
+                while (this.match(TokenType.COMMA)) {
+                    if (this.check(TokenType.RBRACE))
+                        break;
+                    const k = this.parseExpression();
+                    this.consume(TokenType.COLON, "Expect ':' after key");
+                    const v = this.parseExpression();
+                    entries.push({ key: k, value: v });
+                }
+                this.consume(TokenType.RBRACE, "Expect '}' after dict");
+                return { type: "Dict", entries };
+            }
+        }
+        else if (this.match(TokenType.FOR)) {
+            const item = this.consume(TokenType.IDENTIFIER, "Expect variable name").value;
+            this.consume(TokenType.IN, "Expect 'in'");
+            const iterable = this.parseExpression();
+            let condition = null;
+            if (this.match(TokenType.IF)) {
+                condition = this.parseExpression();
+            }
+            this.consume(TokenType.RBRACE, "Expect '}' after set comprehension");
+            return {
+                type: "SetComprehension",
+                expression: firstExpr,
+                item,
+                iterable,
+                condition,
+            };
+        }
+        else {
+            const elements = [firstExpr];
+            while (this.match(TokenType.COMMA)) {
+                if (this.check(TokenType.RBRACE))
+                    break;
+                elements.push(this.parseExpression());
+            }
+            this.consume(TokenType.RBRACE, "Expect '}' after set");
+            return { type: "Set", elements };
+        }
     }
     parseSubscript(value) {
         let start = null;

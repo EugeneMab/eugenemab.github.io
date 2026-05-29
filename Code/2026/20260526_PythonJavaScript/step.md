@@ -21,10 +21,10 @@
     - [x] **Strings:** Implement `chr()`, `ord()`, and raw strings (`r"..."`).
     - [x] **Booleans:** Strict `bool()` casting and truthiness evaluation (`_is_truthy` helper).
     - [x] **Large Numbers:** `BigInt` for arbitrary precision `long` semantics.
-- [ ] **Step 13: Core Collection Types**
-    - [ ] **Tuples:** Implement immutable `tuple` (using `Object.freeze` or specialized class).
-    - [ ] **Sets:** Implement `set` and `frozenset` using JS `Set`.
-    - [ ] **Bytes:** `bytes` and `bytearray` parity using `Uint8Array`.
+- [x] **Step 13: Core Collection Types**
+    - [x] **Tuples:** Implement immutable `tuple` (using `Object.freeze` or specialized class).
+    - [x] **Sets:** Implement `set` and `frozenset` using JS `Set`.
+    - [x] **Bytes:** `bytes` and `bytearray` parity using `Uint8Array`.
 - [ ] **Step 14: Foundational Operators**
     - [ ] **Arithmetic:** Floor division (`//`), Modulo (`%`), Exponentiation (`**`).
     - [ ] **Bitwise:** `&`, `|`, `^`, `~`, `<<`, `>>`.
