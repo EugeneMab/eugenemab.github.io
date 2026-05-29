@@ -349,48 +349,127 @@ self.onmessage = async (e) => {
           return a >= b;
         },
         __floordiv: (a: any, b: any) => {
-          if (typeof a === "bigint" && typeof b === "bigint") return a / b;
+          if (
+            (typeof a === "bigint" || Number.isInteger(a)) &&
+            (typeof b === "bigint" || Number.isInteger(b))
+          ) {
+            const ab = BigInt(a);
+            const bb = BigInt(b);
+            let res = ab / bb;
+            if (ab < 0n !== bb < 0n && ab % bb !== 0n) res -= 1n;
+            return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+              res >= BigInt(Number.MIN_SAFE_INTEGER)
+              ? Number(res)
+              : res;
+          }
           return Math.floor(Number(a) / Number(b));
         },
         __mod: (a: any, b: any) => {
-          if (typeof a === "bigint" && typeof b === "bigint") return a % b;
+          if (
+            (typeof a === "bigint" || Number.isInteger(a)) &&
+            (typeof b === "bigint" || Number.isInteger(b))
+          ) {
+            const ab = BigInt(a);
+            const bb = BigInt(b);
+            const res = ab % bb;
+            const res_py = ((res % bb) + bb) % bb;
+            return res_py <= BigInt(Number.MAX_SAFE_INTEGER) &&
+              res_py >= BigInt(Number.MIN_SAFE_INTEGER)
+              ? Number(res_py)
+              : res_py;
+          }
           const res = Number(a) % Number(b);
           return ((res % Number(b)) + Number(b)) % Number(b); // Python-style modulo
         },
         __pow: (a: any, b: any) => {
-          if (typeof a === "bigint" && typeof b === "bigint") {
-            if (b < 0n) return 0n; // Simple BigInt pow doesn't support negative
-            return a ** b;
+          if (
+            (typeof a === "bigint" || Number.isInteger(a)) &&
+            (typeof b === "bigint" || Number.isInteger(b))
+          ) {
+            const ab = BigInt(a);
+            const bb = BigInt(b);
+            if (bb < 0n) return Math.pow(Number(a), Number(b));
+            const res = ab ** bb;
+            return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+              res >= BigInt(Number.MIN_SAFE_INTEGER)
+              ? Number(res)
+              : res;
           }
           return Math.pow(Number(a), Number(b));
         },
         __and_bw: (a: any, b: any) => {
-          if (typeof a === "bigint" || typeof b === "bigint")
-            return BigInt(a) & BigInt(b);
+          if (
+            (typeof a === "bigint" || Number.isInteger(a)) &&
+            (typeof b === "bigint" || Number.isInteger(b))
+          ) {
+            const res = BigInt(a) & BigInt(b);
+            return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+              res >= BigInt(Number.MIN_SAFE_INTEGER)
+              ? Number(res)
+              : res;
+          }
           return a & b;
         },
         __or_bw: (a: any, b: any) => {
-          if (typeof a === "bigint" || typeof b === "bigint")
-            return BigInt(a) | BigInt(b);
+          if (
+            (typeof a === "bigint" || Number.isInteger(a)) &&
+            (typeof b === "bigint" || Number.isInteger(b))
+          ) {
+            const res = BigInt(a) | BigInt(b);
+            return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+              res >= BigInt(Number.MIN_SAFE_INTEGER)
+              ? Number(res)
+              : res;
+          }
           return a | b;
         },
         __xor_bw: (a: any, b: any) => {
-          if (typeof a === "bigint" || typeof b === "bigint")
-            return BigInt(a) ^ BigInt(b);
+          if (
+            (typeof a === "bigint" || Number.isInteger(a)) &&
+            (typeof b === "bigint" || Number.isInteger(b))
+          ) {
+            const res = BigInt(a) ^ BigInt(b);
+            return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+              res >= BigInt(Number.MIN_SAFE_INTEGER)
+              ? Number(res)
+              : res;
+          }
           return a ^ b;
         },
         __lshift: (a: any, b: any) => {
-          if (typeof a === "bigint" || typeof b === "bigint")
-            return BigInt(a) << BigInt(b);
+          if (
+            (typeof a === "bigint" || Number.isInteger(a)) &&
+            (typeof b === "bigint" || Number.isInteger(b))
+          ) {
+            const res = BigInt(a) << BigInt(b);
+            return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+              res >= BigInt(Number.MIN_SAFE_INTEGER)
+              ? Number(res)
+              : res;
+          }
           return a << b;
         },
         __rshift: (a: any, b: any) => {
-          if (typeof a === "bigint" || typeof b === "bigint")
-            return BigInt(a) >> BigInt(b);
+          if (
+            (typeof a === "bigint" || Number.isInteger(a)) &&
+            (typeof b === "bigint" || Number.isInteger(b))
+          ) {
+            const res = BigInt(a) >> BigInt(b);
+            return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+              res >= BigInt(Number.MIN_SAFE_INTEGER)
+              ? Number(res)
+              : res;
+          }
           return a >> b;
         },
         __invert: (a: any) => {
-          if (typeof a === "bigint") return ~a;
+          if (typeof a === "bigint" || Number.isInteger(a)) {
+            const res = ~BigInt(a);
+            return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+              res >= BigInt(Number.MIN_SAFE_INTEGER)
+              ? Number(res)
+              : res;
+          }
           return ~a;
         },
         __in: (item: any, container: any) => {

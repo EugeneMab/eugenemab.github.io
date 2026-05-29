@@ -64,9 +64,13 @@ def main():
     l = [1, 2, 3]
     s = {4, 5, 6}
     d = {"a": 1, "b": 2}
+    t = (7, 8, 9)
+    b = b"abc"
     print(1 in l)
     print(4 in s)
     print("a" in d)
+    print(7 in t)
+    print(97 in b) # 'a' is 97
     print(10 not in l)
     print(10 not in s)
     print("z" not in d)
@@ -79,6 +83,30 @@ def main():
     expect(logs[3]).toBe("true");
     expect(logs[4]).toBe("true");
     expect(logs[5]).toBe("true");
+    expect(logs[6]).toBe("true");
+    expect(logs[7]).toBe("true");
+  });
+
+  it("should support BigInt arithmetic and bitwise ops", async () => {
+    const code = `
+def main():
+    a = 1000000000000000000000000
+    b = 3
+    print(a // b)
+    print(a % b)
+    print(-a % b)
+    print(a & 1)
+    print(a | 1)
+    print(1 << 100)
+    return 0
+`;
+    const { logs } = await runPython(code);
+    expect(logs[0]).toBe("333333333333333333333333");
+    expect(logs[1]).toBe("1");
+    expect(logs[2]).toBe("2"); // Python style modulo for BigInt
+    expect(logs[3]).toBe("0");
+    expect(logs[4]).toBe("1000000000000000000000001");
+    expect(logs[5]).toBe("1267650600228229401496703205376");
   });
 
   it("should handle operator precedence correctly", async () => {
