@@ -72,7 +72,7 @@ export function getJSRuntime(logs: any[] = []) {
       );
     },
     bool: (val: any) => {
-      return runtime._is_truthy(val);
+      return runtime.__true(val);
     },
     chr: (val: any) => {
       const codePoint = Number(val);
@@ -91,7 +91,7 @@ export function getJSRuntime(logs: any[] = []) {
       }
       throw new Error("ord() expected a string of length 1");
     },
-    _is_truthy: (val: any) => {
+    __true: (val: any) => {
       if (val === null || val === undefined) return false;
       if (typeof val === "boolean") return val;
       if (typeof val === "number") return val !== 0;
@@ -104,77 +104,121 @@ export function getJSRuntime(logs: any[] = []) {
       }
       return true;
     },
-    _binop: (op: string, a: any, b: any) => {
-      const isAInt = typeof a === "bigint" || Number.isInteger(a);
-      const isBInt = typeof b === "bigint" || Number.isInteger(b);
-
-      if (isAInt && isBInt) {
-        const ba = BigInt(a);
-        const bb = BigInt(b);
-        let res;
-        switch (op) {
-          case "+":
-            res = ba + bb;
-            break;
-          case "-":
-            res = ba - bb;
-            break;
-          case "*":
-            res = ba * bb;
-            break;
-          case "/":
-            res = Number(ba) / Number(bb);
-            break;
-          case "===":
-            return ba === bb;
-          case "!==":
-            return ba !== bb;
-          case "<":
-            return ba < bb;
-          case ">":
-            return ba > bb;
-          case "<=":
-            return ba <= bb;
-          case ">=":
-            return ba >= bb;
-          default:
-            throw new Error(`Operator ${op} not implemented for integers`);
-        }
-        if (
-          res <= BigInt(Number.MAX_SAFE_INTEGER) &&
-          res >= BigInt(Number.MIN_SAFE_INTEGER)
-        ) {
-          return Number(res);
-        }
-        return res;
-      }
-
-      switch (op) {
-        case "+":
-          return a + b;
-        case "-":
-          return a - b;
-        case "*":
-          return a * b;
-        case "/":
-          return a / b;
-        case "===":
-          return a === b;
-        case "!==":
-          return a !== b;
-        case "<":
-          return a < b;
-        case ">":
-          return a > b;
-        case "<=":
-          return a <= b;
-        case ">=":
-          return a >= b;
-        default:
-          throw new Error(`Operator ${op} not implemented`);
-      }
+    __and: async (aFn: any, bFn: any) => {
+      const a = await aFn();
+      return runtime.__true(a) ? await bFn() : a;
     },
-    _slice: (obj: any, start: any, stop: any, step: any) => {
+    __or: async (aFn: any, bFn: any) => {
+      const a = await aFn();
+      return runtime.__true(a) ? a : await bFn();
+    },
+    __item: (obj: any, idx: any) => {
+      if (
+        typeof idx === "number" &&
+        idx < 0 &&
+        (Array.isArray(obj) || typeof obj === "string")
+      ) {
+        return obj[obj.length + idx];
+      }
+      return obj[idx];
+    },
+    __add: (a: any, b: any) => {
+      if (
+        (typeof a === "bigint" || Number.isInteger(a)) &&
+        (typeof b === "bigint" || Number.isInteger(b))
+      ) {
+        const res = BigInt(a) + BigInt(b);
+        return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+          res >= BigInt(Number.MIN_SAFE_INTEGER)
+          ? Number(res)
+          : res;
+      }
+      return a + b;
+    },
+    __sub: (a: any, b: any) => {
+      if (
+        (typeof a === "bigint" || Number.isInteger(a)) &&
+        (typeof b === "bigint" || Number.isInteger(b))
+      ) {
+        const res = BigInt(a) - BigInt(b);
+        return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+          res >= BigInt(Number.MIN_SAFE_INTEGER)
+          ? Number(res)
+          : res;
+      }
+      return a - b;
+    },
+    __mul: (a: any, b: any) => {
+      if (
+        (typeof a === "bigint" || Number.isInteger(a)) &&
+        (typeof b === "bigint" || Number.isInteger(b))
+      ) {
+        const res = BigInt(a) * BigInt(b);
+        return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+          res >= BigInt(Number.MIN_SAFE_INTEGER)
+          ? Number(res)
+          : res;
+      }
+      return a * b;
+    },
+    __div: (a: any, b: any) => {
+      return Number(a) / Number(b);
+    },
+    __eq: (a: any, b: any) => {
+      if (
+        (typeof a === "bigint" || Number.isInteger(a)) &&
+        (typeof b === "bigint" || Number.isInteger(b))
+      ) {
+        return BigInt(a) === BigInt(b);
+      }
+      return a === b;
+    },
+    __ne: (a: any, b: any) => {
+      if (
+        (typeof a === "bigint" || Number.isInteger(a)) &&
+        (typeof b === "bigint" || Number.isInteger(b))
+      ) {
+        return BigInt(a) !== BigInt(b);
+      }
+      return a !== b;
+    },
+    __lt: (a: any, b: any) => {
+      if (
+        (typeof a === "bigint" || Number.isInteger(a)) &&
+        (typeof b === "bigint" || Number.isInteger(b))
+      ) {
+        return BigInt(a) < BigInt(b);
+      }
+      return a < b;
+    },
+    __gt: (a: any, b: any) => {
+      if (
+        (typeof a === "bigint" || Number.isInteger(a)) &&
+        (typeof b === "bigint" || Number.isInteger(b))
+      ) {
+        return BigInt(a) > BigInt(b);
+      }
+      return a > b;
+    },
+    __le: (a: any, b: any) => {
+      if (
+        (typeof a === "bigint" || Number.isInteger(a)) &&
+        (typeof b === "bigint" || Number.isInteger(b))
+      ) {
+        return BigInt(a) <= BigInt(b);
+      }
+      return a <= b;
+    },
+    __ge: (a: any, b: any) => {
+      if (
+        (typeof a === "bigint" || Number.isInteger(a)) &&
+        (typeof b === "bigint" || Number.isInteger(b))
+      ) {
+        return BigInt(a) >= BigInt(b);
+      }
+      return a >= b;
+    },
+    __slice: (obj: any, start: any, stop: any, step: any) => {
       const len = obj.length;
       if (step === undefined || step === null) step = 1;
       if (start === undefined || start === null) start = step > 0 ? 0 : len - 1;
@@ -191,6 +235,7 @@ export function getJSRuntime(logs: any[] = []) {
       }
       return typeof obj === "string" ? res.join("") : res;
     },
+    __iter: (obj: any) => obj,
   };
   return runtime;
 }

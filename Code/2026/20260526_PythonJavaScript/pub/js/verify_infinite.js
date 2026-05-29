@@ -43,11 +43,7 @@ async function run() {
         len: (obj) => obj.length,
         abs: Math.abs,
         math: Math,
-        _slice: (obj, start, stop, _step) => {
-            // Basic slice implementation for verification script
-            return obj.slice(start, stop);
-        },
-        _is_truthy: (val) => {
+        __true: (val) => {
             if (val === null || val === undefined)
                 return false;
             if (typeof val === "boolean")
@@ -67,72 +63,105 @@ async function run() {
             }
             return true;
         },
-        _binop: (op, a, b) => {
-            const isAInt = typeof a === "bigint" || Number.isInteger(a);
-            const isBInt = typeof b === "bigint" || Number.isInteger(b);
-            if (isAInt && isBInt) {
-                const ba = BigInt(a);
-                const bb = BigInt(b);
-                let res;
-                switch (op) {
-                    case "+":
-                        res = ba + bb;
-                        break;
-                    case "-":
-                        res = ba - bb;
-                        break;
-                    case "*":
-                        res = ba * bb;
-                        break;
-                    case "/":
-                        res = Number(ba) / Number(bb);
-                        break;
-                    case "===":
-                        return ba === bb;
-                    case "!==":
-                        return ba !== bb;
-                    case "<":
-                        return ba < bb;
-                    case ">":
-                        return ba > bb;
-                    case "<=":
-                        return ba <= bb;
-                    case ">=":
-                        return ba >= bb;
-                    default:
-                        throw new Error(`Operator ${op} not implemented for integers`);
-                }
-                if (res <= BigInt(Number.MAX_SAFE_INTEGER) &&
-                    res >= BigInt(Number.MIN_SAFE_INTEGER)) {
-                    return Number(res);
-                }
-                return res;
-            }
-            switch (op) {
-                case "+":
-                    return a + b;
-                case "-":
-                    return a - b;
-                case "*":
-                    return a * b;
-                case "/":
-                    return a / b;
-                case "===":
-                    return a === b;
-                case "!==":
-                    return a !== b;
-                case "<":
-                    return a < b;
-                case ">":
-                    return a > b;
-                case "<=":
-                    return a <= b;
-                case ">=":
-                    return a >= b;
-                default:
-                    throw new Error(`Operator ${op} not implemented`);
-            }
+        __and: async (aFn, bFn) => {
+            const a = await aFn();
+            return runtime.__true(a) ? await bFn() : a;
         },
+        __or: async (aFn, bFn) => {
+            const a = await aFn();
+            return runtime.__true(a) ? a : await bFn();
+        },
+        __item: (obj, idx) => {
+            if (typeof idx === "number" &&
+                idx < 0 &&
+                (Array.isArray(obj) || typeof obj === "string")) {
+                return obj[obj.length + idx];
+            }
+            return obj[idx];
+        },
+        __add: (a, b) => {
+            if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                (typeof b === "bigint" || Number.isInteger(b))) {
+                const res = BigInt(a) + BigInt(b);
+                return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                    res >= BigInt(Number.MIN_SAFE_INTEGER)
+                    ? Number(res)
+                    : res;
+            }
+            return a + b;
+        },
+        __sub: (a, b) => {
+            if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                (typeof b === "bigint" || Number.isInteger(b))) {
+                const res = BigInt(a) - BigInt(b);
+                return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                    res >= BigInt(Number.MIN_SAFE_INTEGER)
+                    ? Number(res)
+                    : res;
+            }
+            return a - b;
+        },
+        __mul: (a, b) => {
+            if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                (typeof b === "bigint" || Number.isInteger(b))) {
+                const res = BigInt(a) * BigInt(b);
+                return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                    res >= BigInt(Number.MIN_SAFE_INTEGER)
+                    ? Number(res)
+                    : res;
+            }
+            return a * b;
+        },
+        __div: (a, b) => {
+            return Number(a) / Number(b);
+        },
+        __eq: (a, b) => {
+            if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                (typeof b === "bigint" || Number.isInteger(b))) {
+                return BigInt(a) === BigInt(b);
+            }
+            return a === b;
+        },
+        __ne: (a, b) => {
+            if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                (typeof b === "bigint" || Number.isInteger(b))) {
+                return BigInt(a) !== BigInt(b);
+            }
+            return a !== b;
+        },
+        __lt: (a, b) => {
+            if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                (typeof b === "bigint" || Number.isInteger(b))) {
+                return BigInt(a) < BigInt(b);
+            }
+            return a < b;
+        },
+        __gt: (a, b) => {
+            if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                (typeof b === "bigint" || Number.isInteger(b))) {
+                return BigInt(a) > BigInt(b);
+            }
+            return a > b;
+        },
+        __le: (a, b) => {
+            if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                (typeof b === "bigint" || Number.isInteger(b))) {
+                return BigInt(a) <= BigInt(b);
+            }
+            return a <= b;
+        },
+        __ge: (a, b) => {
+            if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                (typeof b === "bigint" || Number.isInteger(b))) {
+                return BigInt(a) >= BigInt(b);
+            }
+            return a >= b;
+        },
+        __slice: (obj, start, stop, _step) => {
+            // Basic slice implementation for verification script
+            return obj.slice(start, stop);
+        },
+        __iter: (obj) => obj,
     };
     console.log("Starting Execution (will terminate after 5 iterations)...");
     const wrappedJs = jsCode.replace("export async function main_wrapper", "async function main_wrapper");
