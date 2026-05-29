@@ -275,7 +275,20 @@ export class Parser {
     parsePrimary() {
         let expr;
         if (this.match(TokenType.NUMBER)) {
-            expr = { type: "Literal", value: parseInt(this.previous().value) };
+            const valStr = this.previous().value;
+            if (valStr.includes(".")) {
+                expr = { type: "Literal", value: parseFloat(valStr) };
+            }
+            else {
+                const val = BigInt(valStr);
+                if (val > BigInt(Number.MAX_SAFE_INTEGER) ||
+                    val < BigInt(Number.MIN_SAFE_INTEGER)) {
+                    expr = { type: "Literal", value: val };
+                }
+                else {
+                    expr = { type: "Literal", value: Number(val) };
+                }
+            }
         }
         else if (this.match(TokenType.STRING)) {
             expr = { type: "Literal", value: this.previous().value };

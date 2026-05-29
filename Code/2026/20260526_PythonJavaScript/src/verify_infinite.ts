@@ -51,6 +51,89 @@ async function run() {
       // Basic slice implementation for verification script
       return obj.slice(start, stop);
     },
+    _is_truthy: (val: any) => {
+      if (val === null || val === undefined) return false;
+      if (typeof val === "boolean") return val;
+      if (typeof val === "number") return val !== 0;
+      if (typeof val === "bigint") return val !== 0n;
+      if (typeof val === "string") return val.length > 0;
+      if (Array.isArray(val)) return val.length > 0;
+      if (typeof val === "object") {
+        if (Object.keys(val).length === 0) return false;
+        return true;
+      }
+      return true;
+    },
+    _binop: (op: string, a: any, b: any) => {
+      const isAInt = typeof a === "bigint" || Number.isInteger(a);
+      const isBInt = typeof b === "bigint" || Number.isInteger(b);
+
+      if (isAInt && isBInt) {
+        const ba = BigInt(a);
+        const bb = BigInt(b);
+        let res;
+        switch (op) {
+          case "+":
+            res = ba + bb;
+            break;
+          case "-":
+            res = ba - bb;
+            break;
+          case "*":
+            res = ba * bb;
+            break;
+          case "/":
+            res = Number(ba) / Number(bb);
+            break;
+          case "===":
+            return ba === bb;
+          case "!==":
+            return ba !== bb;
+          case "<":
+            return ba < bb;
+          case ">":
+            return ba > bb;
+          case "<=":
+            return ba <= bb;
+          case ">=":
+            return ba >= bb;
+          default:
+            throw new Error(`Operator ${op} not implemented for integers`);
+        }
+        if (
+          res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+          res >= BigInt(Number.MIN_SAFE_INTEGER)
+        ) {
+          return Number(res);
+        }
+        return res;
+      }
+
+      switch (op) {
+        case "+":
+          return a + b;
+        case "-":
+          return a - b;
+        case "*":
+          return a * b;
+        case "/":
+          return a / b;
+        case "===":
+          return a === b;
+        case "!==":
+          return a !== b;
+        case "<":
+          return a < b;
+        case ">":
+          return a > b;
+        case "<=":
+          return a <= b;
+        case ">=":
+          return a >= b;
+        default:
+          throw new Error(`Operator ${op} not implemented`);
+      }
+    },
   };
 
   console.log("Starting Execution (will terminate after 5 iterations)...");

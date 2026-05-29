@@ -107,13 +107,16 @@ export class Lexer {
 
     // Identifiers and Keywords
     if (this.isAlpha(char)) {
-      if (
-        (char === "f" || char === "F") &&
-        (this.peekNext() === '"' || this.peekNext() === "'")
-      ) {
+      const next = this.peekNext();
+      if ((char === "f" || char === "F") && (next === '"' || next === "'")) {
         const startCol = this.col;
         this.advance(); // consume 'f'
         return this.handleString(this.advance(), true, startCol); // consume quote
+      }
+      if ((char === "r" || char === "R") && (next === '"' || next === "'")) {
+        const startCol = this.col;
+        this.advance(); // consume 'r'
+        return this.handleString(this.advance(), false, startCol, true); // consume quote
       }
       return this.handleIdentifier();
     }
@@ -289,6 +292,16 @@ export class Lexer {
     while (this.pos < this.source.length && this.isDigit(this.peek())) {
       value += this.advance();
     }
+    if (
+      this.pos < this.source.length &&
+      this.peek() === "." &&
+      this.isDigit(this.peekNext())
+    ) {
+      value += this.advance(); // consume '.'
+      while (this.pos < this.source.length && this.isDigit(this.peek())) {
+        value += this.advance();
+      }
+    }
     return { type: TokenType.NUMBER, value, line: this.line, col: startCol };
   }
 
@@ -296,6 +309,7 @@ export class Lexer {
     quote: string,
     isFString: boolean = false,
     startCol: number = this.col,
+    isRaw: boolean = false,
   ): Token {
     let value = "";
     while (this.pos < this.source.length && this.peek() !== quote) {
@@ -303,30 +317,39 @@ export class Lexer {
         throw new Error(`Unterminated string at line ${this.line}`);
       }
       if (this.peek() === "\\") {
-        this.advance(); // Skip backslash
-        const escaped = this.advance();
-        switch (escaped) {
-          case "n":
-            value += "\n";
-            break;
-          case "t":
-            value += "\t";
-            break;
-          case "r":
-            value += "\r";
-            break;
-          case "\\":
-            value += "\\";
-            break;
-          case "'":
-            value += "'";
-            break;
-          case '"':
-            value += '"';
-            break;
-          default:
-            value += "\\" + escaped;
-            break;
+        if (isRaw) {
+          if (this.peekNext() === quote) {
+            value += this.advance(); // consume '\'
+            value += this.advance(); // consume quote
+          } else {
+            value += this.advance();
+          }
+        } else {
+          this.advance(); // Skip backslash
+          const escaped = this.advance();
+          switch (escaped) {
+            case "n":
+              value += "\n";
+              break;
+            case "t":
+              value += "\t";
+              break;
+            case "r":
+              value += "\r";
+              break;
+            case "\\":
+              value += "\\";
+              break;
+            case "'":
+              value += "'";
+              break;
+            case '"':
+              value += '"';
+              break;
+            default:
+              value += "\\" + escaped;
+              break;
+          }
         }
       } else {
         value += this.advance();

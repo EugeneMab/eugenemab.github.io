@@ -36,6 +36,11 @@ const samples = [
     value: "sample/context_managers.py",
     js: ["__enter__", "__exit__", "try", "finally"],
   },
+  {
+    name: "Types & Casting",
+    value: "sample/types_casting.py",
+    js: ["int", "float", "bool", "chr", "ord", "runtime._is_truthy"],
+  },
 ];
 
 test("verify all samples in UI including JS", async ({ page }) => {
