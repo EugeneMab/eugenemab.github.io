@@ -46,6 +46,22 @@ const samples = [
     value: "sample/collections.py",
     js: ["__tuple", "__set", "__dict", "__bytes"],
   },
+  {
+    name: "Foundational Operators",
+    value: "sample/operators.py",
+    js: [
+      "__floordiv",
+      "__mod",
+      "__pow",
+      "__and_bw",
+      "__or_bw",
+      "__xor_bw",
+      "__invert",
+      "__lshift",
+      "__rshift",
+      "__in",
+    ],
+  },
 ];
 
 test("verify all samples in UI including JS", async ({ page }) => {

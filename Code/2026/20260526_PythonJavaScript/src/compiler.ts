@@ -61,6 +61,16 @@ const SYSTEM_HELPERS = [
   "__set",
   "__dict",
   "__bytes",
+  "__pow",
+  "__floordiv",
+  "__mod",
+  "__and_bw",
+  "__or_bw",
+  "__xor_bw",
+  "__lshift",
+  "__rshift",
+  "__invert",
+  "__in",
 ];
 
 const OP_TO_HELPER: Record<string, string> = {
@@ -68,12 +78,21 @@ const OP_TO_HELPER: Record<string, string> = {
   "-": "__sub",
   "*": "__mul",
   "/": "__div",
+  "//": "__floordiv",
+  "%": "__mod",
+  "**": "__pow",
+  "&": "__and_bw",
+  "|": "__or_bw",
+  "^": "__xor_bw",
+  "<<": "__lshift",
+  ">>": "__rshift",
   "==": "__eq",
   "!=": "__ne",
   "<": "__lt",
   ">": "__gt",
   "<=": "__le",
   ">=": "__ge",
+  in: "__in",
 };
 
 export class Compiler {
@@ -200,10 +219,13 @@ export class Compiler {
           used.add("__and");
         } else if (node.operator === "or") {
           used.add("__or");
+        } else if (node.operator === "not in") {
+          used.add("__in");
         }
         stack.push(node.left, node.right);
       } else if (node.type === "UnaryExpression") {
         if (node.operator === "not") used.add("__true");
+        if (node.operator === "~") used.add("__invert");
         stack.push(node.argument);
       } else if (node.type === "If") {
         used.add("__true");
@@ -456,6 +478,10 @@ export class Compiler {
       return `(await __or(async () => ${left}, async () => ${right}))`;
     }
 
+    if (op === "not in") {
+      return `(!__in(${left}, ${right}))`;
+    }
+
     const helper = OP_TO_HELPER[op];
     if (helper) {
       return `${helper}(${left}, ${right})`;
@@ -469,6 +495,9 @@ export class Compiler {
     const op = node.operator;
     if (op === "not") {
       return `(!__true(${arg}))`;
+    }
+    if (op === "~") {
+      return `__invert(${arg})`;
     }
     return `${op}${arg}`;
   }

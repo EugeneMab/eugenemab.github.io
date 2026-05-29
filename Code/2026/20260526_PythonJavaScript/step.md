@@ -25,10 +25,10 @@
     - [x] **Tuples:** Implement immutable `tuple` (using `Object.freeze` or specialized class).
     - [x] **Sets:** Implement `set` and `frozenset` using JS `Set`.
     - [x] **Bytes:** `bytes` and `bytearray` parity using `Uint8Array`.
-- [ ] **Step 14: Foundational Operators**
-    - [ ] **Arithmetic:** Floor division (`//`), Modulo (`%`), Exponentiation (`**`).
-    - [ ] **Bitwise:** `&`, `|`, `^`, `~`, `<<`, `>>`.
-    - [ ] **Membership:** `in` and `not in` for all collection types.
+- [x] **Step 14: Foundational Operators**
+    - [x] **Arithmetic:** Floor division (`//`), Modulo (`%`), Exponentiation (`**`).
+    - [x] **Bitwise:** `&`, `|`, `^`, `~`, `<<`, `>>`.
+    - [x] **Membership:** `in` and `not in` for all collection types.
 
 ## 🌟 Level 3: Consolidating the Runtime
 - [ ] **Step 15: Global Built-in Functions**

@@ -13,7 +13,18 @@ export var TokenType;
     TokenType["PLUS"] = "PLUS";
     TokenType["MINUS"] = "MINUS";
     TokenType["STAR"] = "STAR";
+    TokenType["STAR_STAR"] = "STAR_STAR";
     TokenType["SLASH"] = "SLASH";
+    TokenType["SLASH_SLASH"] = "SLASH_SLASH";
+    TokenType["PERCENT"] = "PERCENT";
+    TokenType["AMPERSAND"] = "AMPERSAND";
+    TokenType["PIPE"] = "PIPE";
+    TokenType["CARET"] = "CARET";
+    TokenType["TILDE"] = "TILDE";
+    TokenType["LESS_LESS"] = "LESS_LESS";
+    TokenType["GREATER_GREATER"] = "GREATER_GREATER";
+    TokenType["LESS_EQUALS"] = "LESS_EQUALS";
+    TokenType["GREATER_EQUALS"] = "GREATER_EQUALS";
     TokenType["COLON"] = "COLON";
     TokenType["WHILE"] = "WHILE";
     TokenType["IF"] = "IF";
@@ -138,17 +149,51 @@ export class Lexer {
                 }
                 throw new Error(`Unexpected character: ! at line ${this.line}`);
             case "<":
+                if (this.peek() === "<") {
+                    this.advance();
+                    return this.createToken(TokenType.LESS_LESS, "<<", startCol);
+                }
+                if (this.peek() === "=") {
+                    this.advance();
+                    return this.createToken(TokenType.LESS_EQUALS, "<=", startCol);
+                }
                 return this.createToken(TokenType.LESS, "<", startCol);
             case ">":
+                if (this.peek() === ">") {
+                    this.advance();
+                    return this.createToken(TokenType.GREATER_GREATER, ">>", startCol);
+                }
+                if (this.peek() === "=") {
+                    this.advance();
+                    return this.createToken(TokenType.GREATER_EQUALS, ">=", startCol);
+                }
                 return this.createToken(TokenType.GREATER, ">", startCol);
             case "+":
                 return this.createToken(TokenType.PLUS, "+", startCol);
             case "-":
                 return this.createToken(TokenType.MINUS, "-", startCol);
             case "*":
+                if (this.peek() === "*") {
+                    this.advance();
+                    return this.createToken(TokenType.STAR_STAR, "**", startCol);
+                }
                 return this.createToken(TokenType.STAR, "*", startCol);
             case "/":
+                if (this.peek() === "/") {
+                    this.advance();
+                    return this.createToken(TokenType.SLASH_SLASH, "//", startCol);
+                }
                 return this.createToken(TokenType.SLASH, "/", startCol);
+            case "%":
+                return this.createToken(TokenType.PERCENT, "%", startCol);
+            case "&":
+                return this.createToken(TokenType.AMPERSAND, "&", startCol);
+            case "|":
+                return this.createToken(TokenType.PIPE, "|", startCol);
+            case "^":
+                return this.createToken(TokenType.CARET, "^", startCol);
+            case "~":
+                return this.createToken(TokenType.TILDE, "~", startCol);
             case ":":
                 return this.createToken(TokenType.COLON, ":", startCol);
             case ".":

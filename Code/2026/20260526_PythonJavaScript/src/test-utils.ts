@@ -264,6 +264,66 @@ export function getJSRuntime(logs: any[] = []) {
       }
       return a >= b;
     },
+    __floordiv: (a: any, b: any) => {
+      if (typeof a === "bigint" && typeof b === "bigint") return a / b;
+      return Math.floor(Number(a) / Number(b));
+    },
+    __mod: (a: any, b: any) => {
+      if (typeof a === "bigint" && typeof b === "bigint") return a % b;
+      const res = Number(a) % Number(b);
+      return ((res % Number(b)) + Number(b)) % Number(b);
+    },
+    __pow: (a: any, b: any) => {
+      if (typeof a === "bigint" && typeof b === "bigint") {
+        if (b < 0n) return 0n;
+        return a ** b;
+      }
+      return Math.pow(Number(a), Number(b));
+    },
+    __and_bw: (a: any, b: any) => {
+      if (typeof a === "bigint" || typeof b === "bigint")
+        return BigInt(a) & BigInt(b);
+      return a & b;
+    },
+    __or_bw: (a: any, b: any) => {
+      if (typeof a === "bigint" || typeof b === "bigint")
+        return BigInt(a) | BigInt(b);
+      return a | b;
+    },
+    __xor_bw: (a: any, b: any) => {
+      if (typeof a === "bigint" || typeof b === "bigint")
+        return BigInt(a) ^ BigInt(b);
+      return a ^ b;
+    },
+    __lshift: (a: any, b: any) => {
+      if (typeof a === "bigint" || typeof b === "bigint")
+        return BigInt(a) << BigInt(b);
+      return a << b;
+    },
+    __rshift: (a: any, b: any) => {
+      if (typeof a === "bigint" || typeof b === "bigint")
+        return BigInt(a) >> BigInt(b);
+      return a >> b;
+    },
+    __invert: (a: any) => {
+      if (typeof a === "bigint") return ~a;
+      return ~a;
+    },
+    __in: (item: any, container: any) => {
+      if (Array.isArray(container) || typeof container === "string") {
+        return container.includes(item);
+      }
+      if (container instanceof Set || container instanceof Map) {
+        return (container as any).has(item);
+      }
+      if (container instanceof Uint8Array) {
+        return container.includes(item);
+      }
+      if (typeof container === "object" && container !== null) {
+        return item in container;
+      }
+      return false;
+    },
     __slice: (obj: any, start: any, stop: any, step: any) => {
       const len = obj.length;
       if (step === undefined || step === null) step = 1;

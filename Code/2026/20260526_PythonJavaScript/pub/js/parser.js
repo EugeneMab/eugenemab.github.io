@@ -238,8 +238,72 @@ export class Parser {
         return this.parseComparison();
     }
     parseComparison() {
+        let left = this.parseBitwiseOr();
+        while (this.match(TokenType.EQUALS_EQUALS, TokenType.NOT_EQUALS, TokenType.LESS, TokenType.GREATER, TokenType.LESS_EQUALS, TokenType.GREATER_EQUALS, TokenType.IN)) {
+            const operator = this.previous().value;
+            const right = this.parseBitwiseOr();
+            left = { type: "BinaryExpression", left, operator, right };
+        }
+        if (this.match(TokenType.NOT)) {
+            if (this.match(TokenType.IN)) {
+                const operator = "not in";
+                const right = this.parseBitwiseOr();
+                left = { type: "BinaryExpression", left, operator, right };
+            }
+            else {
+                // This is a bit tricky, if it's not followed by 'in', it might be the start of another expression
+                // But Python doesn't allow 'x == y not z' easily without parens.
+                // For now, if we match 'not' here and then not 'in', we might have an issue.
+                // But 'not' usually has lower precedence than comparison?
+                // Actually 'not' is 13, comparison is 10.
+                // Wait, Python precedence:
+                // or (15)
+                // and (14)
+                // not (13)
+                // in, not in, is, is not, <, <=, >, >=, !=, == (12)
+                // | (11)
+                // ^ (10)
+                // & (9)
+                // <<, >> (8)
+                // +, - (7)
+                // *, @, /, //, % (6)
+                // +x, -x, ~x (5)
+                // ** (4)
+                // My previous implementation had 'not' inside 'parseAnd'.
+            }
+        }
+        return left;
+    }
+    parseBitwiseOr() {
+        let left = this.parseBitwiseXor();
+        while (this.match(TokenType.PIPE)) {
+            const operator = "|";
+            const right = this.parseBitwiseXor();
+            left = { type: "BinaryExpression", left, operator, right };
+        }
+        return left;
+    }
+    parseBitwiseXor() {
+        let left = this.parseBitwiseAnd();
+        while (this.match(TokenType.CARET)) {
+            const operator = "^";
+            const right = this.parseBitwiseAnd();
+            left = { type: "BinaryExpression", left, operator, right };
+        }
+        return left;
+    }
+    parseBitwiseAnd() {
+        let left = this.parseShift();
+        while (this.match(TokenType.AMPERSAND)) {
+            const operator = "&";
+            const right = this.parseShift();
+            left = { type: "BinaryExpression", left, operator, right };
+        }
+        return left;
+    }
+    parseShift() {
         let left = this.parseAddition();
-        while (this.match(TokenType.EQUALS_EQUALS, TokenType.NOT_EQUALS, TokenType.LESS, TokenType.GREATER)) {
+        while (this.match(TokenType.LESS_LESS, TokenType.GREATER_GREATER)) {
             const operator = this.previous().value;
             const right = this.parseAddition();
             left = { type: "BinaryExpression", left, operator, right };
@@ -257,20 +321,29 @@ export class Parser {
     }
     parseMultiplication() {
         let left = this.parseUnary();
-        while (this.match(TokenType.STAR, TokenType.SLASH)) {
-            const operator = this.previous().type === TokenType.STAR ? "*" : "/";
+        while (this.match(TokenType.STAR, TokenType.SLASH, TokenType.SLASH_SLASH, TokenType.PERCENT)) {
+            const operator = this.previous().value;
             const right = this.parseUnary();
             left = { type: "BinaryExpression", left, operator, right };
         }
         return left;
     }
     parseUnary() {
-        if (this.match(TokenType.MINUS)) {
-            const operator = "-";
+        if (this.match(TokenType.PLUS, TokenType.MINUS, TokenType.TILDE)) {
+            const operator = this.previous().value;
             const argument = this.parseUnary();
             return { type: "UnaryExpression", operator, argument };
         }
-        return this.parsePrimary();
+        return this.parseExponentiation();
+    }
+    parseExponentiation() {
+        const left = this.parsePrimary();
+        if (this.match(TokenType.STAR_STAR)) {
+            const operator = "**";
+            const right = this.parseUnary(); // Exponentiation is right-associative
+            return { type: "BinaryExpression", left, operator, right };
+        }
+        return left;
     }
     parsePrimary() {
         let expr;

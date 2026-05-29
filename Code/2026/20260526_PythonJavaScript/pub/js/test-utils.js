@@ -257,6 +257,70 @@ export function getJSRuntime(logs = []) {
             }
             return a >= b;
         },
+        __floordiv: (a, b) => {
+            if (typeof a === "bigint" && typeof b === "bigint")
+                return a / b;
+            return Math.floor(Number(a) / Number(b));
+        },
+        __mod: (a, b) => {
+            if (typeof a === "bigint" && typeof b === "bigint")
+                return a % b;
+            const res = Number(a) % Number(b);
+            return ((res % Number(b)) + Number(b)) % Number(b);
+        },
+        __pow: (a, b) => {
+            if (typeof a === "bigint" && typeof b === "bigint") {
+                if (b < 0n)
+                    return 0n;
+                return a ** b;
+            }
+            return Math.pow(Number(a), Number(b));
+        },
+        __and_bw: (a, b) => {
+            if (typeof a === "bigint" || typeof b === "bigint")
+                return BigInt(a) & BigInt(b);
+            return a & b;
+        },
+        __or_bw: (a, b) => {
+            if (typeof a === "bigint" || typeof b === "bigint")
+                return BigInt(a) | BigInt(b);
+            return a | b;
+        },
+        __xor_bw: (a, b) => {
+            if (typeof a === "bigint" || typeof b === "bigint")
+                return BigInt(a) ^ BigInt(b);
+            return a ^ b;
+        },
+        __lshift: (a, b) => {
+            if (typeof a === "bigint" || typeof b === "bigint")
+                return BigInt(a) << BigInt(b);
+            return a << b;
+        },
+        __rshift: (a, b) => {
+            if (typeof a === "bigint" || typeof b === "bigint")
+                return BigInt(a) >> BigInt(b);
+            return a >> b;
+        },
+        __invert: (a) => {
+            if (typeof a === "bigint")
+                return ~a;
+            return ~a;
+        },
+        __in: (item, container) => {
+            if (Array.isArray(container) || typeof container === "string") {
+                return container.includes(item);
+            }
+            if (container instanceof Set || container instanceof Map) {
+                return container.has(item);
+            }
+            if (container instanceof Uint8Array) {
+                return container.includes(item);
+            }
+            if (typeof container === "object" && container !== null) {
+                return item in container;
+            }
+            return false;
+        },
         __slice: (obj, start, stop, step) => {
             const len = obj.length;
             if (step === undefined || step === null)
