@@ -9,6 +9,9 @@ export function getJSRuntime(logs: any[] = []) {
       this.push(...elements);
       Object.freeze(this);
     }
+    [Symbol.toPrimitive](_hint: string) {
+      return this.toString();
+    }
     toString() {
       if (this.length === 1) return `(${this[0]},)`;
       return `(${this.join(", ")})`;
@@ -126,17 +129,39 @@ export function getJSRuntime(logs: any[] = []) {
         "ord() expected a string of length 1 or bytes of length 1",
       );
     },
-    tuple: (val: any) => new Tuple(val),
-    set: (val: any) => new Set(val),
-    bytes: (val: any) => {
-      if (typeof val === "string") return new TextEncoder().encode(val);
-      if (Array.isArray(val)) return new Uint8Array(val);
+    tuple: (val: any) => {
+      if (val === undefined) return new Tuple();
+      if (Array.isArray(val)) return new Tuple(val);
+      if (typeof val[Symbol.iterator] === "function")
+        return new Tuple([...val]);
+      return new Tuple([val]);
+    },
+    set: (val: any) => {
+      if (val === undefined) return new Set();
+      if (typeof val[Symbol.iterator] === "function") return new Set(val);
+      return new Set([val]);
+    },
+    frozenset: (val: any) => {
+      // Note: Object.freeze() does not make JS Set immutable.
+      return runtime.set(val);
+    },
+    bytes: (val: any, _encoding?: string) => {
+      if (val === undefined) return new Uint8Array();
+      if (typeof val === "number") return new Uint8Array(val);
+      if (typeof val === "string") {
+        return new TextEncoder().encode(val);
+      }
+      if (Array.isArray(val) || val instanceof Uint8Array)
+        return new Uint8Array(val);
       return new Uint8Array();
     },
+    bytearray: (val: any) => {
+      return runtime.bytes(val);
+    },
     dict: (val: any) => {
-      if (val === undefined) return {};
+      if (val === undefined) return Object.create(null);
       if (Array.isArray(val)) {
-        const res: any = {};
+        const res: any = Object.create(null);
         for (const item of val) {
           if (Array.isArray(item) && item.length === 2) {
             res[item[0]] = item[1];
@@ -144,7 +169,7 @@ export function getJSRuntime(logs: any[] = []) {
         }
         return res;
       }
-      return { ...val };
+      return Object.assign(Object.create(null), val);
     },
     sum: (iterable: any, start: any = 0) => {
       let res = start;
@@ -504,7 +529,7 @@ export function getJSRuntime(logs: any[] = []) {
         return container.includes(item);
       }
       if (typeof container === "object" && container !== null) {
-        return item in container;
+        return Object.prototype.hasOwnProperty.call(container, item);
       }
       return false;
     },
@@ -532,7 +557,7 @@ export function getJSRuntime(logs: any[] = []) {
     __tuple: (elements: any[]) => new Tuple(elements),
     __set: (elements: any[]) => new Set(elements),
     __dict: (entries: [any, any][]) => {
-      const res: any = {};
+      const res: any = Object.create(null);
       for (const [k, v] of entries) res[k] = v;
       return res;
     },

@@ -34,10 +34,8 @@ self.onmessage = async (e) => {
                     this.push(...elements);
                     Object.freeze(this);
                 }
-                [Symbol.toPrimitive](hint) {
-                    if (hint === "string")
-                        return this.toString();
-                    return true;
+                [Symbol.toPrimitive](_hint) {
+                    return this.toString();
                 }
                 toString() {
                     if (this.length === 1)
@@ -182,9 +180,8 @@ self.onmessage = async (e) => {
                     return new Set([val]);
                 },
                 frozenset: (val) => {
-                    const s = runtime.set(val);
-                    Object.freeze(s); // Not fully Python frozenset but close for now
-                    return s;
+                    // Note: Object.freeze() does not make JS Set immutable.
+                    return runtime.set(val);
                 },
                 bytes: (val, _encoding) => {
                     if (val === undefined)
@@ -203,9 +200,9 @@ self.onmessage = async (e) => {
                 },
                 dict: (val) => {
                     if (val === undefined)
-                        return {};
+                        return Object.create(null);
                     if (Array.isArray(val)) {
-                        const res = {};
+                        const res = Object.create(null);
                         for (const item of val) {
                             if (Array.isArray(item) && item.length === 2) {
                                 res[item[0]] = item[1];
@@ -213,7 +210,7 @@ self.onmessage = async (e) => {
                         }
                         return res;
                     }
-                    return { ...val };
+                    return Object.assign(Object.create(null), val);
                 },
                 sum: (iterable, start = 0) => {
                     let res = start;
@@ -562,7 +559,7 @@ self.onmessage = async (e) => {
                         return container.includes(item);
                     }
                     if (typeof container === "object" && container !== null) {
-                        return item in container;
+                        return Object.prototype.hasOwnProperty.call(container, item);
                     }
                     return false;
                 },
@@ -607,7 +604,7 @@ self.onmessage = async (e) => {
                 __tuple: (elements) => new Tuple(elements),
                 __set: (elements) => new Set(elements),
                 __dict: (entries) => {
-                    const res = {};
+                    const res = Object.create(null);
                     for (const [k, v] of entries)
                         res[k] = v;
                     return res;
