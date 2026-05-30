@@ -723,6 +723,21 @@ self.onmessage = async (e) => {
           }
           return await func(...posArgs);
         },
+        __member_call: async (
+          obj: any,
+          member: string,
+          posArgs: any[],
+          kwArgs: any,
+        ) => {
+          const helper = runtime[member];
+          if (typeof helper === "function") {
+            return await runtime.__call(helper, [obj, ...posArgs], kwArgs);
+          }
+          if (obj != null && typeof obj[member] === "function") {
+            return await obj[member](...posArgs);
+          }
+          throw new Error(`${member} is not a function`);
+        },
         __bytes: (val: string) => {
           const res = new Uint8Array(val.length);
           for (let i = 0; i < val.length; i++) res[i] = val.charCodeAt(i);

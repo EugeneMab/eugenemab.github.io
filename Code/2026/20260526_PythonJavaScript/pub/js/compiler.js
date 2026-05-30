@@ -77,6 +77,7 @@ const SYSTEM_HELPERS = [
     "__invert",
     "__in",
     "__call",
+    "__member_call",
 ];
 const OP_TO_HELPER = {
     "+": "__add",
@@ -170,7 +171,15 @@ export class Compiler {
             }
             const compiled = this.compileNode(node);
             if (compiled) {
-                js += `${this.indent()}${compiled};\n`;
+                const needsSemicolon = ![
+                    "If",
+                    "While",
+                    "DoWhile",
+                    "For",
+                    "FunctionDef",
+                    "With",
+                ].includes(node.type);
+                js += `${this.indent()}${compiled}${needsSemicolon ? ";" : ""}\n`;
             }
         }
         // Try to call main() if it exists and hasn't been called
@@ -203,6 +212,10 @@ export class Compiler {
                 }
                 if (node.args.some((a) => a.name !== undefined)) {
                     used.add("__call");
+                }
+                if (typeof node.callee !== "string" &&
+                    node.callee.type === "MemberAccess") {
+                    used.add("__member_call");
                 }
                 for (const arg of node.args) {
                     stack.push(arg.value);
@@ -490,17 +503,24 @@ export class Compiler {
         if (localVars.size > 0) {
             js += `${this.indent()}let ${Array.from(localVars).join(", ")};\n`;
         }
+        const argNames = node.params.map((p) => JSON.stringify(p.name)).join(", ");
+        js += `${this.indent()}${node.name}.__arg_names = [${argNames}];\n`;
         for (const stmt of node.body) {
             const compiled = this.compileNode(stmt);
             if (compiled) {
-                js += `${this.indent()}${compiled};\n`;
+                const needsSemicolon = ![
+                    "If",
+                    "While",
+                    "DoWhile",
+                    "For",
+                    "FunctionDef",
+                    "With",
+                ].includes(stmt.type);
+                js += `${this.indent()}${compiled}${needsSemicolon ? ";" : ""}\n`;
             }
         }
         this.indentLevel--;
-        js += `${this.indent()}}\n`;
-        // Attach metadata for keyword arguments
-        const argNames = node.params.map((p) => JSON.stringify(p.name)).join(", ");
-        js += `${this.indent()}${node.name}.__arg_names = [${argNames}];\n`;
+        js += `${this.indent()}}`;
         return js;
     }
     containsYield(nodes) {
@@ -682,21 +702,8 @@ export class Compiler {
     }
     compileCall(node) {
         const hasKeywords = node.args.some((a) => a.name !== undefined);
-        if (hasKeywords) {
-            const posArgs = node.args
-                .filter((a) => a.name === undefined)
-                .map((a) => this.compileNode(a.value));
-            const kwArgs = node.args
-                .filter((a) => a.name !== undefined)
-                .map((a) => `${a.name}: ${this.compileNode(a.value)}`);
-            const args = `[${posArgs.join(", ")}], { ${kwArgs.join(", ")}, __is_kwargs: true }`;
-            const callee = typeof node.callee === "string"
-                ? node.callee
-                : this.compileNode(node.callee);
-            return `(await __call(${callee}, ${args}))`;
-        }
-        const args = node.args.map((a) => this.compileNode(a.value)).join(", ");
         if (typeof node.callee === "string") {
+            const args = node.args.map((a) => this.compileNode(a.value)).join(", ");
             if (node.callee === "next") {
                 if (node.args.length === 0)
                     throw new Error("next() requires at least one argument");
@@ -717,6 +724,16 @@ export class Compiler {
             if (node.callee === "sleep") {
                 return `(await sleep(${args}))`;
             }
+            if (hasKeywords) {
+                const posArgs = node.args
+                    .filter((a) => a.name === undefined)
+                    .map((a) => this.compileNode(a.value));
+                const kwArgs = node.args
+                    .filter((a) => a.name !== undefined)
+                    .map((a) => `${a.name}: ${this.compileNode(a.value)}`);
+                const argsStr = `[${posArgs.join(", ")}], { ${kwArgs.join(", ")}, __is_kwargs: true }`;
+                return `(await __call(${node.callee}, ${argsStr}))`;
+            }
             if (BUILTINS.has(node.callee)) {
                 return `${node.callee}(${args})`;
             }
@@ -725,22 +742,19 @@ export class Compiler {
         if (node.callee.type === "MemberAccess") {
             const obj = this.compileNode(node.callee.object);
             const member = node.callee.member;
-            const tmpObj = this.nextTmp("obj");
-            const tmpFallback = this.nextTmp("fallback");
-            // Handle fallback to runtime for member calls (Python-style methods)
-            return `(await (async () => {
-        const ${tmpObj} = ${obj};
-        const ${tmpFallback} = __globals.${member};
-        if (typeof ${tmpFallback} === 'function') {
-          return await ${tmpFallback}(${tmpObj}${args ? ", " + args : ""});
-        }
-        if (typeof ${tmpObj}.${member} === 'function') {
-          return await ${tmpObj}.${member}(${args});
-        }
-        throw new Error("${member} is not a function");
-      })())`;
+            const posArgs = node.args
+                .filter((a) => a.name === undefined)
+                .map((a) => this.compileNode(a.value));
+            const kwArgs = node.args
+                .filter((a) => a.name !== undefined)
+                .map((a) => `${a.name}: ${this.compileNode(a.value)}`);
+            const kwArgsStr = kwArgs.length > 0
+                ? `{ ${kwArgs.join(", ")}, __is_kwargs: true }`
+                : "null";
+            return `(await __member_call(${obj}, "${member}", [${posArgs.join(", ")}], ${kwArgsStr}))`;
         }
         const callee = this.compileNode(node.callee);
+        const args = node.args.map((a) => this.compileNode(a.value)).join(", ");
         return `(await ${callee}(${args}))`;
     }
     compileSubscript(node) {
