@@ -35,11 +35,11 @@
     - [x] **Aggregation:** `min()`, `max()`, `sum()`, `any()`, `all()`.
     - [x] **Iteration Helpers:** `enumerate()`, `zip()`, `reversed()`, `sorted()`.
     - [x] **Type Checkers:** `type()`, `isinstance()`, `callable()`.
-- [ ] **Step 16: Advanced Scoping & Assignment**
-    - [ ] **Scope Control:** `global` and `nonlocal` keywords for explicit variable binding.
-    - [ ] **Unpacking:** Multiple assignment (`x, y = 1, 2`) and star unpacking (`x, *y = [1, 2, 3]`).
-    - [ ] **Default Args:** Support default values and keyword arguments in function calls.
-- [ ] **Step 17: String & List API Parity**
+- [x] **Step 16: Advanced Scoping & Assignment**
+    - [x] **Scope Control:** `global` and `nonlocal` keywords for explicit variable binding.
+    - [x] **Unpacking:** Multiple assignment (`x, y = 1, 2`) and star unpacking (`x, *y = [1, 2, 3]`).
+    - [x] **Default Args:** Support default values and keyword arguments in function calls.
+- [ ] **Step 17: Basic Classes & Objects**
     - [ ] **Strings:** `split`, `join`, `strip`, `replace`, `find`, `upper`, `lower`.
     - [ ] **Lists:** `append`, `extend`, `insert`, `remove`, `pop`, `sort`, `reverse`.
 

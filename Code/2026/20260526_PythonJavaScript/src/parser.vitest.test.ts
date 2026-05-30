@@ -23,9 +23,9 @@ describe("Parser Legacy Tests", () => {
         const body = ast.body[0].body;
         return (
           body[0].type === "Assignment" &&
-          body[0].target === "x" &&
+          body[0].targets[0].name === "x" &&
           body[1].type === "Assignment" &&
-          body[1].target === "y" &&
+          body[1].targets[0].name === "y" &&
           body[2].type === "Return" &&
           body[2].value.type === "BinaryExpression"
         );

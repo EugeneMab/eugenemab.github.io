@@ -570,6 +570,24 @@ export function getJSRuntime(logs = []) {
                 res[k] = v;
             return res;
         },
+        __call: async (func, posArgs, kwArgs) => {
+            if (typeof func !== "function")
+                throw new Error(`${func} is not a function`);
+            if (func.__arg_names) {
+                const args = [...posArgs];
+                for (let i = args.length; i < func.__arg_names.length; i++) {
+                    const name = func.__arg_names[i];
+                    if (kwArgs && name in kwArgs) {
+                        args[i] = kwArgs[name];
+                    }
+                    else {
+                        args[i] = undefined;
+                    }
+                }
+                return await func(...args);
+            }
+            return await func(...posArgs);
+        },
         __bytes: (val) => {
             const res = new Uint8Array(val.length);
             for (let i = 0; i < val.length; i++)

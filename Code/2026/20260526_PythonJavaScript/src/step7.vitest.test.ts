@@ -16,7 +16,7 @@ describe("Step 7: Parameters & Scoping", () => {
       const func = ast.body[0] as any;
       expect(func.type).toBe("FunctionDef");
       expect(func.name).toBe("add");
-      expect(func.params).toEqual(["a", "b"]);
+      expect(func.params.map((p: any) => p.name)).toEqual(["a", "b"]);
     });
 
     it("should parse function call with multiple arguments", () => {

@@ -18,6 +18,7 @@ import {
   DoWhileNode,
   FStringNode,
   AssignmentNode,
+  IdentifierNode,
 } from "./parser.js";
 
 const BUILTINS = new Set([
@@ -83,6 +84,7 @@ const SYSTEM_HELPERS = [
   "__rshift",
   "__invert",
   "__in",
+  "__call",
 ];
 
 const OP_TO_HELPER: Record<string, string> = {
@@ -218,11 +220,15 @@ export class Compiler {
         if (typeof node.callee === "string") {
           if (BUILTINS.has(node.callee)) used.add(node.callee);
           if (node.callee === "next") {
-            used.add("__item"); // next(g) uses helper for internal done/value check? No, next is explicit.
-            // Actually next() implementation in compiler.ts uses .next() call.
+            used.add("__item");
           }
         }
-        stack.push(...node.args);
+        if (node.args.some((a) => a.name !== undefined)) {
+          used.add("__call");
+        }
+        for (const arg of node.args) {
+          stack.push(arg.value);
+        }
         if (typeof node.callee !== "string") stack.push(node.callee);
       } else if (node.type === "BinaryExpression") {
         if (OP_TO_HELPER[node.operator]) {
@@ -261,10 +267,20 @@ export class Compiler {
         stack.push(...node.body);
       } else if (node.type === "Assignment") {
         stack.push(node.value);
+        for (const target of node.targets) {
+          if (target.type !== "Identifier" && target.type !== "StarTarget") {
+            stack.push(target);
+          }
+        }
       } else if (node.type === "Return" || node.type === "Yield") {
         if (node.value) stack.push(node.value);
       } else if (node.type === "FunctionDef") {
         stack.push(...node.body);
+        for (const p of node.params) {
+          if (p.defaultValue) stack.push(p.defaultValue);
+        }
+      } else if (node.type === "Global" || node.type === "Nonlocal") {
+        // No children to visit
       } else if (node.type === "List") {
         stack.push(...node.elements);
       } else if (node.type === "Tuple") {
@@ -322,10 +338,18 @@ export class Compiler {
   private collectAssignedVars(nodes: ASTNode[]): Set<string> {
     const vars = new Set<string>();
     const stack = [...nodes];
+    const explicitScopes = new Set<string>();
+
     while (stack.length > 0) {
       const node = stack.pop()!;
       if (node.type === "Assignment") {
-        vars.add(node.target);
+        for (const target of node.targets) {
+          this.collectTargets(target, vars);
+        }
+      } else if (node.type === "Global" || node.type === "Nonlocal") {
+        for (const name of node.names) {
+          explicitScopes.add(name);
+        }
       } else if (node.type === "For") {
         for (const it of node.iterators) vars.add(it);
         stack.push(...node.body);
@@ -339,7 +363,23 @@ export class Compiler {
         stack.push(...node.body);
       }
     }
+
+    for (const name of explicitScopes) {
+      vars.delete(name);
+    }
     return vars;
+  }
+
+  private collectTargets(node: ASTNode, vars: Set<string>) {
+    if (node.type === "Identifier") {
+      vars.add(node.name);
+    } else if (node.type === "StarTarget") {
+      vars.add(node.name);
+    } else if (node.type === "Tuple" || node.type === "List") {
+      for (const e of node.elements) {
+        this.collectTargets(e, vars);
+      }
+    }
   }
 
   private compileNode(node: ASTNode): string {
@@ -431,6 +471,13 @@ export class Compiler {
       case "Pass":
         return "";
 
+      case "Global":
+      case "Nonlocal":
+        return "";
+
+      case "StarTarget":
+        throw new Error("StarTarget can only be used in assignment unpacking");
+
       default:
         throw new Error(`Unknown node type: ${(node as any).type}`);
     }
@@ -439,13 +486,20 @@ export class Compiler {
   private compileFunctionDef(node: FunctionDefNode): string {
     const isGenerator = this.containsYield(node.body);
     const funcType = isGenerator ? "async function*" : "async function";
-    const params = node.params.join(", ");
+    const params = node.params
+      .map((p) => {
+        if (p.defaultValue) {
+          return `${p.name} = ${this.compileNode(p.defaultValue)}`;
+        }
+        return p.name;
+      })
+      .join(", ");
     let js = `${this.indent()}${funcType} ${node.name}(${params}) {\n`;
     this.indentLevel++;
 
     // Declare local variables (excluding params)
     const localVars = this.collectAssignedVars(node.body);
-    for (const p of node.params) localVars.delete(p);
+    for (const p of node.params) localVars.delete(p.name);
     if (localVars.size > 0) {
       js += `${this.indent()}let ${Array.from(localVars).join(", ")};\n`;
     }
@@ -458,6 +512,9 @@ export class Compiler {
     }
     this.indentLevel--;
     js += `${this.indent()}}\n`;
+    // Attach metadata for keyword arguments
+    const argNames = node.params.map((p) => JSON.stringify(p.name)).join(", ");
+    js += `${this.indent()}${node.name}.__arg_names = [${argNames}];\n`;
     return js;
   }
 
@@ -476,7 +533,52 @@ export class Compiler {
   }
 
   private compileAssignment(node: AssignmentNode): string {
-    return `${node.target} = ${this.compileNode(node.value)}`;
+    if (node.targets.length === 1 && node.targets[0].type === "Identifier") {
+      return `${(node.targets[0] as IdentifierNode).name} = ${this.compileNode(node.value)}`;
+    }
+
+    const starIndex = node.targets.findIndex((t) => t.type === "StarTarget");
+
+    if (starIndex === -1) {
+      const targets = node.targets.map((t) => this.compileNode(t)).join(", ");
+      return `[${targets}] = ${this.compileNode(node.value)}`;
+    }
+
+    if (starIndex === node.targets.length - 1) {
+      const targets = node.targets
+        .map((t) => {
+          if (t.type === "StarTarget") return `...${(t as any).name}`;
+          return this.compileNode(t);
+        })
+        .join(", ");
+      return `[${targets}] = ${this.compileNode(node.value)}`;
+    }
+
+    // Manual unpacking for middle star (Python allows it, JS doesn't)
+    const tmp = this.nextTmp("unpack");
+    const val = this.compileNode(node.value);
+
+    let js = `((() => {\n`;
+    this.indentLevel++;
+    js += `${this.indent()}const ${tmp} = Array.from(${val});\n`;
+
+    for (let i = 0; i < starIndex; i++) {
+      js += `${this.indent()}${this.compileNode(node.targets[i])} = ${tmp}[${i}];\n`;
+    }
+
+    const tailCount = node.targets.length - 1 - starIndex;
+    const starName = (node.targets[starIndex] as any).name;
+    js += `${this.indent()}${starName} = ${tmp}.slice(${starIndex}, ${tmp}.length - ${tailCount});\n`;
+
+    for (let i = 0; i < tailCount; i++) {
+      const target = node.targets[starIndex + 1 + i];
+      js += `${this.indent()}${this.compileNode(target)} = ${tmp}[${tmp}.length - ${tailCount - i}];\n`;
+    }
+
+    js += `${this.indent()}return ${tmp};\n`;
+    this.indentLevel--;
+    js += `${this.indent()}})())`;
+    return js;
   }
 
   private compileBinaryExpression(node: BinaryExpressionNode): string {
@@ -605,19 +707,37 @@ export class Compiler {
   }
 
   private compileCall(node: CallExpressionNode): string {
-    const args = node.args.map((a) => this.compileNode(a)).join(", ");
+    const hasKeywords = node.args.some((a) => a.name !== undefined);
+
+    if (hasKeywords) {
+      const posArgs = node.args
+        .filter((a) => a.name === undefined)
+        .map((a) => this.compileNode(a.value));
+      const kwArgs = node.args
+        .filter((a) => a.name !== undefined)
+        .map((a) => `${a.name}: ${this.compileNode(a.value)}`);
+
+      const args = `[${posArgs.join(", ")}], { ${kwArgs.join(", ")}, __is_kwargs: true }`;
+      const callee =
+        typeof node.callee === "string"
+          ? node.callee
+          : this.compileNode(node.callee);
+      return `(await __call(${callee}, ${args}))`;
+    }
+
+    const args = node.args.map((a) => this.compileNode(a.value)).join(", ");
 
     if (typeof node.callee === "string") {
       if (node.callee === "next") {
         if (node.args.length === 0)
           throw new Error("next() requires at least one argument");
-        const receiver = this.compileNode(node.args[0]);
+        const receiver = this.compileNode(node.args[0].value);
         if (node.args.length === 1) {
           return `(await ${receiver}.next()).value`;
         } else {
           // next(g, default)
           const tmpRes = this.nextTmp("next_res");
-          const defaultValue = this.compileNode(node.args[1]);
+          const defaultValue = this.compileNode(node.args[1].value);
           return `(await (async () => {
             const ${tmpRes} = await ${receiver}.next();
             return ${tmpRes}.done ? ${defaultValue} : ${tmpRes}.value;

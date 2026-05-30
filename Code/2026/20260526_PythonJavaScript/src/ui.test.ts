@@ -80,6 +80,11 @@ const samples = [
       "callable",
     ],
   },
+  {
+    name: "Scoping & Assignment",
+    value: "sample/scoping_assignment.py",
+    js: ["__call", "slice", "Array.from"],
+  },
 ];
 
 test("verify all samples in UI including JS", async ({ page }) => {
