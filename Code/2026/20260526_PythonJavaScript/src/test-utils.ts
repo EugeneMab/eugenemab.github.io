@@ -1,6 +1,27 @@
 // src/test-utils.ts
 
 export function getJSRuntime(logs: any[] = []) {
+  const __format = (v: any, isElement: boolean = false): string => {
+    if (v instanceof Tuple) return v.toString();
+    if (v instanceof Set)
+      return `set([${Array.from(v)
+        .map((x) => __format(x, true))
+        .join(", ")}])`;
+    if (v instanceof Uint8Array)
+      return `b'${Array.from(v)
+        .map((b) => "\\x" + b.toString(16).padStart(2, "0"))
+        .join("")}'`;
+    if (Array.isArray(v))
+      return `[${v.map((x) => __format(x, true)).join(", ")}]`;
+    if (typeof v === "string") return isElement ? `'${v}'` : v;
+    if (v !== null && typeof v === "object" && !(v instanceof Date)) {
+      return `{${Object.entries(v)
+        .map(([k, val]) => `${__format(k, true)}: ${__format(val, true)}`)
+        .join(", ")}}`;
+    }
+    return String(v);
+  };
+
   class Tuple extends Array {
     constructor(...args: any[]) {
       super();
@@ -13,32 +34,17 @@ export function getJSRuntime(logs: any[] = []) {
       return this.toString();
     }
     toString() {
-      if (this.length === 1) return `(${this[0]},)`;
-      return `(${this.join(", ")})`;
+      const elements = Array.from(this)
+        .map((x) => __format(x, true))
+        .join(", ");
+      if (this.length === 1) return `(${elements},)`;
+      return `(${elements})`;
     }
   }
 
   const runtime: any = {
     print: (val: any) => {
-      const format = (v: any): string => {
-        if (v instanceof Tuple) return v.toString();
-        if (v instanceof Set)
-          return `set([${Array.from(v)
-            .map((x) => format(x))
-            .join(", ")}])`;
-        if (v instanceof Uint8Array)
-          return `b'${Array.from(v)
-            .map((b) => "\\x" + b.toString(16).padStart(2, "0"))
-            .join("")}'`;
-        if (Array.isArray(v)) return `[${v.map((x) => format(x)).join(", ")}]`;
-        if (v !== null && typeof v === "object" && !(v instanceof Date)) {
-          return `{${Object.entries(v)
-            .map(([k, val]) => `${JSON.stringify(k)}: ${format(val)}`)
-            .join(", ")}}`;
-        }
-        return String(v);
-      };
-      logs.push(format(val));
+      logs.push(__format(val));
       return 0;
     },
     sleep: async (ms: number) => {
@@ -142,7 +148,6 @@ export function getJSRuntime(logs: any[] = []) {
       return new Set([val]);
     },
     frozenset: (val: any) => {
-      // Note: Object.freeze() does not make JS Set immutable.
       return runtime.set(val);
     },
     bytes: (val: any, _encoding?: string) => {
@@ -263,6 +268,107 @@ export function getJSRuntime(logs: any[] = []) {
       return t === typeInfo;
     },
     callable: (obj: any) => typeof obj === "function",
+    // String methods
+    split: (s: any, sep?: string, maxsplit: number = -1) => {
+      if (typeof s !== "string") return s.split(sep, maxsplit);
+      if (sep === undefined || sep === null) {
+        return s.trim() === "" ? [] : s.trim().split(/\s+/);
+      }
+      if (maxsplit < 0) return s.split(sep);
+      const parts = s.split(sep);
+      if (parts.length <= maxsplit + 1) return parts;
+      const res = parts.slice(0, maxsplit);
+      res.push(parts.slice(maxsplit).join(sep));
+      return res;
+    },
+    join: (sep: any, iterable: any) => {
+      const arr = Array.from(iterable).map((x) => String(x));
+      return arr.join(String(sep));
+    },
+    strip: (s: any, chars?: string) => {
+      if (typeof s !== "string") return s.strip(chars);
+      if (chars === undefined || chars === null) return s.trim();
+      let start = 0;
+      while (start < s.length && chars.includes(s[start])) start++;
+      let end = s.length - 1;
+      while (end >= start && chars.includes(s[end])) end--;
+      return s.slice(start, end + 1);
+    },
+    replace: (s: any, old: string, sub: string, count: number = -1) => {
+      if (typeof s !== "string") return s.replace(old, sub, count);
+      const parts = s.split(old);
+      if (count < 0 || parts.length <= count + 1) return parts.join(sub);
+      return (
+        parts.slice(0, count + 1).join(sub) +
+        (parts.length > count + 1 ? old + parts.slice(count + 1).join(old) : "")
+      );
+    },
+    find: (s: any, sub: string, start: number = 0, end?: number) => {
+      if (typeof s !== "string") return s.find(sub, start, end);
+      const slice = end === undefined ? s.slice(start) : s.slice(start, end);
+      const res = slice.indexOf(sub);
+      return res === -1 ? -1 : res + start;
+    },
+    upper: (s: any) => (typeof s === "string" ? s.toUpperCase() : s.upper()),
+    lower: (s: any) => (typeof s === "string" ? s.toLowerCase() : s.lower()),
+    // List methods
+    append: (l: any, x: any) => {
+      if (Array.isArray(l)) {
+        l.push(x);
+        return undefined;
+      }
+      return l.append(x);
+    },
+    extend: (l: any, iterable: any) => {
+      if (Array.isArray(l)) {
+        l.push(...iterable);
+        return undefined;
+      }
+      return l.extend(iterable);
+    },
+    insert: (l: any, i: number, x: any) => {
+      if (Array.isArray(l)) {
+        l.splice(i, 0, x);
+        return undefined;
+      }
+      return l.insert(i, x);
+    },
+    remove: (l: any, x: any) => {
+      if (Array.isArray(l)) {
+        const idx = l.indexOf(x);
+        if (idx === -1) throw new Error("list.remove(x): x not in list");
+        l.splice(idx, 1);
+        return undefined;
+      }
+      return l.remove(x);
+    },
+    pop: (l: any, i: number = -1) => {
+      if (Array.isArray(l)) {
+        const idx = i < 0 ? l.length + i : i;
+        if (idx < 0 || idx >= l.length)
+          throw new Error("pop index out of range");
+        return l.splice(idx, 1)[0];
+      }
+      return l.pop(i);
+    },
+    sort: (l: any, _key?: any, reverse: boolean = false) => {
+      if (Array.isArray(l)) {
+        l.sort((a, b) => {
+          if (runtime.__lt(a, b)) return reverse ? 1 : -1;
+          if (runtime.__gt(a, b)) return reverse ? -1 : 1;
+          return 0;
+        });
+        return undefined;
+      }
+      return l.sort(_key, reverse);
+    },
+    reverse: (l: any) => {
+      if (Array.isArray(l)) {
+        l.reverse();
+        return undefined;
+      }
+      return l.reverse();
+    },
     __true: (val: any) => {
       if (val === null || val === undefined) return false;
       if (typeof val === "boolean") return val;

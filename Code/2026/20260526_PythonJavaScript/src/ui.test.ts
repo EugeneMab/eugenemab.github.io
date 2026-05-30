@@ -85,6 +85,24 @@ const samples = [
     value: "sample/scoping_assignment.py",
     js: ["__call", "slice", "Array.from"],
   },
+  {
+    name: "Basic Classes & Objects",
+    value: "sample/methods.py",
+    js: [
+      "strip",
+      "split",
+      "join",
+      "upper",
+      "replace",
+      "append",
+      "extend",
+      "insert",
+      "remove",
+      "pop",
+      "sort",
+      "reverse",
+    ],
+  },
 ];
 
 test("verify all samples in UI including JS", async ({ page }) => {

@@ -39,9 +39,9 @@
     - [x] **Scope Control:** `global` and `nonlocal` keywords for explicit variable binding.
     - [x] **Unpacking:** Multiple assignment (`x, y = 1, 2`) and star unpacking (`x, *y = [1, 2, 3]`).
     - [x] **Default Args:** Support default values and keyword arguments in function calls.
-- [ ] **Step 17: Basic Classes & Objects**
-    - [ ] **Strings:** `split`, `join`, `strip`, `replace`, `find`, `upper`, `lower`.
-    - [ ] **Lists:** `append`, `extend`, `insert`, `remove`, `pop`, `sort`, `reverse`.
+- [x] **Step 17: Basic Classes & Objects**
+    - [x] **Strings:** `split`, `join`, `strip`, `replace`, `find`, `upper`, `lower`.
+    - [x] **Lists:** `append`, `extend`, `insert`, `remove`, `pop`, `sort`, `reverse`.
 
 ## 🌟 Level 4: Architecture & Abstractions
 - [ ] **Step 18: Functional Programming**

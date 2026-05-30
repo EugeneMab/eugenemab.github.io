@@ -58,7 +58,7 @@ def main():
     return d1["a"]
 `;
     const { result, logs } = await runPython(code);
-    expect(logs[0]).toBe('{"a": 1, "b": 2}');
+    expect(logs[0]).toBe("{'a': 1, 'b': 2}");
     expect(result).toBe(1);
   });
 

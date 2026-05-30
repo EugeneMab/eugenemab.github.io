@@ -28,6 +28,22 @@ const BUILTINS = new Set([
     "type",
     "isinstance",
     "callable",
+    // String methods
+    "split",
+    "join",
+    "strip",
+    "replace",
+    "find",
+    "upper",
+    "lower",
+    // List methods
+    "append",
+    "extend",
+    "insert",
+    "remove",
+    "pop",
+    "sort",
+    "reverse",
 ]);
 const SYSTEM_HELPERS = [
     "__add",
@@ -180,6 +196,10 @@ export class Compiler {
                     if (node.callee === "next") {
                         used.add("__item");
                     }
+                }
+                else if (node.callee.type === "MemberAccess") {
+                    if (BUILTINS.has(node.callee.member))
+                        used.add(node.callee.member);
                 }
                 if (node.args.some((a) => a.name !== undefined)) {
                     used.add("__call");
@@ -710,12 +730,12 @@ export class Compiler {
             // Handle fallback to runtime for member calls (Python-style methods)
             return `(await (async () => {
         const ${tmpObj} = ${obj};
-        if (typeof ${tmpObj}.${member} === 'function') {
-          return await ${tmpObj}.${member}(${args});
-        }
         const ${tmpFallback} = __globals.${member};
         if (typeof ${tmpFallback} === 'function') {
           return await ${tmpFallback}(${tmpObj}${args ? ", " + args : ""});
+        }
+        if (typeof ${tmpObj}.${member} === 'function') {
+          return await ${tmpObj}.${member}(${args});
         }
         throw new Error("${member} is not a function");
       })())`;
