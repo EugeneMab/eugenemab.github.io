@@ -13,7 +13,18 @@ export enum TokenType {
   PLUS = "PLUS",
   MINUS = "MINUS",
   STAR = "STAR",
+  STAR_STAR = "STAR_STAR",
   SLASH = "SLASH",
+  SLASH_SLASH = "SLASH_SLASH",
+  PERCENT = "PERCENT",
+  AMPERSAND = "AMPERSAND",
+  PIPE = "PIPE",
+  CARET = "CARET",
+  TILDE = "TILDE",
+  LESS_LESS = "LESS_LESS",
+  GREATER_GREATER = "GREATER_GREATER",
+  LESS_EQUALS = "LESS_EQUALS",
+  GREATER_EQUALS = "GREATER_EQUALS",
   COLON = "COLON",
   WHILE = "WHILE",
   IF = "IF",
@@ -42,6 +53,7 @@ export enum TokenType {
   DOT = "DOT",
   STRING = "STRING",
   FSTRING = "FSTRING",
+  BYTES = "BYTES",
   DO = "DO",
   FROM = "FROM",
   TO = "TO",
@@ -118,6 +130,11 @@ export class Lexer {
         this.advance(); // consume 'r'
         return this.handleString(this.advance(), false, startCol, true); // consume quote
       }
+      if ((char === "b" || char === "B") && (next === '"' || next === "'")) {
+        const startCol = this.col;
+        this.advance(); // consume 'b'
+        return this.handleString(this.advance(), false, startCol, false, true); // consume quote
+      }
       return this.handleIdentifier();
     }
 
@@ -150,17 +167,51 @@ export class Lexer {
         }
         throw new Error(`Unexpected character: ! at line ${this.line}`);
       case "<":
+        if (this.peek() === "<") {
+          this.advance();
+          return this.createToken(TokenType.LESS_LESS, "<<", startCol);
+        }
+        if (this.peek() === "=") {
+          this.advance();
+          return this.createToken(TokenType.LESS_EQUALS, "<=", startCol);
+        }
         return this.createToken(TokenType.LESS, "<", startCol);
       case ">":
+        if (this.peek() === ">") {
+          this.advance();
+          return this.createToken(TokenType.GREATER_GREATER, ">>", startCol);
+        }
+        if (this.peek() === "=") {
+          this.advance();
+          return this.createToken(TokenType.GREATER_EQUALS, ">=", startCol);
+        }
         return this.createToken(TokenType.GREATER, ">", startCol);
       case "+":
         return this.createToken(TokenType.PLUS, "+", startCol);
       case "-":
         return this.createToken(TokenType.MINUS, "-", startCol);
       case "*":
+        if (this.peek() === "*") {
+          this.advance();
+          return this.createToken(TokenType.STAR_STAR, "**", startCol);
+        }
         return this.createToken(TokenType.STAR, "*", startCol);
       case "/":
+        if (this.peek() === "/") {
+          this.advance();
+          return this.createToken(TokenType.SLASH_SLASH, "//", startCol);
+        }
         return this.createToken(TokenType.SLASH, "/", startCol);
+      case "%":
+        return this.createToken(TokenType.PERCENT, "%", startCol);
+      case "&":
+        return this.createToken(TokenType.AMPERSAND, "&", startCol);
+      case "|":
+        return this.createToken(TokenType.PIPE, "|", startCol);
+      case "^":
+        return this.createToken(TokenType.CARET, "^", startCol);
+      case "~":
+        return this.createToken(TokenType.TILDE, "~", startCol);
       case ":":
         return this.createToken(TokenType.COLON, ":", startCol);
       case ".":
@@ -314,6 +365,7 @@ export class Lexer {
     isFString: boolean = false,
     startCol: number = this.col,
     isRaw: boolean = false,
+    isBytes: boolean = false,
   ): Token {
     let value = "";
     while (this.pos < this.source.length && this.peek() !== quote) {
@@ -365,8 +417,12 @@ export class Lexer {
     }
 
     this.advance(); // Skip closing quote
+    let type = TokenType.STRING;
+    if (isFString) type = TokenType.FSTRING;
+    else if (isBytes) type = TokenType.BYTES;
+
     return {
-      type: isFString ? TokenType.FSTRING : TokenType.STRING,
+      type,
       value,
       line: this.line,
       col: startCol,

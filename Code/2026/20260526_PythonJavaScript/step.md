@@ -21,20 +21,20 @@
     - [x] **Strings:** Implement `chr()`, `ord()`, and raw strings (`r"..."`).
     - [x] **Booleans:** Strict `bool()` casting and truthiness evaluation (`_is_truthy` helper).
     - [x] **Large Numbers:** `BigInt` for arbitrary precision `long` semantics.
-- [ ] **Step 13: Core Collection Types**
-    - [ ] **Tuples:** Implement immutable `tuple` (using `Object.freeze` or specialized class).
-    - [ ] **Sets:** Implement `set` and `frozenset` using JS `Set`.
-    - [ ] **Bytes:** `bytes` and `bytearray` parity using `Uint8Array`.
-- [ ] **Step 14: Foundational Operators**
-    - [ ] **Arithmetic:** Floor division (`//`), Modulo (`%`), Exponentiation (`**`).
-    - [ ] **Bitwise:** `&`, `|`, `^`, `~`, `<<`, `>>`.
-    - [ ] **Membership:** `in` and `not in` for all collection types.
+- [x] **Step 13: Core Collection Types**
+    - [x] **Tuples:** Implement immutable `tuple` (using `Object.freeze` or specialized class).
+    - [x] **Sets:** Implement `set` and `frozenset` using JS `Set`.
+    - [x] **Bytes:** `bytes` and `bytearray` parity using `Uint8Array`.
+- [x] **Step 14: Foundational Operators**
+    - [x] **Arithmetic:** Floor division (`//`), Modulo (`%`), Exponentiation (`**`).
+    - [x] **Bitwise:** `&`, `|`, `^`, `~`, `<<`, `>>`.
+    - [x] **Membership:** `in` and `not in` for all collection types.
 
 ## 🌟 Level 3: Consolidating the Runtime
-- [ ] **Step 15: Global Built-in Functions**
-    - [ ] **Aggregation:** `min()`, `max()`, `sum()`, `any()`, `all()`.
-    - [ ] **Iteration Helpers:** `enumerate()`, `zip()`, `reversed()`, `sorted()`.
-    - [ ] **Type Checkers:** `type()`, `isinstance()`, `callable()`.
+- [x] **Step 15: Global Built-in Functions**
+    - [x] **Aggregation:** `min()`, `max()`, `sum()`, `any()`, `all()`.
+    - [x] **Iteration Helpers:** `enumerate()`, `zip()`, `reversed()`, `sorted()`.
+    - [x] **Type Checkers:** `type()`, `isinstance()`, `callable()`.
 - [ ] **Step 16: Advanced Scoping & Assignment**
     - [ ] **Scope Control:** `global` and `nonlocal` keywords for explicit variable binding.
     - [ ] **Unpacking:** Multiple assignment (`x, y = 1, 2`) and star unpacking (`x, *y = [1, 2, 3]`).

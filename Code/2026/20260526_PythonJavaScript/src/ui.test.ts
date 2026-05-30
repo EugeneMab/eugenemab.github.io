@@ -41,6 +41,45 @@ const samples = [
     value: "sample/types_casting.py",
     js: ["int", "float", "bool", "chr", "ord", "__true"],
   },
+  {
+    name: "Core Collection Types",
+    value: "sample/collections.py",
+    js: ["__tuple", "__set", "__dict", "__bytes"],
+  },
+  {
+    name: "Foundational Operators",
+    value: "sample/operators.py",
+    js: [
+      "__floordiv",
+      "__mod",
+      "__pow",
+      "__and_bw",
+      "__or_bw",
+      "__xor_bw",
+      "__invert",
+      "__lshift",
+      "__rshift",
+      "__in",
+    ],
+  },
+  {
+    name: "Global Built-ins",
+    value: "sample/builtins.py",
+    js: [
+      "sum",
+      "min",
+      "max",
+      "any",
+      "all",
+      "enumerate",
+      "zip",
+      "reversed",
+      "sorted",
+      "type",
+      "isinstance",
+      "callable",
+    ],
+  },
 ];
 
 test("verify all samples in UI including JS", async ({ page }) => {

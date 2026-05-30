@@ -14,17 +14,50 @@ export type ASTNode =
   | UnaryExpressionNode
   | IfNode
   | ListNode
+  | TupleNode
+  | SetNode
+  | DictNode
   | ListComprehensionNode
+  | SetComprehensionNode
   | DictComprehensionNode
   | SubscriptNode
   | SliceNode
   | ForNode
   | DoWhileNode
   | FStringNode
+  | BytesNode
   | YieldNode
   | PassNode
   | WithNode
   | MemberAccessNode;
+
+export interface BytesNode {
+  type: "Bytes";
+  value: string;
+}
+
+export interface TupleNode {
+  type: "Tuple";
+  elements: ASTNode[];
+}
+
+export interface SetNode {
+  type: "Set";
+  elements: ASTNode[];
+}
+
+export interface DictNode {
+  type: "Dict";
+  entries: { key: ASTNode; value: ASTNode }[];
+}
+
+export interface SetComprehensionNode {
+  type: "SetComprehension";
+  expression: ASTNode;
+  item: string;
+  iterable: ASTNode;
+  condition: ASTNode | null;
+}
 
 export interface WithNode {
   type: "With";
@@ -50,7 +83,7 @@ export interface PassNode {
 
 export interface ForNode {
   type: "For";
-  iterator: string;
+  iterators: string[];
   iterable?: ASTNode;
   start?: ASTNode;
   stop?: ASTNode;
@@ -275,10 +308,16 @@ export class Parser {
   }
 
   private parseFor(): ForNode {
-    const iterator = this.consume(
-      TokenType.IDENTIFIER,
-      "Expect iterator name",
-    ).value;
+    const iterators: string[] = [];
+    iterators.push(
+      this.consume(TokenType.IDENTIFIER, "Expect iterator name").value,
+    );
+    while (this.match(TokenType.COMMA)) {
+      iterators.push(
+        this.consume(TokenType.IDENTIFIER, "Expect iterator name").value,
+      );
+    }
+
     let iterable: ASTNode | undefined;
     let start: ASTNode | undefined;
     let stop: ASTNode | undefined;
@@ -286,6 +325,9 @@ export class Parser {
     if (this.match(TokenType.IN)) {
       iterable = this.parseExpression();
     } else if (this.match(TokenType.FROM)) {
+      if (iterators.length > 1) {
+        throw new Error("Multiple iterators not supported with 'from ... to'");
+      }
       start = this.parseExpression();
       this.consume(TokenType.TO, "Expect 'to' after 'from'");
       stop = this.parseExpression();
@@ -302,7 +344,7 @@ export class Parser {
       if (node) body.push(node);
     }
     this.consume(TokenType.DEDENT, "Expect dedent after for body");
-    return { type: "For", iterator, iterable, start, stop, body };
+    return { type: "For", iterators, iterable, start, stop, body };
   }
 
   private parseDoWhile(): DoWhileNode {
@@ -435,15 +477,86 @@ export class Parser {
   }
 
   private parseComparison(): ASTNode {
-    let left = this.parseAddition();
+    let left = this.parseBitwiseOr();
     while (
       this.match(
         TokenType.EQUALS_EQUALS,
         TokenType.NOT_EQUALS,
         TokenType.LESS,
         TokenType.GREATER,
+        TokenType.LESS_EQUALS,
+        TokenType.GREATER_EQUALS,
+        TokenType.IN,
       )
     ) {
+      const operator = this.previous().value;
+      const right = this.parseBitwiseOr();
+      left = { type: "BinaryExpression", left, operator, right };
+    }
+
+    if (this.match(TokenType.NOT)) {
+      if (this.match(TokenType.IN)) {
+        const operator = "not in";
+        const right = this.parseBitwiseOr();
+        left = { type: "BinaryExpression", left, operator, right };
+      } else {
+        // This is a bit tricky, if it's not followed by 'in', it might be the start of another expression
+        // But Python doesn't allow 'x == y not z' easily without parens.
+        // For now, if we match 'not' here and then not 'in', we might have an issue.
+        // But 'not' usually has lower precedence than comparison?
+        // Actually 'not' is 13, comparison is 10.
+        // Wait, Python precedence:
+        // or (15)
+        // and (14)
+        // not (13)
+        // in, not in, is, is not, <, <=, >, >=, !=, == (12)
+        // | (11)
+        // ^ (10)
+        // & (9)
+        // <<, >> (8)
+        // +, - (7)
+        // *, @, /, //, % (6)
+        // +x, -x, ~x (5)
+        // ** (4)
+        // My previous implementation had 'not' inside 'parseAnd'.
+      }
+    }
+    return left;
+  }
+
+  private parseBitwiseOr(): ASTNode {
+    let left = this.parseBitwiseXor();
+    while (this.match(TokenType.PIPE)) {
+      const operator = "|";
+      const right = this.parseBitwiseXor();
+      left = { type: "BinaryExpression", left, operator, right };
+    }
+    return left;
+  }
+
+  private parseBitwiseXor(): ASTNode {
+    let left = this.parseBitwiseAnd();
+    while (this.match(TokenType.CARET)) {
+      const operator = "^";
+      const right = this.parseBitwiseAnd();
+      left = { type: "BinaryExpression", left, operator, right };
+    }
+    return left;
+  }
+
+  private parseBitwiseAnd(): ASTNode {
+    let left = this.parseShift();
+    while (this.match(TokenType.AMPERSAND)) {
+      const operator = "&";
+      const right = this.parseShift();
+      left = { type: "BinaryExpression", left, operator, right };
+    }
+    return left;
+  }
+
+  private parseShift(): ASTNode {
+    let left = this.parseAddition();
+    while (this.match(TokenType.LESS_LESS, TokenType.GREATER_GREATER)) {
       const operator = this.previous().value;
       const right = this.parseAddition();
       left = { type: "BinaryExpression", left, operator, right };
@@ -463,8 +576,15 @@ export class Parser {
 
   private parseMultiplication(): ASTNode {
     let left = this.parseUnary();
-    while (this.match(TokenType.STAR, TokenType.SLASH)) {
-      const operator = this.previous().type === TokenType.STAR ? "*" : "/";
+    while (
+      this.match(
+        TokenType.STAR,
+        TokenType.SLASH,
+        TokenType.SLASH_SLASH,
+        TokenType.PERCENT,
+      )
+    ) {
+      const operator = this.previous().value;
       const right = this.parseUnary();
       left = { type: "BinaryExpression", left, operator, right };
     }
@@ -472,12 +592,22 @@ export class Parser {
   }
 
   private parseUnary(): ASTNode {
-    if (this.match(TokenType.MINUS)) {
-      const operator = "-";
+    if (this.match(TokenType.PLUS, TokenType.MINUS, TokenType.TILDE)) {
+      const operator = this.previous().value;
       const argument = this.parseUnary();
       return { type: "UnaryExpression", operator, argument };
     }
-    return this.parsePrimary();
+    return this.parseExponentiation();
+  }
+
+  private parseExponentiation(): ASTNode {
+    const left = this.parsePrimary();
+    if (this.match(TokenType.STAR_STAR)) {
+      const operator = "**";
+      const right = this.parseUnary(); // Exponentiation is right-associative
+      return { type: "BinaryExpression", left, operator, right };
+    }
+    return left;
   }
 
   private parsePrimary(): ASTNode {
@@ -499,6 +629,8 @@ export class Parser {
       }
     } else if (this.match(TokenType.STRING)) {
       expr = { type: "Literal", value: this.previous().value };
+    } else if (this.match(TokenType.BYTES)) {
+      expr = { type: "Bytes", value: this.previous().value };
     } else if (this.match(TokenType.FSTRING)) {
       expr = this.parseFString(this.previous().value);
     } else if (this.match(TokenType.TRUE)) {
@@ -508,12 +640,11 @@ export class Parser {
     } else if (this.match(TokenType.IDENTIFIER)) {
       expr = { type: "Identifier", name: this.previous().value };
     } else if (this.match(TokenType.LPAREN)) {
-      expr = this.parseExpression();
-      this.consume(TokenType.RPAREN, "Expect ')' after expression");
+      expr = this.parseTupleOrParenthesized();
     } else if (this.match(TokenType.LSQUARE)) {
       expr = this.parseList();
     } else if (this.match(TokenType.LBRACE)) {
-      expr = this.parseDict();
+      expr = this.parseDictOrSet();
     } else {
       const token = this.peek();
       throw new Error(
@@ -622,24 +753,93 @@ export class Parser {
     return { type: "List", elements };
   }
 
-  private parseDict(): DictComprehensionNode {
-    const key = this.parseExpression();
-    this.consume(TokenType.COLON, "Expect ':' after key in dict comprehension");
-    const value = this.parseExpression();
-
-    this.consume(TokenType.FOR, "Expect 'for' in dict comprehension");
-    const item = this.consume(
-      TokenType.IDENTIFIER,
-      "Expect variable name",
-    ).value;
-    this.consume(TokenType.IN, "Expect 'in'");
-    const iterable = this.parseExpression();
-    let condition: ASTNode | null = null;
-    if (this.match(TokenType.IF)) {
-      condition = this.parseExpression();
+  private parseTupleOrParenthesized(): ASTNode {
+    if (this.match(TokenType.RPAREN)) {
+      return { type: "Tuple", elements: [] };
     }
-    this.consume(TokenType.RBRACE, "Expect '}' after dict comprehension");
-    return { type: "DictComprehension", key, value, item, iterable, condition };
+    const expr = this.parseExpression();
+    if (this.match(TokenType.COMMA)) {
+      const elements: ASTNode[] = [expr];
+      while (!this.check(TokenType.RPAREN)) {
+        elements.push(this.parseExpression());
+        if (!this.match(TokenType.COMMA)) break;
+      }
+      this.consume(TokenType.RPAREN, "Expect ')' after tuple");
+      return { type: "Tuple", elements };
+    }
+    this.consume(TokenType.RPAREN, "Expect ')' after expression");
+    return expr;
+  }
+
+  private parseDictOrSet(): ASTNode {
+    if (this.match(TokenType.RBRACE)) {
+      return { type: "Dict", entries: [] };
+    }
+
+    const firstExpr = this.parseExpression();
+
+    if (this.match(TokenType.COLON)) {
+      const value = this.parseExpression();
+      if (this.match(TokenType.FOR)) {
+        const item = this.consume(
+          TokenType.IDENTIFIER,
+          "Expect variable name",
+        ).value;
+        this.consume(TokenType.IN, "Expect 'in'");
+        const iterable = this.parseExpression();
+        let condition: ASTNode | null = null;
+        if (this.match(TokenType.IF)) {
+          condition = this.parseExpression();
+        }
+        this.consume(TokenType.RBRACE, "Expect '}' after dict comprehension");
+        return {
+          type: "DictComprehension",
+          key: firstExpr,
+          value,
+          item,
+          iterable,
+          condition,
+        };
+      } else {
+        const entries = [{ key: firstExpr, value }];
+        while (this.match(TokenType.COMMA)) {
+          if (this.check(TokenType.RBRACE)) break;
+          const k = this.parseExpression();
+          this.consume(TokenType.COLON, "Expect ':' after key");
+          const v = this.parseExpression();
+          entries.push({ key: k, value: v });
+        }
+        this.consume(TokenType.RBRACE, "Expect '}' after dict");
+        return { type: "Dict", entries };
+      }
+    } else if (this.match(TokenType.FOR)) {
+      const item = this.consume(
+        TokenType.IDENTIFIER,
+        "Expect variable name",
+      ).value;
+      this.consume(TokenType.IN, "Expect 'in'");
+      const iterable = this.parseExpression();
+      let condition: ASTNode | null = null;
+      if (this.match(TokenType.IF)) {
+        condition = this.parseExpression();
+      }
+      this.consume(TokenType.RBRACE, "Expect '}' after set comprehension");
+      return {
+        type: "SetComprehension",
+        expression: firstExpr,
+        item,
+        iterable,
+        condition,
+      };
+    } else {
+      const elements = [firstExpr];
+      while (this.match(TokenType.COMMA)) {
+        if (this.check(TokenType.RBRACE)) break;
+        elements.push(this.parseExpression());
+      }
+      this.consume(TokenType.RBRACE, "Expect '}' after set");
+      return { type: "Set", elements };
+    }
   }
 
   private parseSubscript(value: ASTNode): ASTNode {

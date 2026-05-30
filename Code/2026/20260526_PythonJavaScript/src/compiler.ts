@@ -11,6 +11,7 @@ import {
   UnaryExpressionNode,
   IfNode,
   ListComprehensionNode,
+  SetComprehensionNode,
   DictComprehensionNode,
   SubscriptNode,
   ForNode,
@@ -31,6 +32,24 @@ const BUILTINS = new Set([
   "bool",
   "chr",
   "ord",
+  "tuple",
+  "set",
+  "frozenset",
+  "bytes",
+  "bytearray",
+  "dict",
+  "min",
+  "max",
+  "sum",
+  "any",
+  "all",
+  "enumerate",
+  "zip",
+  "reversed",
+  "sorted",
+  "type",
+  "isinstance",
+  "callable",
 ]);
 
 const SYSTEM_HELPERS = [
@@ -50,6 +69,20 @@ const SYSTEM_HELPERS = [
   "__item",
   "__iter",
   "__slice",
+  "__tuple",
+  "__set",
+  "__dict",
+  "__bytes",
+  "__pow",
+  "__floordiv",
+  "__mod",
+  "__and_bw",
+  "__or_bw",
+  "__xor_bw",
+  "__lshift",
+  "__rshift",
+  "__invert",
+  "__in",
 ];
 
 const OP_TO_HELPER: Record<string, string> = {
@@ -57,12 +90,21 @@ const OP_TO_HELPER: Record<string, string> = {
   "-": "__sub",
   "*": "__mul",
   "/": "__div",
+  "//": "__floordiv",
+  "%": "__mod",
+  "**": "__pow",
+  "&": "__and_bw",
+  "|": "__or_bw",
+  "^": "__xor_bw",
+  "<<": "__lshift",
+  ">>": "__rshift",
   "==": "__eq",
   "!=": "__ne",
   "<": "__lt",
   ">": "__gt",
   "<=": "__le",
   ">=": "__ge",
+  in: "__in",
 };
 
 export class Compiler {
@@ -189,10 +231,13 @@ export class Compiler {
           used.add("__and");
         } else if (node.operator === "or") {
           used.add("__or");
+        } else if (node.operator === "not in") {
+          used.add("__in");
         }
         stack.push(node.left, node.right);
       } else if (node.type === "UnaryExpression") {
         if (node.operator === "not") used.add("__true");
+        if (node.operator === "~") used.add("__invert");
         stack.push(node.argument);
       } else if (node.type === "If") {
         used.add("__true");
@@ -205,6 +250,7 @@ export class Compiler {
         stack.push(...node.body);
       } else if (node.type === "For") {
         used.add("__iter");
+        if (node.iterators.length > 1) used.add("__item");
         if (node.iterable) stack.push(node.iterable);
         if (node.start) {
           stack.push(node.start);
@@ -221,6 +267,17 @@ export class Compiler {
         stack.push(...node.body);
       } else if (node.type === "List") {
         stack.push(...node.elements);
+      } else if (node.type === "Tuple") {
+        used.add("__tuple");
+        stack.push(...node.elements);
+      } else if (node.type === "Set") {
+        used.add("__set");
+        stack.push(...node.elements);
+      } else if (node.type === "Dict") {
+        used.add("__dict");
+        for (const e of node.entries) stack.push(e.key, e.value);
+      } else if (node.type === "Bytes") {
+        used.add("__bytes");
       } else if (node.type === "Subscript") {
         used.add("__item");
         stack.push(node.value, node.index);
@@ -231,6 +288,7 @@ export class Compiler {
         if (node.step) stack.push(node.step);
       } else if (
         node.type === "ListComprehension" ||
+        node.type === "SetComprehension" ||
         node.type === "DictComprehension"
       ) {
         used.add("__iter");
@@ -239,7 +297,10 @@ export class Compiler {
           used.add("__true");
           stack.push(node.condition);
         }
-        if (node.type === "ListComprehension") {
+        if (
+          node.type === "ListComprehension" ||
+          node.type === "SetComprehension"
+        ) {
           stack.push(node.expression);
         } else {
           stack.push(node.key, node.value);
@@ -266,7 +327,7 @@ export class Compiler {
       if (node.type === "Assignment") {
         vars.add(node.target);
       } else if (node.type === "For") {
-        vars.add(node.iterator);
+        for (const it of node.iterators) vars.add(it);
         stack.push(...node.body);
       } else if (node.type === "With") {
         if (node.target) vars.add(node.target);
@@ -331,11 +392,26 @@ export class Compiler {
       case "List":
         return `[${node.elements.map((e) => this.compileNode(e)).join(", ")}]`;
 
+      case "Tuple":
+        return `__tuple([${node.elements.map((e) => this.compileNode(e)).join(", ")}])`;
+
+      case "Set":
+        return `__set([${node.elements.map((e) => this.compileNode(e)).join(", ")}])`;
+
+      case "Dict":
+        return `__dict([${node.entries.map((e) => `[${this.compileNode(e.key)}, ${this.compileNode(e.value)}]`).join(", ")}])`;
+
+      case "Bytes":
+        return `__bytes(${JSON.stringify(node.value)})`;
+
       case "Subscript":
         return this.compileSubscript(node);
 
       case "ListComprehension":
         return this.compileListComprehension(node);
+
+      case "SetComprehension":
+        return this.compileSetComprehension(node);
 
       case "DictComprehension":
         return this.compileDictComprehension(node);
@@ -415,6 +491,10 @@ export class Compiler {
       return `(await __or(async () => ${left}, async () => ${right}))`;
     }
 
+    if (op === "not in") {
+      return `(!__in(${left}, ${right}))`;
+    }
+
     const helper = OP_TO_HELPER[op];
     if (helper) {
       return `${helper}(${left}, ${right})`;
@@ -428,6 +508,9 @@ export class Compiler {
     const op = node.operator;
     if (op === "not") {
       return `(!__true(${arg}))`;
+    }
+    if (op === "~") {
+      return `__invert(${arg})`;
     }
     return `${op}${arg}`;
   }
@@ -486,7 +569,14 @@ export class Compiler {
       // Use a runtime helper to handle both sync and async iterators efficiently
       let js = `for await (const ${tmpItem} of __iter(${iterable})) {\n`;
       this.indentLevel++;
-      js += `${this.indent()}${node.iterator} = ${tmpItem};\n`;
+      if (node.iterators.length === 1) {
+        js += `${this.indent()}${node.iterators[0]} = ${tmpItem};\n`;
+      } else {
+        // Multi-iterator unpacking
+        for (let i = 0; i < node.iterators.length; i++) {
+          js += `${this.indent()}${node.iterators[i]} = __item(${tmpItem}, ${i});\n`;
+        }
+      }
       for (const stmt of node.body) {
         const compiled = this.compileNode(stmt);
         if (compiled) js += `${this.indent()}${compiled};\n`;
@@ -497,8 +587,9 @@ export class Compiler {
     } else if (node.start && node.stop) {
       const start = this.compileNode(node.start);
       const stop = this.compileNode(node.stop);
+      const iterator = node.iterators[0];
       // Use the already-declared iterator directly
-      let js = `for (${node.iterator} = ${start}; __lt(${node.iterator}, ${stop}); ${node.iterator} = __add(${node.iterator}, 1)) {\n`;
+      let js = `for (${iterator} = ${start}; __lt(${iterator}, ${stop}); ${iterator} = __add(${iterator}, 1)) {\n`;
       this.indentLevel++;
       for (const stmt of node.body) {
         const compiled = this.compileNode(stmt);
@@ -598,6 +689,24 @@ export class Compiler {
       for await (const ${tmpItem} of __iter(${iterable})) {
         const ${node.item} = ${tmpItem};
         if (${cond}) res.push(${expr});
+      }
+      return res;
+    })())`;
+  }
+
+  private compileSetComprehension(node: SetComprehensionNode): string {
+    const expr = this.compileNode(node.expression);
+    const iterable = this.compileNode(node.iterable);
+    const cond = node.condition
+      ? `__true(${this.compileNode(node.condition)})`
+      : "true";
+    const tmpItem = this.nextTmp("item");
+
+    return `(await (async () => {
+      const res = new Set();
+      for await (const ${tmpItem} of __iter(${iterable})) {
+        const ${node.item} = ${tmpItem};
+        if (${cond}) res.add(${expr});
       }
       return res;
     })())`;

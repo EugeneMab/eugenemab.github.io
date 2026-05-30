@@ -27,16 +27,50 @@ self.onmessage = async (e) => {
             const jsCode = compiler.compileJS(ast);
             self.postMessage({ type: "js", payload: jsCode });
             // 4. Execution
+            class Tuple extends Array {
+                constructor(...args) {
+                    super();
+                    const elements = args.length === 1 && Array.isArray(args[0]) ? args[0] : args;
+                    this.push(...elements);
+                    Object.freeze(this);
+                }
+                [Symbol.toPrimitive](_hint) {
+                    return this.toString();
+                }
+                toString() {
+                    if (this.length === 1)
+                        return `(${this[0]},)`;
+                    return `(${this.join(", ")})`;
+                }
+            }
             const runtime = {
                 print: (val) => {
-                    let payload;
-                    if (Array.isArray(val)) {
-                        payload = `[${val.map((v) => String(v)).join(", ")}]`;
-                    }
-                    else {
-                        payload = String(val);
-                    }
-                    self.postMessage({ type: "log", payload });
+                    const format = (v) => {
+                        if (v instanceof Tuple)
+                            return v.toString();
+                        if (v instanceof Set)
+                            return `set([${Array.from(v)
+                                .map((x) => format(x))
+                                .join(", ")}])`;
+                        if (v instanceof Uint8Array)
+                            return `b'${Array.from(v)
+                                .map((b) => "\\x" + b.toString(16).padStart(2, "0"))
+                                .join("")}'`;
+                        if (Array.isArray(v))
+                            return `[${v.map((x) => format(x)).join(", ")}]`;
+                        if (v !== null && typeof v === "object" && !(v instanceof Date)) {
+                            if (v instanceof Map) {
+                                return `{${Array.from(v.entries())
+                                    .map(([k, val]) => `${format(k)}: ${format(val)}`)
+                                    .join(", ")}}`;
+                            }
+                            return `{${Object.entries(v)
+                                .map(([k, val]) => `${JSON.stringify(k)}: ${format(val)}`)
+                                .join(", ")}}`;
+                        }
+                        return String(v);
+                    };
+                    self.postMessage({ type: "log", payload: format(val) });
                     return 0;
                 },
                 sleep: (ms) => {
@@ -54,6 +88,10 @@ self.onmessage = async (e) => {
                 },
                 len: (obj) => {
                     if (Array.isArray(obj) || typeof obj === "string")
+                        return obj.length;
+                    if (obj instanceof Set || obj instanceof Map)
+                        return obj.size;
+                    if (obj instanceof Uint8Array)
                         return obj.length;
                     if (typeof obj === "object")
                         return Object.keys(obj).length;
@@ -120,8 +158,166 @@ self.onmessage = async (e) => {
                     if (typeof val === "string" && Array.from(val).length === 1) {
                         return val.codePointAt(0);
                     }
-                    throw new Error("ord() expected a string of length 1");
+                    if (val instanceof Uint8Array && val.length === 1) {
+                        return val[0];
+                    }
+                    throw new Error("ord() expected a string of length 1 or bytes of length 1");
                 },
+                tuple: (val) => {
+                    if (val === undefined)
+                        return new Tuple();
+                    if (Array.isArray(val))
+                        return new Tuple(val);
+                    if (typeof val[Symbol.iterator] === "function")
+                        return new Tuple([...val]);
+                    return new Tuple([val]);
+                },
+                set: (val) => {
+                    if (val === undefined)
+                        return new Set();
+                    if (typeof val[Symbol.iterator] === "function")
+                        return new Set(val);
+                    return new Set([val]);
+                },
+                frozenset: (val) => {
+                    // Note: Object.freeze() does not make JS Set immutable.
+                    return runtime.set(val);
+                },
+                bytes: (val, _encoding) => {
+                    if (val === undefined)
+                        return new Uint8Array();
+                    if (typeof val === "number")
+                        return new Uint8Array(val);
+                    if (typeof val === "string") {
+                        return new TextEncoder().encode(val);
+                    }
+                    if (Array.isArray(val) || val instanceof Uint8Array)
+                        return new Uint8Array(val);
+                    return new Uint8Array();
+                },
+                bytearray: (val) => {
+                    return runtime.bytes(val);
+                },
+                dict: (val) => {
+                    if (val === undefined)
+                        return Object.create(null);
+                    if (Array.isArray(val)) {
+                        const res = Object.create(null);
+                        for (const item of val) {
+                            if (Array.isArray(item) && item.length === 2) {
+                                res[item[0]] = item[1];
+                            }
+                        }
+                        return res;
+                    }
+                    return Object.assign(Object.create(null), val);
+                },
+                sum: (iterable, start = 0) => {
+                    let res = start;
+                    for (const item of iterable) {
+                        res = runtime.__add(res, item);
+                    }
+                    return res;
+                },
+                any: (iterable) => {
+                    for (const item of iterable) {
+                        if (runtime.__true(item))
+                            return true;
+                    }
+                    return false;
+                },
+                all: (iterable) => {
+                    for (const item of iterable) {
+                        if (!runtime.__true(item))
+                            return false;
+                    }
+                    return true;
+                },
+                max: (...args) => {
+                    let iterable = args;
+                    if (args.length === 1) {
+                        iterable = args[0];
+                    }
+                    // Simple implementation without key/default for now to keep it lean
+                    let res = undefined;
+                    for (const item of iterable) {
+                        if (res === undefined || runtime.__gt(item, res))
+                            res = item;
+                    }
+                    if (res === undefined)
+                        throw new Error("max() arg is an empty sequence");
+                    return res;
+                },
+                min: (...args) => {
+                    let iterable = args;
+                    if (args.length === 1) {
+                        iterable = args[0];
+                    }
+                    let res = undefined;
+                    for (const item of iterable) {
+                        if (res === undefined || runtime.__lt(item, res))
+                            res = item;
+                    }
+                    if (res === undefined)
+                        throw new Error("min() arg is an empty sequence");
+                    return res;
+                },
+                enumerate: (iterable, start = 0) => {
+                    const res = [];
+                    let i = start;
+                    for (const item of iterable) {
+                        res.push(new Tuple([i++, item]));
+                    }
+                    return res;
+                },
+                zip: (...iterables) => {
+                    const iters = iterables.map((it) => Array.from(it));
+                    const minLen = Math.min(...iters.map((it) => it.length));
+                    const res = [];
+                    for (let i = 0; i < minLen; i++) {
+                        res.push(new Tuple(iters.map((it) => it[i])));
+                    }
+                    return res;
+                },
+                reversed: (seq) => {
+                    const arr = Array.from(seq);
+                    arr.reverse();
+                    return arr;
+                },
+                sorted: (iterable, _key, reverse = false) => {
+                    const arr = Array.from(iterable);
+                    arr.sort((a, b) => {
+                        const va = a;
+                        const vb = b;
+                        if (runtime.__lt(va, vb))
+                            return reverse ? 1 : -1;
+                        if (runtime.__gt(va, vb))
+                            return reverse ? -1 : 1;
+                        return 0;
+                    });
+                    return arr;
+                },
+                type: (obj) => {
+                    if (obj === null)
+                        return "NoneType";
+                    if (obj instanceof Tuple)
+                        return "tuple";
+                    if (obj instanceof Set)
+                        return "set";
+                    if (obj instanceof Uint8Array)
+                        return "bytes";
+                    if (Array.isArray(obj))
+                        return "list";
+                    return typeof obj;
+                },
+                isinstance: (obj, typeInfo) => {
+                    const t = runtime.type(obj);
+                    if (Array.isArray(typeInfo)) {
+                        return typeInfo.some((ti) => t === ti);
+                    }
+                    return t === typeInfo;
+                },
+                callable: (obj) => typeof obj === "function",
                 __true: (val) => {
                     if (val === null || val === undefined)
                         return false;
@@ -134,6 +330,10 @@ self.onmessage = async (e) => {
                     if (typeof val === "string")
                         return val.length > 0;
                     if (Array.isArray(val))
+                        return val.length > 0;
+                    if (val instanceof Set || val instanceof Map)
+                        return val.size > 0;
+                    if (val instanceof Uint8Array)
                         return val.length > 0;
                     if (typeof val === "object") {
                         if (Object.keys(val).length === 0)
@@ -153,7 +353,9 @@ self.onmessage = async (e) => {
                 __item: (obj, idx) => {
                     if (typeof idx === "number" &&
                         idx < 0 &&
-                        (Array.isArray(obj) || typeof obj === "string")) {
+                        (Array.isArray(obj) ||
+                            typeof obj === "string" ||
+                            obj instanceof Uint8Array)) {
                         return obj[obj.length + idx];
                     }
                     return obj[idx];
@@ -236,6 +438,131 @@ self.onmessage = async (e) => {
                     }
                     return a >= b;
                 },
+                __floordiv: (a, b) => {
+                    if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                        (typeof b === "bigint" || Number.isInteger(b))) {
+                        const ab = BigInt(a);
+                        const bb = BigInt(b);
+                        let res = ab / bb;
+                        if (ab < 0n !== bb < 0n && ab % bb !== 0n)
+                            res -= 1n;
+                        return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                            res >= BigInt(Number.MIN_SAFE_INTEGER)
+                            ? Number(res)
+                            : res;
+                    }
+                    return Math.floor(Number(a) / Number(b));
+                },
+                __mod: (a, b) => {
+                    if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                        (typeof b === "bigint" || Number.isInteger(b))) {
+                        const ab = BigInt(a);
+                        const bb = BigInt(b);
+                        const res = ab % bb;
+                        const res_py = ((res % bb) + bb) % bb;
+                        return res_py <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                            res_py >= BigInt(Number.MIN_SAFE_INTEGER)
+                            ? Number(res_py)
+                            : res_py;
+                    }
+                    const res = Number(a) % Number(b);
+                    return ((res % Number(b)) + Number(b)) % Number(b); // Python-style modulo
+                },
+                __pow: (a, b) => {
+                    if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                        (typeof b === "bigint" || Number.isInteger(b))) {
+                        const ab = BigInt(a);
+                        const bb = BigInt(b);
+                        if (bb < 0n)
+                            return Math.pow(Number(a), Number(b));
+                        const res = ab ** bb;
+                        return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                            res >= BigInt(Number.MIN_SAFE_INTEGER)
+                            ? Number(res)
+                            : res;
+                    }
+                    return Math.pow(Number(a), Number(b));
+                },
+                __and_bw: (a, b) => {
+                    if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                        (typeof b === "bigint" || Number.isInteger(b))) {
+                        const res = BigInt(a) & BigInt(b);
+                        return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                            res >= BigInt(Number.MIN_SAFE_INTEGER)
+                            ? Number(res)
+                            : res;
+                    }
+                    return a & b;
+                },
+                __or_bw: (a, b) => {
+                    if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                        (typeof b === "bigint" || Number.isInteger(b))) {
+                        const res = BigInt(a) | BigInt(b);
+                        return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                            res >= BigInt(Number.MIN_SAFE_INTEGER)
+                            ? Number(res)
+                            : res;
+                    }
+                    return a | b;
+                },
+                __xor_bw: (a, b) => {
+                    if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                        (typeof b === "bigint" || Number.isInteger(b))) {
+                        const res = BigInt(a) ^ BigInt(b);
+                        return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                            res >= BigInt(Number.MIN_SAFE_INTEGER)
+                            ? Number(res)
+                            : res;
+                    }
+                    return a ^ b;
+                },
+                __lshift: (a, b) => {
+                    if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                        (typeof b === "bigint" || Number.isInteger(b))) {
+                        const res = BigInt(a) << BigInt(b);
+                        return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                            res >= BigInt(Number.MIN_SAFE_INTEGER)
+                            ? Number(res)
+                            : res;
+                    }
+                    return a << b;
+                },
+                __rshift: (a, b) => {
+                    if ((typeof a === "bigint" || Number.isInteger(a)) &&
+                        (typeof b === "bigint" || Number.isInteger(b))) {
+                        const res = BigInt(a) >> BigInt(b);
+                        return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                            res >= BigInt(Number.MIN_SAFE_INTEGER)
+                            ? Number(res)
+                            : res;
+                    }
+                    return a >> b;
+                },
+                __invert: (a) => {
+                    if (typeof a === "bigint" || Number.isInteger(a)) {
+                        const res = ~BigInt(a);
+                        return res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                            res >= BigInt(Number.MIN_SAFE_INTEGER)
+                            ? Number(res)
+                            : res;
+                    }
+                    return ~a;
+                },
+                __in: (item, container) => {
+                    if (Array.isArray(container) || typeof container === "string") {
+                        return container.includes(item);
+                    }
+                    if (container instanceof Set || container instanceof Map) {
+                        return container.has(item);
+                    }
+                    if (container instanceof Uint8Array) {
+                        return container.includes(item);
+                    }
+                    if (typeof container === "object" && container !== null) {
+                        return Object.prototype.hasOwnProperty.call(container, item);
+                    }
+                    return false;
+                },
                 __slice: (obj, start, stop, step) => {
                     const len = obj.length;
                     if (step === undefined || step === null)
@@ -259,12 +586,34 @@ self.onmessage = async (e) => {
                             if (i >= 0 && i < len)
                                 res.push(obj[i]);
                     }
-                    return typeof obj === "string" ? res.join("") : res;
+                    if (typeof obj === "string")
+                        return res.join("");
+                    if (obj instanceof Uint8Array)
+                        return new Uint8Array(res);
+                    if (obj instanceof Tuple)
+                        return new Tuple(res);
+                    return res;
                 },
                 __iter: (obj) => {
                     if (obj && obj[Symbol.asyncIterator])
                         return obj;
+                    if (obj && obj[Symbol.iterator])
+                        return obj;
                     return obj;
+                },
+                __tuple: (elements) => new Tuple(elements),
+                __set: (elements) => new Set(elements),
+                __dict: (entries) => {
+                    const res = Object.create(null);
+                    for (const [k, v] of entries)
+                        res[k] = v;
+                    return res;
+                },
+                __bytes: (val) => {
+                    const res = new Uint8Array(val.length);
+                    for (let i = 0; i < val.length; i++)
+                        res[i] = val.charCodeAt(i);
+                    return res;
                 },
             };
             // Use a data URL to import the generated JS code as a module

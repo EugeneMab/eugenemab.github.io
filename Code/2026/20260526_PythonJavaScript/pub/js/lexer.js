@@ -13,7 +13,18 @@ export var TokenType;
     TokenType["PLUS"] = "PLUS";
     TokenType["MINUS"] = "MINUS";
     TokenType["STAR"] = "STAR";
+    TokenType["STAR_STAR"] = "STAR_STAR";
     TokenType["SLASH"] = "SLASH";
+    TokenType["SLASH_SLASH"] = "SLASH_SLASH";
+    TokenType["PERCENT"] = "PERCENT";
+    TokenType["AMPERSAND"] = "AMPERSAND";
+    TokenType["PIPE"] = "PIPE";
+    TokenType["CARET"] = "CARET";
+    TokenType["TILDE"] = "TILDE";
+    TokenType["LESS_LESS"] = "LESS_LESS";
+    TokenType["GREATER_GREATER"] = "GREATER_GREATER";
+    TokenType["LESS_EQUALS"] = "LESS_EQUALS";
+    TokenType["GREATER_EQUALS"] = "GREATER_EQUALS";
     TokenType["COLON"] = "COLON";
     TokenType["WHILE"] = "WHILE";
     TokenType["IF"] = "IF";
@@ -41,6 +52,7 @@ export var TokenType;
     TokenType["DOT"] = "DOT";
     TokenType["STRING"] = "STRING";
     TokenType["FSTRING"] = "FSTRING";
+    TokenType["BYTES"] = "BYTES";
     TokenType["DO"] = "DO";
     TokenType["FROM"] = "FROM";
     TokenType["TO"] = "TO";
@@ -103,6 +115,11 @@ export class Lexer {
                 this.advance(); // consume 'r'
                 return this.handleString(this.advance(), false, startCol, true); // consume quote
             }
+            if ((char === "b" || char === "B") && (next === '"' || next === "'")) {
+                const startCol = this.col;
+                this.advance(); // consume 'b'
+                return this.handleString(this.advance(), false, startCol, false, true); // consume quote
+            }
             return this.handleIdentifier();
         }
         // Numbers
@@ -132,17 +149,51 @@ export class Lexer {
                 }
                 throw new Error(`Unexpected character: ! at line ${this.line}`);
             case "<":
+                if (this.peek() === "<") {
+                    this.advance();
+                    return this.createToken(TokenType.LESS_LESS, "<<", startCol);
+                }
+                if (this.peek() === "=") {
+                    this.advance();
+                    return this.createToken(TokenType.LESS_EQUALS, "<=", startCol);
+                }
                 return this.createToken(TokenType.LESS, "<", startCol);
             case ">":
+                if (this.peek() === ">") {
+                    this.advance();
+                    return this.createToken(TokenType.GREATER_GREATER, ">>", startCol);
+                }
+                if (this.peek() === "=") {
+                    this.advance();
+                    return this.createToken(TokenType.GREATER_EQUALS, ">=", startCol);
+                }
                 return this.createToken(TokenType.GREATER, ">", startCol);
             case "+":
                 return this.createToken(TokenType.PLUS, "+", startCol);
             case "-":
                 return this.createToken(TokenType.MINUS, "-", startCol);
             case "*":
+                if (this.peek() === "*") {
+                    this.advance();
+                    return this.createToken(TokenType.STAR_STAR, "**", startCol);
+                }
                 return this.createToken(TokenType.STAR, "*", startCol);
             case "/":
+                if (this.peek() === "/") {
+                    this.advance();
+                    return this.createToken(TokenType.SLASH_SLASH, "//", startCol);
+                }
                 return this.createToken(TokenType.SLASH, "/", startCol);
+            case "%":
+                return this.createToken(TokenType.PERCENT, "%", startCol);
+            case "&":
+                return this.createToken(TokenType.AMPERSAND, "&", startCol);
+            case "|":
+                return this.createToken(TokenType.PIPE, "|", startCol);
+            case "^":
+                return this.createToken(TokenType.CARET, "^", startCol);
+            case "~":
+                return this.createToken(TokenType.TILDE, "~", startCol);
             case ":":
                 return this.createToken(TokenType.COLON, ":", startCol);
             case ".":
@@ -265,7 +316,7 @@ export class Lexer {
         }
         return { type: TokenType.NUMBER, value, line: this.line, col: startCol };
     }
-    handleString(quote, isFString = false, startCol = this.col, isRaw = false) {
+    handleString(quote, isFString = false, startCol = this.col, isRaw = false, isBytes = false) {
         let value = "";
         while (this.pos < this.source.length && this.peek() !== quote) {
             if (this.peek() === "\n") {
@@ -317,8 +368,13 @@ export class Lexer {
             throw new Error(`Unterminated string at line ${this.line}`);
         }
         this.advance(); // Skip closing quote
+        let type = TokenType.STRING;
+        if (isFString)
+            type = TokenType.FSTRING;
+        else if (isBytes)
+            type = TokenType.BYTES;
         return {
-            type: isFString ? TokenType.FSTRING : TokenType.STRING,
+            type,
             value,
             line: this.line,
             col: startCol,
