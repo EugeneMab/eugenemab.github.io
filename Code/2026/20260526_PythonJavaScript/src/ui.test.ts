@@ -136,18 +136,48 @@ test("verify all samples in UI including JS", async ({ page }) => {
     // Check outputs
     const resultOutput = page.locator("#result-output");
     const jsOutput = page.locator("#js-output");
+    const statusLine = page.locator("#status-line");
 
-    // Wait for result box to contain "Result:"
-    await expect(resultOutput).toContainText("Result:");
+    // Wait for result box to contain "Result:" or an error
+    try {
+      await expect(resultOutput).toContainText(/Result:|Error:/, {
+        timeout: 15000,
+      });
+    } catch (_e) {
+      const statusText = await statusLine.textContent();
+      const resultText = await resultOutput.textContent();
+      throw new Error(
+        `Timeout waiting for result in ${sample.name}. Status: ${statusText}, Result: ${resultText}`,
+        { cause: _e },
+      );
+    }
+
+    const resultText = (await resultOutput.textContent()) || "";
+    if (resultText.includes("Error:")) {
+      errors.push(`Sample ${sample.name} failed with: ${resultText}`);
+    }
 
     // Verify JS content
     const jsText = (await jsOutput.textContent()) || "";
     for (const marker of sample.js) {
-      expect(jsText).toContain(marker);
+      if (!jsText.includes(marker)) {
+        errors.push(`Sample ${sample.name} missing JS marker: ${marker}`);
+      }
     }
 
-    console.log(`✅ Sample ${sample.name} passed.`);
+    // Verify Lexicon and AST are not empty
+    const lexOutput = page.locator("#lex-output");
+    const astOutput = page.locator("#ast-output");
+    const lexText = (await lexOutput.textContent()) || "";
+    const astText = (await astOutput.textContent()) || "";
+
+    if (lexText.trim() === "") {
+      errors.push(`Sample ${sample.name} has empty Lexicon`);
+    }
+    if (astText.trim() === "" || astText.trim() === "null") {
+      errors.push(`Sample ${sample.name} has empty or null AST`);
+    }
   }
 
-  expect(errors).toHaveLength(0);
+  expect(errors).toEqual([]);
 });

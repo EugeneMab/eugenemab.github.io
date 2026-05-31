@@ -369,6 +369,25 @@ export function getJSRuntime(logs: any[] = []) {
       }
       return l.reverse();
     },
+    // Protocol methods
+    __enter__: async (obj: any, fallback?: any) => {
+      if (obj != null && typeof obj.__enter__ === "function") {
+        return await obj.__enter__();
+      }
+      if (typeof fallback === "function") {
+        return await fallback(obj);
+      }
+      return obj;
+    },
+    __exit__: async (obj: any, a: any, b: any, c: any, fallback?: any) => {
+      if (obj != null && typeof obj.__exit__ === "function") {
+        return await obj.__exit__(a, b, c);
+      }
+      if (typeof fallback === "function") {
+        return await fallback(obj, a, b, c);
+      }
+      return undefined;
+    },
     __true: (val: any) => {
       if (val === null || val === undefined) return false;
       if (typeof val === "boolean") return val;
@@ -683,21 +702,6 @@ export function getJSRuntime(logs: any[] = []) {
         return await func(...args);
       }
       return await func(...posArgs);
-    },
-    __member_call: async (
-      obj: any,
-      member: string,
-      posArgs: any[],
-      kwArgs: any,
-    ) => {
-      const helper = runtime[member];
-      if (typeof helper === "function") {
-        return await runtime.__call(helper, [obj, ...posArgs], kwArgs);
-      }
-      if (obj != null && typeof obj[member] === "function") {
-        return await obj[member](...posArgs);
-      }
-      throw new Error(`${member} is not a function`);
     },
     __bytes: (val: string) => {
       const res = new Uint8Array(val.length);

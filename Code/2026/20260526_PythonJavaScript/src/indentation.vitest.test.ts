@@ -31,7 +31,7 @@ def main():
       "      return 1;",
       "    } else {",
       "      return 0;",
-      "    };",
+      "    }",
     ]);
   });
 
@@ -44,7 +44,7 @@ def main():
     testIndentation(code, [
       "    while (__true(1)) {",
       "      print(1);",
-      "    };",
+      "    }",
     ]);
   });
 
@@ -59,8 +59,8 @@ def main():
       "    if (__true(1)) {",
       "      while (__true(1)) {",
       "        return 1;",
-      "      };",
-      "    };",
+      "      }",
+      "    }",
     ]);
   });
 });

@@ -8,8 +8,18 @@ self.onmessage = async (e) => {
         try {
             const lexer = new Lexer(code);
             const tokens = lexer.tokenize();
+            self.postMessage({
+                type: "lex",
+                payload: tokens
+                    .map((t) => `[${t.type}] ${JSON.stringify(t.value)}`)
+                    .join("\n"),
+            });
             const parser = new Parser(tokens);
             const ast = parser.parse();
+            self.postMessage({
+                type: "ast",
+                payload: JSON.stringify(ast, (key, value) => (typeof value === "bigint" ? value.toString() : value), 2),
+            });
             const compiler = new Compiler();
             const jsCode = compiler.compileJS(ast);
             self.postMessage({ type: "js", payload: jsCode });
@@ -172,7 +182,6 @@ self.onmessage = async (e) => {
                     return new Set([val]);
                 },
                 frozenset: (val) => {
-                    // Note: Object.freeze() does not make JS Set immutable.
                     return runtime.set(val);
                 },
                 bytes: (val, _encoding) => {
@@ -230,7 +239,6 @@ self.onmessage = async (e) => {
                     if (args.length === 1) {
                         iterable = args[0];
                     }
-                    // Simple implementation without key/default for now to keep it lean
                     let res = undefined;
                     for (const item of iterable) {
                         if (res === undefined || runtime.__gt(item, res))
@@ -279,11 +287,9 @@ self.onmessage = async (e) => {
                 sorted: (iterable, _key, reverse = false) => {
                     const arr = Array.from(iterable);
                     arr.sort((a, b) => {
-                        const va = a;
-                        const vb = b;
-                        if (runtime.__lt(va, vb))
+                        if (runtime.__lt(a, b))
                             return reverse ? 1 : -1;
-                        if (runtime.__gt(va, vb))
+                        if (runtime.__gt(a, b))
                             return reverse ? -1 : 1;
                         return 0;
                     });
@@ -361,8 +367,8 @@ self.onmessage = async (e) => {
                     const res = slice.indexOf(sub);
                     return res === -1 ? -1 : res + start;
                 },
-                upper: (s) => typeof s === "string" ? s.toUpperCase() : s.upper(),
-                lower: (s) => typeof s === "string" ? s.toLowerCase() : s.lower(),
+                upper: (s) => (typeof s === "string" ? s.toUpperCase() : s.upper()),
+                lower: (s) => (typeof s === "string" ? s.toLowerCase() : s.lower()),
                 // List methods
                 append: (l, x) => {
                     if (Array.isArray(l)) {
@@ -423,6 +429,25 @@ self.onmessage = async (e) => {
                         return undefined;
                     }
                     return l.reverse();
+                },
+                // Protocol methods
+                __enter__: async (obj, fallback) => {
+                    if (obj != null && typeof obj.__enter__ === "function") {
+                        return await obj.__enter__();
+                    }
+                    if (typeof fallback === "function") {
+                        return await fallback(obj);
+                    }
+                    return obj;
+                },
+                __exit__: async (obj, a, b, c, fallback) => {
+                    if (obj != null && typeof obj.__exit__ === "function") {
+                        return await obj.__exit__(a, b, c);
+                    }
+                    if (typeof fallback === "function") {
+                        return await fallback(obj, a, b, c);
+                    }
+                    return undefined;
                 },
                 __true: (val) => {
                     if (val === null || val === undefined)
@@ -732,16 +757,6 @@ self.onmessage = async (e) => {
                         return await func(...args);
                     }
                     return await func(...posArgs);
-                },
-                __member_call: async (obj, member, posArgs, kwArgs) => {
-                    const helper = runtime[member];
-                    if (typeof helper === "function") {
-                        return await runtime.__call(helper, [obj, ...posArgs], kwArgs);
-                    }
-                    if (obj != null && typeof obj[member] === "function") {
-                        return await obj[member](...posArgs);
-                    }
-                    throw new Error(`${member} is not a function`);
                 },
                 __bytes: (val) => {
                     const res = new Uint8Array(val.length);
