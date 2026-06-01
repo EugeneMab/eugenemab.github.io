@@ -3,6 +3,7 @@ import { TokenType, Lexer } from "./lexer.js";
 export class Parser {
     tokens;
     pos = 0;
+    funcNestingLevel = 0;
     constructor(tokens) {
         this.tokens = tokens;
     }
@@ -78,6 +79,9 @@ export class Parser {
         return { type: "Global", names };
     }
     parseNonlocal() {
+        if (this.funcNestingLevel === 0) {
+            throw new Error("nonlocal declaration not allowed at module level");
+        }
         const names = [];
         do {
             names.push(this.consume(TokenType.IDENTIFIER, "Expect identifier").value);
@@ -211,11 +215,16 @@ export class Parser {
         this.consume(TokenType.LPAREN, "Expect '(' after function name");
         const params = [];
         if (!this.check(TokenType.RPAREN)) {
+            let hasDefault = false;
             do {
                 const pName = this.consume(TokenType.IDENTIFIER, "Expect parameter name").value;
                 let defaultValue;
                 if (this.match(TokenType.EQUALS)) {
                     defaultValue = this.parseExpression();
+                    hasDefault = true;
+                }
+                else if (hasDefault) {
+                    throw new Error("non-default argument follows default argument");
                 }
                 params.push({ name: pName, defaultValue });
             } while (this.match(TokenType.COMMA));
@@ -224,12 +233,14 @@ export class Parser {
         this.consume(TokenType.COLON, "Expect ':' after parameters");
         this.consume(TokenType.NEWLINE, "Expect newline after ':'");
         this.consume(TokenType.INDENT, "Expect indentation after function definition");
+        this.funcNestingLevel++;
         const body = [];
         while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
             const node = this.parseStatement();
             if (node)
                 body.push(node);
         }
+        this.funcNestingLevel--;
         this.consume(TokenType.DEDENT, "Expect dedent after function body");
         return { type: "FunctionDef", name, params, body };
     }
@@ -452,13 +463,18 @@ export class Parser {
     parseCallArgs(callee) {
         const args = [];
         if (!this.check(TokenType.RPAREN)) {
+            let hasKeyword = false;
             do {
                 const expr = this.parseExpression();
                 if (expr.type === "Identifier" && this.match(TokenType.EQUALS)) {
                     const value = this.parseExpression();
                     args.push({ name: expr.name, value });
+                    hasKeyword = true;
                 }
                 else {
+                    if (hasKeyword) {
+                        throw new Error("positional argument follows keyword argument");
+                    }
                     args.push({ value: expr });
                 }
             } while (this.match(TokenType.COMMA));

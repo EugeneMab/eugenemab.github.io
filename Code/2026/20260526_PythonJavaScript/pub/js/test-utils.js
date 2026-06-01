@@ -705,18 +705,50 @@ export function getJSRuntime(logs = []) {
                 res[k] = v;
             return res;
         },
+        __unpack: (val, expectedCount, starIndex = -1) => {
+            const arr = Array.from(val);
+            if (starIndex === -1) {
+                if (arr.length !== expectedCount) {
+                    throw new Error(`ValueError: too many values to unpack (expected ${expectedCount})`);
+                }
+            }
+            else {
+                if (arr.length < expectedCount - 1) {
+                    throw new Error(`ValueError: not enough values to unpack (expected at least ${expectedCount - 1}, got ${arr.length})`);
+                }
+            }
+            return arr;
+        },
         __call: async (func, posArgs, kwArgs) => {
             if (typeof func !== "function")
                 throw new Error(`${func} is not a function`);
             if (func.__arg_names) {
+                const argNames = func.__arg_names;
+                // Check for duplicate arguments
+                for (let i = 0; i < posArgs.length; i++) {
+                    if (kwArgs && argNames[i] in kwArgs) {
+                        throw new Error(`TypeError: ${func.name || "function"}() got multiple values for argument '${argNames[i]}'`);
+                    }
+                }
                 const args = [...posArgs];
-                for (let i = args.length; i < func.__arg_names.length; i++) {
-                    const name = func.__arg_names[i];
+                // Map keyword arguments to positional indices
+                for (let i = args.length; i < argNames.length; i++) {
+                    const name = argNames[i];
                     if (kwArgs && name in kwArgs) {
                         args[i] = kwArgs[name];
                     }
                     else {
                         args[i] = undefined;
+                    }
+                }
+                // Check for unknown keyword arguments
+                if (kwArgs) {
+                    for (const key in kwArgs) {
+                        if (key === "__is_kwargs")
+                            continue;
+                        if (!argNames.includes(key)) {
+                            throw new Error(`TypeError: ${func.name || "function"}() got an unexpected keyword argument '${key}'`);
+                        }
                     }
                 }
                 return await func(...args);

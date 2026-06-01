@@ -23,7 +23,8 @@ self.onmessage = async (e) => {
         type: "ast",
         payload: JSON.stringify(
           ast,
-          (key, value) => (typeof value === "bigint" ? value.toString() : value),
+          (key, value) =>
+            typeof value === "bigint" ? value.toString() : value,
           2,
         ),
       });
@@ -346,12 +347,15 @@ self.onmessage = async (e) => {
         },
         find: (s: any, sub: string, start: number = 0, end?: number) => {
           if (typeof s !== "string") return s.find(sub, start, end);
-          const slice = end === undefined ? s.slice(start) : s.slice(start, end);
+          const slice =
+            end === undefined ? s.slice(start) : s.slice(start, end);
           const res = slice.indexOf(sub);
           return res === -1 ? -1 : res + start;
         },
-        upper: (s: any) => (typeof s === "string" ? s.toUpperCase() : s.upper()),
-        lower: (s: any) => (typeof s === "string" ? s.toLowerCase() : s.lower()),
+        upper: (s: any) =>
+          typeof s === "string" ? s.toUpperCase() : s.upper(),
+        lower: (s: any) =>
+          typeof s === "string" ? s.toLowerCase() : s.lower(),
         // List methods
         append: (l: any, x: any) => {
           if (Array.isArray(l)) {
@@ -734,17 +738,59 @@ self.onmessage = async (e) => {
           for (const [k, v] of entries) res[k] = v;
           return res;
         },
+        __unpack: (val: any, expectedCount: number, starIndex: number = -1) => {
+          const arr = Array.from(val);
+          if (starIndex === -1) {
+            if (arr.length !== expectedCount) {
+              throw new Error(
+                `ValueError: too many values to unpack (expected ${expectedCount})`,
+              );
+            }
+          } else {
+            if (arr.length < expectedCount - 1) {
+              throw new Error(
+                `ValueError: not enough values to unpack (expected at least ${expectedCount - 1}, got ${arr.length})`,
+              );
+            }
+          }
+          return arr;
+        },
         __call: async (func: any, posArgs: any[], kwArgs: any) => {
           if (typeof func !== "function")
             throw new Error(`${func} is not a function`);
+
           if (func.__arg_names) {
+            const argNames = func.__arg_names;
+
+            // Check for duplicate arguments
+            for (let i = 0; i < posArgs.length; i++) {
+              if (kwArgs && argNames[i] in kwArgs) {
+                throw new Error(
+                  `TypeError: ${func.name || "function"}() got multiple values for argument '${argNames[i]}'`,
+                );
+              }
+            }
+
             const args = [...posArgs];
-            for (let i = args.length; i < func.__arg_names.length; i++) {
-              const name = func.__arg_names[i];
+            // Map keyword arguments to positional indices
+            for (let i = args.length; i < argNames.length; i++) {
+              const name = argNames[i];
               if (kwArgs && name in kwArgs) {
                 args[i] = kwArgs[name];
               } else {
                 args[i] = undefined; // JS default value will take over
+              }
+            }
+
+            // Check for unknown keyword arguments
+            if (kwArgs) {
+              for (const key in kwArgs) {
+                if (key === "__is_kwargs") continue;
+                if (!argNames.includes(key)) {
+                  throw new Error(
+                    `TypeError: ${func.name || "function"}() got an unexpected keyword argument '${key}'`,
+                  );
+                }
               }
             }
             return await func(...args);

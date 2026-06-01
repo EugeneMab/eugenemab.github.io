@@ -29,7 +29,7 @@ describe("Step 10: Iterators & Generators (Parser)", () => {
     const compiler = new Compiler();
     const jsCode = compiler.compileJS(ast);
 
-    expect(jsCode).toContain("async function* gen");
+    expect(jsCode).toContain("gen = async function*");
     expect(jsCode).toContain("yield 1");
     expect(jsCode).toContain("yield 2");
   });

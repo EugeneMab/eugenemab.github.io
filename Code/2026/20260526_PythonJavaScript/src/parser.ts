@@ -232,6 +232,7 @@ export interface CallExpressionNode {
 export class Parser {
   private tokens: Token[];
   private pos: number = 0;
+  private funcNestingLevel: number = 0;
 
   constructor(tokens: Token[]) {
     this.tokens = tokens;
@@ -307,6 +308,9 @@ export class Parser {
   }
 
   private parseNonlocal(): NonlocalNode {
+    if (this.funcNestingLevel === 0) {
+      throw new Error("nonlocal declaration not allowed at module level");
+    }
     const names: string[] = [];
     do {
       names.push(this.consume(TokenType.IDENTIFIER, "Expect identifier").value);
@@ -457,6 +461,7 @@ export class Parser {
     this.consume(TokenType.LPAREN, "Expect '(' after function name");
     const params: Parameter[] = [];
     if (!this.check(TokenType.RPAREN)) {
+      let hasDefault = false;
       do {
         const pName = this.consume(
           TokenType.IDENTIFIER,
@@ -465,6 +470,9 @@ export class Parser {
         let defaultValue: ASTNode | undefined;
         if (this.match(TokenType.EQUALS)) {
           defaultValue = this.parseExpression();
+          hasDefault = true;
+        } else if (hasDefault) {
+          throw new Error("non-default argument follows default argument");
         }
         params.push({ name: pName, defaultValue });
       } while (this.match(TokenType.COMMA));
@@ -477,11 +485,13 @@ export class Parser {
       "Expect indentation after function definition",
     );
 
+    this.funcNestingLevel++;
     const body: ASTNode[] = [];
     while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
       const node = this.parseStatement();
       if (node) body.push(node);
     }
+    this.funcNestingLevel--;
     this.consume(TokenType.DEDENT, "Expect dedent after function body");
 
     return { type: "FunctionDef", name, params, body };
@@ -737,12 +747,17 @@ export class Parser {
   private parseCallArgs(callee: ASTNode): CallExpressionNode {
     const args: Argument[] = [];
     if (!this.check(TokenType.RPAREN)) {
+      let hasKeyword = false;
       do {
         const expr = this.parseExpression();
         if (expr.type === "Identifier" && this.match(TokenType.EQUALS)) {
           const value = this.parseExpression();
           args.push({ name: expr.name, value });
+          hasKeyword = true;
         } else {
+          if (hasKeyword) {
+            throw new Error("positional argument follows keyword argument");
+          }
           args.push({ value: expr });
         }
       } while (this.match(TokenType.COMMA));

@@ -4,7 +4,7 @@ const samples = [
   {
     name: "Basic Return",
     value: "sample/basic.py",
-    js: ["async function main", "return 42"],
+    js: ["main = async function", "return 42"],
   },
   {
     name: "Variables & Math",
@@ -19,7 +19,7 @@ const samples = [
   {
     name: "Function Parameters",
     value: "sample/params.py",
-    js: ["async function add(a, b)", "await add(10, 32)"],
+    js: ["add = async function(a, b)", "await add(10, 32)"],
   },
   {
     name: "Lists & Slicing",
@@ -83,7 +83,7 @@ const samples = [
   {
     name: "Scoping & Assignment",
     value: "sample/scoping_assignment.py",
-    js: ["__call", "slice", "Array.from"],
+    js: ["__call", "slice", "__unpack"],
   },
   {
     name: "Basic Classes & Objects",
