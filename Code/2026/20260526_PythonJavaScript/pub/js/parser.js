@@ -272,7 +272,31 @@ export class Parser {
         return expr;
     }
     parseExpression() {
+        if (this.match(TokenType.LAMBDA)) {
+            return this.parseLambda();
+        }
         return this.parseOr();
+    }
+    parseLambda() {
+        const params = [];
+        if (!this.check(TokenType.COLON)) {
+            let hasDefault = false;
+            do {
+                const pName = this.consume(TokenType.IDENTIFIER, "Expect parameter name").value;
+                let defaultValue;
+                if (this.match(TokenType.EQUALS)) {
+                    defaultValue = this.parseExpression();
+                    hasDefault = true;
+                }
+                else if (hasDefault) {
+                    throw new Error("non-default argument follows default argument");
+                }
+                params.push({ name: pName, defaultValue });
+            } while (this.match(TokenType.COMMA));
+        }
+        this.consume(TokenType.COLON, "Expect ':' after lambda parameters");
+        const expression = this.parseExpression();
+        return { type: "Lambda", params, expression };
     }
     parseOr() {
         let left = this.parseAnd();

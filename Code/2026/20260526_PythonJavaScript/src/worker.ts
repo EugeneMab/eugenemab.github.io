@@ -308,6 +308,42 @@ self.onmessage = async (e) => {
           return t === typeInfo;
         },
         callable: (obj: any) => typeof obj === "function",
+        map: async (func: any, ...iterables: any[]) => {
+          const iters = iterables.map((it) => Array.from(it));
+          const minLen = Math.min(...iters.map((it) => it.length));
+          const res = [];
+          for (let i = 0; i < minLen; i++) {
+            const args = iters.map((it) => it[i]);
+            res.push(await func(...args));
+          }
+          return res;
+        },
+        filter: async (func: any, iterable: any) => {
+          const res = [];
+          for (const item of iterable) {
+            if (runtime.__true(await func(item))) {
+              res.push(item);
+            }
+          }
+          return res;
+        },
+        reduce: async (func: any, iterable: any, initial?: any) => {
+          const arr = Array.from(iterable);
+          let acc = initial;
+          let start = 0;
+          if (acc === undefined) {
+            if (arr.length === 0)
+              throw new Error(
+                "reduce() of empty sequence with no initial value",
+              );
+            acc = arr[0];
+            start = 1;
+          }
+          for (let i = start; i < arr.length; i++) {
+            acc = await func(acc, arr[i]);
+          }
+          return acc;
+        },
         // String methods
         split: (s: any, sep?: string, maxsplit: number = -1) => {
           if (typeof s !== "string") return s.split(sep, maxsplit);

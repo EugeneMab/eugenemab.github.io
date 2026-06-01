@@ -86,6 +86,11 @@ const samples = [
     js: ["__call", "slice", "__unpack"],
   },
   {
+    name: "Functional Programming",
+    value: "sample/functional.py",
+    js: ["async", "=>", "map", "filter", "reduce"],
+  },
+  {
     name: "Basic Classes & Objects",
     value: "sample/methods.py",
     js: [

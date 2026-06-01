@@ -32,7 +32,14 @@ export type ASTNode =
   | NonlocalNode
   | StarTargetNode
   | WithNode
-  | MemberAccessNode;
+  | MemberAccessNode
+  | LambdaNode;
+
+export interface LambdaNode {
+  type: "Lambda";
+  params: Parameter[];
+  expression: ASTNode;
+}
 
 export interface GlobalNode {
   type: "Global";
@@ -530,7 +537,34 @@ export class Parser {
   }
 
   private parseExpression(): ASTNode {
+    if (this.match(TokenType.LAMBDA)) {
+      return this.parseLambda();
+    }
     return this.parseOr();
+  }
+
+  private parseLambda(): LambdaNode {
+    const params: Parameter[] = [];
+    if (!this.check(TokenType.COLON)) {
+      let hasDefault = false;
+      do {
+        const pName = this.consume(
+          TokenType.IDENTIFIER,
+          "Expect parameter name",
+        ).value;
+        let defaultValue: ASTNode | undefined;
+        if (this.match(TokenType.EQUALS)) {
+          defaultValue = this.parseExpression();
+          hasDefault = true;
+        } else if (hasDefault) {
+          throw new Error("non-default argument follows default argument");
+        }
+        params.push({ name: pName, defaultValue });
+      } while (this.match(TokenType.COMMA));
+    }
+    this.consume(TokenType.COLON, "Expect ':' after lambda parameters");
+    const expression = this.parseExpression();
+    return { type: "Lambda", params, expression };
   }
 
   private parseOr(): ASTNode {

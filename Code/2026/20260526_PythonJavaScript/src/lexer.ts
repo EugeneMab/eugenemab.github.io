@@ -40,6 +40,7 @@ export enum TokenType {
   PASS = "PASS",
   GLOBAL = "GLOBAL",
   NONLOCAL = "NONLOCAL",
+  LAMBDA = "LAMBDA",
 
   NEWLINE = "NEWLINE",
   INDENT = "INDENT",
@@ -326,6 +327,7 @@ export class Lexer {
       pass: TokenType.PASS,
       global: TokenType.GLOBAL,
       nonlocal: TokenType.NONLOCAL,
+      lambda: TokenType.LAMBDA,
       with: TokenType.WITH,
       as: TokenType.AS,
       True: TokenType.TRUE,

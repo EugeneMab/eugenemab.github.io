@@ -44,9 +44,9 @@
     - [x] **Lists:** `append`, `extend`, `insert`, `remove`, `pop`, `sort`, `reverse`.
 
 ## 🌟 Level 4: Architecture & Abstractions
-- [ ] **Step 18: Functional Programming**
-    - [ ] `lambda` expressions (anonymous functions).
-    - [ ] Higher-order functions: `map()`, `filter()`, `reduce()`.
+- [x] **Step 18: Functional Programming**
+    - [x] `lambda` expressions (anonymous functions).
+    - [x] Higher-order functions: `map()`, `filter()`, `reduce()`.
 - [ ] **Step 19: Object Model (Classes)**
     - [ ] Map Python `class` to JavaScript `class`.
     - [ ] `__init__`, `self` binding, method dispatch, and single inheritance.
