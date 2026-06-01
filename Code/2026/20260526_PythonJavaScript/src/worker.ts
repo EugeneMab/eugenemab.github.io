@@ -795,9 +795,12 @@ self.onmessage = async (e) => {
           if (typeof func !== "function")
             throw new Error(`${func} is not a function`);
 
-          if (func.__arg_names) {
-            const argNames = func.__arg_names;
+          const isClass = (func as any).__is_class__;
+          const argNames = isClass
+            ? (func as any).__init_arg_names
+            : func.__arg_names;
 
+          if (argNames) {
             // Check for duplicate arguments
             for (let i = 0; i < posArgs.length; i++) {
               if (kwArgs && argNames[i] in kwArgs) {
@@ -829,8 +832,10 @@ self.onmessage = async (e) => {
                 }
               }
             }
+            if (isClass) return new func(...args);
             return await func(...args);
           }
+          if (isClass) return new func(...posArgs);
           return await func(...posArgs);
         },
         __bytes: (val: string) => {

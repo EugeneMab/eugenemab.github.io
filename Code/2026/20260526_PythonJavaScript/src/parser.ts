@@ -33,7 +33,15 @@ export type ASTNode =
   | StarTargetNode
   | WithNode
   | MemberAccessNode
-  | LambdaNode;
+  | LambdaNode
+  | ClassNode;
+
+export interface ClassNode {
+  type: "Class";
+  name: string;
+  bases: ASTNode[];
+  body: ASTNode[];
+}
 
 export interface LambdaNode {
   type: "Lambda";
@@ -256,6 +264,7 @@ export class Parser {
 
   private parseStatement(): ASTNode | null {
     if (this.match(TokenType.DEF)) return this.parseFunctionDef();
+    if (this.match(TokenType.CLASS)) return this.parseClass();
     if (this.match(TokenType.RETURN)) return this.parseReturn();
     if (this.match(TokenType.YIELD)) return this.parseYield();
     if (this.match(TokenType.WHILE)) return this.parseWhile();
@@ -286,7 +295,11 @@ export class Parser {
   }
 
   private getAssignmentTargets(expr: ASTNode): ASTNode[] {
-    if (expr.type === "Identifier") {
+    if (
+      expr.type === "Identifier" ||
+      expr.type === "MemberAccess" ||
+      expr.type === "Subscript"
+    ) {
       return [expr];
     }
     if (expr.type === "Tuple" || expr.type === "List") {
@@ -295,14 +308,16 @@ export class Parser {
           e.type === "Identifier" ||
           e.type === "Tuple" ||
           e.type === "List" ||
-          e.type === "StarTarget"
+          e.type === "StarTarget" ||
+          e.type === "MemberAccess" ||
+          e.type === "Subscript"
         ) {
           return e;
         }
         throw new Error("Invalid assignment target");
       });
     }
-    throw new Error("Invalid assignment target");
+    throw new Error(`Invalid assignment target: ${expr.type}`);
   }
 
   private parseGlobal(): GlobalNode {
@@ -502,6 +517,31 @@ export class Parser {
     this.consume(TokenType.DEDENT, "Expect dedent after function body");
 
     return { type: "FunctionDef", name, params, body };
+  }
+
+  private parseClass(): ClassNode {
+    const name = this.consume(TokenType.IDENTIFIER, "Expect class name").value;
+    const bases: ASTNode[] = [];
+    if (this.match(TokenType.LPAREN)) {
+      if (!this.check(TokenType.RPAREN)) {
+        do {
+          bases.push(this.parseExpression());
+        } while (this.match(TokenType.COMMA));
+      }
+      this.consume(TokenType.RPAREN, "Expect ')' after base classes");
+    }
+    this.consume(TokenType.COLON, "Expect ':' after class definition");
+    this.consume(TokenType.NEWLINE, "Expect newline after ':'");
+    this.consume(TokenType.INDENT, "Expect indentation after class definition");
+
+    const body: ASTNode[] = [];
+    while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
+      const node = this.parseStatement();
+      if (node) body.push(node);
+    }
+    this.consume(TokenType.DEDENT, "Expect dedent after class body");
+
+    return { type: "Class", name, bases, body };
   }
 
   private parseReturn(): ReturnNode {

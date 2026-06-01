@@ -146,6 +146,7 @@ export class Compiler {
   private topLevelVars: Set<string> = new Set();
   private shadowedBuiltins: Set<string> = new Set();
   private currentLocalVars: Set<string>[] = []; // Stack for nested functions
+  private currentSelfName: string | null = null;
 
   private indent(): string {
     return "  ".repeat(this.indentLevel);
@@ -236,11 +237,12 @@ export class Compiler {
           "For",
           "FunctionDef",
           "With",
+          "Class",
         ].includes(node.type);
         js += `${this.indent()}${compiled}${needsSemicolon ? ";" : ""}\n`;
-      }
-      if (node.type === "FunctionDef") {
-        js += `${this.indent()}__globals.${node.name} = ${node.name};\n`;
+        if (node.type === "FunctionDef" || node.type === "Class") {
+          js += `${this.indent()}__globals.${node.name} = ${node.name};\n`;
+        }
       }
     }
 
@@ -384,6 +386,9 @@ export class Compiler {
         for (const p of node.params) {
           if (p.defaultValue) stack.push(p.defaultValue);
         }
+      } else if (node.type === "Class") {
+        stack.push(...node.body);
+        stack.push(...node.bases);
       } else if (node.type === "MemberAccess") {
         stack.push(node.object);
       }
@@ -403,6 +408,8 @@ export class Compiler {
           this.collectTargets(target, vars);
         }
       } else if (node.type === "FunctionDef") {
+        vars.add(node.name);
+      } else if (node.type === "Class") {
         vars.add(node.name);
       } else if (node.type === "Global" || node.type === "Nonlocal") {
         for (const name of node.names) {
@@ -436,6 +443,9 @@ export class Compiler {
       if (node.type === "Assignment") {
         for (const target of node.targets) this.collectTargets(target, vars);
       } else if (node.type === "FunctionDef") {
+        vars.add(node.name);
+        stack.push(...node.body);
+      } else if (node.type === "Class") {
         vars.add(node.name);
         stack.push(...node.body);
       } else if (node.type === "For") {
@@ -476,6 +486,9 @@ export class Compiler {
       case "FunctionDef":
         return this.compileFunctionDef(node);
 
+      case "Class":
+        return this.compileClass(node);
+
       case "Assignment":
         return this.compileAssignment(node);
 
@@ -495,6 +508,9 @@ export class Compiler {
         return node.value.toString();
 
       case "Identifier":
+        if (this.currentSelfName && node.name === this.currentSelfName) {
+          return "this";
+        }
         return node.name;
 
       case "Return":
@@ -638,6 +654,116 @@ export class Compiler {
     const argNames = node.params.map((p) => JSON.stringify(p.name)).join(", ");
     js += `${this.indent()}${node.name}.__arg_names = [${argNames}];`;
     return js;
+  }
+
+  private compileClass(node: ClassNode): string {
+    const base =
+      node.bases.length > 0 ? ` extends ${this.compileNode(node.bases[0])}` : "";
+    let classJs = `${node.name} = class${base} {\n`;
+    this.indentLevel++;
+
+    const metadata: string[] = [];
+    let preClassJs = "";
+
+    for (const bodyNode of node.body) {
+      if (bodyNode.type === "FunctionDef") {
+        const [methodJs, methodPreJs] = this.compileClassMethod(bodyNode);
+        preClassJs += methodPreJs;
+        classJs += methodJs;
+
+        const argNames = bodyNode.params
+          .slice(1) // First param is always 'self' for methods
+          .map((p) => JSON.stringify(p.name))
+          .join(", ");
+
+        if (bodyNode.name === "__init__") {
+          metadata.push(`${node.name}.__init_arg_names = [${argNames}];`);
+        } else {
+          metadata.push(
+            `${node.name}.prototype.${bodyNode.name}.__arg_names = [${argNames}];`,
+          );
+        }
+      } else if (bodyNode.type === "Assignment") {
+        for (const target of bodyNode.targets) {
+          if (target.type === "Identifier") {
+            classJs += `${this.indent()}static ${target.name} = ${this.compileNode(bodyNode.value)};\n`;
+          }
+        }
+      }
+    }
+
+    this.indentLevel--;
+    classJs += `${this.indent()}}`;
+
+    let finalJs = preClassJs + classJs + ";\n";
+    finalJs += `${this.indent()}${node.name}.__is_class__ = true;\n`;
+    finalJs += metadata.map((m) => `${this.indent()}${m}`).join("\n");
+
+    return finalJs;
+  }
+
+  private compileClassMethod(node: FunctionDefNode): [string, string] {
+    const isConstructor = node.name === "__init__";
+    const methodName = isConstructor ? "constructor" : node.name;
+    const isGenerator = this.containsYield(node.body);
+
+    if (isGenerator) {
+      throw new Error("Generators in classes not fully supported in Step 19");
+    }
+
+    const selfName = node.params.length > 0 ? node.params[0].name : null;
+    const remainingParams = node.params.slice(1);
+
+    let preJs = "";
+    const params: string[] = [];
+    for (const p of remainingParams) {
+      if (p.defaultValue) {
+        const tmpDef = this.nextTmp(`default_${node.name}_${p.name}`);
+        preJs += `${this.indent()}const ${tmpDef} = ${this.compileNode(p.defaultValue)};\n`;
+        params.push(`${p.name} = ${tmpDef}`);
+      } else {
+        params.push(p.name);
+      }
+    }
+
+    let js = `${this.indent()}${methodName === "constructor" ? "" : "async "}${methodName}(${params.join(", ")}) {\n`;
+    this.indentLevel++;
+
+    if (selfName) {
+      js += `${this.indent()}const ${selfName} = this;\n`;
+    }
+
+    const localVars = this.collectAssignedVars(node.body);
+    for (const p of node.params) localVars.delete(p.name);
+    if (localVars.size > 0) {
+      js += `${this.indent()}let ${Array.from(localVars).join(", ")};\n`;
+    }
+
+    const oldSelf = this.currentSelfName;
+    this.currentSelfName = selfName;
+    this.currentLocalVars.push(localVars);
+    for (const stmt of node.body) {
+      const compiled = this.compileNode(stmt);
+      if (compiled) {
+        const needsSemicolon = ![
+          "If",
+          "While",
+          "DoWhile",
+          "For",
+          "FunctionDef",
+          "With",
+          "Class",
+        ].includes(stmt.type);
+        js += `${this.indent()}${compiled}${needsSemicolon ? ";" : ""}\n`;
+      }
+    }
+    this.currentLocalVars.pop();
+    this.currentSelfName = oldSelf;
+
+    this.indentLevel--;
+    js += `${this.indent()}}\n`;
+
+    return [js, preJs];
   }
 
   private containsYield(nodes: ASTNode[]): boolean {
@@ -927,12 +1053,35 @@ export class Compiler {
       if (isBuiltin) {
         return `(${isAsyncBuiltin ? "await " : ""}${callPrefix}${node.callee}(${args}))`;
       }
-      return `(await ${node.callee}(${args}))`;
+      // Use __call for all non-builtin global calls to handle classes and metadata
+      return `(await __call(${node.callee}, [${args}], null))`;
     }
 
     if (node.callee.type === "MemberAccess") {
-      const obj = this.compileNode(node.callee.object);
+      const objNode = node.callee.object;
       const member = node.callee.member;
+
+      // Special handling for super().method()
+      if (
+        objNode.type === "CallExpression" &&
+        typeof objNode.callee === "string" &&
+        objNode.callee === "super"
+      ) {
+        const args = node.args.map((a) => this.compileNode(a.value)).join(", ");
+        if (member === "__init__") {
+          return `super(${args})`;
+        }
+        return `(await super.${member}(${args}))`;
+      }
+
+      const obj = this.compileNode(objNode);
+
+      const posArgs = node.args
+        .filter((a) => a.name === undefined)
+        .map((a) => this.compileNode(a.value));
+      const kwArgs = node.args
+        .filter((a) => a.name !== undefined)
+        .map((a) => `${a.name}: ${this.compileNode(a.value)}`);
 
       if (BUILTINS.has(member)) {
         // Use bare name if NOT shadowed anywhere (smart preloading).
@@ -942,24 +1091,11 @@ export class Compiler {
         const isAsync = ASYNC_BUILTINS.has(member);
         const isProtocol = member === "__enter__" || member === "__exit__";
 
-        const posArgsNodes = node.args.filter((a) => a.name === undefined);
-        const kwArgsNodes = node.args.filter((a) => a.name !== undefined);
-
         if (hasKeywords) {
-          const posArgs = [
-            obj,
-            ...posArgsNodes.map((a) => this.compileNode(a.value)),
-          ];
-          const kwArgs = kwArgsNodes.map(
-            (a) => `${a.name}: ${this.compileNode(a.value)}`,
-          );
-          const argsStr = `[${posArgs.join(", ")}], { ${kwArgs.join(", ")}, __is_kwargs: true }`;
+          const argsStr = `[${obj}, ${posArgs.join(", ")}], { ${kwArgs.join(", ")}, __is_kwargs: true }`;
           return `(await __call(${callee}, ${argsStr}))`;
         } else {
-          const argsList = [
-            obj,
-            ...posArgsNodes.map((a) => this.compileNode(a.value)),
-          ];
+          const argsList = [obj, ...posArgs];
           if (isProtocol) {
             argsList.push(member); // Pass user-visible name as fallback
           }
@@ -968,13 +1104,15 @@ export class Compiler {
         }
       }
 
-      const args = node.args.map((a) => this.compileNode(a.value)).join(", ");
-      return `(await ${obj}.${member}(${args}))`;
+      // Member call for user-defined methods/classes. Use __call with bound method.
+      const kwArgsStr =
+        kwArgs.length > 0 ? `{ ${kwArgs.join(", ")}, __is_kwargs: true }` : "null";
+      return `(await __call(${obj}.${member}.bind(${obj}), [${posArgs.join(", ")}], ${kwArgsStr}))`;
     }
 
     const callee = this.compileNode(node.callee);
     const args = node.args.map((a) => this.compileNode(a.value)).join(", ");
-    return `(await ${callee}(${args}))`;
+    return `(await __call(${callee}, [${args}], null))`;
   }
 
   private compileSubscript(node: SubscriptNode): string {
