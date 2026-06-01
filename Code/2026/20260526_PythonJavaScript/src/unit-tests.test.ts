@@ -132,7 +132,7 @@ describe("Compiler", () => {
     const parser = new Parser(lexer.tokenize());
     const compiler = new Compiler();
     const js = compiler.compileJS(parser.parse());
-    expect(js).toContain("async function main()");
+    expect(js).toContain("main = async function");
     expect(js).toContain("return 42");
   });
 

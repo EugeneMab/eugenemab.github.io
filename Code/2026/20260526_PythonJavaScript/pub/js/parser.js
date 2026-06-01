@@ -3,6 +3,7 @@ import { TokenType, Lexer } from "./lexer.js";
 export class Parser {
     tokens;
     pos = 0;
+    funcNestingLevel = 0;
     constructor(tokens) {
         this.tokens = tokens;
     }
@@ -32,23 +33,61 @@ export class Parser {
             return this.parseIf();
         if (this.match(TokenType.WITH))
             return this.parseWith();
+        if (this.match(TokenType.GLOBAL))
+            return this.parseGlobal();
+        if (this.match(TokenType.NONLOCAL))
+            return this.parseNonlocal();
         if (this.match(TokenType.PASS)) {
             this.consumeStatementEnd();
             return { type: "Pass" };
         }
         if (this.match(TokenType.NEWLINE))
             return null;
-        const expr = this.parseExpression();
+        const expr = this.parseTestList();
         if (this.match(TokenType.EQUALS)) {
-            if (expr.type !== "Identifier") {
-                throw new Error("Invalid assignment target");
-            }
-            const value = this.parseExpression();
+            const targets = this.getAssignmentTargets(expr);
+            const value = this.parseTestList();
             this.consumeStatementEnd();
-            return { type: "Assignment", target: expr.name, value };
+            return { type: "Assignment", targets, value };
         }
         this.consumeStatementEnd();
         return expr;
+    }
+    getAssignmentTargets(expr) {
+        if (expr.type === "Identifier") {
+            return [expr];
+        }
+        if (expr.type === "Tuple" || expr.type === "List") {
+            return expr.elements.map((e) => {
+                if (e.type === "Identifier" ||
+                    e.type === "Tuple" ||
+                    e.type === "List" ||
+                    e.type === "StarTarget") {
+                    return e;
+                }
+                throw new Error("Invalid assignment target");
+            });
+        }
+        throw new Error("Invalid assignment target");
+    }
+    parseGlobal() {
+        const names = [];
+        do {
+            names.push(this.consume(TokenType.IDENTIFIER, "Expect identifier").value);
+        } while (this.match(TokenType.COMMA));
+        this.consumeStatementEnd();
+        return { type: "Global", names };
+    }
+    parseNonlocal() {
+        if (this.funcNestingLevel === 0) {
+            throw new Error("nonlocal declaration not allowed at module level");
+        }
+        const names = [];
+        do {
+            names.push(this.consume(TokenType.IDENTIFIER, "Expect identifier").value);
+        } while (this.match(TokenType.COMMA));
+        this.consumeStatementEnd();
+        return { type: "Nonlocal", names };
     }
     consumeStatementEnd() {
         if (this.match(TokenType.NEWLINE) ||
@@ -171,49 +210,66 @@ export class Parser {
         this.consume(TokenType.DEDENT, "Expect dedent after with body");
         return { type: "With", expression, target, body };
     }
-    parseCall() {
-        const callee = this.consume(TokenType.IDENTIFIER, "Expect function name").value;
-        this.consume(TokenType.LPAREN, "Expect '('");
-        const args = [];
-        if (!this.check(TokenType.RPAREN)) {
-            do {
-                args.push(this.parseExpression());
-            } while (this.match(TokenType.COMMA));
-        }
-        this.consume(TokenType.RPAREN, "Expect ')'");
-        return { type: "CallExpression", callee, args };
-    }
     parseFunctionDef() {
         const name = this.consume(TokenType.IDENTIFIER, "Expect function name").value;
         this.consume(TokenType.LPAREN, "Expect '(' after function name");
         const params = [];
         if (!this.check(TokenType.RPAREN)) {
+            let hasDefault = false;
             do {
-                params.push(this.consume(TokenType.IDENTIFIER, "Expect parameter name").value);
+                const pName = this.consume(TokenType.IDENTIFIER, "Expect parameter name").value;
+                let defaultValue;
+                if (this.match(TokenType.EQUALS)) {
+                    defaultValue = this.parseExpression();
+                    hasDefault = true;
+                }
+                else if (hasDefault) {
+                    throw new Error("non-default argument follows default argument");
+                }
+                params.push({ name: pName, defaultValue });
             } while (this.match(TokenType.COMMA));
         }
         this.consume(TokenType.RPAREN, "Expect ')' after parameters");
         this.consume(TokenType.COLON, "Expect ':' after parameters");
         this.consume(TokenType.NEWLINE, "Expect newline after ':'");
         this.consume(TokenType.INDENT, "Expect indentation after function definition");
+        this.funcNestingLevel++;
         const body = [];
         while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
             const node = this.parseStatement();
             if (node)
                 body.push(node);
         }
+        this.funcNestingLevel--;
         this.consume(TokenType.DEDENT, "Expect dedent after function body");
         return { type: "FunctionDef", name, params, body };
     }
     parseReturn() {
-        const value = this.parseExpression();
+        const value = this.parseTestList();
         this.consumeStatementEnd();
         return { type: "Return", value };
     }
     parseYield() {
-        const value = this.parseExpression();
+        const value = this.parseTestList();
         this.consumeStatementEnd();
         return { type: "Yield", value };
+    }
+    parseTestList() {
+        const expr = this.parseExpression();
+        if (this.match(TokenType.COMMA)) {
+            const elements = [expr];
+            do {
+                if (this.check(TokenType.NEWLINE) ||
+                    this.check(TokenType.COLON) ||
+                    this.check(TokenType.RSQUARE) ||
+                    this.check(TokenType.RPAREN) ||
+                    this.check(TokenType.EQUALS))
+                    break;
+                elements.push(this.parseExpression());
+            } while (this.match(TokenType.COMMA));
+            return { type: "Tuple", elements };
+        }
+        return expr;
     }
     parseExpression() {
         return this.parseOr();
@@ -256,27 +312,6 @@ export class Parser {
                 const operator = "not in";
                 const right = this.parseBitwiseOr();
                 left = { type: "BinaryExpression", left, operator, right };
-            }
-            else {
-                // This is a bit tricky, if it's not followed by 'in', it might be the start of another expression
-                // But Python doesn't allow 'x == y not z' easily without parens.
-                // For now, if we match 'not' here and then not 'in', we might have an issue.
-                // But 'not' usually has lower precedence than comparison?
-                // Actually 'not' is 13, comparison is 10.
-                // Wait, Python precedence:
-                // or (15)
-                // and (14)
-                // not (13)
-                // in, not in, is, is not, <, <=, >, >=, !=, == (12)
-                // | (11)
-                // ^ (10)
-                // & (9)
-                // <<, >> (8)
-                // +, - (7)
-                // *, @, /, //, % (6)
-                // +x, -x, ~x (5)
-                // ** (4)
-                // My previous implementation had 'not' inside 'parseAnd'.
             }
         }
         return left;
@@ -340,6 +375,13 @@ export class Parser {
             const operator = this.previous().value;
             const argument = this.parseUnary();
             return { type: "UnaryExpression", operator, argument };
+        }
+        if (this.match(TokenType.STAR)) {
+            const arg = this.parseUnary();
+            if (arg.type !== "Identifier") {
+                throw new Error("Expect identifier after *");
+            }
+            return { type: "StarTarget", name: arg.name };
         }
         return this.parseExponentiation();
     }
@@ -421,8 +463,20 @@ export class Parser {
     parseCallArgs(callee) {
         const args = [];
         if (!this.check(TokenType.RPAREN)) {
+            let hasKeyword = false;
             do {
-                args.push(this.parseExpression());
+                const expr = this.parseExpression();
+                if (expr.type === "Identifier" && this.match(TokenType.EQUALS)) {
+                    const value = this.parseExpression();
+                    args.push({ name: expr.name, value });
+                    hasKeyword = true;
+                }
+                else {
+                    if (hasKeyword) {
+                        throw new Error("positional argument follows keyword argument");
+                    }
+                    args.push({ value: expr });
+                }
             } while (this.match(TokenType.COMMA));
         }
         this.consume(TokenType.RPAREN, "Expect ')'");
@@ -502,18 +556,8 @@ export class Parser {
         if (this.match(TokenType.RPAREN)) {
             return { type: "Tuple", elements: [] };
         }
-        const expr = this.parseExpression();
-        if (this.match(TokenType.COMMA)) {
-            const elements = [expr];
-            while (!this.check(TokenType.RPAREN)) {
-                elements.push(this.parseExpression());
-                if (!this.match(TokenType.COMMA))
-                    break;
-            }
-            this.consume(TokenType.RPAREN, "Expect ')' after tuple");
-            return { type: "Tuple", elements };
-        }
-        this.consume(TokenType.RPAREN, "Expect ')' after expression");
+        const expr = this.parseTestList(); // Tuples in parens are testlists
+        this.consume(TokenType.RPAREN, "Expect ')' after tuple");
         return expr;
     }
     parseDictOrSet() {

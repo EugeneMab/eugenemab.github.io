@@ -8,17 +8,15 @@ self.onmessage = async (e) => {
 
   if (type === "compile") {
     try {
-      // 1. Lexing
       const lexer = new Lexer(code);
       const tokens = lexer.tokenize();
       self.postMessage({
         type: "lex",
         payload: tokens
-          .map((t) => `${t.type} ${t.line} ${t.col} "${t.value}"`)
+          .map((t) => `[${t.type}] ${JSON.stringify(t.value)}`)
           .join("\n"),
       });
 
-      // 2. Parsing
       const parser = new Parser(tokens);
       const ast = parser.parse();
       self.postMessage({
@@ -26,17 +24,42 @@ self.onmessage = async (e) => {
         payload: JSON.stringify(
           ast,
           (key, value) =>
-            typeof value === "bigint" ? value.toString() + "n" : value,
+            typeof value === "bigint" ? value.toString() : value,
           2,
         ),
       });
 
-      // 3. Compiling
       const compiler = new Compiler();
       const jsCode = compiler.compileJS(ast);
       self.postMessage({ type: "js", payload: jsCode });
 
       // 4. Execution
+      const __format = (v: any, isElement: boolean = false): string => {
+        if (v instanceof Tuple) return v.toString();
+        if (v instanceof Set)
+          return `set([${Array.from(v)
+            .map((x) => __format(x, true))
+            .join(", ")}])`;
+        if (v instanceof Uint8Array)
+          return `b'${Array.from(v)
+            .map((b) => "\\x" + b.toString(16).padStart(2, "0"))
+            .join("")}'`;
+        if (Array.isArray(v))
+          return `[${v.map((x) => __format(x, true)).join(", ")}]`;
+        if (typeof v === "string") return isElement ? `'${v}'` : v;
+        if (v !== null && typeof v === "object" && !(v instanceof Date)) {
+          if (v instanceof Map) {
+            return `{${Array.from(v.entries())
+              .map(([k, val]) => `${__format(k, true)}: ${__format(val, true)}`)
+              .join(", ")}}`;
+          }
+          return `{${Object.entries(v)
+            .map(([k, val]) => `${JSON.stringify(k)}: ${__format(val, true)}`)
+            .join(", ")}}`;
+        }
+        return String(v);
+      };
+
       class Tuple extends Array {
         constructor(...args: any[]) {
           super();
@@ -49,38 +72,17 @@ self.onmessage = async (e) => {
           return this.toString();
         }
         toString() {
-          if (this.length === 1) return `(${this[0]},)`;
-          return `(${this.join(", ")})`;
+          const elements = Array.from(this)
+            .map((x) => __format(x, true))
+            .join(", ");
+          if (this.length === 1) return `(${elements},)`;
+          return `(${elements})`;
         }
       }
 
       const runtime: any = {
         print: (val: any) => {
-          const format = (v: any): string => {
-            if (v instanceof Tuple) return v.toString();
-            if (v instanceof Set)
-              return `set([${Array.from(v)
-                .map((x) => format(x))
-                .join(", ")}])`;
-            if (v instanceof Uint8Array)
-              return `b'${Array.from(v)
-                .map((b) => "\\x" + b.toString(16).padStart(2, "0"))
-                .join("")}'`;
-            if (Array.isArray(v))
-              return `[${v.map((x) => format(x)).join(", ")}]`;
-            if (v !== null && typeof v === "object" && !(v instanceof Date)) {
-              if (v instanceof Map) {
-                return `{${Array.from(v.entries())
-                  .map(([k, val]) => `${format(k)}: ${format(val)}`)
-                  .join(", ")}}`;
-              }
-              return `{${Object.entries(v)
-                .map(([k, val]) => `${JSON.stringify(k)}: ${format(val)}`)
-                .join(", ")}}`;
-            }
-            return String(v);
-          };
-          self.postMessage({ type: "log", payload: format(val) });
+          self.postMessage({ type: "log", payload: __format(val) });
           return 0;
         },
         sleep: (ms: number) => {
@@ -186,7 +188,6 @@ self.onmessage = async (e) => {
           return new Set([val]);
         },
         frozenset: (val: any) => {
-          // Note: Object.freeze() does not make JS Set immutable.
           return runtime.set(val);
         },
         bytes: (val: any, _encoding?: string) => {
@@ -239,7 +240,6 @@ self.onmessage = async (e) => {
           if (args.length === 1) {
             iterable = args[0];
           }
-          // Simple implementation without key/default for now to keep it lean
           let res: any = undefined;
           for (const item of iterable) {
             if (res === undefined || runtime.__gt(item, res)) res = item;
@@ -286,10 +286,8 @@ self.onmessage = async (e) => {
         sorted: (iterable: any, _key?: any, reverse: boolean = false) => {
           const arr = Array.from(iterable);
           arr.sort((a, b) => {
-            const va = a;
-            const vb = b;
-            if (runtime.__lt(va, vb)) return reverse ? 1 : -1;
-            if (runtime.__gt(va, vb)) return reverse ? -1 : 1;
+            if (runtime.__lt(a, b)) return reverse ? 1 : -1;
+            if (runtime.__gt(a, b)) return reverse ? -1 : 1;
             return 0;
           });
           return arr;
@@ -310,6 +308,131 @@ self.onmessage = async (e) => {
           return t === typeInfo;
         },
         callable: (obj: any) => typeof obj === "function",
+        // String methods
+        split: (s: any, sep?: string, maxsplit: number = -1) => {
+          if (typeof s !== "string") return s.split(sep, maxsplit);
+          if (sep === undefined || sep === null) {
+            return s.trim() === "" ? [] : s.trim().split(/\s+/);
+          }
+          if (maxsplit < 0) return s.split(sep);
+          const parts = s.split(sep);
+          if (parts.length <= maxsplit + 1) return parts;
+          const res = parts.slice(0, maxsplit);
+          res.push(parts.slice(maxsplit).join(sep));
+          return res;
+        },
+        join: (sep: any, iterable: any) => {
+          const arr = Array.from(iterable).map((x) => String(x));
+          return arr.join(String(sep));
+        },
+        strip: (s: any, chars?: string) => {
+          if (typeof s !== "string") return s.strip(chars);
+          if (chars === undefined || chars === null) return s.trim();
+          let start = 0;
+          while (start < s.length && chars.includes(s[start])) start++;
+          let end = s.length - 1;
+          while (end >= start && chars.includes(s[end])) end--;
+          return s.slice(start, end + 1);
+        },
+        replace: (s: any, old: string, sub: string, count: number = -1) => {
+          if (typeof s !== "string") return s.replace(old, sub, count);
+          const parts = s.split(old);
+          if (count < 0 || parts.length <= count + 1) return parts.join(sub);
+          return (
+            parts.slice(0, count + 1).join(sub) +
+            (parts.length > count + 1
+              ? old + parts.slice(count + 1).join(old)
+              : "")
+          );
+        },
+        find: (s: any, sub: string, start: number = 0, end?: number) => {
+          if (typeof s !== "string") return s.find(sub, start, end);
+          const slice =
+            end === undefined ? s.slice(start) : s.slice(start, end);
+          const res = slice.indexOf(sub);
+          return res === -1 ? -1 : res + start;
+        },
+        upper: (s: any) =>
+          typeof s === "string" ? s.toUpperCase() : s.upper(),
+        lower: (s: any) =>
+          typeof s === "string" ? s.toLowerCase() : s.lower(),
+        // List methods
+        append: (l: any, x: any) => {
+          if (Array.isArray(l)) {
+            l.push(x);
+            return undefined;
+          }
+          return l.append(x);
+        },
+        extend: (l: any, iterable: any) => {
+          if (Array.isArray(l)) {
+            l.push(...iterable);
+            return undefined;
+          }
+          return l.extend(iterable);
+        },
+        insert: (l: any, i: number, x: any) => {
+          if (Array.isArray(l)) {
+            l.splice(i, 0, x);
+            return undefined;
+          }
+          return l.insert(i, x);
+        },
+        remove: (l: any, x: any) => {
+          if (Array.isArray(l)) {
+            const idx = l.indexOf(x);
+            if (idx === -1) throw new Error("list.remove(x): x not in list");
+            l.splice(idx, 1);
+            return undefined;
+          }
+          return l.remove(x);
+        },
+        pop: (l: any, i: number = -1) => {
+          if (Array.isArray(l)) {
+            const idx = i < 0 ? l.length + i : i;
+            if (idx < 0 || idx >= l.length)
+              throw new Error("pop index out of range");
+            return l.splice(idx, 1)[0];
+          }
+          return l.pop(i);
+        },
+        sort: (l: any, _key?: any, reverse: boolean = false) => {
+          if (Array.isArray(l)) {
+            l.sort((a, b) => {
+              if (runtime.__lt(a, b)) return reverse ? 1 : -1;
+              if (runtime.__gt(a, b)) return reverse ? -1 : 1;
+              return 0;
+            });
+            return undefined;
+          }
+          return l.sort(_key, reverse);
+        },
+        reverse: (l: any) => {
+          if (Array.isArray(l)) {
+            l.reverse();
+            return undefined;
+          }
+          return l.reverse();
+        },
+        // Protocol methods
+        __enter__: async (obj: any, fallback?: any) => {
+          if (obj != null && typeof obj.__enter__ === "function") {
+            return await obj.__enter__();
+          }
+          if (typeof fallback === "function") {
+            return await fallback(obj);
+          }
+          return obj;
+        },
+        __exit__: async (obj: any, a: any, b: any, c: any, fallback?: any) => {
+          if (obj != null && typeof obj.__exit__ === "function") {
+            return await obj.__exit__(a, b, c);
+          }
+          if (typeof fallback === "function") {
+            return await fallback(obj, a, b, c);
+          }
+          return undefined;
+        },
         __true: (val: any) => {
           if (val === null || val === undefined) return false;
           if (typeof val === "boolean") return val;
@@ -614,6 +737,65 @@ self.onmessage = async (e) => {
           const res: any = Object.create(null);
           for (const [k, v] of entries) res[k] = v;
           return res;
+        },
+        __unpack: (val: any, expectedCount: number, starIndex: number = -1) => {
+          const arr = Array.from(val);
+          if (starIndex === -1) {
+            if (arr.length !== expectedCount) {
+              throw new Error(
+                `ValueError: too many values to unpack (expected ${expectedCount})`,
+              );
+            }
+          } else {
+            if (arr.length < expectedCount - 1) {
+              throw new Error(
+                `ValueError: not enough values to unpack (expected at least ${expectedCount - 1}, got ${arr.length})`,
+              );
+            }
+          }
+          return arr;
+        },
+        __call: async (func: any, posArgs: any[], kwArgs: any) => {
+          if (typeof func !== "function")
+            throw new Error(`${func} is not a function`);
+
+          if (func.__arg_names) {
+            const argNames = func.__arg_names;
+
+            // Check for duplicate arguments
+            for (let i = 0; i < posArgs.length; i++) {
+              if (kwArgs && argNames[i] in kwArgs) {
+                throw new Error(
+                  `TypeError: ${func.name || "function"}() got multiple values for argument '${argNames[i]}'`,
+                );
+              }
+            }
+
+            const args = [...posArgs];
+            // Map keyword arguments to positional indices
+            for (let i = args.length; i < argNames.length; i++) {
+              const name = argNames[i];
+              if (kwArgs && name in kwArgs) {
+                args[i] = kwArgs[name];
+              } else {
+                args[i] = undefined; // JS default value will take over
+              }
+            }
+
+            // Check for unknown keyword arguments
+            if (kwArgs) {
+              for (const key in kwArgs) {
+                if (key === "__is_kwargs") continue;
+                if (!argNames.includes(key)) {
+                  throw new Error(
+                    `TypeError: ${func.name || "function"}() got an unexpected keyword argument '${key}'`,
+                  );
+                }
+              }
+            }
+            return await func(...args);
+          }
+          return await func(...posArgs);
         },
         __bytes: (val: string) => {
           const res = new Uint8Array(val.length);

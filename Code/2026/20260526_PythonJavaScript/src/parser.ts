@@ -28,8 +28,21 @@ export type ASTNode =
   | BytesNode
   | YieldNode
   | PassNode
+  | GlobalNode
+  | NonlocalNode
+  | StarTargetNode
   | WithNode
   | MemberAccessNode;
+
+export interface GlobalNode {
+  type: "Global";
+  names: string[];
+}
+
+export interface NonlocalNode {
+  type: "Nonlocal";
+  names: string[];
+}
 
 export interface BytesNode {
   type: "Bytes";
@@ -154,17 +167,27 @@ export interface UnaryExpressionNode {
   argument: ASTNode;
 }
 
+export interface Parameter {
+  name: string;
+  defaultValue?: ASTNode;
+}
+
 export interface FunctionDefNode {
   type: "FunctionDef";
   name: string;
-  params: string[];
+  params: Parameter[];
   body: ASTNode[];
 }
 
 export interface AssignmentNode {
   type: "Assignment";
-  target: string;
+  targets: ASTNode[];
   value: ASTNode;
+}
+
+export interface StarTargetNode {
+  type: "StarTarget";
+  name: string;
 }
 
 export interface BinaryExpressionNode {
@@ -195,15 +218,21 @@ export interface WhileNode {
   body: ASTNode[];
 }
 
+export interface Argument {
+  value: ASTNode;
+  name?: string;
+}
+
 export interface CallExpressionNode {
   type: "CallExpression";
   callee: string | ASTNode;
-  args: ASTNode[];
+  args: Argument[];
 }
 
 export class Parser {
   private tokens: Token[];
   private pos: number = 0;
+  private funcNestingLevel: number = 0;
 
   constructor(tokens: Token[]) {
     this.tokens = tokens;
@@ -227,6 +256,8 @@ export class Parser {
     if (this.match(TokenType.FOR)) return this.parseFor();
     if (this.match(TokenType.IF)) return this.parseIf();
     if (this.match(TokenType.WITH)) return this.parseWith();
+    if (this.match(TokenType.GLOBAL)) return this.parseGlobal();
+    if (this.match(TokenType.NONLOCAL)) return this.parseNonlocal();
     if (this.match(TokenType.PASS)) {
       this.consumeStatementEnd();
       return { type: "Pass" };
@@ -234,19 +265,58 @@ export class Parser {
 
     if (this.match(TokenType.NEWLINE)) return null;
 
-    const expr = this.parseExpression();
+    const expr = this.parseTestList();
 
     if (this.match(TokenType.EQUALS)) {
-      if (expr.type !== "Identifier") {
-        throw new Error("Invalid assignment target");
-      }
-      const value = this.parseExpression();
+      const targets = this.getAssignmentTargets(expr);
+      const value = this.parseTestList();
       this.consumeStatementEnd();
-      return { type: "Assignment", target: expr.name, value };
+      return { type: "Assignment", targets, value };
     }
 
     this.consumeStatementEnd();
     return expr;
+  }
+
+  private getAssignmentTargets(expr: ASTNode): ASTNode[] {
+    if (expr.type === "Identifier") {
+      return [expr];
+    }
+    if (expr.type === "Tuple" || expr.type === "List") {
+      return expr.elements.map((e) => {
+        if (
+          e.type === "Identifier" ||
+          e.type === "Tuple" ||
+          e.type === "List" ||
+          e.type === "StarTarget"
+        ) {
+          return e;
+        }
+        throw new Error("Invalid assignment target");
+      });
+    }
+    throw new Error("Invalid assignment target");
+  }
+
+  private parseGlobal(): GlobalNode {
+    const names: string[] = [];
+    do {
+      names.push(this.consume(TokenType.IDENTIFIER, "Expect identifier").value);
+    } while (this.match(TokenType.COMMA));
+    this.consumeStatementEnd();
+    return { type: "Global", names };
+  }
+
+  private parseNonlocal(): NonlocalNode {
+    if (this.funcNestingLevel === 0) {
+      throw new Error("nonlocal declaration not allowed at module level");
+    }
+    const names: string[] = [];
+    do {
+      names.push(this.consume(TokenType.IDENTIFIER, "Expect identifier").value);
+    } while (this.match(TokenType.COMMA));
+    this.consumeStatementEnd();
+    return { type: "Nonlocal", names };
   }
 
   private consumeStatementEnd(): void {
@@ -383,34 +453,28 @@ export class Parser {
     return { type: "With", expression, target, body };
   }
 
-  private parseCall(): CallExpressionNode {
-    const callee = this.consume(
-      TokenType.IDENTIFIER,
-      "Expect function name",
-    ).value;
-    this.consume(TokenType.LPAREN, "Expect '('");
-    const args: ASTNode[] = [];
-    if (!this.check(TokenType.RPAREN)) {
-      do {
-        args.push(this.parseExpression());
-      } while (this.match(TokenType.COMMA));
-    }
-    this.consume(TokenType.RPAREN, "Expect ')'");
-    return { type: "CallExpression", callee, args };
-  }
-
   private parseFunctionDef(): FunctionDefNode {
     const name = this.consume(
       TokenType.IDENTIFIER,
       "Expect function name",
     ).value;
     this.consume(TokenType.LPAREN, "Expect '(' after function name");
-    const params: string[] = [];
+    const params: Parameter[] = [];
     if (!this.check(TokenType.RPAREN)) {
+      let hasDefault = false;
       do {
-        params.push(
-          this.consume(TokenType.IDENTIFIER, "Expect parameter name").value,
-        );
+        const pName = this.consume(
+          TokenType.IDENTIFIER,
+          "Expect parameter name",
+        ).value;
+        let defaultValue: ASTNode | undefined;
+        if (this.match(TokenType.EQUALS)) {
+          defaultValue = this.parseExpression();
+          hasDefault = true;
+        } else if (hasDefault) {
+          throw new Error("non-default argument follows default argument");
+        }
+        params.push({ name: pName, defaultValue });
       } while (this.match(TokenType.COMMA));
     }
     this.consume(TokenType.RPAREN, "Expect ')' after parameters");
@@ -421,26 +485,48 @@ export class Parser {
       "Expect indentation after function definition",
     );
 
+    this.funcNestingLevel++;
     const body: ASTNode[] = [];
     while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
       const node = this.parseStatement();
       if (node) body.push(node);
     }
+    this.funcNestingLevel--;
     this.consume(TokenType.DEDENT, "Expect dedent after function body");
 
     return { type: "FunctionDef", name, params, body };
   }
 
   private parseReturn(): ReturnNode {
-    const value = this.parseExpression();
+    const value = this.parseTestList();
     this.consumeStatementEnd();
     return { type: "Return", value };
   }
 
   private parseYield(): YieldNode {
-    const value = this.parseExpression();
+    const value = this.parseTestList();
     this.consumeStatementEnd();
     return { type: "Yield", value };
+  }
+
+  private parseTestList(): ASTNode {
+    const expr = this.parseExpression();
+    if (this.match(TokenType.COMMA)) {
+      const elements: ASTNode[] = [expr];
+      do {
+        if (
+          this.check(TokenType.NEWLINE) ||
+          this.check(TokenType.COLON) ||
+          this.check(TokenType.RSQUARE) ||
+          this.check(TokenType.RPAREN) ||
+          this.check(TokenType.EQUALS)
+        )
+          break;
+        elements.push(this.parseExpression());
+      } while (this.match(TokenType.COMMA));
+      return { type: "Tuple", elements };
+    }
+    return expr;
   }
 
   private parseExpression(): ASTNode {
@@ -499,26 +585,6 @@ export class Parser {
         const operator = "not in";
         const right = this.parseBitwiseOr();
         left = { type: "BinaryExpression", left, operator, right };
-      } else {
-        // This is a bit tricky, if it's not followed by 'in', it might be the start of another expression
-        // But Python doesn't allow 'x == y not z' easily without parens.
-        // For now, if we match 'not' here and then not 'in', we might have an issue.
-        // But 'not' usually has lower precedence than comparison?
-        // Actually 'not' is 13, comparison is 10.
-        // Wait, Python precedence:
-        // or (15)
-        // and (14)
-        // not (13)
-        // in, not in, is, is not, <, <=, >, >=, !=, == (12)
-        // | (11)
-        // ^ (10)
-        // & (9)
-        // <<, >> (8)
-        // +, - (7)
-        // *, @, /, //, % (6)
-        // +x, -x, ~x (5)
-        // ** (4)
-        // My previous implementation had 'not' inside 'parseAnd'.
       }
     }
     return left;
@@ -597,6 +663,13 @@ export class Parser {
       const argument = this.parseUnary();
       return { type: "UnaryExpression", operator, argument };
     }
+    if (this.match(TokenType.STAR)) {
+      const arg = this.parseUnary();
+      if (arg.type !== "Identifier") {
+        throw new Error("Expect identifier after *");
+      }
+      return { type: "StarTarget", name: arg.name };
+    }
     return this.parseExponentiation();
   }
 
@@ -672,10 +745,21 @@ export class Parser {
   }
 
   private parseCallArgs(callee: ASTNode): CallExpressionNode {
-    const args: ASTNode[] = [];
+    const args: Argument[] = [];
     if (!this.check(TokenType.RPAREN)) {
+      let hasKeyword = false;
       do {
-        args.push(this.parseExpression());
+        const expr = this.parseExpression();
+        if (expr.type === "Identifier" && this.match(TokenType.EQUALS)) {
+          const value = this.parseExpression();
+          args.push({ name: expr.name, value });
+          hasKeyword = true;
+        } else {
+          if (hasKeyword) {
+            throw new Error("positional argument follows keyword argument");
+          }
+          args.push({ value: expr });
+        }
       } while (this.match(TokenType.COMMA));
     }
     this.consume(TokenType.RPAREN, "Expect ')'");
@@ -757,17 +841,8 @@ export class Parser {
     if (this.match(TokenType.RPAREN)) {
       return { type: "Tuple", elements: [] };
     }
-    const expr = this.parseExpression();
-    if (this.match(TokenType.COMMA)) {
-      const elements: ASTNode[] = [expr];
-      while (!this.check(TokenType.RPAREN)) {
-        elements.push(this.parseExpression());
-        if (!this.match(TokenType.COMMA)) break;
-      }
-      this.consume(TokenType.RPAREN, "Expect ')' after tuple");
-      return { type: "Tuple", elements };
-    }
-    this.consume(TokenType.RPAREN, "Expect ')' after expression");
+    const expr = this.parseTestList(); // Tuples in parens are testlists
+    this.consume(TokenType.RPAREN, "Expect ')' after tuple");
     return expr;
   }
 
