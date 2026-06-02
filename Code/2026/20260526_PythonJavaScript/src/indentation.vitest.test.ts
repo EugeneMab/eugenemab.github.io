@@ -43,7 +43,7 @@ def main():
 `;
     testIndentation(code, [
       "    while (__true(1)) {",
-      "      print(1);",
+      "      (print(1));",
       "    }",
     ]);
   });

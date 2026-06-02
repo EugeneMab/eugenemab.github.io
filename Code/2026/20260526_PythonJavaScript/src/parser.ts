@@ -32,7 +32,22 @@ export type ASTNode =
   | NonlocalNode
   | StarTargetNode
   | WithNode
-  | MemberAccessNode;
+  | MemberAccessNode
+  | LambdaNode
+  | ClassNode;
+
+export interface ClassNode {
+  type: "Class";
+  name: string;
+  bases: ASTNode[];
+  body: ASTNode[];
+}
+
+export interface LambdaNode {
+  type: "Lambda";
+  params: Parameter[];
+  expression: ASTNode;
+}
 
 export interface GlobalNode {
   type: "Global";
@@ -249,6 +264,7 @@ export class Parser {
 
   private parseStatement(): ASTNode | null {
     if (this.match(TokenType.DEF)) return this.parseFunctionDef();
+    if (this.match(TokenType.CLASS)) return this.parseClass();
     if (this.match(TokenType.RETURN)) return this.parseReturn();
     if (this.match(TokenType.YIELD)) return this.parseYield();
     if (this.match(TokenType.WHILE)) return this.parseWhile();
@@ -279,7 +295,11 @@ export class Parser {
   }
 
   private getAssignmentTargets(expr: ASTNode): ASTNode[] {
-    if (expr.type === "Identifier") {
+    if (
+      expr.type === "Identifier" ||
+      expr.type === "MemberAccess" ||
+      expr.type === "Subscript"
+    ) {
       return [expr];
     }
     if (expr.type === "Tuple" || expr.type === "List") {
@@ -288,14 +308,16 @@ export class Parser {
           e.type === "Identifier" ||
           e.type === "Tuple" ||
           e.type === "List" ||
-          e.type === "StarTarget"
+          e.type === "StarTarget" ||
+          e.type === "MemberAccess" ||
+          e.type === "Subscript"
         ) {
           return e;
         }
         throw new Error("Invalid assignment target");
       });
     }
-    throw new Error("Invalid assignment target");
+    throw new Error(`Invalid assignment target: ${expr.type}`);
   }
 
   private parseGlobal(): GlobalNode {
@@ -497,6 +519,31 @@ export class Parser {
     return { type: "FunctionDef", name, params, body };
   }
 
+  private parseClass(): ClassNode {
+    const name = this.consume(TokenType.IDENTIFIER, "Expect class name").value;
+    const bases: ASTNode[] = [];
+    if (this.match(TokenType.LPAREN)) {
+      if (!this.check(TokenType.RPAREN)) {
+        do {
+          bases.push(this.parseExpression());
+        } while (this.match(TokenType.COMMA));
+      }
+      this.consume(TokenType.RPAREN, "Expect ')' after base classes");
+    }
+    this.consume(TokenType.COLON, "Expect ':' after class definition");
+    this.consume(TokenType.NEWLINE, "Expect newline after ':'");
+    this.consume(TokenType.INDENT, "Expect indentation after class definition");
+
+    const body: ASTNode[] = [];
+    while (!this.check(TokenType.DEDENT) && !this.isAtEnd()) {
+      const node = this.parseStatement();
+      if (node) body.push(node);
+    }
+    this.consume(TokenType.DEDENT, "Expect dedent after class body");
+
+    return { type: "Class", name, bases, body };
+  }
+
   private parseReturn(): ReturnNode {
     const value = this.parseTestList();
     this.consumeStatementEnd();
@@ -530,7 +577,34 @@ export class Parser {
   }
 
   private parseExpression(): ASTNode {
+    if (this.match(TokenType.LAMBDA)) {
+      return this.parseLambda();
+    }
     return this.parseOr();
+  }
+
+  private parseLambda(): LambdaNode {
+    const params: Parameter[] = [];
+    if (!this.check(TokenType.COLON)) {
+      let hasDefault = false;
+      do {
+        const pName = this.consume(
+          TokenType.IDENTIFIER,
+          "Expect parameter name",
+        ).value;
+        let defaultValue: ASTNode | undefined;
+        if (this.match(TokenType.EQUALS)) {
+          defaultValue = this.parseExpression();
+          hasDefault = true;
+        } else if (hasDefault) {
+          throw new Error("non-default argument follows default argument");
+        }
+        params.push({ name: pName, defaultValue });
+      } while (this.match(TokenType.COMMA));
+    }
+    this.consume(TokenType.COLON, "Expect ':' after lambda parameters");
+    const expression = this.parseExpression();
+    return { type: "Lambda", params, expression };
   }
 
   private parseOr(): ASTNode {

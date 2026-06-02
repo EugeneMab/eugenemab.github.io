@@ -40,6 +40,8 @@ export var TokenType;
     TokenType["PASS"] = "PASS";
     TokenType["GLOBAL"] = "GLOBAL";
     TokenType["NONLOCAL"] = "NONLOCAL";
+    TokenType["LAMBDA"] = "LAMBDA";
+    TokenType["CLASS"] = "CLASS";
     TokenType["NEWLINE"] = "NEWLINE";
     TokenType["INDENT"] = "INDENT";
     TokenType["DEDENT"] = "DEDENT";
@@ -291,6 +293,8 @@ export class Lexer {
             pass: TokenType.PASS,
             global: TokenType.GLOBAL,
             nonlocal: TokenType.NONLOCAL,
+            lambda: TokenType.LAMBDA,
+            class: TokenType.CLASS,
             with: TokenType.WITH,
             as: TokenType.AS,
             True: TokenType.TRUE,

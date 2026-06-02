@@ -289,6 +289,43 @@ export function getJSRuntime(logs = []) {
             return t === typeInfo;
         },
         callable: (obj) => typeof obj === "function",
+        map: async (func, ...iterables) => {
+            if (iterables.length === 0) {
+                throw new Error("TypeError: map() must have at least two arguments");
+            }
+            const iters = iterables.map((it) => Array.from(it));
+            const minLen = Math.min(...iters.map((it) => it.length));
+            const res = [];
+            for (let i = 0; i < minLen; i++) {
+                const args = iters.map((it) => it[i]);
+                res.push(await func(...args));
+            }
+            return res;
+        },
+        filter: async (func, iterable) => {
+            const res = [];
+            for (const item of iterable) {
+                if (runtime.__true(await func(item))) {
+                    res.push(item);
+                }
+            }
+            return res;
+        },
+        reduce: async (func, iterable, initial) => {
+            const arr = Array.from(iterable);
+            let acc = initial;
+            let start = 0;
+            if (acc === undefined) {
+                if (arr.length === 0)
+                    throw new Error("reduce() of empty sequence with no initial value");
+                acc = arr[0];
+                start = 1;
+            }
+            for (let i = start; i < arr.length; i++) {
+                acc = await func(acc, arr[i]);
+            }
+            return acc;
+        },
         // String methods
         split: (s, sep, maxsplit = -1) => {
             if (typeof s !== "string")
@@ -451,6 +488,17 @@ export function getJSRuntime(logs = []) {
         __or: async (aFn, bFn) => {
             const a = await aFn();
             return runtime.__true(a) ? a : await bFn();
+        },
+        __set_item: (obj, idx, val) => {
+            if (typeof idx === "number" &&
+                idx < 0 &&
+                (Array.isArray(obj) || obj instanceof Uint8Array)) {
+                obj[obj.length + idx] = val;
+            }
+            else {
+                obj[idx] = val;
+            }
+            return val;
         },
         __item: (obj, idx) => {
             if (typeof idx === "number" &&
@@ -722,18 +770,22 @@ export function getJSRuntime(logs = []) {
         __call: async (func, posArgs, kwArgs) => {
             if (typeof func !== "function")
                 throw new Error(`${func} is not a function`);
-            if (func.__arg_names) {
-                const argNames = func.__arg_names;
+            const isClass = func.__is_class__;
+            const argNames = isClass
+                ? func.__init_arg_names
+                : func.__arg_names;
+            if (argNames) {
+                const argNamesArr = argNames;
                 // Check for duplicate arguments
                 for (let i = 0; i < posArgs.length; i++) {
-                    if (kwArgs && argNames[i] in kwArgs) {
-                        throw new Error(`TypeError: ${func.name || "function"}() got multiple values for argument '${argNames[i]}'`);
+                    if (kwArgs && argNamesArr[i] in kwArgs) {
+                        throw new Error(`TypeError: ${func.name || "function"}() got multiple values for argument '${argNamesArr[i]}'`);
                     }
                 }
                 const args = [...posArgs];
                 // Map keyword arguments to positional indices
-                for (let i = args.length; i < argNames.length; i++) {
-                    const name = argNames[i];
+                for (let i = args.length; i < argNamesArr.length; i++) {
+                    const name = argNamesArr[i];
                     if (kwArgs && name in kwArgs) {
                         args[i] = kwArgs[name];
                     }
@@ -746,14 +798,52 @@ export function getJSRuntime(logs = []) {
                     for (const key in kwArgs) {
                         if (key === "__is_kwargs")
                             continue;
-                        if (!argNames.includes(key)) {
+                        if (!argNamesArr.includes(key)) {
                             throw new Error(`TypeError: ${func.name || "function"}() got an unexpected keyword argument '${key}'`);
                         }
                     }
                 }
+                if (isClass)
+                    return new func(...args);
                 return await func(...args);
             }
+            if (isClass)
+                return new func(...posArgs);
             return await func(...posArgs);
+        },
+        __call_method: async (obj, member, posArgs, kwArgs) => {
+            const func = obj[member];
+            if (typeof func !== "function")
+                throw new Error(`AttributeError: object has no method '${member}'`);
+            const argNames = func.__arg_names;
+            if (argNames) {
+                for (let i = 0; i < posArgs.length; i++) {
+                    if (kwArgs && argNames[i] in kwArgs) {
+                        throw new Error(`TypeError: ${member}() got multiple values for argument '${argNames[i]}'`);
+                    }
+                }
+                const args = [...posArgs];
+                for (let i = args.length; i < argNames.length; i++) {
+                    const name = argNames[i];
+                    if (kwArgs && name in kwArgs) {
+                        args[i] = kwArgs[name];
+                    }
+                    else {
+                        args[i] = undefined;
+                    }
+                }
+                if (kwArgs) {
+                    for (const key in kwArgs) {
+                        if (key === "__is_kwargs")
+                            continue;
+                        if (!argNames.includes(key)) {
+                            throw new Error(`TypeError: ${member}() got an unexpected keyword argument '${key}'`);
+                        }
+                    }
+                }
+                return await func.apply(obj, args);
+            }
+            return await func.apply(obj, posArgs);
         },
         __bytes: (val) => {
             const res = new Uint8Array(val.length);
