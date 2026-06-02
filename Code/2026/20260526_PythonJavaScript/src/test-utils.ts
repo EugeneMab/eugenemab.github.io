@@ -269,6 +269,9 @@ export function getJSRuntime(logs: any[] = []) {
     },
     callable: (obj: any) => typeof obj === "function",
     map: async (func: any, ...iterables: any[]) => {
+      if (iterables.length === 0) {
+        throw new Error("TypeError: map() must have at least two arguments");
+      }
       const iters = iterables.map((it) => Array.from(it));
       const minLen = Math.min(...iters.map((it) => it.length));
       const res = [];
@@ -444,6 +447,18 @@ export function getJSRuntime(logs: any[] = []) {
     __or: async (aFn: any, bFn: any) => {
       const a = await aFn();
       return runtime.__true(a) ? a : await bFn();
+    },
+    __set_item: (obj: any, idx: any, val: any) => {
+      if (
+        typeof idx === "number" &&
+        idx < 0 &&
+        (Array.isArray(obj) || obj instanceof Uint8Array)
+      ) {
+        obj[obj.length + idx] = val;
+      } else {
+        obj[idx] = val;
+      }
+      return val;
     },
     __item: (obj: any, idx: any) => {
       if (

@@ -117,6 +117,7 @@ const SYSTEM_HELPERS = [
   "__call",
   "__call_method",
   "__unpack",
+  "__set_item",
 ];
 
 const OP_TO_HELPER: Record<string, string> = {
@@ -728,8 +729,31 @@ export class Compiler {
   ): string {
     const isConstructor = node.name === "__init__";
     const methodName = isConstructor ? "constructor" : node.name;
-    const isGenerator = this.containsYield(node.body);
 
+    if (isConstructor) {
+      if (isDerived) {
+        const firstStmt = node.body[0];
+        const isSuperInit =
+          firstStmt &&
+          firstStmt.type === "CallExpression" &&
+          typeof firstStmt.callee !== "string" &&
+          firstStmt.callee.type === "MemberAccess" &&
+          firstStmt.callee.member === "__init__" &&
+          typeof firstStmt.callee.object !== "string" &&
+          firstStmt.callee.object.type === "CallExpression" &&
+          firstStmt.callee.object.callee === "super";
+
+        if (!isSuperInit) {
+          throw new Error(
+            "SyntaxError: derived class __init__ must call super().__init__() as first statement",
+          );
+        }
+      }
+      // Check for illegal await in constructor
+      this.checkForAwait(node.body, "class constructor");
+    }
+
+    const isGenerator = this.containsYield(node.body);
     if (isGenerator) {
       throw new Error("Generators in classes not fully supported in Step 19");
     }
@@ -796,7 +820,7 @@ export class Compiler {
     this.currentLocalVars.pop();
     this.currentSelfName = oldSelf;
 
-    // Fallback: inject self if still missing (e.g. derived constructor without super call)
+    // Fallback: inject self if still missing
     if (selfName && !selfInjected) {
       js += `${this.indent()}const ${selfName} = this;\n`;
     }
@@ -805,6 +829,60 @@ export class Compiler {
     js += `${this.indent()}}\n`;
 
     return js;
+  }
+
+  private checkForAwait(nodes: ASTNode[], context: string) {
+    const stack = [...nodes];
+    while (stack.length > 0) {
+      const node = stack.pop()!;
+      if (node.type === "CallExpression") {
+        const isSuperInit =
+          typeof node.callee !== "string" &&
+          node.callee.type === "MemberAccess" &&
+          node.callee.member === "__init__" &&
+          typeof node.callee.object !== "string" &&
+          node.callee.object.type === "CallExpression" &&
+          node.callee.object.callee === "super";
+
+        if (!isSuperInit) {
+          throw new Error(`SyntaxError: 'await' not allowed in ${context}`);
+        }
+        // super().__init__ is sync, but its arguments might have awaits
+        for (const arg of node.args) stack.push(arg.value);
+        continue;
+      }
+      if (
+        node.type === "ListComprehension" ||
+        node.type === "SetComprehension" ||
+        node.type === "DictComprehension" ||
+        node.type === "Yield"
+      ) {
+        throw new Error(`SyntaxError: 'await' not allowed in ${context}`);
+      }
+      if (node.type === "BinaryExpression") {
+        if (node.operator === "and" || node.operator === "or") {
+          throw new Error(`SyntaxError: 'await' not allowed in ${context}`);
+        }
+        stack.push(node.left, node.right);
+      } else if (node.type === "If") {
+        stack.push(node.condition);
+        stack.push(...node.thenBranch);
+        if (node.elseBranch) stack.push(...node.elseBranch);
+      } else if (node.type === "While" || node.type === "DoWhile") {
+        stack.push(node.condition);
+        stack.push(...node.body);
+      } else if (node.type === "For") {
+        if (node.iterable) stack.push(node.iterable);
+        stack.push(...node.body);
+      } else if (node.type === "With") {
+        stack.push(node.expression);
+        stack.push(...node.body);
+      } else if (node.type === "Assignment") {
+        stack.push(node.value);
+      } else if (node.type === "Return") {
+        if (node.value) stack.push(node.value);
+      }
+    }
   }
 
   private containsYield(nodes: ASTNode[]): boolean {
@@ -822,50 +900,60 @@ export class Compiler {
   }
 
   private compileAssignment(node: AssignmentNode): string {
-    if (
-      node.targets.length === 1 &&
-      (node.targets[0].type === "Identifier" ||
-        node.targets[0].type === "MemberAccess" ||
-        node.targets[0].type === "Subscript")
-    ) {
-      return `${this.compileNode(node.targets[0])} = ${this.compileNode(node.value)}`;
+    const val = this.compileNode(node.value);
+
+    if (node.targets.length === 1) {
+      const target = node.targets[0];
+      if (target.type === "Identifier") {
+        return `${target.name} = ${val}`;
+      }
+      if (target.type === "MemberAccess") {
+        return `${this.compileNode(target.object)}.${target.member} = ${val}`;
+      }
+      if (target.type === "Subscript") {
+        if (target.index.type === "Slice") {
+          throw new Error("Slice assignment not supported in Step 19");
+        }
+        const obj = this.compileNode(target.value);
+        const idx = this.compileNode(target.index);
+        return `__set_item(${obj}, ${idx}, ${val})`;
+      }
     }
 
     const starIndex = node.targets.findIndex((t) => t.type === "StarTarget");
-
-    if (starIndex === -1) {
-      const targets = node.targets.map((t) => this.compileNode(t)).join(", ");
-      return `[${targets}] = __unpack(${this.compileNode(node.value)}, ${node.targets.length}, -1)`;
-    }
-
-    if (starIndex === node.targets.length - 1) {
-      const targets = node.targets
-        .map((t) => {
-          if (t.type === "StarTarget") return `...${t.name}`;
-          return this.compileNode(t);
-        })
-        .join(", ");
-      return `[${targets}] = __unpack(${this.compileNode(node.value)}, ${node.targets.length}, ${starIndex})`;
-    }
-
-    const tmp = this.nextTmp("unpack");
-    const val = this.compileNode(node.value);
+    const tmp = this.nextTmp("assign");
 
     let js = `((() => {\n`;
     this.indentLevel++;
     js += `${this.indent()}const ${tmp} = __unpack(${val}, ${node.targets.length}, ${starIndex});\n`;
 
-    for (let i = 0; i < starIndex; i++) {
-      js += `${this.indent()}${this.compileNode(node.targets[i])} = ${tmp}[${i}];\n`;
-    }
+    for (let i = 0; i < node.targets.length; i++) {
+      const target = node.targets[i];
+      let valueExpr: string;
 
-    const tailCount = node.targets.length - 1 - starIndex;
-    const starName = (node.targets[starIndex] as any).name;
-    js += `${this.indent()}${starName} = ${tmp}.slice(${starIndex}, ${tmp}.length - ${tailCount});\n`;
+      if (starIndex !== -1 && i === starIndex) {
+        const tailCount = node.targets.length - 1 - starIndex;
+        valueExpr = `${tmp}.slice(${starIndex}, ${tmp}.length - ${tailCount})`;
+      } else if (starIndex !== -1 && i > starIndex) {
+        const tailCount = node.targets.length - 1 - starIndex;
+        const offset = i - starIndex;
+        valueExpr = `${tmp}[${tmp}.length - ${tailCount - offset + 1}]`;
+      } else {
+        valueExpr = `${tmp}[${i}]`;
+      }
 
-    for (let i = 0; i < tailCount; i++) {
-      const target = node.targets[starIndex + 1 + i];
-      js += `${this.indent()}${this.compileNode(target)} = ${tmp}[${tmp}.length - ${tailCount - i}];\n`;
+      if (target.type === "Identifier" || target.type === "StarTarget") {
+        js += `${this.indent()}${target.name} = ${valueExpr};\n`;
+      } else if (target.type === "MemberAccess") {
+        js += `${this.indent()}${this.compileNode(target.object)}.${target.member} = ${valueExpr};\n`;
+      } else if (target.type === "Subscript") {
+        if (target.index.type === "Slice") {
+          throw new Error("Slice assignment not supported in Step 19");
+        }
+        const obj = this.compileNode(target.value);
+        const idx = this.compileNode(target.index);
+        js += `${this.indent()}__set_item(${obj}, ${idx}, ${valueExpr});\n`;
+      }
     }
 
     js += `${this.indent()}return ${tmp};\n`;
