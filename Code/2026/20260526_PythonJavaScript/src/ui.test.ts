@@ -101,6 +101,11 @@ const samples = [
     js: ["?", "255", "int", "hex", "converted", "const"],
   },
   {
+    name: "Multi-line Syntax",
+    value: "sample/multiline.py",
+    js: ["max", "total", "fruits", "mapping", "sentence"],
+  },
+  {
     name: "Basic Classes & Objects",
     value: "sample/methods.py",
     js: [

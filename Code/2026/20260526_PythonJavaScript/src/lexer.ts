@@ -80,6 +80,7 @@ export class Lexer {
   private col: number = 1;
   private indentStack: number[] = [0];
   private pendingTokens: Token[] = [];
+  private parenLevel: number = 0;
 
   constructor(source: string) {
     this.source = source;
@@ -221,18 +222,24 @@ export class Lexer {
       case ".":
         return this.createToken(TokenType.DOT, ".", startCol);
       case "(":
+        this.parenLevel++;
         return this.createToken(TokenType.LPAREN, "(", startCol);
       case ")":
+        this.parenLevel--;
         return this.createToken(TokenType.RPAREN, ")", startCol);
       case ",":
         return this.createToken(TokenType.COMMA, ",", startCol);
       case "[":
+        this.parenLevel++;
         return this.createToken(TokenType.LSQUARE, "[", startCol);
       case "]":
+        this.parenLevel--;
         return this.createToken(TokenType.RSQUARE, "]", startCol);
       case "{":
+        this.parenLevel++;
         return this.createToken(TokenType.LBRACE, "{", startCol);
       case "}":
+        this.parenLevel--;
         return this.createToken(TokenType.RBRACE, "}", startCol);
       default:
         throw new Error(
@@ -241,7 +248,7 @@ export class Lexer {
     }
   }
 
-  private handleNewline(): Token {
+  private handleNewline(): Token | null {
     const startLine = this.line;
     const startCol = this.col;
 
@@ -272,7 +279,12 @@ export class Lexer {
       this.pos < this.source.length &&
       (this.peek() === "\n" || this.peek() === "\r" || this.peek() === "#")
     ) {
-      return this.nextToken();
+      return null;
+    }
+
+    // Implicit line joining
+    if (this.parenLevel > 0) {
+      return null;
     }
 
     const currentIndent = this.indentStack[this.indentStack.length - 1];
@@ -490,6 +502,21 @@ export class Lexer {
       const char = this.peek();
       if (char === " " || char === "\t") {
         this.advance();
+      } else if (char === "\\") {
+        const next = this.peekNext();
+        if (next === "\n" || next === "\r") {
+          this.advance(); // consume '\'
+          if (next === "\r" && this.source[this.pos + 1] === "\n") {
+            this.advance(); // consume '\r'
+            this.advance(); // consume '\n'
+          } else {
+            this.advance(); // consume '\n' or '\r'
+          }
+          this.line++;
+          this.col = 1;
+        } else {
+          break;
+        }
       } else if (char === "#") {
         while (
           this.pos < this.source.length &&

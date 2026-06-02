@@ -385,6 +385,7 @@ export class Compiler {
           stack.push(node.key, node.value);
         }
       } else if (node.type === "FString") {
+        used.add("str");
         for (const p of node.parts) {
           if (typeof p !== "string") stack.push(p);
         }
@@ -1344,7 +1345,7 @@ export class Compiler {
             .replace(/`/g, "\\`")
             .replace(/\$\{/g, "\\${");
         }
-        return `\${${this.compileNode(p)}}`;
+        return `\${str(${this.compileNode(p)})}`;
       })
       .join("");
     return `(\`${parts}\`)`;
