@@ -666,23 +666,23 @@ export class Compiler {
       node.bases.length > 0
         ? ` extends ${this.compileNode(node.bases[0])}`
         : "";
-    let classJs = `${node.name} = class${base} {\n`;
-    this.indentLevel++;
 
     const metadata: string[] = [];
     let preClassJs = "";
 
+    // 1. Pre-calculate default parameters in the outer scope
     for (const bodyNode of node.body) {
       if (bodyNode.type === "FunctionDef") {
-        const [methodJs, methodPreJs] = this.compileClassMethod(
-          bodyNode,
-          node.bases.length > 0,
-        );
-        preClassJs += methodPreJs;
-        classJs += methodJs;
+        const remainingParams = bodyNode.params.slice(1);
+        for (const p of remainingParams) {
+          if (p.defaultValue) {
+            const tmpDef = this.nextTmp(`default_${bodyNode.name}_${p.name}`);
+            preClassJs += `const ${tmpDef} = ${this.compileNode(p.defaultValue)};\n${this.indent()}`;
+            (p as any).__tmp_def_name = tmpDef;
+          }
+        }
 
-        const argNames = bodyNode.params
-          .slice(1) // First param is always 'self' for methods
+        const argNames = remainingParams
           .map((p: any) => JSON.stringify(p.name))
           .join(", ");
 
@@ -693,6 +693,16 @@ export class Compiler {
             `${node.name}.prototype.${bodyNode.name}.__arg_names = [${argNames}];`,
           );
         }
+      }
+    }
+
+    // 2. Build class body
+    let classJs = `${node.name} = class${base} {\n`;
+    this.indentLevel++;
+
+    for (const bodyNode of node.body) {
+      if (bodyNode.type === "FunctionDef") {
+        classJs += this.compileClassMethod(bodyNode, node.bases.length > 0);
       } else if (bodyNode.type === "Assignment") {
         for (const target of bodyNode.targets) {
           if (target.type === "Identifier") {
@@ -715,7 +725,7 @@ export class Compiler {
   private compileClassMethod(
     node: FunctionDefNode,
     isDerived: boolean,
-  ): [string, string] {
+  ): string {
     const isConstructor = node.name === "__init__";
     const methodName = isConstructor ? "constructor" : node.name;
     const isGenerator = this.containsYield(node.body);
@@ -727,13 +737,10 @@ export class Compiler {
     const selfName = node.params.length > 0 ? node.params[0].name : null;
     const remainingParams = node.params.slice(1);
 
-    let preJs = "";
     const params: string[] = [];
     for (const p of remainingParams) {
       if (p.defaultValue) {
-        const tmpDef = this.nextTmp(`default_${node.name}_${p.name}`);
-        preJs += `${this.indent()}const ${tmpDef} = ${this.compileNode(p.defaultValue)};\n`;
-        params.push(`${p.name} = ${tmpDef}`);
+        params.push(`${p.name} = ${(p as any).__tmp_def_name}`);
       } else {
         params.push(p.name);
       }
@@ -797,7 +804,7 @@ export class Compiler {
     this.indentLevel--;
     js += `${this.indent()}}\n`;
 
-    return [js, preJs];
+    return js;
   }
 
   private containsYield(nodes: ASTNode[]): boolean {
