@@ -838,6 +838,48 @@ self.onmessage = async (e) => {
           if (isClass) return new func(...posArgs);
           return await func(...posArgs);
         },
+        __call_method: async (
+          obj: any,
+          member: string,
+          posArgs: any[],
+          kwArgs: any,
+        ) => {
+          const func = obj[member];
+          if (typeof func !== "function")
+            throw new Error(`AttributeError: object has no method '${member}'`);
+
+          const argNames = func.__arg_names;
+          if (argNames) {
+            for (let i = 0; i < posArgs.length; i++) {
+              if (kwArgs && argNames[i] in kwArgs) {
+                throw new Error(
+                  `TypeError: ${member}() got multiple values for argument '${argNames[i]}'`,
+                );
+              }
+            }
+            const args = [...posArgs];
+            for (let i = args.length; i < argNames.length; i++) {
+              const name = argNames[i];
+              if (kwArgs && name in kwArgs) {
+                args[i] = kwArgs[name];
+              } else {
+                args[i] = undefined;
+              }
+            }
+            if (kwArgs) {
+              for (const key in kwArgs) {
+                if (key === "__is_kwargs") continue;
+                if (!argNames.includes(key)) {
+                  throw new Error(
+                    `TypeError: ${member}() got an unexpected keyword argument '${key}'`,
+                  );
+                }
+              }
+            }
+            return await func.apply(obj, args);
+          }
+          return await func.apply(obj, posArgs);
+        },
         __bytes: (val: string) => {
           const res = new Uint8Array(val.length);
           for (let i = 0; i < val.length; i++) res[i] = val.charCodeAt(i);

@@ -18,8 +18,8 @@ import {
   DoWhileNode,
   FStringNode,
   AssignmentNode,
-  IdentifierNode,
   LambdaNode,
+  ClassNode,
 } from "./parser.js";
 
 const BUILTINS = new Set([
@@ -115,6 +115,7 @@ const SYSTEM_HELPERS = [
   "__invert",
   "__in",
   "__call",
+  "__call_method",
   "__unpack",
 ];
 
@@ -267,11 +268,15 @@ export class Compiler {
       if (node.type === "CallExpression") {
         if (typeof node.callee === "string") {
           if (BUILTINS.has(node.callee)) used.add(node.callee);
+          else used.add("__call");
           if (node.callee === "next") {
             used.add("__item");
           }
         } else if (node.callee.type === "MemberAccess") {
           if (BUILTINS.has(node.callee.member)) used.add(node.callee.member);
+          else used.add("__call_method");
+        } else {
+          used.add("__call");
         }
         if (node.args.some((a) => a.name !== undefined)) {
           used.add("__call");
@@ -658,7 +663,9 @@ export class Compiler {
 
   private compileClass(node: ClassNode): string {
     const base =
-      node.bases.length > 0 ? ` extends ${this.compileNode(node.bases[0])}` : "";
+      node.bases.length > 0
+        ? ` extends ${this.compileNode(node.bases[0])}`
+        : "";
     let classJs = `${node.name} = class${base} {\n`;
     this.indentLevel++;
 
@@ -667,13 +674,16 @@ export class Compiler {
 
     for (const bodyNode of node.body) {
       if (bodyNode.type === "FunctionDef") {
-        const [methodJs, methodPreJs] = this.compileClassMethod(bodyNode);
+        const [methodJs, methodPreJs] = this.compileClassMethod(
+          bodyNode,
+          node.bases.length > 0,
+        );
         preClassJs += methodPreJs;
         classJs += methodJs;
 
         const argNames = bodyNode.params
           .slice(1) // First param is always 'self' for methods
-          .map((p) => JSON.stringify(p.name))
+          .map((p: any) => JSON.stringify(p.name))
           .join(", ");
 
         if (bodyNode.name === "__init__") {
@@ -702,7 +712,10 @@ export class Compiler {
     return finalJs;
   }
 
-  private compileClassMethod(node: FunctionDefNode): [string, string] {
+  private compileClassMethod(
+    node: FunctionDefNode,
+    isDerived: boolean,
+  ): [string, string] {
     const isConstructor = node.name === "__init__";
     const methodName = isConstructor ? "constructor" : node.name;
     const isGenerator = this.containsYield(node.body);
@@ -729,10 +742,6 @@ export class Compiler {
     let js = `${this.indent()}${methodName === "constructor" ? "" : "async "}${methodName}(${params.join(", ")}) {\n`;
     this.indentLevel++;
 
-    if (selfName) {
-      js += `${this.indent()}const ${selfName} = this;\n`;
-    }
-
     const localVars = this.collectAssignedVars(node.body);
     for (const p of node.params) localVars.delete(p.name);
     if (localVars.size > 0) {
@@ -742,6 +751,14 @@ export class Compiler {
     const oldSelf = this.currentSelfName;
     this.currentSelfName = selfName;
     this.currentLocalVars.push(localVars);
+
+    let selfInjected = false;
+    // Map 'self' to 'this' immediately if NOT a derived constructor
+    if (selfName && (!isConstructor || !isDerived)) {
+      js += `${this.indent()}const ${selfName} = this;\n`;
+      selfInjected = true;
+    }
+
     for (const stmt of node.body) {
       const compiled = this.compileNode(stmt);
       if (compiled) {
@@ -755,10 +772,27 @@ export class Compiler {
           "Class",
         ].includes(stmt.type);
         js += `${this.indent()}${compiled}${needsSemicolon ? ";" : ""}\n`;
+
+        // If this was a super().__init__ call, inject self right after
+        if (
+          isConstructor &&
+          isDerived &&
+          !selfInjected &&
+          selfName &&
+          compiled.startsWith("super(")
+        ) {
+          js += `${this.indent()}const ${selfName} = this;\n`;
+          selfInjected = true;
+        }
       }
     }
     this.currentLocalVars.pop();
     this.currentSelfName = oldSelf;
+
+    // Fallback: inject self if still missing (e.g. derived constructor without super call)
+    if (selfName && !selfInjected) {
+      js += `${this.indent()}const ${selfName} = this;\n`;
+    }
 
     this.indentLevel--;
     js += `${this.indent()}}\n`;
@@ -781,8 +815,13 @@ export class Compiler {
   }
 
   private compileAssignment(node: AssignmentNode): string {
-    if (node.targets.length === 1 && node.targets[0].type === "Identifier") {
-      return `${(node.targets[0] as IdentifierNode).name} = ${this.compileNode(node.value)}`;
+    if (
+      node.targets.length === 1 &&
+      (node.targets[0].type === "Identifier" ||
+        node.targets[0].type === "MemberAccess" ||
+        node.targets[0].type === "Subscript")
+    ) {
+      return `${this.compileNode(node.targets[0])} = ${this.compileNode(node.value)}`;
     }
 
     const starIndex = node.targets.findIndex((t) => t.type === "StarTarget");
@@ -1104,10 +1143,12 @@ export class Compiler {
         }
       }
 
-      // Member call for user-defined methods/classes. Use __call with bound method.
+      // Member call for user-defined methods/classes. Use __call_method.
       const kwArgsStr =
-        kwArgs.length > 0 ? `{ ${kwArgs.join(", ")}, __is_kwargs: true }` : "null";
-      return `(await __call(${obj}.${member}.bind(${obj}), [${posArgs.join(", ")}], ${kwArgsStr}))`;
+        kwArgs.length > 0
+          ? `{ ${kwArgs.join(", ")}, __is_kwargs: true }`
+          : "null";
+      return `(await __call_method(${obj}, "${member}", [${posArgs.join(", ")}], ${kwArgsStr}))`;
     }
 
     const callee = this.compileNode(node.callee);

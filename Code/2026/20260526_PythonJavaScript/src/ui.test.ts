@@ -19,7 +19,7 @@ const samples = [
   {
     name: "Function Parameters",
     value: "sample/params.py",
-    js: ["add = async function(a, b)", "await add(10, 32)"],
+    js: ["add = async function(a, b)", "__call(add"],
   },
   {
     name: "Lists & Slicing",
@@ -89,6 +89,11 @@ const samples = [
     name: "Functional Programming",
     value: "sample/functional.py",
     js: ["async", "=>", "map", "filter", "reduce"],
+  },
+  {
+    name: "Classes & Inheritance",
+    value: "sample/classes.py",
+    js: ["class", "extends", "constructor", "__call_method", "super"],
   },
   {
     name: "Basic Classes & Objects",

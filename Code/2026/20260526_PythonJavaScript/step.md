@@ -47,9 +47,9 @@
 - [x] **Step 18: Functional Programming**
     - [x] `lambda` expressions (anonymous functions).
     - [x] Higher-order functions: `map()`, `filter()`, `reduce()`.
-- [ ] **Step 19: Object Model (Classes)**
-    - [ ] Map Python `class` to JavaScript `class`.
-    - [ ] `__init__`, `self` binding, method dispatch, and single inheritance.
+- [x] **Step 19: Object Model (Classes)**
+    - [x] Map Python `class` to JavaScript `class`.
+    - [x] `__init__`, `self` binding, method dispatch, and single inheritance.
 - [ ] **Step 20: Basic System & IO**
     - [ ] Basic `try...except...finally` block.
     - [ ] Virtual `io` (e.g., `open()` to a memory-backed file registry).
