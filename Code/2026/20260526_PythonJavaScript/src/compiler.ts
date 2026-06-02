@@ -20,6 +20,7 @@ import {
   AssignmentNode,
   LambdaNode,
   ClassNode,
+  IfExpressionNode,
 } from "./parser.js";
 
 const BUILTINS = new Set([
@@ -32,8 +33,10 @@ const BUILTINS = new Set([
   "int",
   "float",
   "bool",
+  "str",
   "chr",
   "ord",
+  "hex",
   "tuple",
   "set",
   "frozenset",
@@ -306,6 +309,9 @@ export class Compiler {
         stack.push(node.condition);
         stack.push(...node.thenBranch);
         if (node.elseBranch) stack.push(...node.elseBranch);
+      } else if (node.type === "IfExpression") {
+        used.add("__true");
+        stack.push(node.condition, node.thenBranch, node.elseBranch);
       } else if (node.type === "While" || node.type === "DoWhile") {
         used.add("__true");
         stack.push(node.condition);
@@ -533,6 +539,9 @@ export class Compiler {
 
       case "If":
         return this.compileIf(node);
+
+      case "IfExpression":
+        return this.compileIfExpression(node);
 
       case "CallExpression":
         return this.compileCall(node);
@@ -1038,6 +1047,13 @@ export class Compiler {
       js += `${this.indent()}}`;
     }
     return js;
+  }
+
+  private compileIfExpression(node: IfExpressionNode): string {
+    const cond = this.compileNode(node.condition);
+    const then = this.compileNode(node.thenBranch);
+    const el = this.compileNode(node.elseBranch);
+    return `(__true(${cond}) ? ${then} : ${el})`;
   }
 
   private compileWhile(node: WhileNode): string {

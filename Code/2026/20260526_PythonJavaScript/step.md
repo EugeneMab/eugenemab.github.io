@@ -50,6 +50,17 @@
 - [x] **Step 19: Object Model (Classes)**
     - [x] Map Python `class` to JavaScript `class`.
     - [x] `__init__`, `self` binding, method dispatch, and single inheritance.
-- [ ] **Step 20: Basic System & IO**
+- [x] **Step 20: Expressions & Literals**
+    - [x] If-expression (`x if cond else y`).
+    - [x] Hex numbers (`0x...`) and hex string conversion (`hex()`, `int(s, 16)`).
+    - [x] Multi-line strings (`"""..."""` or `'''...'''`).
+    - [x] Multiple ways of comments (single-line and docstrings).
+- [ ] **Step 21: Multi-line Syntax & Continuation**
+    - [ ] Multi-line parenthesized expressions (implicit line joining).
+    - [ ] Backslash (`\`) for explicit line breaking.
+- [ ] **Step 22: Extended Standard Library**
+    - [ ] More system functions for `number`, `string`, `list`, `dict`.
+    - [ ] Advanced formatting (e.g., `format()`, `.format()`).
+- [ ] **Step 23: Basic System & IO**
     - [ ] Basic `try...except...finally` block.
     - [ ] Virtual `io` (e.g., `open()` to a memory-backed file registry).

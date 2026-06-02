@@ -101,22 +101,38 @@ self.onmessage = async (e) => {
                 },
                 abs: (val) => Math.abs(val),
                 math: Math,
-                int: (val) => {
+                hex: (val) => {
+                    const b = BigInt(val);
+                    return "0x" + b.toString(16);
+                },
+                int: (val, base = 10) => {
                     if (typeof val === "string") {
                         const trimmed = val.trim();
                         try {
                             if (trimmed === "")
                                 throw new Error("empty string");
-                            const truncated = trimmed.split(".")[0];
-                            const b = BigInt(truncated);
-                            if (b <= BigInt(Number.MAX_SAFE_INTEGER) &&
-                                b >= BigInt(Number.MIN_SAFE_INTEGER)) {
-                                return Number(b);
+                            let res;
+                            if (base === 10) {
+                                res = BigInt(trimmed.split(".")[0]);
                             }
-                            return b;
+                            else if (base === 16) {
+                                const s = trimmed.startsWith("0x") || trimmed.startsWith("0X")
+                                    ? trimmed
+                                    : "0x" + trimmed;
+                                res = BigInt(s);
+                            }
+                            else {
+                                // Fallback for other bases if needed, though mostly 10 and 16 are used
+                                res = BigInt(parseInt(trimmed, base));
+                            }
+                            if (res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                                res >= BigInt(Number.MIN_SAFE_INTEGER)) {
+                                return Number(res);
+                            }
+                            return res;
                         }
                         catch {
-                            throw new Error(`invalid literal for int() with base 10: '${val}'`);
+                            throw new Error(`invalid literal for int() with base ${base}: '${val}'`);
                         }
                     }
                     if (typeof val === "number")
@@ -146,6 +162,9 @@ self.onmessage = async (e) => {
                 },
                 bool: (val) => {
                     return runtime.__true(val);
+                },
+                str: (val) => {
+                    return __format(val);
                 },
                 chr: (val) => {
                     const codePoint = Number(val);

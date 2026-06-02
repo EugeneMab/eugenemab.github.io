@@ -106,23 +106,38 @@ self.onmessage = async (e) => {
         },
         abs: (val: number) => Math.abs(val),
         math: Math,
-        int: (val: any) => {
+        hex: (val: any) => {
+          const b = BigInt(val);
+          return "0x" + b.toString(16);
+        },
+        int: (val: any, base: number = 10) => {
           if (typeof val === "string") {
             const trimmed = val.trim();
             try {
               if (trimmed === "") throw new Error("empty string");
-              const truncated = trimmed.split(".")[0];
-              const b = BigInt(truncated);
-              if (
-                b <= BigInt(Number.MAX_SAFE_INTEGER) &&
-                b >= BigInt(Number.MIN_SAFE_INTEGER)
-              ) {
-                return Number(b);
+              let res: bigint;
+              if (base === 10) {
+                res = BigInt(trimmed.split(".")[0]);
+              } else if (base === 16) {
+                const s =
+                  trimmed.startsWith("0x") || trimmed.startsWith("0X")
+                    ? trimmed
+                    : "0x" + trimmed;
+                res = BigInt(s);
+              } else {
+                // Fallback for other bases if needed, though mostly 10 and 16 are used
+                res = BigInt(parseInt(trimmed, base));
               }
-              return b;
+              if (
+                res <= BigInt(Number.MAX_SAFE_INTEGER) &&
+                res >= BigInt(Number.MIN_SAFE_INTEGER)
+              ) {
+                return Number(res);
+              }
+              return res;
             } catch {
               throw new Error(
-                `invalid literal for int() with base 10: '${val}'`,
+                `invalid literal for int() with base ${base}: '${val}'`,
               );
             }
           }
@@ -152,6 +167,9 @@ self.onmessage = async (e) => {
         },
         bool: (val: any) => {
           return runtime.__true(val);
+        },
+        str: (val: any) => {
+          return __format(val);
         },
         chr: (val: any) => {
           const codePoint = Number(val);

@@ -8,8 +8,10 @@ const BUILTINS = new Set([
     "int",
     "float",
     "bool",
+    "str",
     "chr",
     "ord",
+    "hex",
     "tuple",
     "set",
     "frozenset",
@@ -275,6 +277,10 @@ export class Compiler {
                 if (node.elseBranch)
                     stack.push(...node.elseBranch);
             }
+            else if (node.type === "IfExpression") {
+                used.add("__true");
+                stack.push(node.condition, node.thenBranch, node.elseBranch);
+            }
             else if (node.type === "While" || node.type === "DoWhile") {
                 used.add("__true");
                 stack.push(node.condition);
@@ -533,6 +539,8 @@ export class Compiler {
                 return this.compileFor(node);
             case "If":
                 return this.compileIf(node);
+            case "IfExpression":
+                return this.compileIfExpression(node);
             case "CallExpression":
                 return this.compileCall(node);
             case "List":
@@ -977,6 +985,12 @@ export class Compiler {
             js += `${this.indent()}}`;
         }
         return js;
+    }
+    compileIfExpression(node) {
+        const cond = this.compileNode(node.condition);
+        const then = this.compileNode(node.thenBranch);
+        const el = this.compileNode(node.elseBranch);
+        return `(__true(${cond}) ? ${then} : ${el})`;
     }
     compileWhile(node) {
         let js = `while (__true(${this.compileNode(node.condition)})) {\n`;

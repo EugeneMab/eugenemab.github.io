@@ -304,7 +304,14 @@ export class Parser {
         if (this.match(TokenType.LAMBDA)) {
             return this.parseLambda();
         }
-        return this.parseOr();
+        const expr = this.parseOr();
+        if (this.match(TokenType.IF)) {
+            const condition = this.parseOr();
+            this.consume(TokenType.ELSE, "Expect 'else' in if-expression");
+            const elseBranch = this.parseExpression();
+            return { type: "IfExpression", condition, thenBranch: expr, elseBranch };
+        }
+        return expr;
     }
     parseLambda() {
         const params = [];
@@ -582,10 +589,10 @@ export class Parser {
         if (this.match(TokenType.FOR)) {
             const item = this.consume(TokenType.IDENTIFIER, "Expect variable name").value;
             this.consume(TokenType.IN, "Expect 'in'");
-            const iterable = this.parseExpression();
+            const iterable = this.parseOr();
             let condition = null;
             if (this.match(TokenType.IF)) {
-                condition = this.parseExpression();
+                condition = this.parseOr();
             }
             this.consume(TokenType.RSQUARE, "Expect ']' after comprehension");
             return {
@@ -623,10 +630,10 @@ export class Parser {
             if (this.match(TokenType.FOR)) {
                 const item = this.consume(TokenType.IDENTIFIER, "Expect variable name").value;
                 this.consume(TokenType.IN, "Expect 'in'");
-                const iterable = this.parseExpression();
+                const iterable = this.parseOr();
                 let condition = null;
                 if (this.match(TokenType.IF)) {
-                    condition = this.parseExpression();
+                    condition = this.parseOr();
                 }
                 this.consume(TokenType.RBRACE, "Expect '}' after dict comprehension");
                 return {
@@ -655,10 +662,10 @@ export class Parser {
         else if (this.match(TokenType.FOR)) {
             const item = this.consume(TokenType.IDENTIFIER, "Expect variable name").value;
             this.consume(TokenType.IN, "Expect 'in'");
-            const iterable = this.parseExpression();
+            const iterable = this.parseOr();
             let condition = null;
             if (this.match(TokenType.IF)) {
-                condition = this.parseExpression();
+                condition = this.parseOr();
             }
             this.consume(TokenType.RBRACE, "Expect '}' after set comprehension");
             return {
