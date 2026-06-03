@@ -106,6 +106,11 @@ const samples = [
     js: ["max", "total", "fruits", "mapping", "sentence"],
   },
   {
+    name: "Extended Standard Library",
+    value: "sample/stdlib.py",
+    js: ["bin", "oct", "round", "divmod", "startswith", "endswith", "get"],
+  },
+  {
     name: "Basic Classes & Objects",
     value: "sample/methods.py",
     js: [

@@ -110,6 +110,25 @@ self.onmessage = async (e) => {
           const b = BigInt(val);
           return "0x" + b.toString(16);
         },
+        bin: (val: any) => {
+          const b = BigInt(val);
+          return "0b" + b.toString(2);
+        },
+        oct: (val: any) => {
+          const b = BigInt(val);
+          return "0o" + b.toString(8);
+        },
+        round: (val: number, n: number = 0) => {
+          const m = Math.pow(10, n);
+          return Math.round(val * m) / m;
+        },
+        divmod: (a: any, b: any) => {
+          return new Tuple([runtime.__floordiv(a, b), runtime.__mod(a, b)]);
+        },
+        list: (iterable: any) => {
+          if (iterable === undefined) return [];
+          return Array.from(iterable);
+        },
         int: (val: any, base: number = 10) => {
           if (typeof val === "string") {
             const trimmed = val.trim();
@@ -170,6 +189,34 @@ self.onmessage = async (e) => {
         },
         str: (val: any) => {
           return __format(val);
+        },
+        format: (val: any, ...args: any[]) => {
+          if (typeof val === "string") {
+            if (args.length === 0) return val;
+            let res = val;
+            let i = 0;
+            while (res.includes("{}") && i < args.length) {
+              res = res.replace("{}", __format(args[i++]));
+            }
+            res = res.replace(/{:([^}]*)}/g, (_, spec) => {
+              const arg = args[i++];
+              if (spec.endsWith("f") && typeof arg === "number") {
+                const match = spec.match(/(\d+)/);
+                const prec = match ? parseInt(match[1]) : 0;
+                return arg.toFixed(prec);
+              }
+              return __format(arg);
+            });
+            return res;
+          }
+          if (typeof val === "number" && args.length > 0) {
+            const spec = String(args[0]);
+            if (spec.endsWith("f")) {
+              const prec = parseInt(spec.slice(0, -1)) || 0;
+              return val.toFixed(prec);
+            }
+          }
+          return String(val);
         },
         chr: (val: any) => {
           const codePoint = Number(val);
@@ -415,6 +462,43 @@ self.onmessage = async (e) => {
           typeof s === "string" ? s.toUpperCase() : s.upper(),
         lower: (s: any) =>
           typeof s === "string" ? s.toLowerCase() : s.lower(),
+        startswith: (s: any, prefix: string) => {
+          if (typeof s !== "string") return s.startswith(prefix);
+          return s.startsWith(prefix);
+        },
+        endswith: (s: any, suffix: string) => {
+          if (typeof s !== "string") return s.endswith(suffix);
+          return s.endsWith(suffix);
+        },
+        isalpha: (s: any) => {
+          if (typeof s !== "string") return s.isalpha();
+          return /^[a-zA-Z]+$/.test(s);
+        },
+        isdigit: (s: any) => {
+          if (typeof s !== "string") return s.isdigit();
+          return /^[0-9]+$/.test(s);
+        },
+        isspace: (s: any) => {
+          if (typeof s !== "string") return s.isspace();
+          return /^\s+$/.test(s);
+        },
+        isalnum: (s: any) => {
+          if (typeof s !== "string") return s.isalnum();
+          return /^[a-zA-Z0-9]+$/.test(s);
+        },
+        islower: (s: any) => {
+          if (typeof s !== "string") return s.islower();
+          return s === s.toLowerCase() && s !== s.toUpperCase();
+        },
+        isupper: (s: any) => {
+          if (typeof s !== "string") return s.isupper();
+          return s === s.toUpperCase() && s !== s.toLowerCase();
+        },
+        count: (s: any, sub: any) => {
+          if (Array.isArray(s)) return s.filter((x) => x === sub).length;
+          if (typeof s !== "string") return s.count(sub);
+          return s.split(sub).length - 1;
+        },
         // List methods
         append: (l: any, x: any) => {
           if (Array.isArray(l)) {
@@ -472,6 +556,48 @@ self.onmessage = async (e) => {
             return undefined;
           }
           return l.reverse();
+        },
+        // Dict methods
+        get: (d: any, key: any, def: any = null) => {
+          if (d instanceof Map) return d.has(key) ? d.get(key) : def;
+          return key in d ? d[key] : def;
+        },
+        keys: (d: any) => {
+          if (d instanceof Map) return Array.from(d.keys());
+          return Object.keys(d);
+        },
+        values: (d: any) => {
+          if (d instanceof Map) return Array.from(d.values());
+          return Object.values(d);
+        },
+        items: (d: any) => {
+          if (d instanceof Map)
+            return Array.from(d.entries()).map((e) => new Tuple(e));
+          return Object.entries(d).map((e) => new Tuple(e));
+        },
+        update: (d: any, other: any) => {
+          if (d instanceof Map) {
+            if (other instanceof Map) {
+              for (const [k, v] of other) d.set(k, v);
+            } else {
+              for (const k in other) d.set(k, other[k]);
+            }
+          } else {
+            Object.assign(d, other);
+          }
+          return undefined;
+        },
+        clear: (d: any) => {
+          if (d instanceof Map || d instanceof Set) d.clear();
+          else if (Array.isArray(d)) d.length = 0;
+          else for (const k in d) delete d[k];
+          return undefined;
+        },
+        copy: (d: any) => {
+          if (d instanceof Map) return new Map(d);
+          if (d instanceof Set) return new Set(d);
+          if (Array.isArray(d)) return [...d];
+          return Object.assign(Object.create(null), d);
         },
         // Protocol methods
         __enter__: async (obj: any, fallback?: any) => {

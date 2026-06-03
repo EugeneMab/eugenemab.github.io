@@ -12,6 +12,11 @@ const BUILTINS = new Set([
     "chr",
     "ord",
     "hex",
+    "bin",
+    "oct",
+    "round",
+    "divmod",
+    "list",
     "tuple",
     "set",
     "frozenset",
@@ -33,6 +38,7 @@ const BUILTINS = new Set([
     "map",
     "filter",
     "reduce",
+    "format",
     "split",
     "join",
     "strip",
@@ -40,6 +46,15 @@ const BUILTINS = new Set([
     "find",
     "upper",
     "lower",
+    "startswith",
+    "endswith",
+    "isalpha",
+    "isdigit",
+    "isspace",
+    "isalnum",
+    "islower",
+    "isupper",
+    "count",
     "append",
     "extend",
     "insert",
@@ -47,6 +62,13 @@ const BUILTINS = new Set([
     "pop",
     "sort",
     "reverse",
+    "get",
+    "keys",
+    "values",
+    "items",
+    "update",
+    "clear",
+    "copy",
     "__enter__",
     "__exit__",
 ]);
@@ -374,6 +396,7 @@ export class Compiler {
                 }
             }
             else if (node.type === "FString") {
+                used.add("str");
                 for (const p of node.parts) {
                     if (typeof p !== "string")
                         stack.push(p);
@@ -1255,7 +1278,7 @@ export class Compiler {
                     .replace(/`/g, "\\`")
                     .replace(/\$\{/g, "\\${");
             }
-            return `\${${this.compileNode(p)}}`;
+            return `\${str(${this.compileNode(p)})}`;
         })
             .join("");
         return `(\`${parts}\`)`;

@@ -55,12 +55,12 @@
     - [x] Hex numbers (`0x...`) and hex string conversion (`hex()`, `int(s, 16)`).
     - [x] Multi-line strings (`"""..."""` or `'''...'''`).
     - [x] Multiple ways of comments (single-line and docstrings).
-- [ ] **Step 21: Multi-line Syntax & Continuation**
-    - [ ] Multi-line parenthesized expressions (implicit line joining).
-    - [ ] Backslash (`\`) for explicit line breaking.
-- [ ] **Step 22: Extended Standard Library**
-    - [ ] More system functions for `number`, `string`, `list`, `dict`.
-    - [ ] Advanced formatting (e.g., `format()`, `.format()`).
+- [x] **Step 21: Multi-line Syntax & Continuation**
+    - [x] Multi-line parenthesized expressions (implicit line joining).
+    - [x] Backslash (`\`) for explicit line breaking.
+- [x] **Step 22: Extended Standard Library**
+    - [x] More system functions for `number`, `string`, `list`, `dict`.
+    - [x] Advanced formatting (e.g., `format()`, `.format()`).
 - [ ] **Step 23: Basic System & IO**
     - [ ] Basic `try...except...finally` block.
     - [ ] Virtual `io` (e.g., `open()` to a memory-backed file registry).
