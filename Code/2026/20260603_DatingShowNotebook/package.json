@@ -1,0 +1,9 @@
+{
+  "name": "dating-show-notebook-standalone",
+  "version": "1.0.0",
+  "description": "Standalone HTML/JS/CSS Dating Show Notebook",
+  "scripts": {
+    "start": "node tool.js start",
+    "kill": "node tool.js kill"
+  }
+}
