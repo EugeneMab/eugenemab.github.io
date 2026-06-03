@@ -11,6 +11,7 @@ import {
   getFilteredPeople,
 } from '../utils/layout';
 import OpenFolderModal from './OpenFolderModal';
+import PopupSlider from './PopupSlider';
 
 const MAX_IMAGE_HEIGHT = 10240;
 
@@ -172,35 +173,23 @@ const TopButtonPane: React.FC = () => {
           </div>
 
           {/* Global Scaling Sliders */}
-          <div className="flex items-center gap-6 shrink-0">
-            <div className="flex items-center gap-2">
-              <ZoomIn size={ICON_SIZE_18} className="text-gray-500 shrink-0" />
-              <input
-                type="range"
-                min={BODY_SCALE_MIN}
-                max={BODY_SCALE_MAX}
-                step={RANGE_STEP}
-                value={bodyScale}
-                onChange={(e) => {
-                  return setBodyScale(parseFloat(e.target.value));
-                }}
-                className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Type size={ICON_SIZE_18} className="text-gray-500 shrink-0" />
-              <input
-                type="range"
-                min={DESC_SCALE_MIN}
-                max={DESC_SCALE_MAX}
-                step={RANGE_STEP}
-                value={descriptionScale}
-                onChange={(e) => {
-                  return setDescriptionScale(parseFloat(e.target.value));
-                }}
-                className="w-24 h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-              />
-            </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <PopupSlider
+              Icon={ZoomIn}
+              value={bodyScale}
+              onChange={setBodyScale}
+              min={BODY_SCALE_MIN}
+              max={BODY_SCALE_MAX}
+              title="Body Scale"
+            />
+            <PopupSlider
+              Icon={Type}
+              value={descriptionScale}
+              onChange={setDescriptionScale}
+              min={DESC_SCALE_MIN}
+              max={DESC_SCALE_MAX}
+              title="Description Scale"
+            />
           </div>
 
           {/* Undo Last Action */}

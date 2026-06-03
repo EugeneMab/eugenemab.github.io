@@ -104,7 +104,7 @@ describe('imageGen utils', () => {
     });
 
     // Mock Image using a constructor
-    let lastInstance: { onload?: () => void; onerror?: (e: unknown) => void } | null = null;
+    let lastInstance: any = null;
     vi.stubGlobal(
       'Image',
       class {
@@ -152,7 +152,7 @@ describe('imageGen utils', () => {
       },
     });
 
-    let lastInstance: { onload?: () => void } | null = null;
+    let lastInstance: any = null;
     vi.stubGlobal(
       'Image',
       class {
@@ -179,7 +179,7 @@ describe('imageGen utils', () => {
 
   /* Tests svgToJpeg error path. */
   it('svgToJpeg handles image load error', async () => {
-    let lastInstance: { onerror?: (e: unknown) => void } | null = null;
+    let lastInstance: any = null;
     vi.stubGlobal(
       'Image',
       class {
