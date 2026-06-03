@@ -11,7 +11,7 @@ interface PopupSliderProps {
   title: string;
 }
 
-const RATIO = 1.1;
+const RATIO = 1.05;
 
 const valueToLog = (val: number) => Math.log(val) / Math.log(RATIO);
 const logToValue = (log: number) => Math.pow(RATIO, log);
@@ -67,7 +67,8 @@ const PopupSlider: React.FC<PopupSliderProps> = ({ Icon, value, onChange, min, m
               step={1}
               value={Math.round(logValue)}
               onChange={(e) => {
-                return onChange(logToValue(parseInt(e.target.value)));
+                const next = logToValue(parseInt(e.target.value, 10));
+                return onChange(Math.min(max, Math.max(min, next)));
               }}
               style={
                 {

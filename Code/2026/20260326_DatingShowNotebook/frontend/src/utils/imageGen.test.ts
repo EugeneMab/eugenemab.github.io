@@ -104,7 +104,7 @@ describe('imageGen utils', () => {
     });
 
     // Mock Image using a constructor
-    let lastInstance: any = null;
+    let lastInstance: { onload?: () => void; onerror?: (e: unknown) => void } | null = null;
     vi.stubGlobal(
       'Image',
       class {
@@ -128,8 +128,9 @@ describe('imageGen utils', () => {
     });
 
     // Simulate image load
-    if (lastInstance && lastInstance.onload) {
-      lastInstance.onload();
+    const instance = lastInstance as any;
+    if (instance && instance.onload) {
+      instance.onload();
     }
 
     const result = await promise;
@@ -152,7 +153,7 @@ describe('imageGen utils', () => {
       },
     });
 
-    let lastInstance: any = null;
+    let lastInstance: { onload?: () => void; onerror?: (e: unknown) => void } | null = null;
     vi.stubGlobal(
       'Image',
       class {
@@ -170,8 +171,8 @@ describe('imageGen utils', () => {
       return setTimeout(r, 0);
     });
 
-    if (lastInstance && lastInstance.onload) {
-      lastInstance.onload();
+    if (lastInstance && (lastInstance as any).onload) {
+      (lastInstance as any).onload();
     }
 
     await expect(promise).rejects.toThrow('Failed to get canvas context');
@@ -179,7 +180,7 @@ describe('imageGen utils', () => {
 
   /* Tests svgToJpeg error path. */
   it('svgToJpeg handles image load error', async () => {
-    let lastInstance: any = null;
+    let lastInstance: { onload?: () => void; onerror?: (e: unknown) => void } | null = null;
     vi.stubGlobal(
       'Image',
       class {
@@ -199,8 +200,8 @@ describe('imageGen utils', () => {
       return setTimeout(r, 0);
     });
 
-    if (lastInstance && lastInstance.onerror) {
-      lastInstance.onerror(new Error('Load failed'));
+    if (lastInstance && (lastInstance as any).onerror) {
+      (lastInstance as any).onerror(new Error('Load failed'));
     }
 
     await expect(promise).rejects.toThrow('Load failed');
