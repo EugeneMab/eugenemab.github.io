@@ -207,7 +207,8 @@ export class Lexer {
                 this.parenLevel++;
                 return this.createToken(TokenType.LPAREN, "(", startCol);
             case ")":
-                this.parenLevel--;
+                if (this.parenLevel > 0)
+                    this.parenLevel--;
                 return this.createToken(TokenType.RPAREN, ")", startCol);
             case ",":
                 return this.createToken(TokenType.COMMA, ",", startCol);
@@ -215,13 +216,15 @@ export class Lexer {
                 this.parenLevel++;
                 return this.createToken(TokenType.LSQUARE, "[", startCol);
             case "]":
-                this.parenLevel--;
+                if (this.parenLevel > 0)
+                    this.parenLevel--;
                 return this.createToken(TokenType.RSQUARE, "]", startCol);
             case "{":
                 this.parenLevel++;
                 return this.createToken(TokenType.LBRACE, "{", startCol);
             case "}":
-                this.parenLevel--;
+                if (this.parenLevel > 0)
+                    this.parenLevel--;
                 return this.createToken(TokenType.RBRACE, "}", startCol);
             default:
                 throw new Error(`Unexpected character: ${char} at line ${this.line}, col ${startCol}`);

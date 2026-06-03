@@ -103,15 +103,24 @@ self.onmessage = async (e) => {
                 math: Math,
                 hex: (val) => {
                     const b = BigInt(val);
-                    return "0x" + b.toString(16);
+                    const s = b.toString(16);
+                    if (b < 0n)
+                        return "-0x" + s.slice(1);
+                    return "0x" + s;
                 },
                 bin: (val) => {
                     const b = BigInt(val);
-                    return "0b" + b.toString(2);
+                    const s = b.toString(2);
+                    if (b < 0n)
+                        return "-0b" + s.slice(1);
+                    return "0b" + s;
                 },
                 oct: (val) => {
                     const b = BigInt(val);
-                    return "0o" + b.toString(8);
+                    const s = b.toString(8);
+                    if (b < 0n)
+                        return "-0o" + s.slice(1);
+                    return "0o" + s;
                 },
                 round: (val, n = 0) => {
                     const m = Math.pow(10, n);
@@ -136,10 +145,19 @@ self.onmessage = async (e) => {
                                 res = BigInt(trimmed.split(".")[0]);
                             }
                             else if (base === 16) {
-                                const s = trimmed.startsWith("0x") || trimmed.startsWith("0X")
-                                    ? trimmed
-                                    : "0x" + trimmed;
-                                res = BigInt(s);
+                                let s = trimmed;
+                                let sign = 1n;
+                                if (s.startsWith("-")) {
+                                    sign = -1n;
+                                    s = s.slice(1);
+                                }
+                                else if (s.startsWith("+")) {
+                                    s = s.slice(1);
+                                }
+                                if (!s.startsWith("0x") && !s.startsWith("0X")) {
+                                    s = "0x" + s;
+                                }
+                                res = BigInt(s) * sign;
                             }
                             else {
                                 // Fallback for other bases if needed, though mostly 10 and 16 are used
@@ -519,7 +537,10 @@ self.onmessage = async (e) => {
                         return s.filter((x) => x === sub).length;
                     if (typeof s !== "string")
                         return s.count(sub);
-                    return s.split(sub).length - 1;
+                    const needle = String(sub);
+                    if (needle === "")
+                        return s.length + 1;
+                    return s.split(needle).length - 1;
                 },
                 // List methods
                 append: (l, x) => {

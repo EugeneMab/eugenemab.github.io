@@ -48,13 +48,7 @@ def main():
     i = int("FF", 16)
     return h + " " + str(i)
 `;
-    // str() is not explicitly in BUILTINS but string concatenation handles it if str is preloaded or handled.
-    // Actually str is handled in runtime via __format usually but not as a global 'str' function yet.
-    // Let's check if 'str' is in BUILTINS.
     const { globals } = await runPython(code);
-    // Wait, str() might fail if not defined.
-    // I should add str() to BUILTINS or use another way.
-    // For now I'll use format or just check h and i.
     expect(await globals.main()).toBe("0xff 255");
   });
 
