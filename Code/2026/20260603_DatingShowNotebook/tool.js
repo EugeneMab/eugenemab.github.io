@@ -7,7 +7,8 @@ const PID_FILE = path.join(__dirname, 'server.pid');
 
 if (process.argv[2] === 'start') {
   const server = http.createServer((req, res) => {
-    let filePath = '.' + req.url;
+    let urlPath = req.url.split('?')[0];
+    let filePath = '.' + urlPath;
     if (filePath === './') {
       filePath = './index.html';
     }
