@@ -34,7 +34,15 @@ export type ASTNode =
   | WithNode
   | MemberAccessNode
   | LambdaNode
-  | ClassNode;
+  | ClassNode
+  | IfExpressionNode;
+
+export interface IfExpressionNode {
+  type: "IfExpression";
+  condition: ASTNode;
+  thenBranch: ASTNode;
+  elseBranch: ASTNode;
+}
 
 export interface ClassNode {
   type: "Class";
@@ -580,7 +588,14 @@ export class Parser {
     if (this.match(TokenType.LAMBDA)) {
       return this.parseLambda();
     }
-    return this.parseOr();
+    const expr = this.parseOr();
+    if (this.match(TokenType.IF)) {
+      const condition = this.parseOr();
+      this.consume(TokenType.ELSE, "Expect 'else' in if-expression");
+      const elseBranch = this.parseExpression();
+      return { type: "IfExpression", condition, thenBranch: expr, elseBranch };
+    }
+    return expr;
   }
 
   private parseLambda(): LambdaNode {
@@ -887,10 +902,10 @@ export class Parser {
         "Expect variable name",
       ).value;
       this.consume(TokenType.IN, "Expect 'in'");
-      const iterable = this.parseExpression();
+      const iterable = this.parseOr();
       let condition: ASTNode | null = null;
       if (this.match(TokenType.IF)) {
-        condition = this.parseExpression();
+        condition = this.parseOr();
       }
       this.consume(TokenType.RSQUARE, "Expect ']' after comprehension");
       return {
@@ -935,10 +950,10 @@ export class Parser {
           "Expect variable name",
         ).value;
         this.consume(TokenType.IN, "Expect 'in'");
-        const iterable = this.parseExpression();
+        const iterable = this.parseOr();
         let condition: ASTNode | null = null;
         if (this.match(TokenType.IF)) {
-          condition = this.parseExpression();
+          condition = this.parseOr();
         }
         this.consume(TokenType.RBRACE, "Expect '}' after dict comprehension");
         return {
@@ -967,10 +982,10 @@ export class Parser {
         "Expect variable name",
       ).value;
       this.consume(TokenType.IN, "Expect 'in'");
-      const iterable = this.parseExpression();
+      const iterable = this.parseOr();
       let condition: ASTNode | null = null;
       if (this.match(TokenType.IF)) {
-        condition = this.parseExpression();
+        condition = this.parseOr();
       }
       this.consume(TokenType.RBRACE, "Expect '}' after set comprehension");
       return {

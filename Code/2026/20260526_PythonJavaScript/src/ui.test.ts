@@ -96,6 +96,21 @@ const samples = [
     js: ["class", "extends", "constructor", "__call_method", "super"],
   },
   {
+    name: "Expressions & Literals",
+    value: "sample/literals.py",
+    js: ["?", "255", "int", "hex", "converted", "const"],
+  },
+  {
+    name: "Multi-line Syntax",
+    value: "sample/multiline.py",
+    js: ["max", "total", "fruits", "mapping", "sentence"],
+  },
+  {
+    name: "Extended Standard Library",
+    value: "sample/stdlib.py",
+    js: ["bin", "oct", "round", "divmod", "startswith", "endswith", "get"],
+  },
+  {
     name: "Basic Classes & Objects",
     value: "sample/methods.py",
     js: [

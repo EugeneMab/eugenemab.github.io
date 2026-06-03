@@ -71,6 +71,7 @@ export class Lexer {
     col = 1;
     indentStack = [0];
     pendingTokens = [];
+    parenLevel = 0;
     constructor(source) {
         this.source = source;
     }
@@ -203,18 +204,27 @@ export class Lexer {
             case ".":
                 return this.createToken(TokenType.DOT, ".", startCol);
             case "(":
+                this.parenLevel++;
                 return this.createToken(TokenType.LPAREN, "(", startCol);
             case ")":
+                if (this.parenLevel > 0)
+                    this.parenLevel--;
                 return this.createToken(TokenType.RPAREN, ")", startCol);
             case ",":
                 return this.createToken(TokenType.COMMA, ",", startCol);
             case "[":
+                this.parenLevel++;
                 return this.createToken(TokenType.LSQUARE, "[", startCol);
             case "]":
+                if (this.parenLevel > 0)
+                    this.parenLevel--;
                 return this.createToken(TokenType.RSQUARE, "]", startCol);
             case "{":
+                this.parenLevel++;
                 return this.createToken(TokenType.LBRACE, "{", startCol);
             case "}":
+                if (this.parenLevel > 0)
+                    this.parenLevel--;
                 return this.createToken(TokenType.RBRACE, "}", startCol);
             default:
                 throw new Error(`Unexpected character: ${char} at line ${this.line}, col ${startCol}`);
@@ -242,7 +252,11 @@ export class Lexer {
         // Skip blank lines or comment-only lines
         if (this.pos < this.source.length &&
             (this.peek() === "\n" || this.peek() === "\r" || this.peek() === "#")) {
-            return this.nextToken();
+            return null;
+        }
+        // Implicit line joining
+        if (this.parenLevel > 0) {
+            return null;
         }
         const currentIndent = this.indentStack[this.indentStack.length - 1];
         const tokens = [];
@@ -311,6 +325,15 @@ export class Lexer {
     handleNumber() {
         let value = "";
         const startCol = this.col;
+        if (this.peek() === "0" &&
+            (this.peekNext() === "x" || this.peekNext() === "X")) {
+            value += this.advance(); // consume '0'
+            value += this.advance(); // consume 'x' or 'X'
+            while (this.pos < this.source.length && /[0-9a-fA-F]/.test(this.peek())) {
+                value += this.advance();
+            }
+            return { type: TokenType.NUMBER, value, line: this.line, col: startCol };
+        }
         while (this.pos < this.source.length && this.isDigit(this.peek())) {
             value += this.advance();
         }
@@ -326,56 +349,82 @@ export class Lexer {
     }
     handleString(quote, isFString = false, startCol = this.col, isRaw = false, isBytes = false) {
         let value = "";
-        while (this.pos < this.source.length && this.peek() !== quote) {
-            if (this.peek() === "\n") {
-                throw new Error(`Unterminated string at line ${this.line}`);
+        const isTriple = this.peek() === quote && this.peekNext() === quote;
+        if (isTriple) {
+            this.advance(); // consume 2nd quote
+            this.advance(); // consume 3rd quote
+            while (this.pos < this.source.length) {
+                if (this.peek() === quote &&
+                    this.peekNext() === quote &&
+                    this.source[this.pos + 2] === quote) {
+                    break;
+                }
+                const char = this.advance();
+                if (char === "\n") {
+                    this.line++;
+                    this.col = 1;
+                }
+                value += char;
             }
-            if (this.peek() === "\\") {
-                if (isRaw) {
-                    if (this.peekNext() === quote) {
-                        value += this.advance(); // consume '\'
-                        value += this.advance(); // consume quote
+            if (this.pos >= this.source.length) {
+                throw new Error(`Unterminated triple-quoted string at line ${this.line}`);
+            }
+            this.advance(); // skip 1st closing quote
+            this.advance(); // skip 2nd closing quote
+            this.advance(); // skip 3rd closing quote
+        }
+        else {
+            while (this.pos < this.source.length && this.peek() !== quote) {
+                if (this.peek() === "\n") {
+                    throw new Error(`Unterminated string at line ${this.line}`);
+                }
+                if (this.peek() === "\\") {
+                    if (isRaw) {
+                        if (this.peekNext() === quote) {
+                            value += this.advance(); // consume '\'
+                            value += this.advance(); // consume quote
+                        }
+                        else {
+                            value += this.advance();
+                        }
                     }
                     else {
-                        value += this.advance();
+                        this.advance(); // Skip backslash
+                        const escaped = this.advance();
+                        switch (escaped) {
+                            case "n":
+                                value += "\n";
+                                break;
+                            case "t":
+                                value += "\t";
+                                break;
+                            case "r":
+                                value += "\r";
+                                break;
+                            case "\\":
+                                value += "\\";
+                                break;
+                            case "'":
+                                value += "'";
+                                break;
+                            case '"':
+                                value += '"';
+                                break;
+                            default:
+                                value += "\\" + escaped;
+                                break;
+                        }
                     }
                 }
                 else {
-                    this.advance(); // Skip backslash
-                    const escaped = this.advance();
-                    switch (escaped) {
-                        case "n":
-                            value += "\n";
-                            break;
-                        case "t":
-                            value += "\t";
-                            break;
-                        case "r":
-                            value += "\r";
-                            break;
-                        case "\\":
-                            value += "\\";
-                            break;
-                        case "'":
-                            value += "'";
-                            break;
-                        case '"':
-                            value += '"';
-                            break;
-                        default:
-                            value += "\\" + escaped;
-                            break;
-                    }
+                    value += this.advance();
                 }
             }
-            else {
-                value += this.advance();
+            if (this.pos >= this.source.length) {
+                throw new Error(`Unterminated string at line ${this.line}`);
             }
+            this.advance(); // Skip closing quote
         }
-        if (this.pos >= this.source.length) {
-            throw new Error(`Unterminated string at line ${this.line}`);
-        }
-        this.advance(); // Skip closing quote
         let type = TokenType.STRING;
         if (isFString)
             type = TokenType.FSTRING;
@@ -393,6 +442,24 @@ export class Lexer {
             const char = this.peek();
             if (char === " " || char === "\t") {
                 this.advance();
+            }
+            else if (char === "\\") {
+                const next = this.peekNext();
+                if (next === "\n" || next === "\r") {
+                    this.advance(); // consume '\'
+                    if (next === "\r" && this.source[this.pos + 1] === "\n") {
+                        this.advance(); // consume '\r'
+                        this.advance(); // consume '\n'
+                    }
+                    else {
+                        this.advance(); // consume '\n' or '\r'
+                    }
+                    this.line++;
+                    this.col = 1;
+                }
+                else {
+                    break;
+                }
             }
             else if (char === "#") {
                 while (this.pos < this.source.length &&
