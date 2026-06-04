@@ -5,11 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dating Show Notebook</title>
   <script src="./lib/tailwind.js"></script>
-  <script src="./lib/react.min.js"></script>
-  <script src="./lib/react-dom.min.js"></script>
-  <script src="./lib/lucide-react.min.js"></script>
+  
+  <!-- Load React and ReactDOM (Development UMD) -->
+  <script src="./lib/react.js"></script>
+  <script src="./lib/react-dom.js"></script>
+  
+  <script>
+    // Ensure React is available under both 'React' and 'react' for different UMD builds
+    window.React = window.React || React;
+    window.react = window.React;
+    window.ReactDOM = window.ReactDOM || ReactDOM;
+    console.log('React initialized:', !!window.React, window.React?.version);
+  </script>
+
+  <!-- Load Lucide React (UMD) - Depends on window.react -->
+  <script src="./lib/lucide-react.js"></script>
+  
   <style>
-    body { margin: 0; padding: 0; overflow: hidden; }
+    body { margin: 0; padding: 0; overflow: hidden; background: #f3f4f6; }
     #root { width: 100%; height: 100vh; }
     ::-webkit-scrollbar { width: 10px; height: 10px; }
     ::-webkit-scrollbar-track { background: #2e004d; }

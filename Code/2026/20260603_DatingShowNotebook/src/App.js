@@ -4,16 +4,24 @@ import { AppContent } from './components/AppContent.js';
 
 const { useState, useEffect } = React;
 
+const DEFAULT_DATA = {
+  people: [],
+  episodes: [],
+  nextUniqueId: 1,
+  bodyScale: 1,
+  descriptionScale: 1
+};
+
 export const App = () => {
   const [data, setData] = useState(() => {
     const saved = localStorage.getItem('dsn_data');
-    return saved ? JSON.parse(saved) : {
-      people: [],
-      episodes: [],
-      nextUniqueId: 1,
-      bodyScale: 1,
-      descriptionScale: 1
-    };
+    if (!saved) return DEFAULT_DATA;
+    try {
+      return JSON.parse(saved);
+    } catch (e) {
+      console.error('Failed to parse saved data, falling back to default.');
+      return DEFAULT_DATA;
+    }
   });
 
   const [activeMode, setActiveMode] = useState('message');
@@ -179,12 +187,21 @@ export const App = () => {
                 <button 
                   onClick=${() => {
                     try {
-                      const val = document.getElementById('data-textarea').value;
+                      const val = document.getElementById('data-textarea').value.trim();
+                      if (!val) {
+                        setData(DEFAULT_DATA);
+                        setIsDataModalOpen(false);
+                        return;
+                      }
                       const parsed = JSON.parse(val);
+                      // Basic validation to ensure required fields exist
+                      if (!parsed.people || !parsed.episodes) {
+                        throw new Error('Missing required fields: people or episodes');
+                      }
                       setData(parsed);
                       setIsDataModalOpen(false);
                     } catch (e) {
-                      alert('Invalid JSON: ' + e.message);
+                      alert('Error loading data: ' + e.message);
                     }
                   }}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
