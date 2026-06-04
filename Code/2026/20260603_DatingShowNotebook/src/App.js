@@ -77,15 +77,25 @@ export const App = () => {
           <div className="p-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
             <h2 className="font-bold text-gray-700">Episodes</h2>
             <button 
-              onClick=${() => updateData(prev => ({
-                ...prev,
-                episodes: [...prev.episodes, {
-                  id: prev.nextUniqueId,
-                  title: 'New Episode',
-                  events: []
-                }],
-                nextUniqueId: prev.nextUniqueId + 1
-              }))}
+              onClick=${() => updateData(prev => {
+                const epId = prev.nextUniqueId;
+                const evId = epId + 1;
+                const title = `Episode ${prev.episodes.length + 1}`;
+                return {
+                  ...prev,
+                  episodes: [...prev.episodes, {
+                    id: epId,
+                    title: title,
+                    events: [{
+                      id: evId,
+                      title: `${title}-1`,
+                      messages: [],
+                      teams: {}
+                    }]
+                  }],
+                  nextUniqueId: evId + 1
+                };
+              })}
               className="p-1 hover:bg-gray-200 rounded text-blue-600"
               title="Add Episode"
             >
@@ -104,47 +114,179 @@ export const App = () => {
               <span>Participants</span>
             </div>
             <div className="h-px bg-gray-100 my-2" />
-            ${data.episodes.map(ep => html`
+            ${data.episodes.map((ep, epIdx) => html`
               <div key=${ep.id} className="space-y-1">
                 <div 
                   className=${`p-2 rounded cursor-pointer flex justify-between items-center group ${selectedEpisodeId === ep.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
                   onClick=${() => {
-                    setSelectedEpisodeId(ep.id);
-                    if (ep.events.length > 0) setSelectedEventId(ep.events[0].id);
-                    else setSelectedEventId(null);
+                    if (selectedEpisodeId !== ep.id) {
+                      setSelectedEpisodeId(ep.id);
+                      if (ep.events.length > 0) setSelectedEventId(ep.events[0].id);
+                      else setSelectedEventId(null);
+                    }
                   }}
                 >
-                  <span className="truncate flex-1">${ep.title}</span>
-                  <button 
-                    onClick=${(e) => {
-                      e.stopPropagation();
-                      updateData(prev => ({
+                  <input 
+                    className="truncate flex-1 bg-transparent border-none focus:ring-0 p-0 font-medium cursor-pointer min-w-0"
+                    value=${ep.title}
+                    onChange=${(e) => updateData(prev => ({
+                      ...prev,
+                      episodes: prev.episodes.map(x => x.id === ep.id ? { ...x, title: e.target.value } : x)
+                    }))}
+                  />
+                  <div className="flex items-center opacity-0 group-hover:opacity-100 shrink-0 ml-1">
+                    <button 
+                      onClick=${(e) => {
+                        e.stopPropagation();
+                        updateData(prev => ({
+                          ...prev,
+                          episodes: prev.episodes.map(x => x.id === ep.id ? {
+                            ...x,
+                            events: [...x.events, {
+                              id: prev.nextUniqueId,
+                              title: `${x.title}-${x.events.length + 1}`,
+                              messages: [],
+                              teams: {}
+                            }]
+                          } : x),
+                          nextUniqueId: prev.nextUniqueId + 1
+                        }));
+                      }}
+                      className="p-1 hover:bg-gray-200 rounded text-green-600"
+                      title="Add Event"
+                    >
+                      <${LucideReact.Plus} size=${14} />
+                    </button>
+                    <button 
+                      disabled=${epIdx === 0}
+                      onClick=${(e) => {
+                        e.stopPropagation();
+                        updateData(prev => {
+                          const episodes = [...prev.episodes];
+                          [episodes[epIdx], episodes[epIdx - 1]] = [episodes[epIdx - 1], episodes[epIdx]];
+                          return { ...prev, episodes };
+                        });
+                      }}
+                      className=${`p-1 hover:bg-gray-200 rounded text-gray-500 ${epIdx === 0 ? 'opacity-30' : ''}`}
+                      title="Move Up"
+                    >
+                      <${LucideReact.ArrowUp} size=${14} />
+                    </button>
+                    <button 
+                      disabled=${epIdx === data.episodes.length - 1}
+                      onClick=${(e) => {
+                        e.stopPropagation();
+                        updateData(prev => {
+                          const episodes = [...prev.episodes];
+                          [episodes[epIdx], episodes[epIdx + 1]] = [episodes[epIdx + 1], episodes[epIdx]];
+                          return { ...prev, episodes };
+                        });
+                      }}
+                      className=${`p-1 hover:bg-gray-200 rounded text-gray-500 ${epIdx === data.episodes.length - 1 ? 'opacity-30' : ''}`}
+                      title="Move Down"
+                    >
+                      <${LucideReact.ArrowDown} size=${14} />
+                    </button>
+                    <button 
+                      onClick=${(e) => {
+                        e.stopPropagation();
+                        if (confirm('Delete this episode?')) {
+                          updateData(prev => ({
+                            ...prev,
+                            episodes: prev.episodes.filter(x => x.id !== ep.id)
+                          }));
+                          if (selectedEpisodeId === ep.id) {
+                            setSelectedEpisodeId(null);
+                            setSelectedEventId(null);
+                          }
+                        }
+                      }}
+                      className="p-1 hover:bg-gray-200 rounded text-red-600"
+                      title="Delete Episode"
+                    >
+                      <${LucideReact.Trash2} size=${14} />
+                    </button>
+                  </div>
+                </div>
+                ${selectedEpisodeId === ep.id && ep.events.map((ev, evIdx) => html`
+                  <div 
+                    key=${ev.id}
+                    className=${`ml-4 p-2 text-sm rounded cursor-pointer flex justify-between items-center group ${selectedEventId === ev.id ? 'bg-blue-100 text-blue-800 font-medium' : 'hover:bg-gray-100'}`}
+                    onClick=${() => setSelectedEventId(ev.id)}
+                  >
+                    <input 
+                      className="truncate flex-1 bg-transparent border-none focus:ring-0 p-0 text-sm cursor-pointer min-w-0"
+                      value=${ev.title}
+                      onChange=${(e) => updateData(prev => ({
                         ...prev,
                         episodes: prev.episodes.map(x => x.id === ep.id ? {
                           ...x,
-                          events: [...x.events, {
-                            id: prev.nextUniqueId,
-                            title: 'New Event',
-                            messages: [],
-                            teams: {}
-                          }]
-                        } : x),
-                        nextUniqueId: prev.nextUniqueId + 1
-                      }));
-                    }}
-                    className="opacity-0 group-hover:opacity-100 p-1 hover:bg-gray-200 rounded text-green-600"
-                    title="Add Event"
-                  >
-                    <${LucideReact.Plus} size=${16} />
-                  </button>
-                </div>
-                ${selectedEpisodeId === ep.id && ep.events.map(ev => html`
-                  <div 
-                    key=${ev.id}
-                    className=${`ml-4 p-2 text-sm rounded cursor-pointer ${selectedEventId === ev.id ? 'bg-blue-100 text-blue-800 font-medium' : 'hover:bg-gray-100'}`}
-                    onClick=${() => setSelectedEventId(ev.id)}
-                  >
-                    ${ev.title}
+                          events: x.events.map(y => y.id === ev.id ? { ...y, title: e.target.value } : y)
+                        } : x)
+                      }))}
+                    />
+                    <div className="flex items-center opacity-0 group-hover:opacity-100 shrink-0 ml-1">
+                      <button 
+                        disabled=${evIdx === 0}
+                        onClick=${(e) => {
+                          e.stopPropagation();
+                          updateData(prev => {
+                            const episodes = prev.episodes.map(x => {
+                              if (x.id !== ep.id) return x;
+                              const events = [...x.events];
+                              [events[evIdx], events[evIdx - 1]] = [events[evIdx - 1], events[evIdx]];
+                              return { ...x, events };
+                            });
+                            return { ...prev, episodes };
+                          });
+                        }}
+                        className=${`p-1 hover:bg-gray-200 rounded text-gray-500 ${evIdx === 0 ? 'opacity-30' : ''}`}
+                        title="Move Up"
+                      >
+                        <${LucideReact.ArrowUp} size=${12} />
+                      </button>
+                      <button 
+                        disabled=${evIdx === ep.events.length - 1}
+                        onClick=${(e) => {
+                          e.stopPropagation();
+                          updateData(prev => {
+                            const episodes = prev.episodes.map(x => {
+                              if (x.id !== ep.id) return x;
+                              const events = [...x.events];
+                              [events[evIdx], events[evIdx + 1]] = [events[evIdx + 1], events[evIdx]];
+                              return { ...x, events };
+                            });
+                            return { ...prev, episodes };
+                          });
+                        }}
+                        className=${`p-1 hover:bg-gray-200 rounded text-gray-500 ${evIdx === ep.events.length - 1 ? 'opacity-30' : ''}`}
+                        title="Move Down"
+                      >
+                        <${LucideReact.ArrowDown} size=${12} />
+                      </button>
+                      <button 
+                        onClick=${(e) => {
+                          e.stopPropagation();
+                          if (confirm('Delete this event?')) {
+                            updateData(prev => ({
+                              ...prev,
+                              episodes: prev.episodes.map(x => x.id === ep.id ? {
+                                ...x,
+                                events: x.events.filter(y => y.id !== ev.id)
+                              } : x)
+                            }));
+                            if (selectedEventId === ev.id) {
+                              const remainingEvents = ep.events.filter(y => y.id !== ev.id);
+                              setSelectedEventId(remainingEvents[0]?.id || null);
+                            }
+                          }
+                        }}
+                        className="p-1 hover:bg-gray-200 rounded text-red-600"
+                        title="Delete Event"
+                      >
+                        <${LucideReact.Trash2} size=${12} />
+                      </button>
+                    </div>
                   </div>
                 `)}
               </div>
