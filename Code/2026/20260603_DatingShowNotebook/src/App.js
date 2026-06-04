@@ -119,9 +119,11 @@ export const App = () => {
                 <div 
                   className=${`p-2 rounded cursor-pointer flex justify-between items-center group ${selectedEpisodeId === ep.id ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50'}`}
                   onClick=${() => {
-                    setSelectedEpisodeId(ep.id);
-                    if (ep.events.length > 0) setSelectedEventId(ep.events[0].id);
-                    else setSelectedEventId(null);
+                    if (selectedEpisodeId !== ep.id) {
+                      setSelectedEpisodeId(ep.id);
+                      if (ep.events.length > 0) setSelectedEventId(ep.events[0].id);
+                      else setSelectedEventId(null);
+                    }
                   }}
                 >
                   <input 
@@ -142,7 +144,7 @@ export const App = () => {
                             ...x,
                             events: [...x.events, {
                               id: prev.nextUniqueId,
-                              title: `${ep.title}-${x.events.length + 1}`,
+                              title: `${x.title}-${x.events.length + 1}`,
                               messages: [],
                               teams: {}
                             }]

@@ -108,6 +108,8 @@ export const PersonView = ({ data, setData }) => {
             className="w-full h-full border-2 border-gray-300 flex items-center justify-center cursor-pointer overflow-hidden bg-gray-200 outline-none focus:ring-2 focus:ring-blue-500"
             onPaste=${e => handlePaste(e, p.id)}
             tabIndex="0"
+            aria-label="Paste participant image"
+            title="Paste an image from the clipboard"
           >
             ${p.image ? html`<img src=${p.image} className="w-full h-full object-cover" />` : html`<div className="text-gray-400 text-center px-1" style=${{ fontSize: `${SMALL_FONT_SIZE * scale}rem` }}>Paste Image</div>`}
           </div>
@@ -136,11 +138,11 @@ export const PersonView = ({ data, setData }) => {
                   if (ranges !== null) updatePerson(p.id, { ranges });
                 }}
               >
-                <${LucideReact.Hash} size=${14 * scale} /> Range: ${p.ranges}
+                <${LucideReact.Hash} size=${14} * scale} /> Range: ${p.ranges}
               </button>
 
-              <button disabled=${i === 0} onClick=${() => movePerson(p.id, 'up')} className=${`p-1 rounded hover:bg-gray-200 bg-gray-100 ${i === 0 ? 'opacity-20' : ''}`}><${LucideReact.ArrowUp} size=${16 * scale} /></button>
-              <button disabled=${isLast} onClick=${() => movePerson(p.id, 'down')} className=${`p-1 rounded hover:bg-gray-200 bg-gray-100 ${isLast ? 'opacity-20' : ''}`}><${LucideReact.ArrowDown} size=${16 * scale} /></button>
+              <button title="Move up" aria-label="Move up" disabled=${i === 0} onClick=${() => movePerson(p.id, 'up')} className=${`p-1 rounded hover:bg-gray-200 bg-gray-100 ${i === 0 ? 'opacity-20' : ''}`}><${LucideReact.ArrowUp} size=${16 * scale} /></button>
+              <button title="Move down" aria-label="Move down" disabled=${isLast} onClick=${() => movePerson(p.id, 'down')} className=${`p-1 rounded hover:bg-gray-200 bg-gray-100 ${isLast ? 'opacity-20' : ''}`}><${LucideReact.ArrowDown} size=${16 * scale} /></button>
               
               <button 
                 onClick=${() => removePerson(p.id)}
