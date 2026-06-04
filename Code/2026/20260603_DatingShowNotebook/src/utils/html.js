@@ -1,4 +1,4 @@
-import htm from '/lib/htm.js';
+import htm from '../../lib/htm.js';
 
 // Access React and ReactDOM from window
 const React = window.React;

@@ -198,7 +198,39 @@ export const App = () => {
                       if (!parsed.people || !parsed.episodes) {
                         throw new Error('Missing required fields: people or episodes');
                       }
-                      setData(parsed);
+                      // Normalization: Ensure all fields exist and recompute nextUniqueId
+                      const normalized = {
+                        ...DEFAULT_DATA,
+                        ...parsed,
+                        people: (parsed.people || []).map(p => ({
+                          description: '',
+                          image: '',
+                          ranges: '',
+                          ...p
+                        })),
+                        episodes: (parsed.episodes || []).map(ep => ({
+                          title: 'New Episode',
+                          events: [],
+                          ...ep,
+                          events: (ep.events || []).map(ev => ({
+                            title: 'New Event',
+                            messages: [],
+                            teams: {},
+                            ...ev
+                          }))
+                        }))
+                      };
+                      
+                      // Recompute nextUniqueId based on existing IDs
+                      let maxId = 0;
+                      normalized.people.forEach(p => maxId = Math.max(maxId, p.id || 0));
+                      normalized.episodes.forEach(ep => {
+                        maxId = Math.max(maxId, ep.id || 0);
+                        ep.events.forEach(ev => maxId = Math.max(maxId, ev.id || 0));
+                      });
+                      normalized.nextUniqueId = Math.max(normalized.nextUniqueId || 0, maxId + 1);
+
+                      setData(normalized);
                       setIsDataModalOpen(false);
                     } catch (e) {
                       alert('Error loading data: ' + e.message);

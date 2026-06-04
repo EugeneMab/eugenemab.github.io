@@ -167,7 +167,15 @@ export const MainBody = ({ data, setData, activeMode, selectedEpisodeId, selecte
                   </div>
                 </foreignObject>
                 <foreignObject x=${X_MALE_IMG * scale} y=${y} width=${MALE_IMG_WIDTH * scale} height=${IMG_HEIGHT * scale}>
-                  <div xmlns="http://www.w3.org/1999/xhtml" className="w-full h-full border-2 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-200" onClick=${() => handlePersonClick(p.id)} onPaste=${e => handlePaste(e, p.id)}>
+                  <div 
+                    xmlns="http://www.w3.org/1999/xhtml" 
+                    className="w-full h-full border-2 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-200 outline-none focus:ring-2 focus:ring-blue-500" 
+                    tabIndex="0"
+                    role="button"
+                    onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePersonClick(p.id); } }}
+                    onClick=${(e) => { e.currentTarget.focus(); handlePersonClick(p.id); }} 
+                    onPaste=${e => handlePaste(e, p.id)}
+                  >
                     ${p.image ? html`<img src=${p.image} className="w-full h-full object-cover" />` : html`<div className="text-gray-400 text-xs">No Image</div>`}
                   </div>
                 </foreignObject>
@@ -187,7 +195,15 @@ export const MainBody = ({ data, setData, activeMode, selectedEpisodeId, selecte
                   />
                 `}
                 <foreignObject x=${X_FEMALE_IMG * scale} y=${y} width=${FEMALE_IMG_WIDTH * scale} height=${IMG_HEIGHT * scale}>
-                  <div xmlns="http://www.w3.org/1999/xhtml" className="w-full h-full border-2 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-200" onClick=${() => handlePersonClick(p.id)} onPaste=${e => handlePaste(e, p.id)}>
+                  <div 
+                    xmlns="http://www.w3.org/1999/xhtml" 
+                    className="w-full h-full border-2 rounded overflow-hidden cursor-pointer flex items-center justify-center bg-gray-200 outline-none focus:ring-2 focus:ring-red-500" 
+                    tabIndex="0"
+                    role="button"
+                    onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePersonClick(p.id); } }}
+                    onClick=${(e) => { e.currentTarget.focus(); handlePersonClick(p.id); }} 
+                    onPaste=${e => handlePaste(e, p.id)}
+                  >
                     ${p.image ? html`<img src=${p.image} className="w-full h-full object-cover" />` : html`<div className="text-gray-400 text-xs">No Image</div>`}
                   </div>
                 </foreignObject>

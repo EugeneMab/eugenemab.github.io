@@ -7,12 +7,18 @@ const PID_FILE = path.join(__dirname, 'server.pid');
 
 if (process.argv[2] === 'start') {
   const server = http.createServer((req, res) => {
-    let urlPath = req.url.split('?')[0];
-    let filePath = '.' + urlPath;
-    if (filePath === './') {
-      filePath = './index.html';
+    // Security: decode and resolve path to prevent directory traversal
+    const urlPath = decodeURIComponent((req.url || '/').split('?')[0]);
+    const requestedPath = urlPath === '/' ? '/index.html' : urlPath;
+    const resolvedPath = path.resolve(__dirname, '.' + requestedPath);
+
+    if (!resolvedPath.startsWith(__dirname + path.sep)) {
+      res.writeHead(403);
+      res.end('Forbidden');
+      return;
     }
 
+    const filePath = resolvedPath;
     const extname = String(path.extname(filePath)).toLowerCase();
     const mimeTypes = {
       '.html': 'text/html',
@@ -20,7 +26,8 @@ if (process.argv[2] === 'start') {
       '.css': 'text/css',
       '.json': 'application/json',
       '.png': 'image/png',
-      '.jpg': 'image/jpg',
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
       '.gif': 'image/gif',
       '.svg': 'image/svg+xml',
     };
@@ -38,7 +45,8 @@ if (process.argv[2] === 'start') {
         }
       } else {
         res.writeHead(200, { 'Content-Type': contentType });
-        res.end(content, 'utf-8');
+        // Security: Send Buffer directly without encoding to avoid binary corruption
+        res.end(content);
       }
     });
   });
@@ -55,14 +63,25 @@ if (process.argv[2] === 'start') {
   });
 } else if (process.argv[2] === 'kill') {
   if (fs.existsSync(PID_FILE)) {
-    const pid = parseInt(fs.readFileSync(PID_FILE, 'utf-8'));
-    try {
-      process.kill(pid);
-      console.log(`Stopped server with PID ${pid}`);
-    } catch (e) {
-      console.log(`Could not kill process ${pid}: ${e.message}`);
+    const content = fs.readFileSync(PID_FILE, 'utf-8').trim();
+    const pid = parseInt(content, 10);
+    if (!isNaN(pid)) {
+      try {
+        process.kill(pid);
+        console.log(`Stopped server with PID ${pid}`);
+        fs.unlinkSync(PID_FILE);
+      } catch (e) {
+        if (e.code === 'ESRCH') {
+          console.log(`Server with PID ${pid} already stopped (stale PID file)`);
+          fs.unlinkSync(PID_FILE);
+        } else {
+          console.log(`Could not kill process ${pid}: ${e.message}`);
+        }
+      }
+    } else {
+      console.log('Invalid PID in PID file, removing stale file.');
+      fs.unlinkSync(PID_FILE);
     }
-    fs.unlinkSync(PID_FILE);
   } else {
     console.log('No server running (PID file not found)');
   }
