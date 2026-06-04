@@ -59,7 +59,16 @@ export const MainBody = ({ data, setData, activeMode, selectedEpisodeId, selecte
             const p2 = prev.people.find(p => p.id === personId);
             if (!p1 || !p2) return prev;
 
-            const type = activeMode === 'bidirectional-message' ? 'bidirectional' : activeMode === 'message' ? 'strong' : 'weak';
+            const isSameGender = p1.gender === p2.gender;
+            const isStrong = activeMode === 'message';
+            const isWeak = activeMode === 'weak-message';
+            const isBidirectional = activeMode === 'bidirectional-message';
+
+            if ((isStrong || isBidirectional) && isSameGender) {
+              return prev;
+            }
+
+            const type = isBidirectional ? 'bidirectional' : isStrong ? 'strong' : 'weak';
             
             return {
               ...prev,
@@ -224,6 +233,17 @@ export const MainBody = ({ data, setData, activeMode, selectedEpisodeId, selecte
               if (!fromPos || !toPos) return null;
               const { color, marker } = getMessageStyle(m.type, fromPos.gender);
               const { x1, y1, x2, y2 } = calculateMessageCoords(fromPos, toPos, scale, m.type);
+              
+              if (fromPos.gender === toPos.gender) {
+                const centerX = (X_MID + MID_WIDTH / 2) * scale;
+                return html`
+                  <g key=${`msg-${i}`}>
+                    <line x1=${x1} y1=${y1} x2=${centerX} y2=${y2} stroke=${color} strokeWidth=${MESSAGE_STROKE_WIDTH * scale} />
+                    <line x1=${centerX} y1=${y2} x2=${x2} y2=${y2} stroke=${color} strokeWidth=${MESSAGE_STROKE_WIDTH * scale} markerEnd=${marker ? `url(#${marker})` : ''} />
+                  </g>
+                `;
+              }
+
               return html`<line key=${`msg-${i}`} x1=${x1} y1=${y1} x2=${x2} y2=${y2} stroke=${color} strokeWidth=${MESSAGE_STROKE_WIDTH * scale} markerEnd=${marker ? `url(#${marker})` : ''} />`;
             })}
           </g>
