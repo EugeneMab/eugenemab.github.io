@@ -10,8 +10,9 @@ export function formatError(
   const colNum = token.col;
   const rawLine = lines[lineNum - 1] || "";
 
+  // Embed #### directly at the column position
   const embeddedLine =
-    rawLine.slice(0, colNum - 1) + rawLine.slice(colNum - 1) + "####";
+    rawLine.slice(0, colNum - 1) + "####" + rawLine.slice(colNum - 1);
 
   return `Error at line ${lineNum}, column ${colNum}: ${message}\n\n${embeddedLine}`;
 }

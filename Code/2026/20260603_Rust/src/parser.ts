@@ -328,6 +328,11 @@ export class Parser {
 
   private consume(type: TokenType, message: string): Token {
     if (this.check(type)) return this.advance();
-    throw new Error(formatError(this.source, message, this.peek()));
+    const token = this.peek();
+    const prev = this.previous();
+    // If the next token is on a new line, point to the previous token (likely where the missing semicolon should be)
+    const errorToken =
+      token.type === TokenType.EOF || token.line > prev.line ? prev : token;
+    throw new Error(formatError(this.source, message, errorToken));
   }
 }

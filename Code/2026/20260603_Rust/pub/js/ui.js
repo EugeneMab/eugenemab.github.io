@@ -1,5 +1,7 @@
 // REM Rust-to-WASM Port (RUST)
 let worker = null;
+let activeTimer = null;
+let startPerf = 0;
 export function initUI() {
     const editor = document.getElementById("editor");
     const compileBtn = document.getElementById("compile-btn");
@@ -41,26 +43,26 @@ export function initUI() {
             runCode();
         }
     });
+    const clearTimer = () => {
+        if (activeTimer) {
+            clearTimeout(activeTimer);
+            activeTimer = null;
+        }
+    };
     const runCode = () => {
         if (worker) {
             worker.terminate();
         }
-        const startPerf = performance.now();
+        clearTimer();
+        startPerf = performance.now();
         const startTime = new Date().toLocaleTimeString();
-        statusLine.textContent = "Compiling...";
-        Object.values(outputs).forEach((o) => (o.textContent = ""));
-        outputs.info.textContent = `[${startTime}] Start\n`;
-        worker = new Worker("./js/worker.js", { type: "module" });
         const timeoutValue = parseInt(timeoutInput.value) || 10;
         const timeout = timeoutValue * 1000;
-        let timer = null;
-        const clearTimer = () => {
-            if (timer) {
-                clearTimeout(timer);
-                timer = null;
-            }
-        };
-        timer = setTimeout(() => {
+        statusLine.textContent = "Compiling...";
+        Object.values(outputs).forEach((o) => (o.textContent = ""));
+        outputs.info.textContent = `[${startTime}] Start (Timeout: ${timeoutValue}s)\n`;
+        worker = new Worker("./js/worker.js", { type: "module" });
+        activeTimer = setTimeout(() => {
             if (worker) {
                 worker.terminate();
                 worker = null;
@@ -68,7 +70,7 @@ export function initUI() {
                 const duration = performance.now() - startPerf;
                 outputs.info.textContent += `[${new Date().toLocaleTimeString()}] End Error: Timeout duration=${duration.toFixed(2)}ms\n`;
             }
-            timer = null;
+            activeTimer = null;
         }, timeout);
         worker.onmessage = (e) => {
             const { type, payload } = e.data;
@@ -100,12 +102,14 @@ export function initUI() {
                     break;
                 case "result":
                     clearTimer();
+                    worker = null; // Mark as finished
                     statusLine.textContent = "Execution Finished";
                     const successDuration = performance.now() - startPerf;
                     outputs.info.textContent += `[${new Date().toLocaleTimeString()}] End okay return code=${payload} duration=${successDuration.toFixed(2)}ms\n`;
                     break;
                 case "error":
                     clearTimer();
+                    worker = null; // Mark as finished
                     outputs.exec.textContent += payload.detail + "\n";
                     outputs.info.textContent += payload.detail + "\n";
                     const errDuration = performance.now() - startPerf;
@@ -121,10 +125,10 @@ export function initUI() {
         if (worker) {
             worker.terminate();
             worker = null;
+            clearTimer();
             statusLine.textContent = "Aborted";
-            // We don't have an easy way to clear the local 'timer' inside runCode from here,
-            // but runCode handles cleanup of old workers.
-            // However, we can track the active timer globally if needed.
+            const abortDuration = performance.now() - startPerf;
+            outputs.info.textContent += `[${new Date().toLocaleTimeString()}] End Error: Aborted duration=${abortDuration.toFixed(2)}ms\n`;
         }
     });
     // File IO
