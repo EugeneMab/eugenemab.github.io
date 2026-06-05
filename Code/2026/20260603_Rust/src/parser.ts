@@ -29,6 +29,7 @@ export interface ExpressionStatement {
 export interface BlockStatement {
   type: "BlockStatement";
   body: Statement[];
+  tailExpression?: Expression;
 }
 
 export interface FunctionDeclaration {
@@ -142,11 +143,36 @@ export class Parser {
   private parseBlockStatement(): BlockStatement {
     this.consume(TokenType.LBRACE, "Expect '{' to start block");
     const body: Statement[] = [];
+    let tailExpression: Expression | undefined;
+
     while (!this.check(TokenType.RBRACE) && !this.isAtEnd()) {
-      body.push(this.parseStatement());
+      if (this.match(TokenType.LET)) {
+        body.push(this.parseLetStatement());
+      } else if (this.match(TokenType.FN)) {
+        body.push(this.parseFunctionDeclaration());
+      } else if (this.peek().type === TokenType.LBRACE) {
+        body.push(this.parseBlockStatement());
+      } else {
+        const expr = this.parseExpression();
+        if (this.match(TokenType.SEMICOLON)) {
+          body.push({ type: "ExpressionStatement", expression: expr });
+        } else {
+          tailExpression = expr;
+          if (!this.check(TokenType.RBRACE)) {
+            throw new Error(
+              formatError(
+                this.source,
+                "Expect ';' after expression",
+                this.peek(),
+              ),
+            );
+          }
+          break;
+        }
+      }
     }
     this.consume(TokenType.RBRACE, "Expect '}' to end block");
-    return { type: "BlockStatement", body };
+    return { type: "BlockStatement", body, tailExpression };
   }
 
   private parseExpressionStatement(): ExpressionStatement {

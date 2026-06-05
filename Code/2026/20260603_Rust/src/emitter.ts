@@ -254,9 +254,13 @@ export class Emitter {
     const scan = (s: Statement) => {
       if (s.type === "LetStatement" && !this.locals.has(s.name))
         localNames.add(s.name);
-      if (s.type === "BlockStatement") s.body.forEach(scan);
+      if (s.type === "BlockStatement") {
+        s.body.forEach(scan);
+        if (s.tailExpression) this.scanExpression();
+      }
     };
     fn.body.body.forEach(scan);
+    if (fn.body.tailExpression) this.scanExpression();
 
     const localList = Array.from(localNames);
     localList.forEach((name, i) => this.locals.set(name, fn.params.length + i));
@@ -266,9 +270,10 @@ export class Emitter {
     const body: number[] = [];
     this.emitBlockBinary(fn.body, body);
 
-    // In Rust, for now, we assume functions return 0 if no explicit return is hit
-    // and we ensure the stack is clean before this final push.
-    body.push(OP_I32_CONST, 0);
+    // Default return 0 if no tail expression
+    if (!fn.body.tailExpression) {
+      body.push(OP_I32_CONST, 0);
+    }
     body.push(OP_END);
 
     const localBytes = this.encodeVector(
@@ -281,7 +286,11 @@ export class Emitter {
     ];
   }
 
-  private emitBlockBinary(block: BlockStatement, body: number[]) {
+  private scanExpression() {
+    // Current expressions don't declare new locals, but future ones might
+  }
+
+  private emitBlockBinary(block: any, body: number[]) {
     for (const stmt of block.body) {
       if (stmt.type === "LetStatement") {
         this.emitExpressionBinary(stmt.initializer, body);
@@ -293,6 +302,9 @@ export class Emitter {
         this.emitExpressionBinary(stmt.expression, body);
         body.push(OP_DROP);
       }
+    }
+    if (block.tailExpression) {
+      this.emitExpressionBinary(block.tailExpression, body);
     }
   }
 
