@@ -17,6 +17,7 @@
                 <div class="sample-selector">
                     <label for="sample-select">Load Sample:</label>
                     <select id="sample-select">
+                        <option value="">-- Select a sample --</option>
                         <option value="basic">Basic Math</option>
                         <option value="bitwise">Bitwise Ops</option>
                         <option value="panic">Panic Test</option>
@@ -24,27 +25,23 @@
                 </div>
                 <h3>Rust Source</h3>
                 <div class="controls">
+                    <button id="load-file-btn">Open File (Ctrl+O)</button>
+                    <button id="save-btn">Save File (Ctrl+S)</button>
                     <button id="compile-btn">Compile & Run (F8)</button>
                     <div class="timeout-control">
                         <label for="timeout-input">Timeout:</label>
                         <input type="number" id="timeout-input" value="10" min="1">s
                     </div>
                     <button id="abort-btn" class="abort-btn">Abort</button>
+                    <input type="file" id="file-input" hidden accept=".rs,.txt">
                 </div>
-                <textarea id="editor" spellcheck="false">// REM Rust-to-WASM Port (RUST)
-fn main() {
-    let x = 10;
-    let y = 20;
-    let z = (x + y) * 2;
-    print!(z);
-    print!(0x2A);
-    z
-}</textarea>
+                <textarea id="editor" spellcheck="false" placeholder="// REM Rust-to-WASM Port (RUST)"></textarea>
             </div>
 
             <div class="right-panel">
                 <div id="status-line" class="status-line">Ready</div>
                 <div class="output-tabs">
+                    <button class="tab-btn" data-tab="info">Info</button>
                     <button class="tab-btn" data-tab="lex">Lex</button>
                     <button class="tab-btn" data-tab="ast">AST</button>
                     <button class="tab-btn" data-tab="wat">WAT</button>
@@ -52,6 +49,7 @@ fn main() {
                     <button class="tab-btn active" data-tab="exec">Execution</button>
                 </div>
                 
+                <div class="tab-content hidden" id="info-content"><pre id="info-output"></pre></div>
                 <div class="tab-content hidden" id="lex-content"><pre id="lex-output"></pre></div>
                 <div class="tab-content hidden" id="ast-content"><pre id="ast-output"></pre></div>
                 <div class="tab-content hidden" id="wat-content"><pre id="wat-output"></pre></div>

@@ -1,4 +1,4 @@
-import { Runtime } from './runtime.js';
+import { Runtime } from "./runtime.js";
 const code = `
 // This is a comment
 /// Doc comment

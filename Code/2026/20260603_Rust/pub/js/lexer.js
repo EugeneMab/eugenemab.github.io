@@ -42,15 +42,15 @@ export var TokenType;
     TokenType[TokenType["EOF"] = 36] = "EOF";
 })(TokenType || (TokenType = {}));
 const KEYWORDS = {
-    'fn': TokenType.FN,
-    'let': TokenType.LET,
-    'mut': TokenType.MUT,
-    'if': TokenType.IF,
-    'else': TokenType.ELSE,
-    'loop': TokenType.LOOP,
-    'struct': TokenType.STRUCT,
-    'impl': TokenType.IMPL,
-    'panic': TokenType.PANIC,
+    fn: TokenType.FN,
+    let: TokenType.LET,
+    mut: TokenType.MUT,
+    if: TokenType.IF,
+    else: TokenType.ELSE,
+    loop: TokenType.LOOP,
+    struct: TokenType.STRUCT,
+    impl: TokenType.IMPL,
+    panic: TokenType.PANIC,
 };
 export class Lexer {
     pos = 0;
@@ -62,8 +62,8 @@ export class Lexer {
         const tokens = [];
         while (this.pos < this.input.length) {
             const char = this.input[this.pos];
-            if (this.match('//')) {
-                while (this.pos < this.input.length && this.input[this.pos] !== '\n') {
+            if (this.match("//")) {
+                while (this.pos < this.input.length && this.input[this.pos] !== "\n") {
                     this.pos++;
                 }
                 continue;
@@ -84,29 +84,39 @@ export class Lexer {
                 tokens.push(this.readString());
                 continue;
             }
-            if (this.match('->')) {
-                tokens.push({ type: TokenType.ARROW, value: '->' });
+            if (this.match("->")) {
+                tokens.push({ type: TokenType.ARROW, value: "->" });
                 continue;
             }
-            if (this.match('<<')) {
-                tokens.push({ type: TokenType.LSHIFT, value: '<<' });
+            if (this.match("<<")) {
+                tokens.push({ type: TokenType.LSHIFT, value: "<<" });
                 continue;
             }
-            if (this.match('>>')) {
-                tokens.push({ type: TokenType.RSHIFT, value: '>>' });
+            if (this.match(">>")) {
+                tokens.push({ type: TokenType.RSHIFT, value: ">>" });
                 continue;
             }
             const symbols = {
-                '(': TokenType.LPAREN, ')': TokenType.RPAREN,
-                '{': TokenType.LBRACE, '}': TokenType.RBRACE,
-                '[': TokenType.LBRACKET, ']': TokenType.RBRACKET,
-                ',': TokenType.COMMA, '.': TokenType.DOT,
-                ':': TokenType.COLON, ';': TokenType.SEMICOLON,
-                '+': TokenType.PLUS, '-': TokenType.MINUS,
-                '*': TokenType.STAR, '/': TokenType.SLASH,
-                '%': TokenType.PERCENT, '&': TokenType.AMPERSAND,
-                '|': TokenType.PIPE, '^': TokenType.CARET,
-                '=': TokenType.EQUALS, '!': TokenType.EXCLAMATION,
+                "(": TokenType.LPAREN,
+                ")": TokenType.RPAREN,
+                "{": TokenType.LBRACE,
+                "}": TokenType.RBRACE,
+                "[": TokenType.LBRACKET,
+                "]": TokenType.RBRACKET,
+                ",": TokenType.COMMA,
+                ".": TokenType.DOT,
+                ":": TokenType.COLON,
+                ";": TokenType.SEMICOLON,
+                "+": TokenType.PLUS,
+                "-": TokenType.MINUS,
+                "*": TokenType.STAR,
+                "/": TokenType.SLASH,
+                "%": TokenType.PERCENT,
+                "&": TokenType.AMPERSAND,
+                "|": TokenType.PIPE,
+                "^": TokenType.CARET,
+                "=": TokenType.EQUALS,
+                "!": TokenType.EXCLAMATION,
             };
             if (char in symbols) {
                 tokens.push({ type: symbols[char], value: char });
@@ -115,7 +125,7 @@ export class Lexer {
             }
             throw new Error(`Unexpected character: ${char} at pos ${this.pos}`);
         }
-        tokens.push({ type: TokenType.EOF, value: '' });
+        tokens.push({ type: TokenType.EOF, value: "" });
         return tokens;
     }
     match(str) {
@@ -126,8 +136,9 @@ export class Lexer {
         return false;
     }
     readIdentifierOrKeyword() {
-        let start = this.pos;
-        while (this.pos < this.input.length && /[a-zA-Z0-9_]/.test(this.input[this.pos])) {
+        const start = this.pos;
+        while (this.pos < this.input.length &&
+            /[a-zA-Z0-9_]/.test(this.input[this.pos])) {
             this.pos++;
         }
         const value = this.input.substring(start, this.pos);
@@ -135,22 +146,29 @@ export class Lexer {
         return { type, value };
     }
     readNumber() {
-        let start = this.pos;
-        if (this.input.startsWith('0x', this.pos)) {
+        const start = this.pos;
+        if (this.input.startsWith("0x", this.pos)) {
             this.pos += 2;
-            while (this.pos < this.input.length && /[0-9a-fA-F]/.test(this.input[this.pos])) {
+            while (this.pos < this.input.length &&
+                /[0-9a-fA-F]/.test(this.input[this.pos])) {
                 this.pos++;
             }
-            return { type: TokenType.HEX, value: this.input.substring(start, this.pos) };
+            return {
+                type: TokenType.HEX,
+                value: this.input.substring(start, this.pos),
+            };
         }
         while (this.pos < this.input.length && /[0-9]/.test(this.input[this.pos])) {
             this.pos++;
         }
-        return { type: TokenType.INTEGER, value: this.input.substring(start, this.pos) };
+        return {
+            type: TokenType.INTEGER,
+            value: this.input.substring(start, this.pos),
+        };
     }
     readString() {
         this.pos++; // skip opening quote
-        let start = this.pos;
+        const start = this.pos;
         while (this.pos < this.input.length && this.input[this.pos] !== '"') {
             this.pos++;
         }

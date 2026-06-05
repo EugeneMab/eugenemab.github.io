@@ -1,18 +1,47 @@
 export enum TokenType {
   // Keywords
-  FN, LET, MUT, IF, ELSE, LOOP, STRUCT, IMPL, PANIC,
+  FN,
+  LET,
+  MUT,
+  IF,
+  ELSE,
+  LOOP,
+  STRUCT,
+  IMPL,
+  PANIC,
 
   // Literals
-  INTEGER, HEX, STRING, IDENTIFIER,
+  INTEGER,
+  HEX,
+  STRING,
+  IDENTIFIER,
 
   // Symbols
-  LPAREN, RPAREN, LBRACE, RBRACE, LBRACKET, RBRACKET,
-  COMMA, DOT, COLON, SEMICOLON, ARROW,
-  PLUS, MINUS, STAR, SLASH, PERCENT,
-  AMPERSAND, PIPE, CARET, LSHIFT, RSHIFT,
-  EQUALS, EXCLAMATION,
+  LPAREN,
+  RPAREN,
+  LBRACE,
+  RBRACE,
+  LBRACKET,
+  RBRACKET,
+  COMMA,
+  DOT,
+  COLON,
+  SEMICOLON,
+  ARROW,
+  PLUS,
+  MINUS,
+  STAR,
+  SLASH,
+  PERCENT,
+  AMPERSAND,
+  PIPE,
+  CARET,
+  LSHIFT,
+  RSHIFT,
+  EQUALS,
+  EXCLAMATION,
 
-  EOF
+  EOF,
 }
 
 export interface Token {
@@ -21,15 +50,15 @@ export interface Token {
 }
 
 const KEYWORDS: Record<string, TokenType> = {
-  'fn': TokenType.FN,
-  'let': TokenType.LET,
-  'mut': TokenType.MUT,
-  'if': TokenType.IF,
-  'else': TokenType.ELSE,
-  'loop': TokenType.LOOP,
-  'struct': TokenType.STRUCT,
-  'impl': TokenType.IMPL,
-  'panic': TokenType.PANIC,
+  fn: TokenType.FN,
+  let: TokenType.LET,
+  mut: TokenType.MUT,
+  if: TokenType.IF,
+  else: TokenType.ELSE,
+  loop: TokenType.LOOP,
+  struct: TokenType.STRUCT,
+  impl: TokenType.IMPL,
+  panic: TokenType.PANIC,
 };
 
 export class Lexer {
@@ -45,8 +74,8 @@ export class Lexer {
     while (this.pos < this.input.length) {
       const char = this.input[this.pos];
 
-      if (this.match('//')) {
-        while (this.pos < this.input.length && this.input[this.pos] !== '\n') {
+      if (this.match("//")) {
+        while (this.pos < this.input.length && this.input[this.pos] !== "\n") {
           this.pos++;
         }
         continue;
@@ -72,32 +101,42 @@ export class Lexer {
         continue;
       }
 
-      if (this.match('->')) {
-        tokens.push({ type: TokenType.ARROW, value: '->' });
+      if (this.match("->")) {
+        tokens.push({ type: TokenType.ARROW, value: "->" });
         continue;
       }
 
-      if (this.match('<<')) {
-        tokens.push({ type: TokenType.LSHIFT, value: '<<' });
+      if (this.match("<<")) {
+        tokens.push({ type: TokenType.LSHIFT, value: "<<" });
         continue;
       }
 
-      if (this.match('>>')) {
-        tokens.push({ type: TokenType.RSHIFT, value: '>>' });
+      if (this.match(">>")) {
+        tokens.push({ type: TokenType.RSHIFT, value: ">>" });
         continue;
       }
 
       const symbols: Record<string, TokenType> = {
-        '(': TokenType.LPAREN, ')': TokenType.RPAREN,
-        '{': TokenType.LBRACE, '}': TokenType.RBRACE,
-        '[': TokenType.LBRACKET, ']': TokenType.RBRACKET,
-        ',': TokenType.COMMA, '.': TokenType.DOT,
-        ':': TokenType.COLON, ';': TokenType.SEMICOLON,
-        '+': TokenType.PLUS, '-': TokenType.MINUS,
-        '*': TokenType.STAR, '/': TokenType.SLASH,
-        '%': TokenType.PERCENT, '&': TokenType.AMPERSAND,
-        '|': TokenType.PIPE, '^': TokenType.CARET,
-        '=': TokenType.EQUALS, '!': TokenType.EXCLAMATION,
+        "(": TokenType.LPAREN,
+        ")": TokenType.RPAREN,
+        "{": TokenType.LBRACE,
+        "}": TokenType.RBRACE,
+        "[": TokenType.LBRACKET,
+        "]": TokenType.RBRACKET,
+        ",": TokenType.COMMA,
+        ".": TokenType.DOT,
+        ":": TokenType.COLON,
+        ";": TokenType.SEMICOLON,
+        "+": TokenType.PLUS,
+        "-": TokenType.MINUS,
+        "*": TokenType.STAR,
+        "/": TokenType.SLASH,
+        "%": TokenType.PERCENT,
+        "&": TokenType.AMPERSAND,
+        "|": TokenType.PIPE,
+        "^": TokenType.CARET,
+        "=": TokenType.EQUALS,
+        "!": TokenType.EXCLAMATION,
       };
 
       if (char in symbols) {
@@ -109,7 +148,7 @@ export class Lexer {
       throw new Error(`Unexpected character: ${char} at pos ${this.pos}`);
     }
 
-    tokens.push({ type: TokenType.EOF, value: '' });
+    tokens.push({ type: TokenType.EOF, value: "" });
     return tokens;
   }
 
@@ -122,8 +161,11 @@ export class Lexer {
   }
 
   private readIdentifierOrKeyword(): Token {
-    let start = this.pos;
-    while (this.pos < this.input.length && /[a-zA-Z0-9_]/.test(this.input[this.pos])) {
+    const start = this.pos;
+    while (
+      this.pos < this.input.length &&
+      /[a-zA-Z0-9_]/.test(this.input[this.pos])
+    ) {
       this.pos++;
     }
     const value = this.input.substring(start, this.pos);
@@ -132,24 +174,33 @@ export class Lexer {
   }
 
   private readNumber(): Token {
-    let start = this.pos;
-    if (this.input.startsWith('0x', this.pos)) {
+    const start = this.pos;
+    if (this.input.startsWith("0x", this.pos)) {
       this.pos += 2;
-      while (this.pos < this.input.length && /[0-9a-fA-F]/.test(this.input[this.pos])) {
+      while (
+        this.pos < this.input.length &&
+        /[0-9a-fA-F]/.test(this.input[this.pos])
+      ) {
         this.pos++;
       }
-      return { type: TokenType.HEX, value: this.input.substring(start, this.pos) };
+      return {
+        type: TokenType.HEX,
+        value: this.input.substring(start, this.pos),
+      };
     }
 
     while (this.pos < this.input.length && /[0-9]/.test(this.input[this.pos])) {
       this.pos++;
     }
-    return { type: TokenType.INTEGER, value: this.input.substring(start, this.pos) };
+    return {
+      type: TokenType.INTEGER,
+      value: this.input.substring(start, this.pos),
+    };
   }
 
   private readString(): Token {
     this.pos++; // skip opening quote
-    let start = this.pos;
+    const start = this.pos;
     while (this.pos < this.input.length && this.input[this.pos] !== '"') {
       this.pos++;
     }

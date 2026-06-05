@@ -1,4 +1,4 @@
-import { TokenType } from './lexer.js';
+import { TokenType } from "./lexer.js";
 export class Parser {
     tokens;
     pos = 0;
@@ -10,7 +10,7 @@ export class Parser {
         while (!this.isAtEnd()) {
             body.push(this.parseStatement());
         }
-        return { type: 'Program', body };
+        return { type: "Program", body };
     }
     parseStatement() {
         if (this.match(TokenType.LET))
@@ -27,7 +27,7 @@ export class Parser {
         this.consume(TokenType.EQUALS, "Expect '=' after identifier");
         const initializer = this.parseExpression();
         this.consume(TokenType.SEMICOLON, "Expect ';' after let statement");
-        return { type: 'LetStatement', name, isMutable, initializer };
+        return { type: "LetStatement", name, isMutable, initializer };
     }
     parseFunctionDeclaration() {
         const name = this.consume(TokenType.IDENTIFIER, "Expect function name").value;
@@ -40,7 +40,7 @@ export class Parser {
         }
         this.consume(TokenType.RPAREN, "Expect ')' after parameters");
         const body = this.parseBlockStatement();
-        return { type: 'FunctionDeclaration', name, params, body };
+        return { type: "FunctionDeclaration", name, params, body };
     }
     parseBlockStatement() {
         this.consume(TokenType.LBRACE, "Expect '{' to start block");
@@ -49,12 +49,12 @@ export class Parser {
             body.push(this.parseStatement());
         }
         this.consume(TokenType.RBRACE, "Expect '}' to end block");
-        return { type: 'BlockStatement', body };
+        return { type: "BlockStatement", body };
     }
     parseExpressionStatement() {
         const expression = this.parseExpression();
         this.consume(TokenType.SEMICOLON, "Expect ';' after expression");
-        return { type: 'ExpressionStatement', expression };
+        return { type: "ExpressionStatement", expression };
     }
     parseExpression() {
         return this.parseBitwiseOr();
@@ -64,7 +64,7 @@ export class Parser {
         while (this.match(TokenType.PIPE)) {
             const operator = this.previous().value;
             const right = this.parseBitwiseXor();
-            expr = { type: 'BinaryExpression', operator, left: expr, right };
+            expr = { type: "BinaryExpression", operator, left: expr, right };
         }
         return expr;
     }
@@ -73,7 +73,7 @@ export class Parser {
         while (this.match(TokenType.CARET)) {
             const operator = this.previous().value;
             const right = this.parseBitwiseAnd();
-            expr = { type: 'BinaryExpression', operator, left: expr, right };
+            expr = { type: "BinaryExpression", operator, left: expr, right };
         }
         return expr;
     }
@@ -82,7 +82,7 @@ export class Parser {
         while (this.match(TokenType.AMPERSAND)) {
             const operator = this.previous().value;
             const right = this.parseShift();
-            expr = { type: 'BinaryExpression', operator, left: expr, right };
+            expr = { type: "BinaryExpression", operator, left: expr, right };
         }
         return expr;
     }
@@ -91,7 +91,7 @@ export class Parser {
         while (this.match(TokenType.LSHIFT, TokenType.RSHIFT)) {
             const operator = this.previous().value;
             const right = this.parseAddition();
-            expr = { type: 'BinaryExpression', operator, left: expr, right };
+            expr = { type: "BinaryExpression", operator, left: expr, right };
         }
         return expr;
     }
@@ -100,7 +100,7 @@ export class Parser {
         while (this.match(TokenType.PLUS, TokenType.MINUS)) {
             const operator = this.previous().value;
             const right = this.parseMultiplication();
-            expr = { type: 'BinaryExpression', operator, left: expr, right };
+            expr = { type: "BinaryExpression", operator, left: expr, right };
         }
         return expr;
     }
@@ -109,7 +109,7 @@ export class Parser {
         while (this.match(TokenType.STAR, TokenType.SLASH, TokenType.PERCENT)) {
             const operator = this.previous().value;
             const right = this.parseUnary();
-            expr = { type: 'BinaryExpression', operator, left: expr, right };
+            expr = { type: "BinaryExpression", operator, left: expr, right };
         }
         return expr;
     }
@@ -117,17 +117,29 @@ export class Parser {
         if (this.match(TokenType.MINUS, TokenType.EXCLAMATION, TokenType.AMPERSAND)) {
             const operator = this.previous().value;
             const argument = this.parseUnary();
-            return { type: 'UnaryExpression', operator, argument };
+            return { type: "UnaryExpression", operator, argument };
         }
         return this.parsePrimary();
     }
     parsePrimary() {
         if (this.match(TokenType.INTEGER))
-            return { type: 'Literal', value: parseInt(this.previous().value), rawType: 'integer' };
+            return {
+                type: "Literal",
+                value: parseInt(this.previous().value),
+                rawType: "integer",
+            };
         if (this.match(TokenType.HEX))
-            return { type: 'Literal', value: parseInt(this.previous().value, 16), rawType: 'hex' };
+            return {
+                type: "Literal",
+                value: parseInt(this.previous().value, 16),
+                rawType: "hex",
+            };
         if (this.match(TokenType.STRING))
-            return { type: 'Literal', value: this.previous().value, rawType: 'string' };
+            return {
+                type: "Literal",
+                value: this.previous().value,
+                rawType: "string",
+            };
         if (this.match(TokenType.IDENTIFIER)) {
             const name = this.previous().value;
             if (this.match(TokenType.EXCLAMATION)) {
@@ -140,7 +152,7 @@ export class Parser {
                     } while (this.match(TokenType.COMMA));
                 }
                 this.consume(TokenType.RPAREN, "Expect ')' after macro args");
-                return { type: 'MacroInvocation', name, args };
+                return { type: "MacroInvocation", name, args };
             }
             if (this.match(TokenType.LPAREN)) {
                 // Function call
@@ -151,9 +163,9 @@ export class Parser {
                     } while (this.match(TokenType.COMMA));
                 }
                 this.consume(TokenType.RPAREN, "Expect ')' after args");
-                return { type: 'CallExpression', callee: name, args };
+                return { type: "CallExpression", callee: name, args };
             }
-            return { type: 'Identifier', name };
+            return { type: "Identifier", name };
         }
         if (this.match(TokenType.LPAREN)) {
             const expr = this.parseExpression();

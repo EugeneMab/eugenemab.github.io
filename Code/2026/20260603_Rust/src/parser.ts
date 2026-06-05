@@ -1,12 +1,9 @@
-import { Token, TokenType } from './lexer.js';
+import { Token, TokenType } from "./lexer.js";
 
-export type ASTNode = 
-  | Program
-  | Statement
-  | Expression;
+export type ASTNode = Program | Statement | Expression;
 
 export interface Program {
-  type: 'Program';
+  type: "Program";
   body: Statement[];
 }
 
@@ -17,24 +14,24 @@ export type Statement =
   | FunctionDeclaration;
 
 export interface LetStatement {
-  type: 'LetStatement';
+  type: "LetStatement";
   name: string;
   isMutable: boolean;
   initializer: Expression;
 }
 
 export interface ExpressionStatement {
-  type: 'ExpressionStatement';
+  type: "ExpressionStatement";
   expression: Expression;
 }
 
 export interface BlockStatement {
-  type: 'BlockStatement';
+  type: "BlockStatement";
   body: Statement[];
 }
 
 export interface FunctionDeclaration {
-  type: 'FunctionDeclaration';
+  type: "FunctionDeclaration";
   name: string;
   params: string[]; // Simple for now
   body: BlockStatement;
@@ -49,37 +46,37 @@ export type Expression =
   | MacroInvocation;
 
 export interface BinaryExpression {
-  type: 'BinaryExpression';
+  type: "BinaryExpression";
   operator: string;
   left: Expression;
   right: Expression;
 }
 
 export interface UnaryExpression {
-  type: 'UnaryExpression';
+  type: "UnaryExpression";
   operator: string;
   argument: Expression;
 }
 
 export interface Literal {
-  type: 'Literal';
+  type: "Literal";
   value: string | number;
-  rawType: 'integer' | 'hex' | 'string';
+  rawType: "integer" | "hex" | "string";
 }
 
 export interface Identifier {
-  type: 'Identifier';
+  type: "Identifier";
   name: string;
 }
 
 export interface CallExpression {
-  type: 'CallExpression';
+  type: "CallExpression";
   callee: string;
   args: Expression[];
 }
 
 export interface MacroInvocation {
-  type: 'MacroInvocation';
+  type: "MacroInvocation";
   name: string; // e.g., "print"
   args: Expression[];
 }
@@ -97,37 +94,46 @@ export class Parser {
     while (!this.isAtEnd()) {
       body.push(this.parseStatement());
     }
-    return { type: 'Program', body };
+    return { type: "Program", body };
   }
 
   private parseStatement(): Statement {
     if (this.match(TokenType.LET)) return this.parseLetStatement();
     if (this.match(TokenType.FN)) return this.parseFunctionDeclaration();
-    if (this.peek().type === TokenType.LBRACE) return this.parseBlockStatement();
+    if (this.peek().type === TokenType.LBRACE)
+      return this.parseBlockStatement();
     return this.parseExpressionStatement();
   }
 
   private parseLetStatement(): LetStatement {
     const isMutable = this.match(TokenType.MUT);
-    const name = this.consume(TokenType.IDENTIFIER, "Expect identifier after 'let'").value;
+    const name = this.consume(
+      TokenType.IDENTIFIER,
+      "Expect identifier after 'let'",
+    ).value;
     this.consume(TokenType.EQUALS, "Expect '=' after identifier");
     const initializer = this.parseExpression();
     this.consume(TokenType.SEMICOLON, "Expect ';' after let statement");
-    return { type: 'LetStatement', name, isMutable, initializer };
+    return { type: "LetStatement", name, isMutable, initializer };
   }
 
   private parseFunctionDeclaration(): FunctionDeclaration {
-    const name = this.consume(TokenType.IDENTIFIER, "Expect function name").value;
+    const name = this.consume(
+      TokenType.IDENTIFIER,
+      "Expect function name",
+    ).value;
     this.consume(TokenType.LPAREN, "Expect '(' after function name");
     const params: string[] = [];
     if (!this.check(TokenType.RPAREN)) {
       do {
-        params.push(this.consume(TokenType.IDENTIFIER, "Expect parameter name").value);
+        params.push(
+          this.consume(TokenType.IDENTIFIER, "Expect parameter name").value,
+        );
       } while (this.match(TokenType.COMMA));
     }
     this.consume(TokenType.RPAREN, "Expect ')' after parameters");
     const body = this.parseBlockStatement();
-    return { type: 'FunctionDeclaration', name, params, body };
+    return { type: "FunctionDeclaration", name, params, body };
   }
 
   private parseBlockStatement(): BlockStatement {
@@ -137,13 +143,13 @@ export class Parser {
       body.push(this.parseStatement());
     }
     this.consume(TokenType.RBRACE, "Expect '}' to end block");
-    return { type: 'BlockStatement', body };
+    return { type: "BlockStatement", body };
   }
 
   private parseExpressionStatement(): ExpressionStatement {
     const expression = this.parseExpression();
     this.consume(TokenType.SEMICOLON, "Expect ';' after expression");
-    return { type: 'ExpressionStatement', expression };
+    return { type: "ExpressionStatement", expression };
   }
 
   private parseExpression(): Expression {
@@ -155,7 +161,7 @@ export class Parser {
     while (this.match(TokenType.PIPE)) {
       const operator = this.previous().value;
       const right = this.parseBitwiseXor();
-      expr = { type: 'BinaryExpression', operator, left: expr, right };
+      expr = { type: "BinaryExpression", operator, left: expr, right };
     }
     return expr;
   }
@@ -165,7 +171,7 @@ export class Parser {
     while (this.match(TokenType.CARET)) {
       const operator = this.previous().value;
       const right = this.parseBitwiseAnd();
-      expr = { type: 'BinaryExpression', operator, left: expr, right };
+      expr = { type: "BinaryExpression", operator, left: expr, right };
     }
     return expr;
   }
@@ -175,7 +181,7 @@ export class Parser {
     while (this.match(TokenType.AMPERSAND)) {
       const operator = this.previous().value;
       const right = this.parseShift();
-      expr = { type: 'BinaryExpression', operator, left: expr, right };
+      expr = { type: "BinaryExpression", operator, left: expr, right };
     }
     return expr;
   }
@@ -185,7 +191,7 @@ export class Parser {
     while (this.match(TokenType.LSHIFT, TokenType.RSHIFT)) {
       const operator = this.previous().value;
       const right = this.parseAddition();
-      expr = { type: 'BinaryExpression', operator, left: expr, right };
+      expr = { type: "BinaryExpression", operator, left: expr, right };
     }
     return expr;
   }
@@ -195,7 +201,7 @@ export class Parser {
     while (this.match(TokenType.PLUS, TokenType.MINUS)) {
       const operator = this.previous().value;
       const right = this.parseMultiplication();
-      expr = { type: 'BinaryExpression', operator, left: expr, right };
+      expr = { type: "BinaryExpression", operator, left: expr, right };
     }
     return expr;
   }
@@ -205,25 +211,42 @@ export class Parser {
     while (this.match(TokenType.STAR, TokenType.SLASH, TokenType.PERCENT)) {
       const operator = this.previous().value;
       const right = this.parseUnary();
-      expr = { type: 'BinaryExpression', operator, left: expr, right };
+      expr = { type: "BinaryExpression", operator, left: expr, right };
     }
     return expr;
   }
 
   private parseUnary(): Expression {
-    if (this.match(TokenType.MINUS, TokenType.EXCLAMATION, TokenType.AMPERSAND)) {
+    if (
+      this.match(TokenType.MINUS, TokenType.EXCLAMATION, TokenType.AMPERSAND)
+    ) {
       const operator = this.previous().value;
       const argument = this.parseUnary();
-      return { type: 'UnaryExpression', operator, argument };
+      return { type: "UnaryExpression", operator, argument };
     }
     return this.parsePrimary();
   }
 
   private parsePrimary(): Expression {
-    if (this.match(TokenType.INTEGER)) return { type: 'Literal', value: parseInt(this.previous().value), rawType: 'integer' };
-    if (this.match(TokenType.HEX)) return { type: 'Literal', value: parseInt(this.previous().value, 16), rawType: 'hex' };
-    if (this.match(TokenType.STRING)) return { type: 'Literal', value: this.previous().value, rawType: 'string' };
-    
+    if (this.match(TokenType.INTEGER))
+      return {
+        type: "Literal",
+        value: parseInt(this.previous().value),
+        rawType: "integer",
+      };
+    if (this.match(TokenType.HEX))
+      return {
+        type: "Literal",
+        value: parseInt(this.previous().value, 16),
+        rawType: "hex",
+      };
+    if (this.match(TokenType.STRING))
+      return {
+        type: "Literal",
+        value: this.previous().value,
+        rawType: "string",
+      };
+
     if (this.match(TokenType.IDENTIFIER)) {
       const name = this.previous().value;
       if (this.match(TokenType.EXCLAMATION)) {
@@ -236,7 +259,7 @@ export class Parser {
           } while (this.match(TokenType.COMMA));
         }
         this.consume(TokenType.RPAREN, "Expect ')' after macro args");
-        return { type: 'MacroInvocation', name, args };
+        return { type: "MacroInvocation", name, args };
       }
       if (this.match(TokenType.LPAREN)) {
         // Function call
@@ -247,9 +270,9 @@ export class Parser {
           } while (this.match(TokenType.COMMA));
         }
         this.consume(TokenType.RPAREN, "Expect ')' after args");
-        return { type: 'CallExpression', callee: name, args };
+        return { type: "CallExpression", callee: name, args };
       }
-      return { type: 'Identifier', name };
+      return { type: "Identifier", name };
     }
 
     if (this.match(TokenType.LPAREN)) {
@@ -258,7 +281,9 @@ export class Parser {
       return expr;
     }
 
-    throw new Error(`Expect expression at ${this.peek().value} (type: ${this.peek().type})`);
+    throw new Error(
+      `Expect expression at ${this.peek().value} (type: ${this.peek().type})`,
+    );
   }
 
   // Helpers

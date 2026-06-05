@@ -1,7 +1,7 @@
-import { Lexer } from './lexer.js';
-import { Parser } from './parser.js';
-import { Emitter } from './emitter.js';
-import { default as wabtInit } from 'wabt';
+import { Lexer } from "./lexer.js";
+import { Parser } from "./parser.js";
+import { Emitter } from "./emitter.js";
+import { default as wabtInit } from "wabt";
 export class Runtime {
     async run(code) {
         const lexer = new Lexer(code);
@@ -11,15 +11,15 @@ export class Runtime {
         const emitter = new Emitter(program);
         const wat = emitter.emitWAT();
         const wabt = await wabtInit();
-        const module = wabt.parseWat('test.wat', wat);
+        const module = wabt.parseWat("test.wat", wat);
         const { buffer } = module.toBinary({});
         const importObject = {
             env: {
                 print: (val) => {
                     console.log(val);
                 },
-                memory: new WebAssembly.Memory({ initial: 1 })
-            }
+                memory: new WebAssembly.Memory({ initial: 1 }),
+            },
         };
         const wasmModule = await WebAssembly.instantiate(buffer, importObject);
         const instance = wasmModule.instance;

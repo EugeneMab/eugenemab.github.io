@@ -1,2 +1,2 @@
-export {};
-// Just entry point
+import { initUI } from "./ui.js";
+initUI();
