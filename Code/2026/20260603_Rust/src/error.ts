@@ -10,7 +10,8 @@ export function formatError(
   const colNum = token.col;
   const rawLine = lines[lineNum - 1] || "";
 
-  const marker = " ".repeat(Math.max(0, colNum - 1)) + "####";
+  const embeddedLine =
+    rawLine.slice(0, colNum - 1) + rawLine.slice(colNum - 1) + "####";
 
-  return `Error at line ${lineNum}, column ${colNum}: ${message}\n\n${rawLine}\n${marker}`;
+  return `Error at line ${lineNum}, column ${colNum}: ${message}\n\n${embeddedLine}`;
 }

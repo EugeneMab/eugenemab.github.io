@@ -45,21 +45,42 @@ export function initUI() {
         if (worker) {
             worker.terminate();
         }
+        const startPerf = performance.now();
+        const startTime = new Date().toLocaleTimeString();
         statusLine.textContent = "Compiling...";
         Object.values(outputs).forEach((o) => (o.textContent = ""));
+        outputs.info.textContent = `[${startTime}] Start\n`;
         worker = new Worker("./js/worker.js", { type: "module" });
         const timeoutValue = parseInt(timeoutInput.value) || 10;
         const timeout = timeoutValue * 1000;
-        const timer = setTimeout(() => {
+        let timer = null;
+        const clearTimer = () => {
+            if (timer) {
+                clearTimeout(timer);
+                timer = null;
+            }
+        };
+        timer = setTimeout(() => {
             if (worker) {
                 worker.terminate();
                 worker = null;
                 statusLine.textContent = "Execution Timed Out";
+                const duration = performance.now() - startPerf;
+                outputs.info.textContent += `[${new Date().toLocaleTimeString()}] End Error: Timeout duration=${duration.toFixed(2)}ms\n`;
             }
+            timer = null;
         }, timeout);
         worker.onmessage = (e) => {
             const { type, payload } = e.data;
             switch (type) {
+                case "phase":
+                    if (payload.event === "enter") {
+                        outputs.info.textContent += `[${payload.timestamp}] enter ${payload.phase}\n`;
+                    }
+                    else {
+                        outputs.info.textContent += `[${payload.timestamp}] leave ${payload.phase} duration=${payload.duration.toFixed(2)}ms\n`;
+                    }
+                    break;
                 case "lex":
                     outputs.lex.textContent = JSON.stringify(payload, null, 2);
                     break;
@@ -78,14 +99,18 @@ export function initUI() {
                     outputs.exec.textContent += payload + "\n";
                     break;
                 case "result":
-                    outputs.exec.textContent += `Return: ${payload}\n`;
+                    clearTimer();
                     statusLine.textContent = "Execution Finished";
-                    clearTimeout(timer);
+                    const successDuration = performance.now() - startPerf;
+                    outputs.info.textContent += `[${new Date().toLocaleTimeString()}] End okay return code=${payload} duration=${successDuration.toFixed(2)}ms\n`;
                     break;
                 case "error":
-                    outputs.exec.textContent += `Error: ${payload}\n`;
-                    statusLine.textContent = "Error";
-                    clearTimeout(timer);
+                    clearTimer();
+                    outputs.exec.textContent += payload.detail + "\n";
+                    outputs.info.textContent += payload.detail + "\n";
+                    const errDuration = performance.now() - startPerf;
+                    outputs.info.textContent += `[${new Date().toLocaleTimeString()}] End Error: ${payload.short} duration=${errDuration.toFixed(2)}ms\n`;
+                    statusLine.textContent = payload.short;
                     break;
             }
         };
@@ -97,6 +122,9 @@ export function initUI() {
             worker.terminate();
             worker = null;
             statusLine.textContent = "Aborted";
+            // We don't have an easy way to clear the local 'timer' inside runCode from here,
+            // but runCode handles cleanup of old workers.
+            // However, we can track the active timer globally if needed.
         }
     });
     // File IO

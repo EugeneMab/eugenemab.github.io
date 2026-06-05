@@ -27,7 +27,6 @@ test("verify basic compiler flow in UI", async ({ page }) => {
 
   // Verify results
   await expect(resultOutput).toContainText("60");
-  await expect(resultOutput).toContainText("Return: 0");
 
   const watText = (await watOutput.textContent()) || "";
   expect(watText).toContain('func (export "main")');
