@@ -1,8 +1,16 @@
 @echo off
-echo Running tests...
+REM Rust-to-WASM Port (RUST)
+echo Running Full Check...
+echo [1/4] Formatting...
+call npm run format
+echo [2/4] Linting...
+call npm run lint
+echo [3/4] Building...
+call npm run build
+echo [4/4] Testing...
 call npm run test
 if %errorlevel% neq 0 (
-    echo Tests failed!
+    echo Check failed!
     exit /b %errorlevel%
 )
-echo All tests passed.
+echo All checks passed.

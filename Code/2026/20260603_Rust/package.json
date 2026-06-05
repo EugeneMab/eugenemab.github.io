@@ -2,18 +2,27 @@
   "name": "rust-to-wasm-compiler",
   "version": "1.0.0",
   "description": "A Rust-to-WASM compiler and execution environment",
-  "main": "dist/index.js",
+  "main": "pub/js/index.js",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "serve": "serve pub -p 7878",
+    "lint": "eslint src/**/*.ts",
+    "format": "prettier --write src/**/*.ts"
   },
   "devDependencies": {
-    "c8": "^8.0.0",
     "typescript": "^5.0.0",
-    "vitest": "^1.0.0"
+    "vitest": "^1.0.0",
+    "c8": "^8.0.0",
+    "serve": "^14.2.0",
+    "prettier": "^3.0.0",
+    "eslint": "^8.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.0.0"
   },
   "dependencies": {
-    "wabt": "^1.0.39"
+    "wabt": "^1.0.35"
   }
 }

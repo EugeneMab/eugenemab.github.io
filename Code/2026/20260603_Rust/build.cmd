@@ -1,8 +1,4 @@
 @echo off
-echo Building TypeScript...
+REM Rust-to-WASM Port (RUST)
+echo Building...
 call npm run build
-if %errorlevel% neq 0 (
-    echo Build failed!
-    exit /b %errorlevel%
-)
-echo Build successful.
