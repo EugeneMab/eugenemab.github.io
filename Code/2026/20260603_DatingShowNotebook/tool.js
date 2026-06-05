@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = 23762;
-const PID_FILE = path.join(__dirname, 'server.pid');
 
 if (process.argv[2] === 'start') {
   const server = http.createServer((req, res) => {
@@ -53,36 +52,39 @@ if (process.argv[2] === 'start') {
 
   server.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}/`);
-    fs.writeFileSync(PID_FILE, process.pid.toString());
-  });
-
-  // Handle termination
-  process.on('SIGINT', () => {
-    if (fs.existsSync(PID_FILE)) fs.unlinkSync(PID_FILE);
-    process.exit();
   });
 } else if (process.argv[2] === 'kill') {
-  if (fs.existsSync(PID_FILE)) {
-    const content = fs.readFileSync(PID_FILE, 'utf-8').trim();
-    const pid = parseInt(content, 10);
-    if (!isNaN(pid)) {
-      try {
-        process.kill(pid);
-        console.log(`Stopped server with PID ${pid}`);
-        fs.unlinkSync(PID_FILE);
-      } catch (e) {
-        if (e.code === 'ESRCH') {
-          console.log(`Server with PID ${pid} already stopped (stale PID file)`);
-          fs.unlinkSync(PID_FILE);
-        } else {
-          console.log(`Could not kill process ${pid}: ${e.message}`);
+  const { execSync } = require('child_process');
+  console.log(`Searching for process listening on port ${PORT}...`);
+  try {
+    const output = execSync(`netstat -nao | findstr :${PORT}`).toString();
+    const lines = output.trim().split('\n');
+    const pidsToKill = new Set();
+    
+    for (const line of lines) {
+      if (line.includes('LISTENING')) {
+        const parts = line.trim().split(/\s+/);
+        const pid = parts[parts.length - 1];
+        if (pid && pid !== '0') {
+          pidsToKill.add(pid);
         }
       }
-    } else {
-      console.log('Invalid PID in PID file, removing stale file.');
-      fs.unlinkSync(PID_FILE);
     }
-  } else {
-    console.log('No server running (PID file not found)');
+    
+    if (pidsToKill.size === 0) {
+      console.log(`No active LISTENING process found on port ${PORT}.`);
+    } else {
+      for (const pid of pidsToKill) {
+        console.log(`Attempting to kill process with PID ${pid}...`);
+        try {
+          execSync(`taskkill /F /PID ${pid}`);
+          console.log(`Successfully killed process ${pid}.`);
+        } catch (e) {
+          console.error(`Error: Failed to kill process ${pid}: ${e.message}`);
+        }
+      }
+    }
+  } catch (e) {
+    console.log(`No process found listening on port ${PORT}.`);
   }
 }
