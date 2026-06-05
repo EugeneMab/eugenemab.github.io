@@ -10,7 +10,7 @@ export class Runtime {
     const parser = new Parser(tokens);
     const program = parser.parse();
     const emitter = new Emitter(program);
-    const wat = emitter.emit();
+    const wat = emitter.emitWAT();
 
     const wabt = await (wabtInit as any)();
     const module = wabt.parseWat('test.wat', wat);

@@ -2,53 +2,64 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Rust-to-WASM Compiler</title>
-    <style>
-        body { font-family: sans-serif; padding: 20px; }
-        textarea { width: 100%; height: 300px; font-family: monospace; }
-        #output { background: #f0f0f0; padding: 10px; white-space: pre-wrap; margin-top: 10px; }
-    </style>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust to WASM Compiler</title>
+    <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-    <h1>Rust-to-WASM Compiler</h1>
-    <textarea id="code">// Rust-to-WASM Port (RUST)
+    <div class="container">
+        <header>
+            <h1>Rust ⮕ WASM</h1>
+        </header>
+        
+        <main class="main-layout">
+            <div class="left-panel">
+                <div class="sample-selector">
+                    <label for="sample-select">Load Sample:</label>
+                    <select id="sample-select">
+                        <option value="basic">Basic Math</option>
+                        <option value="bitwise">Bitwise Ops</option>
+                        <option value="panic">Panic Test</option>
+                    </select>
+                </div>
+                <h3>Rust Source</h3>
+                <div class="controls">
+                    <button id="compile-btn">Compile & Run (F8)</button>
+                    <div class="timeout-control">
+                        <label for="timeout-input">Timeout:</label>
+                        <input type="number" id="timeout-input" value="10" min="1">s
+                    </div>
+                    <button id="abort-btn" class="abort-btn">Abort</button>
+                </div>
+                <textarea id="editor" spellcheck="false">// REM Rust-to-WASM Port (RUST)
 fn main() {
     let x = 10;
     let y = 20;
     let z = (x + y) * 2;
     print!(z);
     print!(0x2A);
+    z
 }</textarea>
-    <button onclick="run()">Run</button>
-    <div id="output"></div>
+            </div>
 
-    <!-- We need to bundle or use ESM. For now, since we have pub/js, we use ESM -->
-    <script type="module">
-        import { Runtime } from './js/runtime.js';
-        
-        window.run = async () => {
-            const code = document.getElementById('code').value;
-            const outputDiv = document.getElementById('output');
-            outputDiv.textContent = 'Running...';
-            
-            const logs = [];
-            // Override console.log to capture output
-            const oldLog = console.log;
-            console.log = (...args) => {
-                logs.push(args.join(' '));
-                oldLog(...args);
-            };
-
-            try {
-                const runtime = new Runtime();
-                await runtime.run(code);
-                outputDiv.textContent = logs.join('\n');
-            } catch (e) {
-                outputDiv.textContent = 'Error: ' + e.message;
-            } finally {
-                console.log = oldLog;
-            }
-        };
-    </script>
+            <div class="right-panel">
+                <div id="status-line" class="status-line">Ready</div>
+                <div class="output-tabs">
+                    <button class="tab-btn" data-tab="lex">Lex</button>
+                    <button class="tab-btn" data-tab="ast">AST</button>
+                    <button class="tab-btn" data-tab="wat">WAT</button>
+                    <button class="tab-btn" data-tab="wasm">WASM</button>
+                    <button class="tab-btn active" data-tab="exec">Execution</button>
+                </div>
+                
+                <div class="tab-content hidden" id="lex-content"><pre id="lex-output"></pre></div>
+                <div class="tab-content hidden" id="ast-content"><pre id="ast-output"></pre></div>
+                <div class="tab-content hidden" id="wat-content"><pre id="wat-output"></pre></div>
+                <div class="tab-content hidden" id="wasm-content"><pre id="wasm-output"></pre></div>
+                <div class="tab-content" id="exec-content"><pre id="result-output"></pre></div>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="./js/main.js"></script>
 </body>
 </html>
