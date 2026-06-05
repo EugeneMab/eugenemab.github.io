@@ -1,35 +1,35 @@
 # Implementation Roadmap (Rust-to-WASM Compiler)
 
 ## 🌟 Level 0: Foundations (Infrastructure)
-- [ ] **Step 1: Environment Setup**
-    - [ ] Create `package.json`, `tsconfig.json`.
-    - [ ] Implement `build.cmd` (TS to JS transpilation).
-    - [ ] Implement `check.cmd` (Vitest/Testing harness).
-    - [ ] Implement `start.cmd` & `kill.cmd` (Local dev server/runner).
-- [ ] **Step 2: Lexer (Rust Subset)**
-    - [ ] Keywords: `fn`, `let`, `mut`, `if`, `else`, `loop`, `struct`, `impl`, `panic`.
-    - [ ] Literals: Integers, Hex (`0x...`), Strings (`"..."`).
-    - [ ] Symbols and Operators.
-- [ ] **Step 3: Parser (AST)**
-    - [ ] Expressions (Binary, Unary, Grouping).
-    - [ ] Statements (Let, Expression, Block).
-    - [ ] Macro invocation parsing (specifically for `print!`).
-- [ ] **Step 4: Emitter (WAT Generation)**
-    - [ ] Convert AST to WebAssembly Text format (WAT).
-    - [ ] Support basic i32/f64 operations.
-- [ ] **Step 5: Runtime & Execution**
-    - [ ] WASM instantiation in JavaScript/TypeScript.
-    - [ ] Memory buffer initialization and management.
+- [x] **Step 1: Environment Setup**
+    - [x] Create `package.json`, `tsconfig.json`.
+    - [x] Implement `build.cmd` (TS to JS transpilation).
+    - [x] Implement `check.cmd` (Vitest/Testing harness).
+    - [x] Implement `start.cmd` & `kill.cmd` (Local dev server/runner).
+- [x] **Step 2: Lexer (Rust Subset)**
+    - [x] Keywords: `fn`, `let`, `mut`, `if`, `else`, `loop`, `struct`, `impl`, `panic`.
+    - [x] Literals: Integers, Hex (`0x...`), Strings (`"..."`).
+    - [x] Symbols and Operators.
+- [x] **Step 3: Parser (AST)**
+    - [x] Expressions (Binary, Unary, Grouping).
+    - [x] Statements (Let, Expression, Block).
+    - [x] Macro invocation parsing (specifically for `print!`).
+- [x] **Step 4: Emitter (WAT Generation)**
+    - [x] Convert AST to WebAssembly Text format (WAT).
+    - [x] Support basic i32/f64 operations.
+- [x] **Step 5: Runtime & Execution**
+    - [x] WASM instantiation in JavaScript/TypeScript.
+    - [x] Memory buffer initialization and management.
 
 ## 🌟 Level 1: Basic Language Features
-- [ ] **Step 6: Math & Logic**
-    - [ ] Full arithmetic support (`+`, `-`, `*`, `/`, `%`).
-    - [ ] Bitwise operators (`&`, `|`, `^`, `<<`, `>>`).
-- [ ] **Step 7: Comments & Metadata**
-    - [ ] Support `//` and `///`.
-- [ ] **Step 8: The `print!` Macro**
-    - [ ] Mapping `print!` to JS `console.log`.
-    - [ ] **Validation:** Ensure illegal format strings are caught.
+- [x] **Step 6: Math & Logic**
+    - [x] Full arithmetic support (`+`, `-`, `*`, `/`, `%`).
+    - [x] Bitwise operators (`&`, `|`, `^`, `<<`, `>>`).
+- [x] **Step 7: Comments & Metadata**
+    - [x] Support `//` and `///`.
+- [x] **Step 8: The `print!` Macro**
+    - [x] Mapping `print!` to JS `console.log`.
+    - [x] **Validation:** Ensure illegal format strings are caught.
 
 ## 🌟 Level 2: Memory Safety, Regions & Exceptions
 - [ ] **Step 9: Panic & Exception Handling (Safety Foundation)**
