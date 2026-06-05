@@ -1,0 +1,19 @@
+{
+  "name": "rust-to-wasm-compiler",
+  "version": "1.0.0",
+  "description": "A Rust-to-WASM compiler and execution environment",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "c8": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  },
+  "dependencies": {
+    "wabt": "^1.0.39"
+  }
+}

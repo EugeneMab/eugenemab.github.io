@@ -1,0 +1,3 @@
+@echo off
+echo Starting local execution host...
+node dist/index.js

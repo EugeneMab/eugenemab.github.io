@@ -1,0 +1,3 @@
+@echo off
+echo Killing node processes...
+taskkill /F /IM node.exe /T
