@@ -9,7 +9,7 @@ self.onmessage = async (e) => {
             const lexer = new Lexer(code);
             const tokens = lexer.tokenize();
             self.postMessage({ type: "lex", payload: tokens });
-            const parser = new Parser(tokens);
+            const parser = new Parser(tokens, code);
             const ast = parser.parse();
             self.postMessage({ type: "ast", payload: ast });
             const emitter = new Emitter(ast);

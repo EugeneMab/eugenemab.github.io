@@ -32,12 +32,13 @@ export function initUI() {
     });
     const samples = {
         basic: `fn main() {\n    let x = 10;\n    let y = 20;\n    let z = (x + y) * 2;\n    print!(z);\n    z;\n}`,
-        bitwise: `fn main() {\n    let bit = (1 << 5) | 1;\n    print!(bit);\n    bit\n}`,
+        bitwise: `fn main() {\n    let bit = (1 << 5) | 1;\n    print!(bit);\n    bit;\n}`,
         panic: `fn main() {\n    print!(1);\n    panic!(42);\n    print!(2);\n}`,
     };
     sampleSelect?.addEventListener("change", () => {
         if (sampleSelect.value) {
             editor.value = samples[sampleSelect.value] || "";
+            runCode();
         }
     });
     const runCode = () => {

@@ -1,4 +1,5 @@
 import { Token, TokenType } from "./lexer.js";
+import { formatError } from "./error.js";
 
 export type ASTNode = Program | Statement | Expression;
 
@@ -83,10 +84,12 @@ export interface MacroInvocation {
 
 export class Parser {
   private tokens: Token[];
+  private source: string;
   private pos = 0;
 
-  constructor(tokens: Token[]) {
+  constructor(tokens: Token[], source: string) {
     this.tokens = tokens;
+    this.source = source;
   }
 
   parse(): Program {
@@ -282,7 +285,11 @@ export class Parser {
     }
 
     throw new Error(
-      `Expect expression at ${this.peek().value} (type: ${this.peek().type})`,
+      formatError(
+        this.source,
+        `Expect expression, found '${this.peek().value}'`,
+        this.peek(),
+      ),
     );
   }
 
@@ -321,6 +328,6 @@ export class Parser {
 
   private consume(type: TokenType, message: string): Token {
     if (this.check(type)) return this.advance();
-    throw new Error(message + " at " + this.peek().value);
+    throw new Error(formatError(this.source, message, this.peek()));
   }
 }

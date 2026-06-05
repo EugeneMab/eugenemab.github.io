@@ -6,7 +6,7 @@ export class Runtime {
     async run(code) {
         const lexer = new Lexer(code);
         const tokens = lexer.tokenize();
-        const parser = new Parser(tokens);
+        const parser = new Parser(tokens, code);
         const program = parser.parse();
         const emitter = new Emitter(program);
         const wat = emitter.emitWAT();

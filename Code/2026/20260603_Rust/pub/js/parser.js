@@ -1,9 +1,12 @@
 import { TokenType } from "./lexer.js";
+import { formatError } from "./error.js";
 export class Parser {
     tokens;
+    source;
     pos = 0;
-    constructor(tokens) {
+    constructor(tokens, source) {
         this.tokens = tokens;
+        this.source = source;
     }
     parse() {
         const body = [];
@@ -172,7 +175,7 @@ export class Parser {
             this.consume(TokenType.RPAREN, "Expect ')' after expression");
             return expr;
         }
-        throw new Error(`Expect expression at ${this.peek().value} (type: ${this.peek().type})`);
+        throw new Error(formatError(this.source, `Expect expression, found '${this.peek().value}'`, this.peek()));
     }
     // Helpers
     match(...types) {
@@ -206,6 +209,6 @@ export class Parser {
     consume(type, message) {
         if (this.check(type))
             return this.advance();
-        throw new Error(message + " at " + this.peek().value);
+        throw new Error(formatError(this.source, message, this.peek()));
     }
 }

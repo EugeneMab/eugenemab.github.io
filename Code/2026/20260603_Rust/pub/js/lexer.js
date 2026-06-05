@@ -54,6 +54,8 @@ const KEYWORDS = {
 };
 export class Lexer {
     pos = 0;
+    line = 1;
+    col = 1;
     input;
     constructor(input) {
         this.input = input;
@@ -64,11 +66,18 @@ export class Lexer {
             const char = this.input[this.pos];
             if (this.match("//")) {
                 while (this.pos < this.input.length && this.input[this.pos] !== "\n") {
-                    this.pos++;
+                    this.advance();
                 }
                 continue;
             }
             if (/\s/.test(char)) {
+                if (char === "\n") {
+                    this.line++;
+                    this.col = 1;
+                }
+                else {
+                    this.col++;
+                }
                 this.pos++;
                 continue;
             }
@@ -84,16 +93,33 @@ export class Lexer {
                 tokens.push(this.readString());
                 continue;
             }
+            const startLine = this.line;
+            const startCol = this.col;
             if (this.match("->")) {
-                tokens.push({ type: TokenType.ARROW, value: "->" });
+                tokens.push({
+                    type: TokenType.ARROW,
+                    value: "->",
+                    line: startLine,
+                    col: startCol,
+                });
                 continue;
             }
             if (this.match("<<")) {
-                tokens.push({ type: TokenType.LSHIFT, value: "<<" });
+                tokens.push({
+                    type: TokenType.LSHIFT,
+                    value: "<<",
+                    line: startLine,
+                    col: startCol,
+                });
                 continue;
             }
             if (this.match(">>")) {
-                tokens.push({ type: TokenType.RSHIFT, value: ">>" });
+                tokens.push({
+                    type: TokenType.RSHIFT,
+                    value: ">>",
+                    line: startLine,
+                    col: startCol,
+                });
                 continue;
             }
             const symbols = {
@@ -119,61 +145,82 @@ export class Lexer {
                 "!": TokenType.EXCLAMATION,
             };
             if (char in symbols) {
-                tokens.push({ type: symbols[char], value: char });
-                this.pos++;
+                tokens.push({
+                    type: symbols[char],
+                    value: char,
+                    line: startLine,
+                    col: startCol,
+                });
+                this.advance();
                 continue;
             }
-            throw new Error(`Unexpected character: ${char} at pos ${this.pos}`);
+            throw new Error(`Unexpected character: ${char} at line ${this.line}:${this.col}`);
         }
-        tokens.push({ type: TokenType.EOF, value: "" });
+        tokens.push({
+            type: TokenType.EOF,
+            value: "",
+            line: this.line,
+            col: this.col,
+        });
         return tokens;
+    }
+    advance() {
+        const char = this.input[this.pos++];
+        if (char === "\n") {
+            this.line++;
+            this.col = 1;
+        }
+        else {
+            this.col++;
+        }
+        return char;
     }
     match(str) {
         if (this.input.startsWith(str, this.pos)) {
-            this.pos += str.length;
+            for (let i = 0; i < str.length; i++)
+                this.advance();
             return true;
         }
         return false;
     }
     readIdentifierOrKeyword() {
-        const start = this.pos;
+        const startLine = this.line;
+        const startCol = this.col;
+        let value = "";
         while (this.pos < this.input.length &&
             /[a-zA-Z0-9_]/.test(this.input[this.pos])) {
-            this.pos++;
+            value += this.advance();
         }
-        const value = this.input.substring(start, this.pos);
         const type = KEYWORDS[value] ?? TokenType.IDENTIFIER;
-        return { type, value };
+        return { type, value, line: startLine, col: startCol };
     }
     readNumber() {
-        const start = this.pos;
+        const startLine = this.line;
+        const startCol = this.col;
+        let value = "";
         if (this.input.startsWith("0x", this.pos)) {
-            this.pos += 2;
+            value += this.advance(); // 0
+            value += this.advance(); // x
             while (this.pos < this.input.length &&
                 /[0-9a-fA-F]/.test(this.input[this.pos])) {
-                this.pos++;
+                value += this.advance();
             }
-            return {
-                type: TokenType.HEX,
-                value: this.input.substring(start, this.pos),
-            };
+            return { type: TokenType.HEX, value, line: startLine, col: startCol };
         }
         while (this.pos < this.input.length && /[0-9]/.test(this.input[this.pos])) {
-            this.pos++;
+            value += this.advance();
         }
-        return {
-            type: TokenType.INTEGER,
-            value: this.input.substring(start, this.pos),
-        };
+        return { type: TokenType.INTEGER, value, line: startLine, col: startCol };
     }
     readString() {
-        this.pos++; // skip opening quote
-        const start = this.pos;
+        const startLine = this.line;
+        const startCol = this.col;
+        this.advance(); // skip opening quote
+        let value = "";
         while (this.pos < this.input.length && this.input[this.pos] !== '"') {
-            this.pos++;
+            value += this.advance();
         }
-        const value = this.input.substring(start, this.pos);
-        this.pos++; // skip closing quote
-        return { type: TokenType.STRING, value };
+        this.advance(); // skip closing quote
+        return { type: TokenType.STRING, value, line: startLine, col: startCol };
     }
 }
