@@ -9,6 +9,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:ui": "playwright test",
+    "serve:test-ui": "serve pub -p 17878",
     "serve": "serve pub -p 7878",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write src/**/*.ts"

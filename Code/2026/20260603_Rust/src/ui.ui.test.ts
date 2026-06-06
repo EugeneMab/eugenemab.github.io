@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test("verify basic compiler flow in UI", async ({ page }) => {
-  await page.goto("http://localhost:7878");
+  await page.goto("/");
 
   // Select sample
   await page.selectOption("#sample-select", "lexer");
