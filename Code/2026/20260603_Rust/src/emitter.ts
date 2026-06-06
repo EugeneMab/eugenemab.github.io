@@ -3,7 +3,9 @@ import {
   Expression,
   FunctionDeclaration,
   BlockStatement,
+  ASTNode,
 } from "./parser.js";
+import { formatError } from "./error.js";
 
 const SECTION_TYPE = 0x01;
 const SECTION_IMPORT = 0x02;
@@ -42,6 +44,7 @@ interface VariableInfo {
 
 export class Emitter {
   private program: Program;
+  private source: string;
   private indent = 0;
   private outputWAT: string[] = [];
   private functionIndices: Map<string, number> = new Map();
@@ -50,8 +53,16 @@ export class Emitter {
   private allLocals: Set<string> = new Set();
   private localCounter = 0;
 
-  constructor(program: Program) {
+  constructor(program: Program, source: string) {
     this.program = program;
+    this.source = source;
+  }
+
+  private throwError(message: string, node: ASTNode): never {
+    if (node.token) {
+      throw new Error(formatError(this.source, message, node.token));
+    }
+    throw new Error(message);
   }
 
   emitWAT(): string {
@@ -172,40 +183,58 @@ export class Emitter {
         this.emitWATLine(`i32.const ${expr.value}`);
         break;
       case "Identifier":
-        const info = this.resolveVariable(expr.name);
-        if (info.isBorrowedMut) {
-          throw new Error(
-            `Cannot use '${expr.name}' while it is mutably borrowed`,
-          );
+        try {
+          const info = this.resolveVariable(expr.name);
+          if (info.isBorrowedMut) {
+            this.throwError(
+              `Cannot use '${expr.name}' while it is mutably borrowed`,
+              expr,
+            );
+          }
+          this.emitWATLine(`local.get $${info.uniqueName}`);
+        } catch (e: any) {
+          if (e.message.startsWith("Undefined variable")) {
+            this.throwError(e.message, expr);
+          }
+          throw e;
         }
-        this.emitWATLine(`local.get $${info.uniqueName}`);
         break;
       case "BorrowExpression":
         if (expr.argument.type === "Identifier") {
-          const info = this.resolveVariable(expr.argument.name);
-          if (expr.isMutable) {
-            if (info.isBorrowedMut || info.borrowCount > 0) {
-              throw new Error(
-                `Cannot borrow '${expr.argument.name}' as mutable: already borrowed`,
-              );
+          try {
+            const info = this.resolveVariable(expr.argument.name);
+            if (expr.isMutable) {
+              if (info.isBorrowedMut || info.borrowCount > 0) {
+                this.throwError(
+                  `Cannot borrow '${expr.argument.name}' as mutable: already borrowed`,
+                  expr,
+                );
+              }
+              if (!info.isMutable) {
+                this.throwError(
+                  `Cannot borrow '${expr.argument.name}' as mutable: it is not declared as mutable`,
+                  expr,
+                );
+              }
+              info.isBorrowedMut = true;
+            } else {
+              if (info.isBorrowedMut) {
+                this.throwError(
+                  `Cannot borrow '${expr.argument.name}' as immutable: already borrowed as mutable`,
+                  expr,
+                );
+              }
+              info.borrowCount++;
             }
-            if (!info.isMutable) {
-              throw new Error(
-                `Cannot borrow '${expr.argument.name}' as mutable: it is not declared as mutable`,
-              );
+            this.emitWATLine("i32.const 0"); // Placeholder for pointer
+          } catch (e: any) {
+            if (e.message.startsWith("Undefined variable")) {
+              this.throwError(e.message, expr);
             }
-            info.isBorrowedMut = true;
-          } else {
-            if (info.isBorrowedMut) {
-              throw new Error(
-                `Cannot borrow '${expr.argument.name}' as immutable: already borrowed as mutable`,
-              );
-            }
-            info.borrowCount++;
+            throw e;
           }
-          this.emitWATLine("i32.const 0"); // Placeholder for pointer
         } else {
-          throw new Error("Can only borrow identifiers");
+          this.throwError("Can only borrow identifiers", expr);
         }
         break;
       case "UnaryExpression":
@@ -217,7 +246,7 @@ export class Emitter {
           this.emitExpressionWAT(expr.argument);
           this.emitWATLine("i32.eqz");
         } else {
-          throw new Error(`Unsupported unary operator: ${expr.operator}`);
+          this.throwError(`Unsupported unary operator: ${expr.operator}`, expr);
         }
         break;
       case "BinaryExpression":
@@ -479,40 +508,58 @@ export class Emitter {
         body.push(OP_I32_CONST, ...this.encodeSignedLEB128(Number(expr.value)));
         break;
       case "Identifier":
-        const info = this.resolveVariable(expr.name);
-        if (info.isBorrowedMut) {
-          throw new Error(
-            `Cannot use '${expr.name}' while it is mutably borrowed`,
-          );
+        try {
+          const info = this.resolveVariable(expr.name);
+          if (info.isBorrowedMut) {
+            this.throwError(
+              `Cannot use '${expr.name}' while it is mutably borrowed`,
+              expr,
+            );
+          }
+          body.push(OP_LOCAL_GET, 0xfe, info.uniqueName as any);
+        } catch (e: any) {
+          if (e.message.startsWith("Undefined variable")) {
+            this.throwError(e.message, expr);
+          }
+          throw e;
         }
-        body.push(OP_LOCAL_GET, 0xfe, info.uniqueName as any);
         break;
       case "BorrowExpression":
         if (expr.argument.type === "Identifier") {
-          const info = this.resolveVariable(expr.argument.name);
-          if (expr.isMutable) {
-            if (info.isBorrowedMut || info.borrowCount > 0) {
-              throw new Error(
-                `Cannot borrow '${expr.argument.name}' as mutable: already borrowed`,
-              );
+          try {
+            const info = this.resolveVariable(expr.argument.name);
+            if (expr.isMutable) {
+              if (info.isBorrowedMut || info.borrowCount > 0) {
+                this.throwError(
+                  `Cannot borrow '${expr.argument.name}' as mutable: already borrowed`,
+                  expr,
+                );
+              }
+              if (!info.isMutable) {
+                this.throwError(
+                  `Cannot borrow '${expr.argument.name}' as mutable: it is not declared as mutable`,
+                  expr,
+                );
+              }
+              info.isBorrowedMut = true;
+            } else {
+              if (info.isBorrowedMut) {
+                this.throwError(
+                  `Cannot borrow '${expr.argument.name}' as immutable: already borrowed as mutable`,
+                  expr,
+                );
+              }
+              info.borrowCount++;
             }
-            if (!info.isMutable) {
-              throw new Error(
-                `Cannot borrow '${expr.argument.name}' as mutable: it is not declared as mutable`,
-              );
+            body.push(OP_I32_CONST, 0);
+          } catch (e: any) {
+            if (e.message.startsWith("Undefined variable")) {
+              this.throwError(e.message, expr);
             }
-            info.isBorrowedMut = true;
-          } else {
-            if (info.isBorrowedMut) {
-              throw new Error(
-                `Cannot borrow '${expr.argument.name}' as immutable: already borrowed as mutable`,
-              );
-            }
-            info.borrowCount++;
+            throw e;
           }
-          body.push(OP_I32_CONST, 0);
         } else {
-          throw new Error("Can only borrow identifiers");
+          this.throwError("Can only borrow identifiers", expr);
         }
         break;
       case "UnaryExpression":
@@ -524,7 +571,7 @@ export class Emitter {
           this.emitExpressionBinary(expr.argument, body);
           body.push(0x45);
         } else {
-          throw new Error(`Unsupported unary operator: ${expr.operator}`);
+          this.throwError(`Unsupported unary operator: ${expr.operator}`, expr);
         }
         break;
       case "BinaryExpression":
