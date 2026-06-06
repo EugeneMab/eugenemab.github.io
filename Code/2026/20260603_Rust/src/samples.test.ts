@@ -4,6 +4,7 @@ import { Parser } from "./parser.js";
 import { Emitter } from "./emitter.js";
 import * as fs from "fs";
 import * as path from "path";
+import { fileURLToPath } from "url";
 
 async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
   const lexer = new Lexer(code);
@@ -35,6 +36,8 @@ async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
 }
 
 function loadSample(name: string): string {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
   const samplePath = path.join(__dirname, "..", "samples", name);
   return fs.readFileSync(samplePath, "utf-8");
 }
@@ -81,7 +84,7 @@ describe("UI Samples Regression Tests", () => {
     expect(result).toBe(0);
   });
 
-  it("Step 9: Panic", async () => {
+  it("Step 9: Panic (Negative at Execute)", async () => {
     const code = loadSample("step09_panic.rs");
     await expect(runRust(code)).rejects.toThrow("Panic! Error code: 456");
   });

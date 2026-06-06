@@ -64,9 +64,15 @@ export class Emitter {
     emitFunctionWAT(fn) {
         this.localCounter = 0;
         this.allLocals.clear();
-        this.scopeStack = [new Map()];
+        this.scopeStack = [
+            {
+                vars: new Map(),
+                borrows: [],
+                heapBackupName: "",
+            },
+        ];
         for (const p of fn.params) {
-            this.scopeStack[0].set(p, {
+            this.scopeStack[0].vars.set(p, {
                 uniqueName: p,
                 isMutable: false,
                 isBorrowedMut: false,
@@ -83,7 +89,6 @@ export class Emitter {
         const params = fn.params.map((p) => `(param $${p} i32)`).join(" ");
         this.emitWATLine(`(func (export "${fn.name}") ${params} (result i32)`);
         this.indent++;
-        this.emitWATLine("(local $old_heap_ptr i32)");
         for (const local of this.allLocals) {
             this.emitWATLine(`(local $${local} i32)`);
         }
@@ -94,9 +99,15 @@ export class Emitter {
         this.emitWATLine(")");
     }
     emitBlockWAT(block) {
+        const heapBackupName = `old_heap_ptr_${++this.localCounter}`;
+        this.allLocals.add(heapBackupName);
         this.emitWATLine("global.get $heap_ptr");
-        this.emitWATLine("local.set $old_heap_ptr");
-        this.scopeStack.push(new Map());
+        this.emitWATLine(`local.set $${heapBackupName}`);
+        this.scopeStack.push({
+            vars: new Map(),
+            borrows: [],
+            heapBackupName,
+        });
         for (const stmt of block.body) {
             if (stmt.type === "LetStatement") {
                 this.emitExpressionWAT(stmt.initializer);
@@ -108,7 +119,7 @@ export class Emitter {
                     isBorrowedMut: false,
                     borrowCount: 0,
                 };
-                this.scopeStack[this.scopeStack.length - 1].set(stmt.name, info);
+                this.scopeStack[this.scopeStack.length - 1].vars.set(stmt.name, info);
                 this.emitWATLine(`local.set $${uniqueName}`);
             }
             else if (stmt.type === "ExpressionStatement") {
@@ -126,14 +137,23 @@ export class Emitter {
         else {
             this.emitWATLine("i32.const 0");
         }
-        this.scopeStack.pop();
-        this.emitWATLine("local.get $old_heap_ptr");
+        // Release borrows
+        const scope = this.scopeStack.pop();
+        for (const borrow of scope.borrows) {
+            if (borrow.isMut) {
+                borrow.info.isBorrowedMut = false;
+            }
+            else {
+                borrow.info.borrowCount--;
+            }
+        }
+        this.emitWATLine(`local.get $${heapBackupName}`);
         this.emitWATLine("global.set $heap_ptr");
     }
     resolveVariable(name) {
         for (let i = this.scopeStack.length - 1; i >= 0; i--) {
-            if (this.scopeStack[i].has(name)) {
-                return this.scopeStack[i].get(name);
+            if (this.scopeStack[i].vars.has(name)) {
+                return this.scopeStack[i].vars.get(name);
             }
         }
         throw new Error(`Undefined variable: ${name}`);
@@ -173,12 +193,20 @@ export class Emitter {
                                 this.throwError(`Cannot borrow '${expr.argument.name}' as mutable: it is not declared as mutable`, expr);
                             }
                             info.isBorrowedMut = true;
+                            this.scopeStack[this.scopeStack.length - 1].borrows.push({
+                                info,
+                                isMut: true,
+                            });
                         }
                         else {
                             if (info.isBorrowedMut) {
                                 this.throwError(`Cannot borrow '${expr.argument.name}' as immutable: already borrowed as mutable`, expr);
                             }
                             info.borrowCount++;
+                            this.scopeStack[this.scopeStack.length - 1].borrows.push({
+                                info,
+                                isMut: false,
+                            });
                         }
                         this.emitWATLine("i32.const 0"); // Placeholder for pointer
                     }
@@ -254,9 +282,13 @@ export class Emitter {
                     this.emitWATLine("unreachable");
                 }
                 else if (expr.name === "alloc") {
+                    const sizeExpr = expr.args[0];
+                    if (!sizeExpr) {
+                        this.throwError("alloc! expects exactly one argument", expr);
+                    }
                     this.emitWATLine("global.get $heap_ptr");
                     this.emitWATLine("global.get $heap_ptr");
-                    this.emitExpressionWAT(expr.args[0]);
+                    this.emitExpressionWAT(sizeExpr);
                     this.emitWATLine("i32.add");
                     this.emitWATLine("global.set $heap_ptr");
                 }
@@ -338,9 +370,16 @@ export class Emitter {
     emitFunctionBinary(fn) {
         this.localCounter = 0;
         this.allLocals.clear();
-        this.scopeStack = [new Map()];
+        this.locals.clear();
+        this.scopeStack = [
+            {
+                vars: new Map(),
+                borrows: [],
+                heapBackupName: "",
+            },
+        ];
         fn.params.forEach((p, i) => {
-            this.scopeStack[0].set(p, {
+            this.scopeStack[0].vars.set(p, {
                 uniqueName: p,
                 isMutable: false,
                 isBorrowedMut: false,
@@ -353,8 +392,7 @@ export class Emitter {
         body.push(OP_END);
         const localList = Array.from(this.allLocals);
         const localMap = new Map();
-        localMap.set("old_heap_ptr", fn.params.length);
-        localList.forEach((name, i) => localMap.set(name, fn.params.length + 1 + i));
+        localList.forEach((name, i) => localMap.set(name, fn.params.length + i));
         const finalBody = [];
         for (let i = 0; i < body.length; i++) {
             if (body[i] === 0xfe) {
@@ -369,7 +407,7 @@ export class Emitter {
                 finalBody.push(body[i]);
             }
         }
-        const localDecls = [[1 + localList.length, TYPE_I32]];
+        const localDecls = localList.length > 0 ? [[localList.length, TYPE_I32]] : [];
         const localBytes = this.encodeVector(localDecls.map((d) => [...this.encodeUnsignedLEB128(d[0]), d[1]]));
         return [
             ...this.encodeUnsignedLEB128(localBytes.length + finalBody.length),
@@ -378,9 +416,15 @@ export class Emitter {
         ];
     }
     emitBlockBinary(block, body) {
+        const heapBackupName = `old_heap_ptr_${++this.localCounter}`;
+        this.allLocals.add(heapBackupName);
         body.push(0x23, 0x00);
-        body.push(OP_LOCAL_SET, 0xfe, "old_heap_ptr");
-        this.scopeStack.push(new Map());
+        body.push(OP_LOCAL_SET, 0xfe, heapBackupName);
+        this.scopeStack.push({
+            vars: new Map(),
+            borrows: [],
+            heapBackupName,
+        });
         for (const stmt of block.body) {
             if (stmt.type === "LetStatement") {
                 this.emitExpressionBinary(stmt.initializer, body);
@@ -392,7 +436,7 @@ export class Emitter {
                     isBorrowedMut: false,
                     borrowCount: 0,
                 };
-                this.scopeStack[this.scopeStack.length - 1].set(stmt.name, info);
+                this.scopeStack[this.scopeStack.length - 1].vars.set(stmt.name, info);
                 body.push(OP_LOCAL_SET, 0xfe, uniqueName);
             }
             else if (stmt.type === "ExpressionStatement") {
@@ -410,8 +454,17 @@ export class Emitter {
         else {
             body.push(OP_I32_CONST, 0);
         }
-        this.scopeStack.pop();
-        body.push(OP_LOCAL_GET, 0xfe, "old_heap_ptr");
+        // Release borrows
+        const scope = this.scopeStack.pop();
+        for (const borrow of scope.borrows) {
+            if (borrow.isMut) {
+                borrow.info.isBorrowedMut = false;
+            }
+            else {
+                borrow.info.borrowCount--;
+            }
+        }
+        body.push(OP_LOCAL_GET, 0xfe, heapBackupName);
         body.push(0x24, 0x00);
     }
     emitExpressionBinary(expr, body) {
@@ -449,12 +502,20 @@ export class Emitter {
                                 this.throwError(`Cannot borrow '${expr.argument.name}' as mutable: it is not declared as mutable`, expr);
                             }
                             info.isBorrowedMut = true;
+                            this.scopeStack[this.scopeStack.length - 1].borrows.push({
+                                info,
+                                isMut: true,
+                            });
                         }
                         else {
                             if (info.isBorrowedMut) {
                                 this.throwError(`Cannot borrow '${expr.argument.name}' as immutable: already borrowed as mutable`, expr);
                             }
                             info.borrowCount++;
+                            this.scopeStack[this.scopeStack.length - 1].borrows.push({
+                                info,
+                                isMut: false,
+                            });
                         }
                         body.push(OP_I32_CONST, 0);
                     }
@@ -530,9 +591,13 @@ export class Emitter {
                     body.push(OP_UNREACHABLE);
                 }
                 else if (expr.name === "alloc") {
+                    const sizeExpr = expr.args[0];
+                    if (!sizeExpr) {
+                        this.throwError("alloc! expects exactly one argument", expr);
+                    }
                     body.push(0x23, 0x00);
                     body.push(0x23, 0x00);
-                    this.emitExpressionBinary(expr.args[0], body);
+                    this.emitExpressionBinary(sizeExpr, body);
                     body.push(OP_I32_ADD);
                     body.push(0x24, 0x00);
                 }

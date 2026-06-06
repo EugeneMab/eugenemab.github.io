@@ -42,6 +42,12 @@ interface VariableInfo {
   borrowCount: number;
 }
 
+interface Scope {
+  vars: Map<string, VariableInfo>;
+  borrows: { info: VariableInfo; isMut: boolean }[];
+  heapBackupName: string;
+}
+
 export class Emitter {
   private program: Program;
   private source: string;
@@ -49,7 +55,7 @@ export class Emitter {
   private outputWAT: string[] = [];
   private functionIndices: Map<string, number> = new Map();
   private locals: Map<string, number> = new Map();
-  private scopeStack: Map<string, VariableInfo>[] = [];
+  private scopeStack: Scope[] = [];
   private allLocals: Set<string> = new Set();
   private localCounter = 0;
 
@@ -92,9 +98,15 @@ export class Emitter {
   private emitFunctionWAT(fn: FunctionDeclaration) {
     this.localCounter = 0;
     this.allLocals.clear();
-    this.scopeStack = [new Map()];
+    this.scopeStack = [
+      {
+        vars: new Map(),
+        borrows: [],
+        heapBackupName: "",
+      },
+    ];
     for (const p of fn.params) {
-      this.scopeStack[0].set(p, {
+      this.scopeStack[0].vars.set(p, {
         uniqueName: p,
         isMutable: false,
         isBorrowedMut: false,
@@ -115,7 +127,6 @@ export class Emitter {
     this.emitWATLine(`(func (export "${fn.name}") ${params} (result i32)`);
     this.indent++;
 
-    this.emitWATLine("(local $old_heap_ptr i32)");
     for (const local of this.allLocals) {
       this.emitWATLine(`(local $${local} i32)`);
     }
@@ -129,10 +140,18 @@ export class Emitter {
   }
 
   private emitBlockWAT(block: BlockStatement) {
-    this.emitWATLine("global.get $heap_ptr");
-    this.emitWATLine("local.set $old_heap_ptr");
+    const heapBackupName = `old_heap_ptr_${++this.localCounter}`;
+    this.allLocals.add(heapBackupName);
 
-    this.scopeStack.push(new Map());
+    this.emitWATLine("global.get $heap_ptr");
+    this.emitWATLine(`local.set $${heapBackupName}`);
+
+    this.scopeStack.push({
+      vars: new Map(),
+      borrows: [],
+      heapBackupName,
+    });
+
     for (const stmt of block.body) {
       if (stmt.type === "LetStatement") {
         this.emitExpressionWAT(stmt.initializer);
@@ -144,7 +163,7 @@ export class Emitter {
           isBorrowedMut: false,
           borrowCount: 0,
         };
-        this.scopeStack[this.scopeStack.length - 1].set(stmt.name, info);
+        this.scopeStack[this.scopeStack.length - 1].vars.set(stmt.name, info);
         this.emitWATLine(`local.set $${uniqueName}`);
       } else if (stmt.type === "ExpressionStatement") {
         this.emitExpressionWAT(stmt.expression);
@@ -159,16 +178,25 @@ export class Emitter {
     } else {
       this.emitWATLine("i32.const 0");
     }
-    this.scopeStack.pop();
 
-    this.emitWATLine("local.get $old_heap_ptr");
+    // Release borrows
+    const scope = this.scopeStack.pop()!;
+    for (const borrow of scope.borrows) {
+      if (borrow.isMut) {
+        borrow.info.isBorrowedMut = false;
+      } else {
+        borrow.info.borrowCount--;
+      }
+    }
+
+    this.emitWATLine(`local.get $${heapBackupName}`);
     this.emitWATLine("global.set $heap_ptr");
   }
 
   private resolveVariable(name: string): VariableInfo {
     for (let i = this.scopeStack.length - 1; i >= 0; i--) {
-      if (this.scopeStack[i].has(name)) {
-        return this.scopeStack[i].get(name)!;
+      if (this.scopeStack[i].vars.has(name)) {
+        return this.scopeStack[i].vars.get(name)!;
       }
     }
     throw new Error(`Undefined variable: ${name}`);
@@ -217,6 +245,10 @@ export class Emitter {
                 );
               }
               info.isBorrowedMut = true;
+              this.scopeStack[this.scopeStack.length - 1].borrows.push({
+                info,
+                isMut: true,
+              });
             } else {
               if (info.isBorrowedMut) {
                 this.throwError(
@@ -225,6 +257,10 @@ export class Emitter {
                 );
               }
               info.borrowCount++;
+              this.scopeStack[this.scopeStack.length - 1].borrows.push({
+                info,
+                isMut: false,
+              });
             }
             this.emitWATLine("i32.const 0"); // Placeholder for pointer
           } catch (e: any) {
@@ -296,9 +332,13 @@ export class Emitter {
           this.emitWATLine("call $panic");
           this.emitWATLine("unreachable");
         } else if (expr.name === "alloc") {
+          const sizeExpr = expr.args[0];
+          if (!sizeExpr) {
+            this.throwError("alloc! expects exactly one argument", expr);
+          }
           this.emitWATLine("global.get $heap_ptr");
           this.emitWATLine("global.get $heap_ptr");
-          this.emitExpressionWAT(expr.args[0]);
+          this.emitExpressionWAT(sizeExpr);
           this.emitWATLine("i32.add");
           this.emitWATLine("global.set $heap_ptr");
         }
@@ -415,9 +455,16 @@ export class Emitter {
   private emitFunctionBinary(fn: FunctionDeclaration): number[] {
     this.localCounter = 0;
     this.allLocals.clear();
-    this.scopeStack = [new Map()];
+    this.locals.clear();
+    this.scopeStack = [
+      {
+        vars: new Map(),
+        borrows: [],
+        heapBackupName: "",
+      },
+    ];
     fn.params.forEach((p, i) => {
-      this.scopeStack[0].set(p, {
+      this.scopeStack[0].vars.set(p, {
         uniqueName: p,
         isMutable: false,
         isBorrowedMut: false,
@@ -432,10 +479,7 @@ export class Emitter {
 
     const localList = Array.from(this.allLocals);
     const localMap = new Map<string, number>();
-    localMap.set("old_heap_ptr", fn.params.length);
-    localList.forEach((name, i) =>
-      localMap.set(name, fn.params.length + 1 + i),
-    );
+    localList.forEach((name, i) => localMap.set(name, fn.params.length + i));
 
     const finalBody: number[] = [];
     for (let i = 0; i < body.length; i++) {
@@ -451,7 +495,8 @@ export class Emitter {
       }
     }
 
-    const localDecls = [[1 + localList.length, TYPE_I32]];
+    const localDecls =
+      localList.length > 0 ? [[localList.length, TYPE_I32]] : [];
     const localBytes = this.encodeVector(
       localDecls.map((d) => [...this.encodeUnsignedLEB128(d[0]), d[1]]),
     );
@@ -463,10 +508,18 @@ export class Emitter {
   }
 
   private emitBlockBinary(block: BlockStatement, body: number[]) {
-    body.push(0x23, 0x00);
-    body.push(OP_LOCAL_SET, 0xfe, "old_heap_ptr" as any);
+    const heapBackupName = `old_heap_ptr_${++this.localCounter}`;
+    this.allLocals.add(heapBackupName);
 
-    this.scopeStack.push(new Map());
+    body.push(0x23, 0x00);
+    body.push(OP_LOCAL_SET, 0xfe, heapBackupName as any);
+
+    this.scopeStack.push({
+      vars: new Map(),
+      borrows: [],
+      heapBackupName,
+    });
+
     for (const stmt of block.body) {
       if (stmt.type === "LetStatement") {
         this.emitExpressionBinary(stmt.initializer, body);
@@ -478,7 +531,7 @@ export class Emitter {
           isBorrowedMut: false,
           borrowCount: 0,
         };
-        this.scopeStack[this.scopeStack.length - 1].set(stmt.name, info);
+        this.scopeStack[this.scopeStack.length - 1].vars.set(stmt.name, info);
         body.push(OP_LOCAL_SET, 0xfe, uniqueName as any);
       } else if (stmt.type === "ExpressionStatement") {
         this.emitExpressionBinary(stmt.expression, body);
@@ -493,9 +546,18 @@ export class Emitter {
     } else {
       body.push(OP_I32_CONST, 0);
     }
-    this.scopeStack.pop();
 
-    body.push(OP_LOCAL_GET, 0xfe, "old_heap_ptr" as any);
+    // Release borrows
+    const scope = this.scopeStack.pop()!;
+    for (const borrow of scope.borrows) {
+      if (borrow.isMut) {
+        borrow.info.isBorrowedMut = false;
+      } else {
+        borrow.info.borrowCount--;
+      }
+    }
+
+    body.push(OP_LOCAL_GET, 0xfe, heapBackupName as any);
     body.push(0x24, 0x00);
   }
 
@@ -542,6 +604,10 @@ export class Emitter {
                 );
               }
               info.isBorrowedMut = true;
+              this.scopeStack[this.scopeStack.length - 1].borrows.push({
+                info,
+                isMut: true,
+              });
             } else {
               if (info.isBorrowedMut) {
                 this.throwError(
@@ -550,6 +616,10 @@ export class Emitter {
                 );
               }
               info.borrowCount++;
+              this.scopeStack[this.scopeStack.length - 1].borrows.push({
+                info,
+                isMut: false,
+              });
             }
             body.push(OP_I32_CONST, 0);
           } catch (e: any) {
@@ -622,9 +692,13 @@ export class Emitter {
           body.push(OP_CALL, ...this.encodeUnsignedLEB128(1));
           body.push(OP_UNREACHABLE);
         } else if (expr.name === "alloc") {
+          const sizeExpr = expr.args[0];
+          if (!sizeExpr) {
+            this.throwError("alloc! expects exactly one argument", expr);
+          }
           body.push(0x23, 0x00);
           body.push(0x23, 0x00);
-          this.emitExpressionBinary(expr.args[0], body);
+          this.emitExpressionBinary(sizeExpr, body);
           body.push(OP_I32_ADD);
           body.push(0x24, 0x00);
         }
