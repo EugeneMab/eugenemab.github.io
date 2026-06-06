@@ -51,6 +51,8 @@ export function initUI() {
     scope: "step10_scope.rs",
     regions: "step11_regions.rs",
     borrow: "step12_borrow.rs",
+    book01_02_hello: "book01_02_hello_world.rs",
+    book02_00_vars: "book02_00_variables.rs",
   };
 
   sampleSelect?.addEventListener("change", async () => {

@@ -16,6 +16,7 @@ const SECTION_CODE = 0x0a;
 
 const TYPE_I32 = 0x7f;
 const TYPE_FUNC = 0x60;
+const HEAP_BASE = 1024;
 
 const OP_END = 0x0b;
 const OP_CALL = 0x10;
@@ -58,6 +59,8 @@ export class Emitter {
   private scopeStack: Scope[] = [];
   private allLocals: Set<string> = new Set();
   private localCounter = 0;
+  private stringConstants: Map<string, number> = new Map();
+  private stringOffset = 0;
 
   constructor(program: Program, source: string) {
     this.program = program;
@@ -73,16 +76,25 @@ export class Emitter {
 
   emitWAT(): string {
     this.outputWAT = [];
-    this.emitWATLine("(module");
+    this.stringConstants.clear();
+    this.stringOffset = 0;
+
+    const moduleWAT: string[] = [];
     this.indent++;
+
+    const oldOutputWAT = this.outputWAT;
+    this.outputWAT = moduleWAT;
+
     this.emitWATLine(
       '(import "env" "print" (func $print (param i32) (result i32)))',
+    );
+    this.emitWATLine(
+      '(import "env" "print_str" (func $print_str (param i32) (result i32)))',
     );
     this.emitWATLine(
       '(import "env" "panic" (func $panic (param i32) (result i32)))',
     );
     this.emitWATLine('(memory (export "memory") 1)');
-    this.emitWATLine("(global $heap_ptr (mut i32) (i32.const 1024))");
 
     for (const stmt of this.program.body) {
       if (stmt.type === "FunctionDeclaration") {
@@ -90,7 +102,30 @@ export class Emitter {
       }
     }
 
+    this.emitWATLine(
+      `(global $heap_ptr (mut i32) (i32.const ${Math.max(HEAP_BASE, this.stringOffset)}))`,
+    );
+
+    // Emit data sections for strings
+    for (const [str, offset] of this.stringConstants.entries()) {
+      const bytes = Array.from(new TextEncoder().encode(str));
+      const len = bytes.length;
+      const lenBytes = [
+        len & 0xff,
+        (len >> 8) & 0xff,
+        (len >> 16) & 0xff,
+        (len >> 24) & 0xff,
+      ];
+      const hex = [...lenBytes, ...bytes]
+        .map((b) => "\\" + b.toString(16).padStart(2, "0"))
+        .join("");
+      this.emitWATLine(`(data (i32.const ${offset}) "${hex}")`);
+    }
+
     this.indent--;
+    this.outputWAT = oldOutputWAT;
+    this.emitWATLine("(module");
+    moduleWAT.forEach((line) => this.outputWAT.push(line));
     this.emitWATLine(")");
     return this.outputWAT.join("\n");
   }
@@ -208,7 +243,17 @@ export class Emitter {
         this.emitBlockWAT(expr);
         break;
       case "Literal":
-        this.emitWATLine(`i32.const ${expr.value}`);
+        if (expr.rawType === "string") {
+          const strValue = expr.value as string;
+          if (!this.stringConstants.has(strValue)) {
+            this.stringConstants.set(strValue, this.stringOffset);
+            this.stringOffset += 4 + new TextEncoder().encode(strValue).length;
+          }
+          const offset = this.stringConstants.get(strValue)!;
+          this.emitWATLine(`i32.const ${offset}`);
+        } else {
+          this.emitWATLine(`i32.const ${expr.value}`);
+        }
         break;
       case "Identifier":
         try {
@@ -322,9 +367,22 @@ export class Emitter {
         }
         break;
       case "MacroInvocation":
-        if (expr.name === "print") {
-          this.emitExpressionWAT(expr.args[0]);
-          this.emitWATLine("call $print");
+        if (expr.name === "print" || expr.name === "println") {
+          const arg = expr.args[0];
+          if (arg.type === "Literal" && arg.rawType === "string") {
+            const strValue = arg.value as string;
+            if (!this.stringConstants.has(strValue)) {
+              this.stringConstants.set(strValue, this.stringOffset);
+              this.stringOffset +=
+                4 + new TextEncoder().encode(strValue).length;
+            }
+            const offset = this.stringConstants.get(strValue)!;
+            this.emitWATLine(`i32.const ${offset}`);
+            this.emitWATLine("call $print_str");
+          } else {
+            this.emitExpressionWAT(arg);
+            this.emitWATLine("call $print");
+          }
         } else if (expr.name === "panic") {
           this.emitExpressionWAT(
             expr.args[0] ?? { type: "Literal", value: 0, rawType: "integer" },
@@ -355,19 +413,22 @@ export class Emitter {
   }
 
   emitWASM(): Uint8Array {
+    this.stringConstants.clear();
+    this.stringOffset = 0;
     this.functionIndices.clear();
     this.functionIndices.set("print", 0);
-    this.functionIndices.set("panic", 1);
+    this.functionIndices.set("print_str", 1);
+    this.functionIndices.set("panic", 2);
 
     const userFunctions = this.program.body.filter(
       (s) => s.type === "FunctionDeclaration",
     ) as FunctionDeclaration[];
-    userFunctions.forEach((fn, i) => this.functionIndices.set(fn.name, 2 + i));
+    userFunctions.forEach((fn, i) => this.functionIndices.set(fn.name, 3 + i));
 
     const typeSection = this.encodeSection(
       SECTION_TYPE,
       this.encodeVector([
-        [TYPE_FUNC, 1, TYPE_I32, 1, TYPE_I32],
+        [TYPE_FUNC, 1, TYPE_I32, 1, TYPE_I32], // print / print_str / panic
         ...userFunctions.map((fn) => [
           TYPE_FUNC,
           fn.params.length,
@@ -389,6 +450,12 @@ export class Emitter {
         ],
         [
           ...this.encodeString("env"),
+          ...this.encodeString("print_str"),
+          0x00,
+          0x00,
+        ],
+        [
+          ...this.encodeString("env"),
           ...this.encodeString("panic"),
           0x00,
           0x00,
@@ -398,13 +465,18 @@ export class Emitter {
 
     const funcSection = this.encodeSection(
       SECTION_FUNCTION,
-      this.encodeVector(userFunctions.map((_, i) => [i + 1])),
+      this.encodeVector(userFunctions.map((_, i) => [i + 1])), // index in type section
     );
 
     const memSection = this.encodeSection(
       SECTION_MEMORY,
       this.encodeVector([[0x00, 0x01]]),
     );
+
+    const functionBodies = userFunctions.map((fn) =>
+      this.emitFunctionBinary(fn),
+    );
+    const initialHeapPtr = Math.max(HEAP_BASE, this.stringOffset);
 
     const globalSection = this.encodeSection(
       0x06,
@@ -413,7 +485,7 @@ export class Emitter {
           TYPE_I32,
           0x01,
           OP_I32_CONST,
-          ...this.encodeSignedLEB128(1024),
+          ...this.encodeSignedLEB128(initialHeapPtr),
           OP_END,
         ],
       ]),
@@ -433,8 +505,34 @@ export class Emitter {
 
     const codeSection = this.encodeSection(
       SECTION_CODE,
-      this.encodeVector(userFunctions.map((fn) => this.emitFunctionBinary(fn))),
+      this.encodeVector(functionBodies),
     );
+
+    // Data section
+    const dataEntries: number[][] = [];
+    for (const [str, offset] of this.stringConstants.entries()) {
+      const bytes = Array.from(new TextEncoder().encode(str));
+      const len = bytes.length;
+      const lenBytes = [
+        len & 0xff,
+        (len >> 8) & 0xff,
+        (len >> 16) & 0xff,
+        (len >> 24) & 0xff,
+      ];
+      dataEntries.push([
+        0x00, // active memory 0
+        OP_I32_CONST,
+        ...this.encodeSignedLEB128(offset),
+        OP_END,
+        ...this.encodeUnsignedLEB128(lenBytes.length + bytes.length),
+        ...lenBytes,
+        ...bytes,
+      ]);
+    }
+    const dataSection =
+      dataEntries.length > 0
+        ? this.encodeSection(0x0b, this.encodeVector(dataEntries))
+        : [];
 
     const magic = [0x00, 0x61, 0x73, 0x6d];
     const version = [0x01, 0x00, 0x00, 0x00];
@@ -449,6 +547,7 @@ export class Emitter {
       ...globalSection,
       ...exportSection,
       ...codeSection,
+      ...dataSection,
     ]);
   }
 
@@ -567,7 +666,20 @@ export class Emitter {
         this.emitBlockBinary(expr, body);
         break;
       case "Literal":
-        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(Number(expr.value)));
+        if (expr.rawType === "string") {
+          const strValue = expr.value as string;
+          if (!this.stringConstants.has(strValue)) {
+            this.stringConstants.set(strValue, this.stringOffset);
+            this.stringOffset += 4 + new TextEncoder().encode(strValue).length;
+          }
+          const offset = this.stringConstants.get(strValue)!;
+          body.push(OP_I32_CONST, ...this.encodeSignedLEB128(offset));
+        } else {
+          body.push(
+            OP_I32_CONST,
+            ...this.encodeSignedLEB128(Number(expr.value)),
+          );
+        }
         break;
       case "Identifier":
         try {
@@ -681,15 +793,28 @@ export class Emitter {
         }
         break;
       case "MacroInvocation":
-        if (expr.name === "print") {
-          this.emitExpressionBinary(expr.args[0], body);
-          body.push(OP_CALL, ...this.encodeUnsignedLEB128(0));
+        if (expr.name === "print" || expr.name === "println") {
+          const arg = expr.args[0];
+          if (arg.type === "Literal" && arg.rawType === "string") {
+            const strValue = arg.value as string;
+            if (!this.stringConstants.has(strValue)) {
+              this.stringConstants.set(strValue, this.stringOffset);
+              this.stringOffset +=
+                4 + new TextEncoder().encode(strValue).length;
+            }
+            const offset = this.stringConstants.get(strValue)!;
+            body.push(OP_I32_CONST, ...this.encodeSignedLEB128(offset));
+            body.push(OP_CALL, ...this.encodeUnsignedLEB128(1)); // print_str is index 1
+          } else {
+            this.emitExpressionBinary(arg, body);
+            body.push(OP_CALL, ...this.encodeUnsignedLEB128(0)); // print is index 0
+          }
         } else if (expr.name === "panic") {
           this.emitExpressionBinary(
             expr.args[0] ?? { type: "Literal", value: 0, rawType: "integer" },
             body,
           );
-          body.push(OP_CALL, ...this.encodeUnsignedLEB128(1));
+          body.push(OP_CALL, ...this.encodeUnsignedLEB128(2)); // panic is index 2
           body.push(OP_UNREACHABLE);
         } else if (expr.name === "alloc") {
           const sizeExpr = expr.args[0];
