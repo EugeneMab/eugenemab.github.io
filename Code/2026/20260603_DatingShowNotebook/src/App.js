@@ -208,7 +208,7 @@ export const App = () => {
                     </button>
                   </div>
                 </div>
-                ${ep.events.map((ev, evIdx) => html`
+                ${selectedEpisodeId === ep.id && ep.events.map((ev, evIdx) => html`
                   <div 
                     key=${ev.id}
                     className=${`ml-4 p-2 text-sm rounded cursor-pointer flex justify-between items-center group ${selectedEventId === ev.id ? 'bg-blue-100 text-blue-800 font-medium' : 'hover:bg-gray-100'}`}

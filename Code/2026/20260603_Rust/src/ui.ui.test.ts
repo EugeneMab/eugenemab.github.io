@@ -22,6 +22,6 @@ test("verify basic compiler flow in UI", async ({ page }) => {
   }
 
   // Verify results for lexer sample (Step 2)
-  await expect(resultOutput).toContainText("42");
-  await expect(resultOutput).toContainText("42"); // 0x2A is also 42
+  const outputText = (await resultOutput.textContent()) ?? "";
+  expect(outputText.match(/42/g)?.length).toBe(2); // dec + hex
 });
