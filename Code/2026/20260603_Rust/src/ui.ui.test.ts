@@ -24,4 +24,29 @@ test("verify basic compiler flow in UI", async ({ page }) => {
   // Verify results for lexer sample (Step 2)
   const outputText = (await resultOutput.textContent()) ?? "";
   expect(outputText.match(/42/g)?.length).toBe(2); // dec + hex
+
+  // Verify Step 9: Panic
+  await page.selectOption("#sample-select", "panic");
+  await expect(statusLine).toContainText("Panic! Error code: 456", {
+    timeout: 10000,
+  });
+  const panicOutput = (await resultOutput.textContent()) ?? "";
+  expect(panicOutput).toContain("123");
+  expect(panicOutput).toContain("Panic! Error code: 456");
+
+  // Verify Step 10: Scope
+  await page.selectOption("#sample-select", "scope");
+  await expect(statusLine).toHaveText("Execution Finished", { timeout: 10000 });
+  const scopeOutput = (await resultOutput.textContent()) ?? "";
+  expect(scopeOutput.trim()).toBe("2\n1");
+
+  // Verify Step 11: Regions
+  await page.selectOption("#sample-select", "regions");
+  await expect(statusLine).toHaveText("Execution Finished", { timeout: 10000 });
+  const regionsOutput = (await resultOutput.textContent()) ?? "";
+  expect(regionsOutput.trim()).toBe("16\n16");
+
+  // Verify Step 12: Borrow
+  await page.selectOption("#sample-select", "borrow");
+  await expect(statusLine).toHaveText("Execution Finished", { timeout: 10000 });
 });

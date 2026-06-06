@@ -32,23 +32,23 @@
     - [x] **Validation:** Ensure illegal format strings are caught.
 
 ## 🌟 Level 2: Memory Safety, Regions & Exceptions
-- [ ] **Step 9: Panic & Exception Handling (Safety Foundation)**
-    - [ ] `panic!` macro implementation.
-    - [ ] WASM Trap integration for immediate safety halts.
-    - [ ] `Result<T, E>` pattern support for graceful errors.
-    - [ ] **Sample (Illegal):** `panic!("Fatal error");` should halt execution immediately.
-- [ ] **Step 10: Scope Detection**
-    - [ ] Track variable lifetimes based on block scopes `{}`.
-    - [ ] Implement "Drop" semantics (automatic cleanup at end of scope).
-    - [ ] **Sample (Illegal):** Accessing a variable outside its defined `{}` scope.
-- [ ] **Step 11: Region-Based Memory**
-    - [ ] Allocate memory in regions/arenas.
-    - [ ] Fast deallocation of entire regions when scope exits.
-    - [ ] **Sample (Illegal):** Attempting to access memory from a dropped region.
-- [ ] **Step 12: Borrow Checker (Level 1)**
-    - [ ] Prevent multiple mutable references.
-    - [ ] Prevent use-after-free in the compiler stage.
-    - [ ] **Sample (Illegal):**
+- [x] **Step 9: Panic & Exception Handling (Safety Foundation)**
+    - [x] `panic!` macro implementation.
+    - [x] WASM Trap integration for immediate safety halts.
+    - [x] `Result<T, E>` pattern support for graceful errors.
+    - [x] **Sample (Illegal):** `panic!("Fatal error");` should halt execution immediately.
+- [x] **Step 10: Scope Detection**
+    - [x] Track variable lifetimes based on block scopes `{}`.
+    - [x] Implement "Drop" semantics (automatic cleanup at end of scope).
+    - [x] **Sample (Illegal):** Accessing a variable outside its defined `{}` scope.
+- [x] **Step 11: Region-Based Memory**
+    - [x] Allocate memory in regions/arenas.
+    - [x] Fast deallocation of entire regions when scope exits.
+    - [x] **Sample (Illegal):** Attempting to access memory from a dropped region.
+- [x] **Step 12: Borrow Checker (Level 1)**
+    - [x] Prevent multiple mutable references.
+    - [x] Prevent use-after-free in the compiler stage.
+    - [x] **Sample (Illegal):**
       ```rust
       let mut x = 5;
       let y = &mut x;

@@ -1,6 +1,5 @@
 import {
   Program,
-  Statement,
   Expression,
   FunctionDeclaration,
   BlockStatement,
@@ -34,12 +33,22 @@ const OP_I32_SHL = 0x74;
 const OP_I32_SHR_S = 0x75;
 const OP_UNREACHABLE = 0x00;
 
+interface VariableInfo {
+  uniqueName: string;
+  isMutable: boolean;
+  isBorrowedMut: boolean;
+  borrowCount: number;
+}
+
 export class Emitter {
   private program: Program;
   private indent = 0;
   private outputWAT: string[] = [];
   private functionIndices: Map<string, number> = new Map();
   private locals: Map<string, number> = new Map();
+  private scopeStack: Map<string, VariableInfo>[] = [];
+  private allLocals: Set<string> = new Set();
+  private localCounter = 0;
 
   constructor(program: Program) {
     this.program = program;
@@ -56,6 +65,7 @@ export class Emitter {
       '(import "env" "panic" (func $panic (param i32) (result i32)))',
     );
     this.emitWATLine('(memory (export "memory") 1)');
+    this.emitWATLine("(global $heap_ptr (mut i32) (i32.const 1024))");
 
     for (const stmt of this.program.body) {
       if (stmt.type === "FunctionDeclaration") {
@@ -69,36 +79,62 @@ export class Emitter {
   }
 
   private emitFunctionWAT(fn: FunctionDeclaration) {
+    this.localCounter = 0;
+    this.allLocals.clear();
+    this.scopeStack = [new Map()];
+    for (const p of fn.params) {
+      this.scopeStack[0].set(p, {
+        uniqueName: p,
+        isMutable: false,
+        isBorrowedMut: false,
+        borrowCount: 0,
+      });
+    }
+
+    const oldOutput = this.outputWAT;
+    this.outputWAT = [];
+    this.indent = 0;
+
+    this.emitBlockWAT(fn.body);
+    const bodyWAT = this.outputWAT;
+    this.outputWAT = oldOutput;
+    this.indent = 1;
+
     const params = fn.params.map((p) => `(param $${p} i32)`).join(" ");
     this.emitWATLine(`(func (export "${fn.name}") ${params} (result i32)`);
     this.indent++;
 
-    const localNames = new Set<string>();
-    const scan = (s: Statement) => {
-      if (s.type === "LetStatement") localNames.add(s.name);
-      if (s.type === "BlockStatement") {
-        s.body.forEach(scan);
-        if (s.tailExpression) this.scanExpression(s.tailExpression, localNames);
-      }
-    };
-    fn.body.body.forEach(scan);
-    if (fn.body.tailExpression)
-      this.scanExpression(fn.body.tailExpression, localNames);
-
-    for (const name of localNames) {
-      this.emitWATLine(`(local $${name} i32)`);
+    this.emitWATLine("(local $old_heap_ptr i32)");
+    for (const local of this.allLocals) {
+      this.emitWATLine(`(local $${local} i32)`);
     }
 
-    this.emitBlockWAT(fn.body);
+    bodyWAT.forEach((line) => {
+      this.outputWAT.push("  ".repeat(this.indent) + line.trim());
+    });
+
     this.indent--;
     this.emitWATLine(")");
   }
 
   private emitBlockWAT(block: BlockStatement) {
+    this.emitWATLine("global.get $heap_ptr");
+    this.emitWATLine("local.set $old_heap_ptr");
+
+    this.scopeStack.push(new Map());
     for (const stmt of block.body) {
       if (stmt.type === "LetStatement") {
         this.emitExpressionWAT(stmt.initializer);
-        this.emitWATLine(`local.set $${stmt.name}`);
+        const uniqueName = `${stmt.name}_${++this.localCounter}`;
+        this.allLocals.add(uniqueName);
+        const info: VariableInfo = {
+          uniqueName,
+          isMutable: stmt.isMutable,
+          isBorrowedMut: false,
+          borrowCount: 0,
+        };
+        this.scopeStack[this.scopeStack.length - 1].set(stmt.name, info);
+        this.emitWATLine(`local.set $${uniqueName}`);
       } else if (stmt.type === "ExpressionStatement") {
         this.emitExpressionWAT(stmt.expression);
         this.emitWATLine("drop");
@@ -112,6 +148,19 @@ export class Emitter {
     } else {
       this.emitWATLine("i32.const 0");
     }
+    this.scopeStack.pop();
+
+    this.emitWATLine("local.get $old_heap_ptr");
+    this.emitWATLine("global.set $heap_ptr");
+  }
+
+  private resolveVariable(name: string): VariableInfo {
+    for (let i = this.scopeStack.length - 1; i >= 0; i--) {
+      if (this.scopeStack[i].has(name)) {
+        return this.scopeStack[i].get(name)!;
+      }
+    }
+    throw new Error(`Undefined variable: ${name}`);
   }
 
   private emitExpressionWAT(expr: Expression) {
@@ -123,7 +172,41 @@ export class Emitter {
         this.emitWATLine(`i32.const ${expr.value}`);
         break;
       case "Identifier":
-        this.emitWATLine(`local.get $${expr.name}`);
+        const info = this.resolveVariable(expr.name);
+        if (info.isBorrowedMut) {
+          throw new Error(
+            `Cannot use '${expr.name}' while it is mutably borrowed`,
+          );
+        }
+        this.emitWATLine(`local.get $${info.uniqueName}`);
+        break;
+      case "BorrowExpression":
+        if (expr.argument.type === "Identifier") {
+          const info = this.resolveVariable(expr.argument.name);
+          if (expr.isMutable) {
+            if (info.isBorrowedMut || info.borrowCount > 0) {
+              throw new Error(
+                `Cannot borrow '${expr.argument.name}' as mutable: already borrowed`,
+              );
+            }
+            if (!info.isMutable) {
+              throw new Error(
+                `Cannot borrow '${expr.argument.name}' as mutable: it is not declared as mutable`,
+              );
+            }
+            info.isBorrowedMut = true;
+          } else {
+            if (info.isBorrowedMut) {
+              throw new Error(
+                `Cannot borrow '${expr.argument.name}' as immutable: already borrowed as mutable`,
+              );
+            }
+            info.borrowCount++;
+          }
+          this.emitWATLine("i32.const 0"); // Placeholder for pointer
+        } else {
+          throw new Error("Can only borrow identifiers");
+        }
         break;
       case "UnaryExpression":
         if (expr.operator === "-") {
@@ -183,6 +266,12 @@ export class Emitter {
           );
           this.emitWATLine("call $panic");
           this.emitWATLine("unreachable");
+        } else if (expr.name === "alloc") {
+          this.emitWATLine("global.get $heap_ptr");
+          this.emitWATLine("global.get $heap_ptr");
+          this.emitExpressionWAT(expr.args[0]);
+          this.emitWATLine("i32.add");
+          this.emitWATLine("global.set $heap_ptr");
         }
         break;
       case "CallExpression":
@@ -248,6 +337,19 @@ export class Emitter {
       this.encodeVector([[0x00, 0x01]]),
     );
 
+    const globalSection = this.encodeSection(
+      0x06,
+      this.encodeVector([
+        [
+          TYPE_I32,
+          0x01,
+          OP_I32_CONST,
+          ...this.encodeSignedLEB128(1024),
+          OP_END,
+        ],
+      ]),
+    );
+
     const exportSection = this.encodeSection(
       SECTION_EXPORT,
       this.encodeVector([
@@ -275,97 +377,80 @@ export class Emitter {
       ...importSection,
       ...funcSection,
       ...memSection,
+      ...globalSection,
       ...exportSection,
       ...codeSection,
     ]);
   }
 
   private emitFunctionBinary(fn: FunctionDeclaration): number[] {
-    this.locals.clear();
-    fn.params.forEach((p, i) => this.locals.set(p, i));
+    this.localCounter = 0;
+    this.allLocals.clear();
+    this.scopeStack = [new Map()];
+    fn.params.forEach((p, i) => {
+      this.scopeStack[0].set(p, {
+        uniqueName: p,
+        isMutable: false,
+        isBorrowedMut: false,
+        borrowCount: 0,
+      });
+      this.locals.set(p, i);
+    });
 
-    const localNames = new Set<string>();
-    const scan = (s: Statement) => {
-      if (s.type === "LetStatement" && !this.locals.has(s.name))
-        localNames.add(s.name);
-      if (s.type === "BlockStatement") {
-        s.body.forEach(scan);
-        if (s.tailExpression) this.scanExpression(s.tailExpression, localNames);
-      }
-    };
-    fn.body.body.forEach(scan);
-    if (fn.body.tailExpression)
-      this.scanExpression(fn.body.tailExpression, localNames);
-
-    const localList = Array.from(localNames);
-    localList.forEach((name, i) => this.locals.set(name, fn.params.length + i));
-
-    const localDecls =
-      localList.length > 0 ? [[localList.length, TYPE_I32]] : [];
     const body: number[] = [];
     this.emitBlockBinary(fn.body, body);
     body.push(OP_END);
 
+    const localList = Array.from(this.allLocals);
+    const localMap = new Map<string, number>();
+    localMap.set("old_heap_ptr", fn.params.length);
+    localList.forEach((name, i) =>
+      localMap.set(name, fn.params.length + 1 + i),
+    );
+
+    const finalBody: number[] = [];
+    for (let i = 0; i < body.length; i++) {
+      if (body[i] === 0xfe) {
+        const name = (body as any)[i + 1];
+        const idx = localMap.has(name)
+          ? localMap.get(name)!
+          : this.locals.get(name)!;
+        finalBody.push(...this.encodeUnsignedLEB128(idx));
+        i++;
+      } else {
+        finalBody.push(body[i]);
+      }
+    }
+
+    const localDecls = [[1 + localList.length, TYPE_I32]];
     const localBytes = this.encodeVector(
       localDecls.map((d) => [...this.encodeUnsignedLEB128(d[0]), d[1]]),
     );
     return [
-      ...this.encodeUnsignedLEB128(localBytes.length + body.length),
+      ...this.encodeUnsignedLEB128(localBytes.length + finalBody.length),
       ...localBytes,
-      ...body,
+      ...finalBody,
     ];
   }
 
-  private scanExpression(expr: Expression, localNames: Set<string>) {
-    switch (expr.type) {
-      case "BinaryExpression":
-        this.scanExpression(expr.left, localNames);
-        this.scanExpression(expr.right, localNames);
-        break;
-      case "UnaryExpression":
-        this.scanExpression(expr.argument, localNames);
-        break;
-      case "MacroInvocation":
-      case "CallExpression":
-        expr.args.forEach((arg) => this.scanExpression(arg, localNames));
-        break;
-      case "BlockStatement":
-        expr.body.forEach((stmt) => {
-          if (stmt.type === "LetStatement" && !this.locals.has(stmt.name)) {
-            localNames.add(stmt.name);
-            this.scanExpression(stmt.initializer, localNames);
-          } else if (stmt.type === "ExpressionStatement") {
-            this.scanExpression(stmt.expression, localNames);
-          } else if (stmt.type === "BlockStatement") {
-            stmt.body.forEach((nestedStmt) => {
-              if (
-                nestedStmt.type === "LetStatement" &&
-                !this.locals.has(nestedStmt.name)
-              ) {
-                localNames.add(nestedStmt.name);
-              }
-            });
-            this.scanExpression(stmt, localNames);
-          }
-        });
-        if (expr.tailExpression) {
-          this.scanExpression(expr.tailExpression, localNames);
-        }
-        break;
-      case "Literal":
-      case "Identifier":
-        break;
-    }
-  }
-
   private emitBlockBinary(block: BlockStatement, body: number[]) {
+    body.push(0x23, 0x00);
+    body.push(OP_LOCAL_SET, 0xfe, "old_heap_ptr" as any);
+
+    this.scopeStack.push(new Map());
     for (const stmt of block.body) {
       if (stmt.type === "LetStatement") {
         this.emitExpressionBinary(stmt.initializer, body);
-        body.push(
-          OP_LOCAL_SET,
-          ...this.encodeUnsignedLEB128(this.locals.get(stmt.name)!),
-        );
+        const uniqueName = `${stmt.name}_${++this.localCounter}`;
+        this.allLocals.add(uniqueName);
+        const info: VariableInfo = {
+          uniqueName,
+          isMutable: stmt.isMutable,
+          isBorrowedMut: false,
+          borrowCount: 0,
+        };
+        this.scopeStack[this.scopeStack.length - 1].set(stmt.name, info);
+        body.push(OP_LOCAL_SET, 0xfe, uniqueName as any);
       } else if (stmt.type === "ExpressionStatement") {
         this.emitExpressionBinary(stmt.expression, body);
         body.push(OP_DROP);
@@ -379,6 +464,10 @@ export class Emitter {
     } else {
       body.push(OP_I32_CONST, 0);
     }
+    this.scopeStack.pop();
+
+    body.push(OP_LOCAL_GET, 0xfe, "old_heap_ptr" as any);
+    body.push(0x24, 0x00);
   }
 
   private emitExpressionBinary(expr: Expression, body: number[]) {
@@ -390,10 +479,41 @@ export class Emitter {
         body.push(OP_I32_CONST, ...this.encodeSignedLEB128(Number(expr.value)));
         break;
       case "Identifier":
-        body.push(
-          OP_LOCAL_GET,
-          ...this.encodeUnsignedLEB128(this.locals.get(expr.name)!),
-        );
+        const info = this.resolveVariable(expr.name);
+        if (info.isBorrowedMut) {
+          throw new Error(
+            `Cannot use '${expr.name}' while it is mutably borrowed`,
+          );
+        }
+        body.push(OP_LOCAL_GET, 0xfe, info.uniqueName as any);
+        break;
+      case "BorrowExpression":
+        if (expr.argument.type === "Identifier") {
+          const info = this.resolveVariable(expr.argument.name);
+          if (expr.isMutable) {
+            if (info.isBorrowedMut || info.borrowCount > 0) {
+              throw new Error(
+                `Cannot borrow '${expr.argument.name}' as mutable: already borrowed`,
+              );
+            }
+            if (!info.isMutable) {
+              throw new Error(
+                `Cannot borrow '${expr.argument.name}' as mutable: it is not declared as mutable`,
+              );
+            }
+            info.isBorrowedMut = true;
+          } else {
+            if (info.isBorrowedMut) {
+              throw new Error(
+                `Cannot borrow '${expr.argument.name}' as immutable: already borrowed as mutable`,
+              );
+            }
+            info.borrowCount++;
+          }
+          body.push(OP_I32_CONST, 0);
+        } else {
+          throw new Error("Can only borrow identifiers");
+        }
         break;
       case "UnaryExpression":
         if (expr.operator === "-") {
@@ -402,7 +522,7 @@ export class Emitter {
           body.push(OP_I32_SUB);
         } else if (expr.operator === "!") {
           this.emitExpressionBinary(expr.argument, body);
-          body.push(0x45); // i32.eqz
+          body.push(0x45);
         } else {
           throw new Error(`Unsupported unary operator: ${expr.operator}`);
         }
@@ -454,6 +574,12 @@ export class Emitter {
           );
           body.push(OP_CALL, ...this.encodeUnsignedLEB128(1));
           body.push(OP_UNREACHABLE);
+        } else if (expr.name === "alloc") {
+          body.push(0x23, 0x00);
+          body.push(0x23, 0x00);
+          this.emitExpressionBinary(expr.args[0], body);
+          body.push(OP_I32_ADD);
+          body.push(0x24, 0x00);
         }
         break;
       case "CallExpression":

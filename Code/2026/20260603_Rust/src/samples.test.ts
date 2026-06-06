@@ -74,4 +74,41 @@ describe("UI Samples Regression Tests", () => {
     expect(logs).toEqual(["111", "222", "333"]);
     expect(result).toBe(0);
   });
+
+  it("Step 9: Panic", async () => {
+    const code = `// Step 9: Panic\nfn main() {\n    print!(123);\n    panic!(456);\n    print!(789);\n    0\n}`;
+    await expect(runRust(code)).rejects.toThrow("Panic! Error code: 456");
+  });
+
+  it("Step 10: Scope Detection", async () => {
+    const code = `// Step 10: Scope Detection\nfn main() {\n    let x = 1;\n    {\n        let x = 2;\n        print!(x); // Should be 2\n    }\n    print!(x); // Should be 1\n    0\n}`;
+    const { logs, result } = await runRust(code);
+    expect(logs).toEqual(["2", "1"]);
+    expect(result).toBe(0);
+  });
+
+  it("Step 11: Region-Based Memory", async () => {
+    const code = `// Step 11: Region-Based Memory\nfn main() {\n    let p1 = alloc!(16);\n    {\n        let p2 = alloc!(32);\n        print!(p2 - p1); // Should be 16\n    }\n    let p3 = alloc!(16);\n    print!(p3 - p1); // Should be 16 (p2 was deallocated)\n    0\n}`;
+    const { logs, result } = await runRust(code);
+    expect(logs).toEqual(["16", "16"]);
+    expect(result).toBe(0);
+  });
+
+  it("Step 12: Borrow Checker", async () => {
+    // Valid borrow
+    const codeLegal = `fn main() {\n    let mut x = 5;\n    let y = &mut x;\n    0\n}`;
+    await runRust(codeLegal);
+
+    // Multiple mutable borrows (Illegal)
+    const codeIllegal1 = `fn main() {\n    let mut x = 5;\n    let y = &mut x;\n    let z = &mut x;\n    0\n}`;
+    await expect(runRust(codeIllegal1)).rejects.toThrow(
+      "Cannot borrow 'x' as mutable: already borrowed",
+    );
+
+    // Use while borrowed (Illegal)
+    const codeIllegal2 = `fn main() {\n    let mut x = 5;\n    let y = &mut x;\n    print!(x);\n    0\n}`;
+    await expect(runRust(codeIllegal2)).rejects.toThrow(
+      "Cannot use 'x' while it is mutably borrowed",
+    );
+  });
 });

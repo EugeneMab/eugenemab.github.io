@@ -42,11 +42,18 @@ export interface FunctionDeclaration {
 export type Expression =
   | BinaryExpression
   | UnaryExpression
+  | BorrowExpression
   | Literal
   | Identifier
   | CallExpression
   | MacroInvocation
   | BlockStatement;
+
+export interface BorrowExpression {
+  type: "BorrowExpression";
+  isMutable: boolean;
+  argument: Expression;
+}
 
 export interface BinaryExpression {
   type: "BinaryExpression";
@@ -255,9 +262,12 @@ export class Parser {
   }
 
   private parseUnary(): Expression {
-    if (
-      this.match(TokenType.MINUS, TokenType.EXCLAMATION, TokenType.AMPERSAND)
-    ) {
+    if (this.match(TokenType.AMPERSAND)) {
+      const isMutable = this.match(TokenType.MUT);
+      const argument = this.parseUnary();
+      return { type: "BorrowExpression", isMutable, argument };
+    }
+    if (this.match(TokenType.MINUS, TokenType.EXCLAMATION)) {
       const operator = this.previous().value;
       const argument = this.parseUnary();
       return { type: "UnaryExpression", operator, argument };
@@ -287,7 +297,7 @@ export class Parser {
         rawType: "string",
       };
 
-    if (this.match(TokenType.IDENTIFIER)) {
+    if (this.match(TokenType.IDENTIFIER, TokenType.PANIC)) {
       const name = this.previous().value;
       if (this.match(TokenType.EXCLAMATION)) {
         this.consume(TokenType.LPAREN, "Expect '(' after macro name");

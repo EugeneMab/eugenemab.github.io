@@ -142,7 +142,12 @@ export class Parser {
         return expr;
     }
     parseUnary() {
-        if (this.match(TokenType.MINUS, TokenType.EXCLAMATION, TokenType.AMPERSAND)) {
+        if (this.match(TokenType.AMPERSAND)) {
+            const isMutable = this.match(TokenType.MUT);
+            const argument = this.parseUnary();
+            return { type: "BorrowExpression", isMutable, argument };
+        }
+        if (this.match(TokenType.MINUS, TokenType.EXCLAMATION)) {
             const operator = this.previous().value;
             const argument = this.parseUnary();
             return { type: "UnaryExpression", operator, argument };
@@ -170,7 +175,7 @@ export class Parser {
                 value: this.previous().value,
                 rawType: "string",
             };
-        if (this.match(TokenType.IDENTIFIER)) {
+        if (this.match(TokenType.IDENTIFIER, TokenType.PANIC)) {
             const name = this.previous().value;
             if (this.match(TokenType.EXCLAMATION)) {
                 this.consume(TokenType.LPAREN, "Expect '(' after macro name");

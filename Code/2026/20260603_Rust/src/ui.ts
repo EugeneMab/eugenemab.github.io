@@ -47,6 +47,10 @@ export function initUI() {
     bitwise: `// Step 6: Bitwise Ops\nfn main() {\n    let x = 0x0F & 0xF0; // 0\n    let y = 0x0F | 0xF0; // 255\n    let z = 1 << 4;      // 16\n    print!(x);\n    print!(y);\n    print!(z);\n    z >> 1 // 8\n}`,
     comments: `// Step 7: Comments\n/// This is a doc comment\nfn main() {\n    // Single line comment\n    let x = 1; // Inline comment\n    print!(x);\n    x\n}`,
     print: `// Step 8: Print Macro\nfn main() {\n    print!(111);\n    print!(222);\n    print!(333);\n    0\n}`,
+    panic: `// Step 9: Panic\nfn main() {\n    print!(123);\n    panic!(456);\n    print!(789);\n    0\n}`,
+    scope: `// Step 10: Scope Detection\nfn main() {\n    let x = 1;\n    {\n        let x = 2;\n        print!(x); // Should be 2\n    }\n    print!(x); // Should be 1\n    0\n}`,
+    regions: `// Step 11: Region-Based Memory\nfn main() {\n    let p1 = alloc!(16);\n    {\n        let p2 = alloc!(32);\n        print!(p2 - p1); // Should be 16\n    }\n    let p3 = alloc!(16);\n    print!(p3 - p1); // Should be 16 (p2 was deallocated)\n    0\n}`,
+    borrow: `// Step 12: Borrow Checker\nfn main() {\n    let mut x = 5;\n    let y = &mut x;\n    // let z = &mut x; // ERROR: Second mutable borrow\n    // print!(x);      // ERROR: Cannot use x while mutably borrowed\n    0\n}`,
   };
 
   sampleSelect?.addEventListener("change", () => {
