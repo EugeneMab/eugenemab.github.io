@@ -15,8 +15,8 @@ A pure HTML/JS/CSS version of the Dating Show Notebook.
 3. Use `kill.cmd` to stop the server.
 
 ## Architecture
-- **React**: UI library (via CDN).
-- **HTM**: JSX-like syntax in pure JS (via CDN).
-- **Tailwind CSS**: Styling (via CDN).
-- **Lucide React**: Icons (via CDN).
+- **React**: UI library loaded from local files in `lib/`.
+- **HTM**: JSX-like syntax in pure JS loaded from local file in `lib/`.
+- **Tailwind CSS**: Styling loaded from local file in `lib/`.
+- **Lucide React**: Icons loaded from local file in `lib/`.
 - **Node.js**: Minimal static server for local development.
