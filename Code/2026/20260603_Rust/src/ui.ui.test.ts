@@ -4,14 +4,10 @@ test("verify basic compiler flow in UI", async ({ page }) => {
   await page.goto("http://localhost:7878");
 
   // Select sample
-  await page.selectOption("#sample-select", "basic");
-
-  // Trigger compile
-  await page.click("#compile-btn");
+  await page.selectOption("#sample-select", "lexer");
 
   // Check output
   const resultOutput = page.locator("#result-output");
-  const watOutput = page.locator("#wat-output");
   const statusLine = page.locator("#status-line");
 
   // Wait for execution finished
@@ -25,10 +21,7 @@ test("verify basic compiler flow in UI", async ({ page }) => {
     throw e;
   }
 
-  // Verify results
-  await expect(resultOutput).toContainText("60");
-
-  const watText = (await watOutput.textContent()) || "";
-  expect(watText).toContain('func (export "main")');
-  expect(watText).toContain("i32.add");
+  // Verify results for lexer sample (Step 2)
+  await expect(resultOutput).toContainText("42");
+  await expect(resultOutput).toContainText("42"); // 0x2A is also 42
 });

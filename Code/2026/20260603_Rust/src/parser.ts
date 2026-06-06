@@ -45,7 +45,8 @@ export type Expression =
   | Literal
   | Identifier
   | CallExpression
-  | MacroInvocation;
+  | MacroInvocation
+  | BlockStatement;
 
 export interface BinaryExpression {
   type: "BinaryExpression";
@@ -104,8 +105,15 @@ export class Parser {
   private parseStatement(): Statement {
     if (this.match(TokenType.LET)) return this.parseLetStatement();
     if (this.match(TokenType.FN)) return this.parseFunctionDeclaration();
-    if (this.peek().type === TokenType.LBRACE)
-      return this.parseBlockStatement();
+
+    if (this.check(TokenType.LBRACE)) {
+      const block = this.parseBlockStatement();
+      if (this.match(TokenType.SEMICOLON)) {
+        return { type: "ExpressionStatement", expression: block };
+      }
+      return block;
+    }
+
     return this.parseExpressionStatement();
   }
 
@@ -146,16 +154,17 @@ export class Parser {
     let tailExpression: Expression | undefined;
 
     while (!this.check(TokenType.RBRACE) && !this.isAtEnd()) {
-      if (this.match(TokenType.LET)) {
-        body.push(this.parseLetStatement());
-      } else if (this.match(TokenType.FN)) {
-        body.push(this.parseFunctionDeclaration());
-      } else if (this.peek().type === TokenType.LBRACE) {
-        body.push(this.parseBlockStatement());
+      if (this.check(TokenType.LET) || this.check(TokenType.FN)) {
+        body.push(this.parseStatement());
+        continue;
+      }
+
+      const expr = this.parseExpression();
+      if (this.match(TokenType.SEMICOLON)) {
+        body.push({ type: "ExpressionStatement", expression: expr });
       } else {
-        const expr = this.parseExpression();
-        if (this.match(TokenType.SEMICOLON)) {
-          body.push({ type: "ExpressionStatement", expression: expr });
+        if (expr.type === "BlockStatement") {
+          body.push(expr);
         } else {
           tailExpression = expr;
           if (!this.check(TokenType.RBRACE)) {
@@ -257,6 +266,8 @@ export class Parser {
   }
 
   private parsePrimary(): Expression {
+    if (this.check(TokenType.LBRACE)) return this.parseBlockStatement();
+
     if (this.match(TokenType.INTEGER))
       return {
         type: "Literal",
@@ -279,7 +290,6 @@ export class Parser {
     if (this.match(TokenType.IDENTIFIER)) {
       const name = this.previous().value;
       if (this.match(TokenType.EXCLAMATION)) {
-        // Macro call: print!(...)
         this.consume(TokenType.LPAREN, "Expect '(' after macro name");
         const args: Expression[] = [];
         if (!this.check(TokenType.RPAREN)) {
@@ -291,7 +301,6 @@ export class Parser {
         return { type: "MacroInvocation", name, args };
       }
       if (this.match(TokenType.LPAREN)) {
-        // Function call
         const args: Expression[] = [];
         if (!this.check(TokenType.RPAREN)) {
           do {
@@ -319,7 +328,6 @@ export class Parser {
     );
   }
 
-  // Helpers
   private match(...types: TokenType[]): boolean {
     for (const type of types) {
       if (this.check(type)) {
@@ -330,9 +338,9 @@ export class Parser {
     return false;
   }
 
-  private check(type: TokenType): boolean {
+  private check(...types: TokenType[]): boolean {
     if (this.isAtEnd()) return false;
-    return this.peek().type === type;
+    return types.includes(this.peek().type);
   }
 
   private advance(): Token {
@@ -356,7 +364,6 @@ export class Parser {
     if (this.check(type)) return this.advance();
     const token = this.peek();
     const prev = this.previous();
-    // If the next token is on a new line, point to the previous token (likely where the missing semicolon should be)
     const errorToken =
       token.type === TokenType.EOF || token.line > prev.line ? prev : token;
     throw new Error(formatError(this.source, message, errorToken));

@@ -33,9 +33,12 @@ export function initUI() {
         });
     });
     const samples = {
-        basic: `fn main() {\n    let x = 10;\n    let y = 20;\n    let z = (x + y) * 2;\n    print!(z);\n    z\n}`,
-        bitwise: `fn main() {\n    let bit = (1 << 5) | 1;\n    print!(bit);\n    bit\n}`,
-        panic: `fn main() {\n    print!(1);\n    panic!(42);\n    print!(2);\n}`,
+        lexer: `// Step 2: Lexer (Literals & Keywords)\nfn main() {\n    let dec = 42;\n    let hex = 0x2A;\n    let s = "Rust";\n    print!(dec);\n    print!(hex);\n    0\n}`,
+        parser: `// Step 3: Parser (Implicit Return)\nfn main() {\n    let x = 1;\n    {\n        let x = 2;\n        x\n    };\n    10 + 20\n}`,
+        math: `// Step 6: Math & Logic\nfn main() {\n    let a = 10 + 5 * 2;\n    let b = (10 + 5) * 2;\n    let c = 100 % 3;\n    print!(a); // 20\n    print!(b); // 30\n    print!(c); // 1\n    a + b + c\n}`,
+        bitwise: `// Step 6: Bitwise Ops\nfn main() {\n    let x = 0x0F & 0xF0; // 0\n    let y = 0x0F | 0xF0; // 255\n    let z = 1 << 4;      // 16\n    print!(x);\n    print!(y);\n    print!(z);\n    z >> 1 // 8\n}`,
+        comments: `// Step 7: Comments\n/// This is a doc comment\nfn main() {\n    // Single line comment\n    let x = 1; // Inline comment\n    print!(x);\n    x\n}`,
+        print: `// Step 8: Print Macro\nfn main() {\n    print!(111);\n    print!(222);\n    print!(333);\n    0\n}`,
     };
     sampleSelect?.addEventListener("change", () => {
         if (sampleSelect.value) {

@@ -36,8 +36,8 @@ export class Emitter {
         this.outputWAT = [];
         this.emitWATLine("(module");
         this.indent++;
-        this.emitWATLine('(import "env" "print" (func $print (param i32)))');
-        this.emitWATLine('(import "env" "panic" (func $panic (param i32)))');
+        this.emitWATLine('(import "env" "print" (func $print (param i32) (result i32)))');
+        this.emitWATLine('(import "env" "panic" (func $panic (param i32) (result i32)))');
         this.emitWATLine('(memory (export "memory") 1)');
         for (const stmt of this.program.body) {
             if (stmt.type === "FunctionDeclaration") {
@@ -50,16 +50,21 @@ export class Emitter {
     }
     emitFunctionWAT(fn) {
         const params = fn.params.map((p) => `(param $${p} i32)`).join(" ");
-        this.emitWATLine(`(func (export "${fn.name}") ${params}`);
+        this.emitWATLine(`(func (export "${fn.name}") ${params} (result i32)`);
         this.indent++;
         const localNames = new Set();
         const scan = (s) => {
             if (s.type === "LetStatement")
                 localNames.add(s.name);
-            if (s.type === "BlockStatement")
+            if (s.type === "BlockStatement") {
                 s.body.forEach(scan);
+                if (s.tailExpression)
+                    this.scanExpression(s.tailExpression, localNames);
+            }
         };
         fn.body.body.forEach(scan);
+        if (fn.body.tailExpression)
+            this.scanExpression(fn.body.tailExpression, localNames);
         for (const name of localNames) {
             this.emitWATLine(`(local $${name} i32)`);
         }
@@ -77,10 +82,23 @@ export class Emitter {
                 this.emitExpressionWAT(stmt.expression);
                 this.emitWATLine("drop");
             }
+            else if (stmt.type === "BlockStatement") {
+                this.emitBlockWAT(stmt);
+                this.emitWATLine("drop");
+            }
+        }
+        if (block.tailExpression) {
+            this.emitExpressionWAT(block.tailExpression);
+        }
+        else {
+            this.emitWATLine("i32.const 0");
         }
     }
     emitExpressionWAT(expr) {
         switch (expr.type) {
+            case "BlockStatement":
+                this.emitBlockWAT(expr);
+                break;
             case "Literal":
                 this.emitWATLine(`i32.const ${expr.value}`);
                 break;
@@ -127,14 +145,17 @@ export class Emitter {
                 if (expr.name === "print") {
                     this.emitExpressionWAT(expr.args[0]);
                     this.emitWATLine("call $print");
-                    this.emitWATLine("i32.const 0"); // dummy return
                 }
                 else if (expr.name === "panic") {
                     this.emitExpressionWAT(expr.args[0] ?? { type: "Literal", value: 0, rawType: "integer" });
                     this.emitWATLine("call $panic");
                     this.emitWATLine("unreachable");
-                    this.emitWATLine("i32.const 0"); // dummy return for stack consistency
                 }
+                break;
+            case "CallExpression":
+                for (const arg of expr.args)
+                    this.emitExpressionWAT(arg);
+                this.emitWATLine(`call $${expr.callee}`);
                 break;
         }
     }
@@ -148,7 +169,7 @@ export class Emitter {
         const userFunctions = this.program.body.filter((s) => s.type === "FunctionDeclaration");
         userFunctions.forEach((fn, i) => this.functionIndices.set(fn.name, 2 + i));
         const typeSection = this.encodeSection(SECTION_TYPE, this.encodeVector([
-            [TYPE_FUNC, 1, TYPE_I32, 1, TYPE_I32], // index 0: (i32) -> i32 (for print/panic)
+            [TYPE_FUNC, 1, TYPE_I32, 1, TYPE_I32],
             ...userFunctions.map((fn) => [
                 TYPE_FUNC,
                 fn.params.length,
@@ -205,21 +226,17 @@ export class Emitter {
             if (s.type === "BlockStatement") {
                 s.body.forEach(scan);
                 if (s.tailExpression)
-                    this.scanExpression();
+                    this.scanExpression(s.tailExpression, localNames);
             }
         };
         fn.body.body.forEach(scan);
         if (fn.body.tailExpression)
-            this.scanExpression();
+            this.scanExpression(fn.body.tailExpression, localNames);
         const localList = Array.from(localNames);
         localList.forEach((name, i) => this.locals.set(name, fn.params.length + i));
         const localDecls = localList.length > 0 ? [[localList.length, TYPE_I32]] : [];
         const body = [];
         this.emitBlockBinary(fn.body, body);
-        // Default return 0 if no tail expression
-        if (!fn.body.tailExpression) {
-            body.push(OP_I32_CONST, 0);
-        }
         body.push(OP_END);
         const localBytes = this.encodeVector(localDecls.map((d) => [...this.encodeUnsignedLEB128(d[0]), d[1]]));
         return [
@@ -228,9 +245,7 @@ export class Emitter {
             ...body,
         ];
     }
-    scanExpression() {
-        // Current expressions don't declare new locals, but future ones might
-    }
+    scanExpression(_expr, _localNames) { }
     emitBlockBinary(block, body) {
         for (const stmt of block.body) {
             if (stmt.type === "LetStatement") {
@@ -241,13 +256,23 @@ export class Emitter {
                 this.emitExpressionBinary(stmt.expression, body);
                 body.push(OP_DROP);
             }
+            else if (stmt.type === "BlockStatement") {
+                this.emitBlockBinary(stmt, body);
+                body.push(OP_DROP);
+            }
         }
         if (block.tailExpression) {
             this.emitExpressionBinary(block.tailExpression, body);
         }
+        else {
+            body.push(OP_I32_CONST, 0);
+        }
     }
     emitExpressionBinary(expr, body) {
         switch (expr.type) {
+            case "BlockStatement":
+                this.emitBlockBinary(expr, body);
+                break;
             case "Literal":
                 body.push(OP_I32_CONST, ...this.encodeSignedLEB128(Number(expr.value)));
                 break;
@@ -300,6 +325,14 @@ export class Emitter {
                     body.push(OP_CALL, ...this.encodeUnsignedLEB128(1));
                     body.push(OP_UNREACHABLE);
                 }
+                break;
+            case "CallExpression":
+                for (const arg of expr.args)
+                    this.emitExpressionBinary(arg, body);
+                const idx = this.functionIndices.get(expr.callee);
+                if (idx === undefined)
+                    throw new Error(`Unknown function: ${expr.callee}`);
+                body.push(OP_CALL, ...this.encodeUnsignedLEB128(idx));
                 break;
         }
     }
