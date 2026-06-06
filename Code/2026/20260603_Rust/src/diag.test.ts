@@ -19,7 +19,7 @@ async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
         return 0;
       },
       print_str: (_ptr: number) => {
-        return _ptr;
+        return 0;
       },
       panic: (code: number) => {
         throw new Error(`Panic! Error code: ${code}`);

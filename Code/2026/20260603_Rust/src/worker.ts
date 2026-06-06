@@ -65,10 +65,17 @@ self.onmessage = async (e) => {
           print_str: (ptr: number) => {
             const mem = new Uint8Array((instance.exports.memory as any).buffer);
             const view = new DataView(mem.buffer);
-            const len = view.getInt32(ptr, true);
-            const str = new TextDecoder().decode(
-              mem.slice(ptr + 4, ptr + 4 + len),
-            );
+            if (!Number.isInteger(ptr) || ptr < 0 || ptr + 4 > mem.length) {
+              throw new Error(`Invalid string pointer: ${ptr}`);
+            }
+            const len = view.getUint32(ptr, true);
+            const start = ptr + 4;
+            if (len > mem.length - start) {
+              throw new Error(
+                `Invalid string length ${len} at pointer ${ptr} for memory size ${mem.length}`,
+              );
+            }
+            const str = new TextDecoder().decode(mem.subarray(start, start + len));
             self.postMessage({ type: "log", payload: str });
             return 0;
           },
