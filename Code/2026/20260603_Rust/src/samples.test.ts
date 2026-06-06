@@ -24,8 +24,17 @@ async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
       print_str: (ptr: number) => {
         const mem = new Uint8Array((instance.exports.memory as any).buffer);
         const view = new DataView(mem.buffer);
-        const len = view.getInt32(ptr, true);
-        const str = new TextDecoder().decode(mem.slice(ptr + 4, ptr + 4 + len));
+        if (!Number.isInteger(ptr) || ptr < 0 || ptr + 4 > mem.length) {
+          throw new Error(`Invalid string pointer: ${ptr}`);
+        }
+        const len = view.getUint32(ptr, true);
+        const start = ptr + 4;
+        if (len > mem.length - start) {
+          throw new Error(
+            `Invalid string length ${len} at pointer ${ptr} for memory size ${mem.length}`,
+          );
+        }
+        const str = new TextDecoder().decode(mem.subarray(start, start + len));
         logs.push(str);
         return 0;
       },
@@ -141,6 +150,13 @@ describe("UI Samples Regression Tests", () => {
       const code = loadSample("book01_02_hello_world.rs");
       const { logs, result } = await runRust(code);
       expect(logs).toEqual(["Hello, world!"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 2-0: Guessing Game Variables", async () => {
+      const code = loadSample("book02_00_variables.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["5", "5"]);
       expect(result).toBe(0);
     });
   });

@@ -7,6 +7,7 @@ const SECTION_EXPORT = 0x07;
 const SECTION_CODE = 0x0a;
 const TYPE_I32 = 0x7f;
 const TYPE_FUNC = 0x60;
+const HEAP_BASE = 1024;
 const OP_END = 0x0b;
 const OP_CALL = 0x10;
 const OP_DROP = 0x1a;
@@ -58,12 +59,12 @@ export class Emitter {
         this.emitWATLine('(import "env" "print_str" (func $print_str (param i32) (result i32)))');
         this.emitWATLine('(import "env" "panic" (func $panic (param i32) (result i32)))');
         this.emitWATLine('(memory (export "memory") 1)');
-        this.emitWATLine("(global $heap_ptr (mut i32) (i32.const 1024))");
         for (const stmt of this.program.body) {
             if (stmt.type === "FunctionDeclaration") {
                 this.emitFunctionWAT(stmt);
             }
         }
+        this.emitWATLine(`(global $heap_ptr (mut i32) (i32.const ${Math.max(HEAP_BASE, this.stringOffset)}))`);
         // Emit data sections for strings
         for (const [str, offset] of this.stringConstants.entries()) {
             const bytes = Array.from(new TextEncoder().encode(str));
@@ -354,6 +355,8 @@ export class Emitter {
         this.outputWAT.push("  ".repeat(this.indent) + line);
     }
     emitWASM() {
+        this.stringConstants.clear();
+        this.stringOffset = 0;
         this.functionIndices.clear();
         this.functionIndices.set("print", 0);
         this.functionIndices.set("print_str", 1);
@@ -392,12 +395,14 @@ export class Emitter {
         ]));
         const funcSection = this.encodeSection(SECTION_FUNCTION, this.encodeVector(userFunctions.map((_, i) => [i + 1])));
         const memSection = this.encodeSection(SECTION_MEMORY, this.encodeVector([[0x00, 0x01]]));
+        const functionBodies = userFunctions.map((fn) => this.emitFunctionBinary(fn));
+        const initialHeapPtr = Math.max(HEAP_BASE, this.stringOffset);
         const globalSection = this.encodeSection(0x06, this.encodeVector([
             [
                 TYPE_I32,
                 0x01,
                 OP_I32_CONST,
-                ...this.encodeSignedLEB128(1024),
+                ...this.encodeSignedLEB128(initialHeapPtr),
                 OP_END,
             ],
         ]));
@@ -409,7 +414,7 @@ export class Emitter {
                 this.functionIndices.get(fn.name),
             ]),
         ]));
-        const codeSection = this.encodeSection(SECTION_CODE, this.encodeVector(userFunctions.map((fn) => this.emitFunctionBinary(fn))));
+        const codeSection = this.encodeSection(SECTION_CODE, this.encodeVector(functionBodies));
         // Data section
         const dataEntries = [];
         for (const [str, offset] of this.stringConstants.entries()) {
