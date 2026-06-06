@@ -212,7 +212,10 @@ export const App = () => {
                   <div 
                     key=${ev.id}
                     className=${`ml-4 p-2 text-sm rounded cursor-pointer flex justify-between items-center group ${selectedEventId === ev.id ? 'bg-blue-100 text-blue-800 font-medium' : 'hover:bg-gray-100'}`}
-                    onClick=${() => setSelectedEventId(ev.id)}
+                    onClick=${() => {
+                      setSelectedEpisodeId(ep.id);
+                      setSelectedEventId(ev.id);
+                    }}
                   >
                     <input 
                       className="truncate flex-1 bg-transparent border-none focus:ring-0 p-0 text-sm cursor-pointer min-w-0"
