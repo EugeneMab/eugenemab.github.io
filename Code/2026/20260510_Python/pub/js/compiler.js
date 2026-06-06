@@ -68,16 +68,6 @@ export class Compiler {
             throw new Error(`Unknown temp local: ${name}`);
         return this.localIndex + idx;
     }
-    validateContextManagerArity(functions) {
-        for (const f of functions) {
-            if (f.name === "__enter__" && f.params.length !== 1) {
-                throw new Error("__enter__ must have exactly 1 parameter (mgr)");
-            }
-            if (f.name === "__exit__" && f.params.length !== 4) {
-                throw new Error("__exit__ must have exactly 4 parameters (mgr, type, value, traceback)");
-            }
-        }
-    }
     compileWAT(program) {
         this.functionMap.clear();
         this.functionMap.set("print", 0);
@@ -90,7 +80,6 @@ export class Compiler {
         this.functionMap.set("next", 7);
         this.generatorIds = [];
         const userFunctions = program.body.filter((n) => n.type === "FunctionDef");
-        this.validateContextManagerArity(userFunctions);
         let currentId = 8;
         userFunctions.forEach((f) => {
             this.functionMap.set(f.name, currentId);
@@ -273,14 +262,6 @@ export class Compiler {
                         scanNode(n.stop);
                     if (n.step)
                         scanNode(n.step);
-                    break;
-                case "With":
-                    if (n.target && !this.locals.has(n.target)) {
-                        this.locals.set(n.target, this.localIndex++);
-                        localDecls.push(`(local $${n.target} i32)`);
-                    }
-                    scanNode(n.expression);
-                    n.body.forEach(scanNode);
                     break;
             }
         };
@@ -771,8 +752,6 @@ export class Compiler {
                     throw new Error(`Dynamic calls on ${node.callee.type} are not yet supported in WAT`);
                 }
             }
-            case "MemberAccess":
-                throw new Error("Member access without call is not yet supported in WAT");
             case "FString": {
                 let wat = "";
                 node.parts.forEach((part, i) => {
@@ -934,7 +913,6 @@ export class Compiler {
         this.functionMap.set("next", 7);
         this.generatorIds = [];
         const userFunctions = program.body.filter((n) => n.type === "FunctionDef");
-        this.validateContextManagerArity(userFunctions);
         let currentId = 8;
         userFunctions.forEach((f) => {
             this.functionMap.set(f.name, currentId);

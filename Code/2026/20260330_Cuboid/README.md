@@ -7,7 +7,15 @@
 Cuboid 3D is a standalone browser-based editor for building simple 3D scenes from cuboids. It combines a scene tree, editing tools, camera controls, undo history, and export/import features inside a single HTML file.
 
 ## How to Use
-1. Open `/tmp/workspace/EugeneMab/eugenemab.github.io/Code/2026/20260330_Cuboid/Cuboid.html` in a modern browser.
+### Linux
+1. Open `git_root_folder/Code/2026/20260330_Cuboid/Cuboid.html` in a modern browser.
+2. Use the toolbar to add cuboids, group objects, split or copy selections, and save or load scenes.
+3. Use the scene tree on the left to select and organize objects.
+4. Use the canvas to inspect the scene and interact with the camera.
+5. Export the result as JSON, OBJ, PNG, or JPG when needed.
+
+### Windows
+1. Open `GitRootFolder\Code\2026\20260330_Cuboid\Cuboid.html` in a modern browser.
 2. Use the toolbar to add cuboids, group objects, split or copy selections, and save or load scenes.
 3. Use the scene tree on the left to select and organize objects.
 4. Use the canvas to inspect the scene and interact with the camera.
