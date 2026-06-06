@@ -45,7 +45,7 @@ self.onmessage = async (e) => {
       logPhase("Emit", "enter");
       currentPhase = "Emit";
       const emitStart = performance.now();
-      const emitter = new Emitter(ast);
+      const emitter = new Emitter(ast, code);
       const wat = emitter.emitWAT();
       const wasm = emitter.emitWASM();
       logPhase("Emit", "leave", performance.now() - emitStart);

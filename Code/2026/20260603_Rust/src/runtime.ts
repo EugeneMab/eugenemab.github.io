@@ -9,7 +9,7 @@ export class Runtime {
     const tokens = lexer.tokenize();
     const parser = new Parser(tokens, code);
     const program = parser.parse();
-    const emitter = new Emitter(program);
+    const emitter = new Emitter(program, code);
     const wat = emitter.emitWAT();
 
     const wabt = await (wabtInit as any)();
