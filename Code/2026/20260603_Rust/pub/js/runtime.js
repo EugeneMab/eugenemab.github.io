@@ -17,6 +17,10 @@ export class Runtime {
             env: {
                 print: (val) => {
                     console.log(val);
+                    return 0;
+                },
+                panic: (code) => {
+                    throw new Error(`Panic! Error code: ${code}`);
                 },
                 memory: new WebAssembly.Memory({ initial: 1 }),
             },

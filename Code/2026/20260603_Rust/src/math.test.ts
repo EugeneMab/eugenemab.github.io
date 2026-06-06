@@ -4,10 +4,8 @@ import { Parser } from "./parser.js";
 import { Emitter } from "./emitter.js";
 
 async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
-  console.log("Running Code:", code);
   const lexer = new Lexer(code);
   const tokens = lexer.tokenize();
-  console.log("Tokens:", tokens.map((t) => `${t.value}(${t.type})`).join(" "));
   const parser = new Parser(tokens, code);
   const ast = parser.parse();
   const emitter = new Emitter(ast);
@@ -17,7 +15,6 @@ async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
   const importObject = {
     env: {
       print: (val: number) => {
-        console.log("Host print called with:", val);
         logs.push(String(val));
         return 0;
       },

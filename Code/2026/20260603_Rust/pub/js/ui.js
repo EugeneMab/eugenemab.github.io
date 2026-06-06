@@ -172,4 +172,3 @@ export function initUI() {
     outputs.info.textContent =
         "Ready. Port: 7878\nRust-to-WASM Compiler Initialized.";
 }
-initUI();

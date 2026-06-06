@@ -125,6 +125,18 @@ export class Emitter {
       case "Identifier":
         this.emitWATLine(`local.get $${expr.name}`);
         break;
+      case "UnaryExpression":
+        if (expr.operator === "-") {
+          this.emitWATLine("i32.const 0");
+          this.emitExpressionWAT(expr.argument);
+          this.emitWATLine("i32.sub");
+        } else if (expr.operator === "!") {
+          this.emitExpressionWAT(expr.argument);
+          this.emitWATLine("i32.eqz");
+        } else {
+          throw new Error(`Unsupported unary operator: ${expr.operator}`);
+        }
+        break;
       case "BinaryExpression":
         this.emitExpressionWAT(expr.left);
         this.emitExpressionWAT(expr.right);
@@ -382,6 +394,18 @@ export class Emitter {
           OP_LOCAL_GET,
           ...this.encodeUnsignedLEB128(this.locals.get(expr.name)!),
         );
+        break;
+      case "UnaryExpression":
+        if (expr.operator === "-") {
+          body.push(OP_I32_CONST, 0);
+          this.emitExpressionBinary(expr.argument, body);
+          body.push(OP_I32_SUB);
+        } else if (expr.operator === "!") {
+          this.emitExpressionBinary(expr.argument, body);
+          body.push(0x45); // i32.eqz
+        } else {
+          throw new Error(`Unsupported unary operator: ${expr.operator}`);
+        }
         break;
       case "BinaryExpression":
         this.emitExpressionBinary(expr.left, body);
