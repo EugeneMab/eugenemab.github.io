@@ -473,7 +473,9 @@ export class Emitter {
       this.encodeVector([[0x00, 0x01]]),
     );
 
-    const functionBodies = userFunctions.map((fn) => this.emitFunctionBinary(fn));
+    const functionBodies = userFunctions.map((fn) =>
+      this.emitFunctionBinary(fn),
+    );
     const initialHeapPtr = Math.max(HEAP_BASE, this.stringOffset);
 
     const globalSection = this.encodeSection(

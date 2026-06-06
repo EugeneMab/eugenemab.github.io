@@ -35,7 +35,9 @@ export class Runtime {
               `Invalid string length ${len} at pointer ${ptr} for memory size ${mem.length}`,
             );
           }
-          const str = new TextDecoder().decode(mem.subarray(start, start + len));
+          const str = new TextDecoder().decode(
+            mem.subarray(start, start + len),
+          );
           console.log(str);
           return 0;
         },
