@@ -26,7 +26,7 @@ const OP_I32_ADD = 0x6a;
 const OP_I32_SUB = 0x6b;
 const OP_I32_MUL = 0x6c;
 const OP_I32_DIV_S = 0x6d;
-const OP_I32_REM_S = 0x6e;
+const OP_I32_REM_S = 0x6f;
 const OP_I32_AND = 0x71;
 const OP_I32_OR = 0x72;
 const OP_I32_XOR = 0x73;
@@ -304,7 +304,47 @@ export class Emitter {
     ];
   }
 
-  private scanExpression(_expr: Expression, _localNames: Set<string>) {}
+  private scanExpression(expr: Expression, localNames: Set<string>) {
+    switch (expr.type) {
+      case "BinaryExpression":
+        this.scanExpression(expr.left, localNames);
+        this.scanExpression(expr.right, localNames);
+        break;
+      case "UnaryExpression":
+        this.scanExpression(expr.argument, localNames);
+        break;
+      case "MacroInvocation":
+      case "CallExpression":
+        expr.args.forEach((arg) => this.scanExpression(arg, localNames));
+        break;
+      case "BlockStatement":
+        expr.body.forEach((stmt) => {
+          if (stmt.type === "LetStatement" && !this.locals.has(stmt.name)) {
+            localNames.add(stmt.name);
+            this.scanExpression(stmt.initializer, localNames);
+          } else if (stmt.type === "ExpressionStatement") {
+            this.scanExpression(stmt.expression, localNames);
+          } else if (stmt.type === "BlockStatement") {
+            stmt.body.forEach((nestedStmt) => {
+              if (
+                nestedStmt.type === "LetStatement" &&
+                !this.locals.has(nestedStmt.name)
+              ) {
+                localNames.add(nestedStmt.name);
+              }
+            });
+            this.scanExpression(stmt, localNames);
+          }
+        });
+        if (expr.tailExpression) {
+          this.scanExpression(expr.tailExpression, localNames);
+        }
+        break;
+      case "Literal":
+      case "Identifier":
+        break;
+    }
+  }
 
   private emitBlockBinary(block: BlockStatement, body: number[]) {
     for (const stmt of block.body) {

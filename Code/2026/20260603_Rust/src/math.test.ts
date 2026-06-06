@@ -17,12 +17,7 @@ async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
   const importObject = {
     env: {
       print: (val: number) => {
-        console.log(
-          "Host print called with:",
-          val,
-          "args:",
-          JSON.stringify(Array.from(arguments as any)),
-        );
+        console.log("Host print called with:", val);
         logs.push(String(val));
         return 0;
       },
