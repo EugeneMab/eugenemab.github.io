@@ -51,6 +51,14 @@ self.onmessage = async (e) => {
                         self.postMessage({ type: "log", payload: String(val) });
                         return 0;
                     },
+                    print_str: (ptr) => {
+                        const mem = new Uint8Array(instance.exports.memory.buffer);
+                        const view = new DataView(mem.buffer);
+                        const len = view.getInt32(ptr, true);
+                        const str = new TextDecoder().decode(mem.slice(ptr + 4, ptr + 4 + len));
+                        self.postMessage({ type: "log", payload: str });
+                        return 0;
+                    },
                     panic: (code) => {
                         throw new Error(`Panic! Error code: ${code}`);
                     },

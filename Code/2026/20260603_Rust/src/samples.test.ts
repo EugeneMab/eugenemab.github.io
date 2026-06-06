@@ -21,6 +21,14 @@ async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
         logs.push(String(val));
         return 0;
       },
+      print_str: (ptr: number) => {
+        const mem = new Uint8Array((instance.exports.memory as any).buffer);
+        const view = new DataView(mem.buffer);
+        const len = view.getInt32(ptr, true);
+        const str = new TextDecoder().decode(mem.slice(ptr + 4, ptr + 4 + len));
+        logs.push(str);
+        return 0;
+      },
       panic: (code: number) => {
         throw new Error(`Panic! Error code: ${code}`);
       },
@@ -126,5 +134,14 @@ describe("UI Samples Regression Tests", () => {
     await expect(runRust(codeIllegal2)).rejects.toThrow(
       "Error at line 4, column 12",
     );
+  });
+
+  describe("Rust Book Samples", () => {
+    it("Book 1-2: Hello World", async () => {
+      const code = loadSample("book01_02_hello_world.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["Hello, world!"]);
+      expect(result).toBe(0);
+    });
   });
 });

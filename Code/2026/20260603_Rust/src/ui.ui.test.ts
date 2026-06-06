@@ -49,4 +49,10 @@ test("verify basic compiler flow in UI", async ({ page }) => {
   // Verify Step 12: Borrow
   await page.selectOption("#sample-select", "borrow");
   await expect(statusLine).toHaveText("Execution Finished", { timeout: 10000 });
+
+  // Verify Book 1-2: Hello World
+  await page.selectOption("#sample-select", "book01_02_hello");
+  await expect(statusLine).toHaveText("Execution Finished", { timeout: 10000 });
+  const helloOutput = (await resultOutput.textContent()) ?? "";
+  expect(helloOutput.trim()).toBe("Hello, world!");
 });
