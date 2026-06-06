@@ -1,0 +1,20 @@
+/* REM Rust-to-WASM Port (RUST) */
+body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; height: 100vh; display: flex; flex-direction: column; }
+.container { display: flex; flex-direction: column; height: 100%; }
+header { background: #2c3e50; color: white; padding: 10px 20px; }
+h1 { margin: 0; font-size: 1.5rem; }
+.main-layout { display: flex; flex: 1; overflow: hidden; }
+.left-panel, .right-panel { flex: 1; display: flex; flex-direction: column; padding: 10px; border-right: 1px solid #ccc; overflow: hidden; }
+.right-panel { border-right: none; background: #fdfdfd; }
+.controls { margin-bottom: 10px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+textarea#editor { flex: 1; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; font-size: 14px; border: 1px solid #ccc; border-radius: 4px; padding: 10px; resize: none; outline: none; }
+.status-line { font-weight: bold; margin-bottom: 10px; color: #34495e; border-bottom: 2px solid #ecf0f1; padding-bottom: 5px; }
+.output-tabs { display: flex; gap: 5px; margin-bottom: 10px; border-bottom: 1px solid #ddd; }
+.tab-btn { padding: 5px 15px; border: none; background: #eee; cursor: pointer; border-radius: 4px 4px 0 0; }
+.tab-btn.active { background: #3498db; color: white; }
+.tab-content { flex: 1; overflow: auto; border: 1px solid #ddd; border-top: none; padding: 10px; background: white; }
+.hidden { display: none; }
+pre { margin: 0; font-size: 13px; font-family: 'Consolas', 'Monaco', 'Courier New', monospace; }
+.abort-btn { background: #e74c3c; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+.abort-btn:hover { background: #c0392b; }
+input[type="number"] { width: 50px; }

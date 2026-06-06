@@ -1,0 +1,14 @@
+  private encodeSignedLEB128(n: number): number[] {
+    const result = [];
+    while (true) {
+      const byte = n & 0x7f;
+      n >>= 7;
+      if ((n === 0 && (byte & 0x40) === 0) || (n === -1 && (byte & 0x40) !== 0)) {
+        result.push(byte);
+        break;
+      }
+      result.push(byte | 0x80);
+    }
+    return result;
+  }
+}

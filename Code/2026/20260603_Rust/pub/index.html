@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rust to WASM Compiler</title>
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Rust ⮕ WASM</h1>
+        </header>
+        
+        <main class="main-layout">
+            <div class="left-panel">
+                <div class="sample-selector">
+                    <label for="sample-select">Load Sample:</label>
+                    <select id="sample-select">
+                        <option value="">-- Select a step sample --</option>
+                        <option value="lexer">Step 2: Literals & Keywords</option>
+                        <option value="parser">Step 3: Implicit Return</option>
+                        <option value="math">Step 6: Math & Logic</option>
+                        <option value="bitwise">Step 6: Bitwise Ops</option>
+                        <option value="comments">Step 7: Comments</option>
+                        <option value="print">Step 8: Print Macro</option>
+                    </select>
+                </div>
+                <h3>Rust Source</h3>
+                <div class="controls">
+                    <button id="load-file-btn">Open File (Ctrl+O)</button>
+                    <button id="save-btn">Save File (Ctrl+S)</button>
+                    <button id="compile-btn">Compile & Run (F8)</button>
+                    <div class="timeout-control">
+                        <label for="timeout-input">Timeout:</label>
+                        <input type="number" id="timeout-input" value="10" min="1">s
+                    </div>
+                    <button id="abort-btn" class="abort-btn">Abort</button>
+                    <input type="file" id="file-input" hidden accept=".rs,.txt">
+                </div>
+                <textarea id="editor" spellcheck="false" placeholder="// REM Rust-to-WASM Port (RUST)"></textarea>
+            </div>
+
+            <div class="right-panel">
+                <div id="status-line" class="status-line">Ready</div>
+                <div class="output-tabs">
+                    <button class="tab-btn" data-tab="info">Info</button>
+                    <button class="tab-btn" data-tab="lex">Lex</button>
+                    <button class="tab-btn" data-tab="ast">AST</button>
+                    <button class="tab-btn" data-tab="wat">WAT</button>
+                    <button class="tab-btn" data-tab="wasm">WASM</button>
+                    <button class="tab-btn active" data-tab="exec">Execution</button>
+                </div>
+                
+                <div class="tab-content hidden" id="info-content"><pre id="info-output"></pre></div>
+                <div class="tab-content hidden" id="lex-content"><pre id="lex-output"></pre></div>
+                <div class="tab-content hidden" id="ast-content"><pre id="ast-output"></pre></div>
+                <div class="tab-content hidden" id="wat-content"><pre id="wat-output"></pre></div>
+                <div class="tab-content hidden" id="wasm-content"><pre id="wasm-output"></pre></div>
+                <div class="tab-content" id="exec-content"><pre id="result-output"></pre></div>
+            </div>
+        </main>
+    </div>
+    <script type="module" src="./js/main.js"></script>
+</body>
+</html>

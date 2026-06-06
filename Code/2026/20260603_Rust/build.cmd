@@ -1,0 +1,4 @@
+@echo off
+REM Rust-to-WASM Port (RUST)
+echo Building...
+call npm run build
