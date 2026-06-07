@@ -36,7 +36,7 @@ export function initUI() {
   const formatWAT = (wat: string): string => {
     const lines = wat.split("\n");
     const formatted: string[] = [];
-    let indent = 0;
+    let blockIndent = 0;
 
     for (const rawLine of lines) {
       const line = rawLine.trim();
@@ -50,17 +50,18 @@ export function initUI() {
       const isElse = lower === "else";
 
       if (isEnd || isElse) {
-        indent = Math.max(0, indent - 1);
+        blockIndent = Math.max(0, blockIndent - 1);
       }
 
-      formatted.push("  ".repeat(indent) + line);
+      const existingIndent = rawLine.match(/^\s*/)?.[0] ?? "";
+      formatted.push(existingIndent + "  ".repeat(blockIndent) + line);
 
       const startsBlock =
         lower.startsWith("if") ||
         lower.startsWith("block") ||
         lower.startsWith("loop");
       if (startsBlock || isElse) {
-        indent++;
+        blockIndent++;
       }
     }
 

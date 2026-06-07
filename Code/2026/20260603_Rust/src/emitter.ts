@@ -182,7 +182,7 @@ export class Emitter {
     }
 
     bodyWAT.forEach((line) => {
-      this.outputWAT.push("  ".repeat(this.indent) + line.trim());
+      this.outputWAT.push("  ".repeat(this.indent) + line);
     });
 
     this.indent--;
