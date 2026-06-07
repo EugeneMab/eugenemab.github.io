@@ -27,6 +27,11 @@ export function initUI() {
     };
     const formatWAT = (wat) => {
         const lines = wat.split("\n");
+        // If emitter already includes nested control-flow indentation,
+        // avoid adding UI indentation on top of it.
+        if (lines.some((l) => /^\s{6,}(block|loop|if|else|end)\b/i.test(l))) {
+            return wat;
+        }
         const formatted = [];
         let blockIndent = 0;
         for (const rawLine of lines) {
