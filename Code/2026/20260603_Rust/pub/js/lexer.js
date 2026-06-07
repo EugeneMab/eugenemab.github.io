@@ -13,42 +13,44 @@ export var TokenType;
     TokenType[TokenType["STRUCT"] = 9] = "STRUCT";
     TokenType[TokenType["IMPL"] = 10] = "IMPL";
     TokenType[TokenType["PANIC"] = 11] = "PANIC";
+    TokenType[TokenType["TRUE"] = 12] = "TRUE";
+    TokenType[TokenType["FALSE"] = 13] = "FALSE";
     // Literals
-    TokenType[TokenType["INTEGER"] = 12] = "INTEGER";
-    TokenType[TokenType["HEX"] = 13] = "HEX";
-    TokenType[TokenType["STRING"] = 14] = "STRING";
-    TokenType[TokenType["IDENTIFIER"] = 15] = "IDENTIFIER";
+    TokenType[TokenType["INTEGER"] = 14] = "INTEGER";
+    TokenType[TokenType["HEX"] = 15] = "HEX";
+    TokenType[TokenType["STRING"] = 16] = "STRING";
+    TokenType[TokenType["IDENTIFIER"] = 17] = "IDENTIFIER";
     // Symbols
-    TokenType[TokenType["LPAREN"] = 16] = "LPAREN";
-    TokenType[TokenType["RPAREN"] = 17] = "RPAREN";
-    TokenType[TokenType["LBRACE"] = 18] = "LBRACE";
-    TokenType[TokenType["RBRACE"] = 19] = "RBRACE";
-    TokenType[TokenType["LBRACKET"] = 20] = "LBRACKET";
-    TokenType[TokenType["RBRACKET"] = 21] = "RBRACKET";
-    TokenType[TokenType["COMMA"] = 22] = "COMMA";
-    TokenType[TokenType["DOT"] = 23] = "DOT";
-    TokenType[TokenType["COLON"] = 24] = "COLON";
-    TokenType[TokenType["SEMICOLON"] = 25] = "SEMICOLON";
-    TokenType[TokenType["ARROW"] = 26] = "ARROW";
-    TokenType[TokenType["PLUS"] = 27] = "PLUS";
-    TokenType[TokenType["MINUS"] = 28] = "MINUS";
-    TokenType[TokenType["STAR"] = 29] = "STAR";
-    TokenType[TokenType["SLASH"] = 30] = "SLASH";
-    TokenType[TokenType["PERCENT"] = 31] = "PERCENT";
-    TokenType[TokenType["AMPERSAND"] = 32] = "AMPERSAND";
-    TokenType[TokenType["PIPE"] = 33] = "PIPE";
-    TokenType[TokenType["CARET"] = 34] = "CARET";
-    TokenType[TokenType["LSHIFT"] = 35] = "LSHIFT";
-    TokenType[TokenType["RSHIFT"] = 36] = "RSHIFT";
-    TokenType[TokenType["EQUALS"] = 37] = "EQUALS";
-    TokenType[TokenType["EQ_EQ"] = 38] = "EQ_EQ";
-    TokenType[TokenType["NE_EQ"] = 39] = "NE_EQ";
-    TokenType[TokenType["LT"] = 40] = "LT";
-    TokenType[TokenType["GT"] = 41] = "GT";
-    TokenType[TokenType["LT_EQ"] = 42] = "LT_EQ";
-    TokenType[TokenType["GT_EQ"] = 43] = "GT_EQ";
-    TokenType[TokenType["EXCLAMATION"] = 44] = "EXCLAMATION";
-    TokenType[TokenType["EOF"] = 45] = "EOF";
+    TokenType[TokenType["LPAREN"] = 18] = "LPAREN";
+    TokenType[TokenType["RPAREN"] = 19] = "RPAREN";
+    TokenType[TokenType["LBRACE"] = 20] = "LBRACE";
+    TokenType[TokenType["RBRACE"] = 21] = "RBRACE";
+    TokenType[TokenType["LBRACKET"] = 22] = "LBRACKET";
+    TokenType[TokenType["RBRACKET"] = 23] = "RBRACKET";
+    TokenType[TokenType["COMMA"] = 24] = "COMMA";
+    TokenType[TokenType["DOT"] = 25] = "DOT";
+    TokenType[TokenType["COLON"] = 26] = "COLON";
+    TokenType[TokenType["SEMICOLON"] = 27] = "SEMICOLON";
+    TokenType[TokenType["ARROW"] = 28] = "ARROW";
+    TokenType[TokenType["PLUS"] = 29] = "PLUS";
+    TokenType[TokenType["MINUS"] = 30] = "MINUS";
+    TokenType[TokenType["STAR"] = 31] = "STAR";
+    TokenType[TokenType["SLASH"] = 32] = "SLASH";
+    TokenType[TokenType["PERCENT"] = 33] = "PERCENT";
+    TokenType[TokenType["AMPERSAND"] = 34] = "AMPERSAND";
+    TokenType[TokenType["PIPE"] = 35] = "PIPE";
+    TokenType[TokenType["CARET"] = 36] = "CARET";
+    TokenType[TokenType["LSHIFT"] = 37] = "LSHIFT";
+    TokenType[TokenType["RSHIFT"] = 38] = "RSHIFT";
+    TokenType[TokenType["EQUALS"] = 39] = "EQUALS";
+    TokenType[TokenType["EQ_EQ"] = 40] = "EQ_EQ";
+    TokenType[TokenType["NE_EQ"] = 41] = "NE_EQ";
+    TokenType[TokenType["LT"] = 42] = "LT";
+    TokenType[TokenType["GT"] = 43] = "GT";
+    TokenType[TokenType["LT_EQ"] = 44] = "LT_EQ";
+    TokenType[TokenType["GT_EQ"] = 45] = "GT_EQ";
+    TokenType[TokenType["EXCLAMATION"] = 46] = "EXCLAMATION";
+    TokenType[TokenType["EOF"] = 47] = "EOF";
 })(TokenType || (TokenType = {}));
 const KEYWORDS = {
     fn: TokenType.FN,
@@ -63,6 +65,8 @@ const KEYWORDS = {
     struct: TokenType.STRUCT,
     impl: TokenType.IMPL,
     panic: TokenType.PANIC,
+    true: TokenType.TRUE,
+    false: TokenType.FALSE,
 };
 export class Lexer {
     pos = 0;

@@ -53,6 +53,7 @@ export function initUI() {
         book03_01_mut: "book03_01_mutability.rs",
         book03_01_const: "book03_01_constants.rs",
         book03_01_shadow: "book03_01_shadowing.rs",
+        book03_02_bool: "book03_02_booleans.rs",
     };
     sampleSelect?.addEventListener("change", async () => {
         const fileName = sampleFiles[sampleSelect.value];

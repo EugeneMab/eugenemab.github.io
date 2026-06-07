@@ -285,6 +285,24 @@ export class Parser {
                 rawType: "string",
             };
         }
+        if (this.match(TokenType.TRUE)) {
+            const token = this.previous();
+            return {
+                type: "Literal",
+                token,
+                value: 1,
+                rawType: "integer",
+            };
+        }
+        if (this.match(TokenType.FALSE)) {
+            const token = this.previous();
+            return {
+                type: "Literal",
+                token,
+                value: 0,
+                rawType: "integer",
+            };
+        }
         if (this.match(TokenType.IDENTIFIER, TokenType.PANIC)) {
             const token = this.previous();
             const name = token.value;
