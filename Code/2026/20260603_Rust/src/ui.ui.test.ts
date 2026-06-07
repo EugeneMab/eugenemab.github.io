@@ -57,4 +57,9 @@ test("verify basic compiler flow in UI", async ({ page }) => {
   await runSample("book02_00_vars", "Execution Finished");
   const varsOutput = (await resultOutput.textContent()) ?? "";
   expect(varsOutput.trim()).toBe("5\n5");
+
+  // Verify Book 4-1: Variable Scope
+  await runSample("book04_01_scope", "Execution Finished");
+  const scopeChapterOutput = (await resultOutput.textContent()) ?? "";
+  expect(scopeChapterOutput.trim()).toBe("inner y: \n20\nouter x: \n10");
 });

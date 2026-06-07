@@ -246,5 +246,26 @@ describe("UI Samples Regression Tests", () => {
       expect(logs).toEqual(["5"]);
       expect(result).toBe(0);
     });
+
+    it("Book 4-1: Variable Scope", async () => {
+      const code = loadSample("book04_01_scope.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["inner y: ", "20", "outer x: ", "10"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 4-2: References and Borrowing", async () => {
+      const code = loadSample("book04_02_borrow.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["borrowed mutably", "x after borrow: ", "6"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 4-2: Mutable Borrow Conflict (Negative at Emit)", async () => {
+      const code = loadSample("book04_02_mut_borrow_error.rs");
+      await expect(runRust(code)).rejects.toThrow(
+        "Cannot borrow 'x' as mutable: already borrowed",
+      );
+    });
   });
 });
