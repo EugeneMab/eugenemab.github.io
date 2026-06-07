@@ -256,16 +256,6 @@ export class Emitter {
                 this.emitWATLine("drop");
             }
         }
-        // Release borrows
-        const scope = this.scopeStack[this.scopeStack.length - 1];
-        for (const borrow of scope.borrows) {
-            if (borrow.isMut) {
-                borrow.info.isBorrowedMut = false;
-            }
-            else {
-                borrow.info.borrowCount--;
-            }
-        }
         this.emitWATLine(`local.get $${heapBackupName}`);
         this.emitWATLine("global.set $heap_ptr");
         if (block.tailExpression) {
@@ -274,7 +264,16 @@ export class Emitter {
         else {
             this.emitWATLine("i32.const 0");
         }
-        this.scopeStack.pop();
+        // Release borrows
+        const scope = this.scopeStack.pop();
+        for (const borrow of scope.borrows) {
+            if (borrow.isMut) {
+                borrow.info.isBorrowedMut = false;
+            }
+            else {
+                borrow.info.borrowCount--;
+            }
+        }
     }
     resolveVariable(name) {
         for (let i = this.scopeStack.length - 1; i >= 0; i--) {
@@ -777,16 +776,6 @@ export class Emitter {
                 body.push(OP_DROP);
             }
         }
-        // Release borrows
-        const scope = this.scopeStack[this.scopeStack.length - 1];
-        for (const borrow of scope.borrows) {
-            if (borrow.isMut) {
-                borrow.info.isBorrowedMut = false;
-            }
-            else {
-                borrow.info.borrowCount--;
-            }
-        }
         body.push(OP_LOCAL_GET, 0xfe, heapBackupName);
         body.push(0x24, 0x00);
         if (block.tailExpression) {
@@ -795,7 +784,16 @@ export class Emitter {
         else {
             body.push(OP_I32_CONST, 0);
         }
-        this.scopeStack.pop();
+        // Release borrows
+        const scope = this.scopeStack.pop();
+        for (const borrow of scope.borrows) {
+            if (borrow.isMut) {
+                borrow.info.isBorrowedMut = false;
+            }
+            else {
+                borrow.info.borrowCount--;
+            }
+        }
     }
     emitExpressionBinary(expr, body) {
         switch (expr.type) {
