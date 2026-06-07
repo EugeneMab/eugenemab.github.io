@@ -60,4 +60,15 @@ describe("Parser", () => {
     expect(fnDecl.name).toBe("main");
     expect(fnDecl.body.body.length).toBe(1);
   });
+
+  it("should parse boolean literals as i32 values", () => {
+    const input = "let t = true; let f = false;";
+    const tokens = new Lexer(input).tokenize();
+    const program = new Parser(tokens, input).parse();
+
+    const trueStmt = program.body[0] as any;
+    const falseStmt = program.body[1] as any;
+    expect(trueStmt.initializer.value).toBe(1);
+    expect(falseStmt.initializer.value).toBe(0);
+  });
 });

@@ -26,6 +26,8 @@ export class Parser {
             return this.parseIfStatement();
         if (this.match(TokenType.LOOP))
             return this.parseLoopStatement();
+        if (this.match(TokenType.WHILE))
+            return this.parseWhileStatement();
         if (this.match(TokenType.BREAK))
             return this.parseBreakStatement();
         if (this.match(TokenType.CONTINUE))
@@ -43,6 +45,12 @@ export class Parser {
         const token = this.previous();
         const body = this.parseBlockStatement();
         return { type: "LoopStatement", token, body };
+    }
+    parseWhileStatement() {
+        const token = this.previous();
+        const condition = this.parseExpression();
+        const body = this.parseBlockStatement();
+        return { type: "WhileStatement", token, condition, body };
     }
     parseBreakStatement() {
         const token = this.previous();
@@ -99,9 +107,15 @@ export class Parser {
         if (!this.check(TokenType.RPAREN)) {
             do {
                 params.push(this.consume(TokenType.IDENTIFIER, "Expect parameter name").value);
+                if (this.match(TokenType.COLON)) {
+                    this.consume(TokenType.IDENTIFIER, "Expect type name");
+                }
             } while (this.match(TokenType.COMMA));
         }
         this.consume(TokenType.RPAREN, "Expect ')' after parameters");
+        if (this.match(TokenType.ARROW)) {
+            this.consume(TokenType.IDENTIFIER, "Expect return type");
+        }
         const body = this.parseBlockStatement();
         return { type: "FunctionDeclaration", token, name, params, body };
     }
@@ -115,6 +129,7 @@ export class Parser {
                 this.check(TokenType.FN) ||
                 this.check(TokenType.IF) ||
                 this.check(TokenType.LOOP) ||
+                this.check(TokenType.WHILE) ||
                 this.check(TokenType.BREAK) ||
                 this.check(TokenType.CONTINUE)) {
                 body.push(this.parseStatement());
@@ -258,6 +273,9 @@ export class Parser {
     parsePrimary() {
         if (this.check(TokenType.LBRACE))
             return this.parseBlockStatement();
+        if (this.match(TokenType.IF)) {
+            return this.parseIfStatement();
+        }
         if (this.match(TokenType.INTEGER)) {
             const token = this.previous();
             return {
@@ -283,6 +301,24 @@ export class Parser {
                 token,
                 value: token.value,
                 rawType: "string",
+            };
+        }
+        if (this.match(TokenType.TRUE)) {
+            const token = this.previous();
+            return {
+                type: "Literal",
+                token,
+                value: 1,
+                rawType: "integer",
+            };
+        }
+        if (this.match(TokenType.FALSE)) {
+            const token = this.previous();
+            return {
+                type: "Literal",
+                token,
+                value: 0,
+                rawType: "integer",
             };
         }
         if (this.match(TokenType.IDENTIFIER, TokenType.PANIC)) {

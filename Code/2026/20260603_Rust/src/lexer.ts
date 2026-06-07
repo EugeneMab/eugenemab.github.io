@@ -7,11 +7,14 @@ export enum TokenType {
   IF,
   ELSE,
   LOOP,
+  WHILE,
   BREAK,
   CONTINUE,
   STRUCT,
   IMPL,
   PANIC,
+  TRUE,
+  FALSE,
 
   // Literals
   INTEGER,
@@ -68,11 +71,14 @@ const KEYWORDS: Record<string, TokenType> = {
   if: TokenType.IF,
   else: TokenType.ELSE,
   loop: TokenType.LOOP,
+  while: TokenType.WHILE,
   break: TokenType.BREAK,
   continue: TokenType.CONTINUE,
   struct: TokenType.STRUCT,
   impl: TokenType.IMPL,
   panic: TokenType.PANIC,
+  true: TokenType.TRUE,
+  false: TokenType.FALSE,
 };
 
 export class Lexer {

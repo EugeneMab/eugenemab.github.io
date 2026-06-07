@@ -5,12 +5,15 @@ test("verify basic compiler flow in UI", async ({ page }) => {
 
   const resultOutput = page.locator("#result-output");
   const statusLine = page.locator("#status-line");
-  const infoOutput = page.locator("#info-output");
 
   const runSample = async (value: string, expectedStatus: string | RegExp) => {
-    const previousInfo = (await infoOutput.textContent()) ?? "";
+    const previousResult = (await resultOutput.textContent()) ?? "";
     await page.selectOption("#sample-select", value);
-    await expect(infoOutput).not.toHaveText(previousInfo, { timeout: 10000 });
+    await expect
+      .poll(async () => (await resultOutput.textContent()) ?? "", {
+        timeout: 10000,
+      })
+      .not.toBe(previousResult);
     await expect(statusLine).toHaveText(expectedStatus, {
       timeout: 10000,
     });
@@ -57,4 +60,18 @@ test("verify basic compiler flow in UI", async ({ page }) => {
   await runSample("book02_00_vars", "Execution Finished");
   const varsOutput = (await resultOutput.textContent()) ?? "";
   expect(varsOutput.trim()).toBe("5\n5");
+
+  // Verify Book 2-0: Guessing Game Loop WAT indentation
+  await runSample("book02_00_loop", "Execution Finished");
+  const watOutput = (await page.locator("#wat-output").textContent()) ?? "";
+  expect(watOutput).toMatch(/^  \(func \(export "main"\)\s+\(result i32\)/m);
+  expect(watOutput).toContain("    block $exit (result i32)");
+  expect(watOutput).toContain("      loop $loop (result i32)");
+  expect(watOutput).toContain("        if (result i32)");
+  expect(watOutput).toContain("          global.get $heap_ptr");
+
+  // Verify Book 4-1: Variable Scope
+  await runSample("book04_01_scope", "Execution Finished");
+  const scopeChapterOutput = (await resultOutput.textContent()) ?? "";
+  expect(scopeChapterOutput.trim()).toBe("inner y: \n20\nouter x: \n10");
 });
