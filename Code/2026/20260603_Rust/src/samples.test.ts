@@ -153,10 +153,69 @@ describe("UI Samples Regression Tests", () => {
       expect(result).toBe(0);
     });
 
+    it("Book 1-3: Hello Cargo", async () => {
+      const code = loadSample("book01_03_hello_cargo.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["Hello, world!"]);
+      expect(result).toBe(0);
+    });
+
     it("Book 2-0: Guessing Game Variables", async () => {
       const code = loadSample("book02_00_variables.rs");
       const { logs, result } = await runRust(code);
       expect(logs).toEqual(["5", "5"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 2-0: Guessing Game If/Else", async () => {
+      const code = loadSample("book02_00_if_else.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["x is five", "x is small"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 2-0: Guessing Game Loop", async () => {
+      const code = loadSample("book02_00_loop.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["1", "3", "4", "done"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 2-0: Break Error (Negative at Emit)", async () => {
+      const code = loadSample("book02_00_break_error.rs");
+      await expect(runRust(code)).rejects.toThrow("'break' outside of loop");
+    });
+
+    it("Book 3-1: Immutability Error (Negative at Emit)", async () => {
+      const code = loadSample("book03_01_immutability_error.rs");
+      await expect(runRust(code)).rejects.toThrow(
+        "Cannot assign to immutable variable: x",
+      );
+    });
+
+    it("Book 3-1: Mutability", async () => {
+      const code = loadSample("book03_01_mutability.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual([
+        "The value of x is: ",
+        "5",
+        "The value of x is: ",
+        "6",
+      ]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 3-1: Constants", async () => {
+      const code = loadSample("book03_01_constants.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["Seconds: ", "10800"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 3-1: Shadowing", async () => {
+      const code = loadSample("book03_01_shadowing.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["Inner x: ", "12", "Outer x: ", "6"]);
       expect(result).toBe(0);
     });
   });

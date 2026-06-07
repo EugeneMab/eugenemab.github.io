@@ -14,15 +14,46 @@ interface BaseNode {
 
 export type Statement =
   | LetStatement
+  | ConstStatement
   | ExpressionStatement
   | BlockStatement
-  | FunctionDeclaration;
+  | FunctionDeclaration
+  | IfStatement
+  | LoopStatement
+  | BreakStatement
+  | ContinueStatement;
 
 export interface LetStatement extends BaseNode {
   type: "LetStatement";
   name: string;
   isMutable: boolean;
   initializer: Expression;
+}
+
+export interface ConstStatement extends BaseNode {
+  type: "ConstStatement";
+  name: string;
+  initializer: Expression;
+}
+
+export interface IfStatement extends BaseNode {
+  type: "IfStatement";
+  condition: Expression;
+  thenBranch: BlockStatement;
+  elseBranch?: BlockStatement | IfStatement;
+}
+
+export interface LoopStatement extends BaseNode {
+  type: "LoopStatement";
+  body: BlockStatement;
+}
+
+export interface BreakStatement extends BaseNode {
+  type: "BreakStatement";
+}
+
+export interface ContinueStatement extends BaseNode {
+  type: "ContinueStatement";
 }
 
 export interface ExpressionStatement extends BaseNode {
@@ -115,7 +146,12 @@ export class Parser {
 
   private parseStatement(): Statement {
     if (this.match(TokenType.LET)) return this.parseLetStatement();
+    if (this.match(TokenType.CONST)) return this.parseConstStatement();
     if (this.match(TokenType.FN)) return this.parseFunctionDeclaration();
+    if (this.match(TokenType.IF)) return this.parseIfStatement();
+    if (this.match(TokenType.LOOP)) return this.parseLoopStatement();
+    if (this.match(TokenType.BREAK)) return this.parseBreakStatement();
+    if (this.match(TokenType.CONTINUE)) return this.parseContinueStatement();
 
     if (this.check(TokenType.LBRACE)) {
       const block = this.parseBlockStatement();
@@ -128,6 +164,39 @@ export class Parser {
     return this.parseExpressionStatement();
   }
 
+  private parseLoopStatement(): LoopStatement {
+    const token = this.previous();
+    const body = this.parseBlockStatement();
+    return { type: "LoopStatement", token, body };
+  }
+
+  private parseBreakStatement(): BreakStatement {
+    const token = this.previous();
+    this.consume(TokenType.SEMICOLON, "Expect ';' after 'break'");
+    return { type: "BreakStatement", token };
+  }
+
+  private parseContinueStatement(): ContinueStatement {
+    const token = this.previous();
+    this.consume(TokenType.SEMICOLON, "Expect ';' after 'continue'");
+    return { type: "ContinueStatement", token };
+  }
+
+  private parseIfStatement(): IfStatement {
+    const token = this.previous();
+    const condition = this.parseExpression();
+    const thenBranch = this.parseBlockStatement();
+    let elseBranch: BlockStatement | IfStatement | undefined;
+    if (this.match(TokenType.ELSE)) {
+      if (this.match(TokenType.IF)) {
+        elseBranch = this.parseIfStatement();
+      } else {
+        elseBranch = this.parseBlockStatement();
+      }
+    }
+    return { type: "IfStatement", token, condition, thenBranch, elseBranch };
+  }
+
   private parseLetStatement(): LetStatement {
     const token = this.previous();
     const isMutable = this.match(TokenType.MUT);
@@ -135,10 +204,27 @@ export class Parser {
       TokenType.IDENTIFIER,
       "Expect identifier after 'let'",
     ).value;
+    if (this.match(TokenType.COLON)) {
+      this.consume(TokenType.IDENTIFIER, "Expect type name");
+    }
     this.consume(TokenType.EQUALS, "Expect '=' after identifier");
     const initializer = this.parseExpression();
     this.consume(TokenType.SEMICOLON, "Expect ';' after let statement");
     return { type: "LetStatement", token, name, isMutable, initializer };
+  }
+
+  private parseConstStatement(): ConstStatement {
+    const token = this.previous();
+    const name = this.consume(
+      TokenType.IDENTIFIER,
+      "Expect identifier after 'const'",
+    ).value;
+    this.consume(TokenType.COLON, "Expect ':' after identifier");
+    this.consume(TokenType.IDENTIFIER, "Expect type name");
+    this.consume(TokenType.EQUALS, "Expect '=' after type");
+    const initializer = this.parseExpression();
+    this.consume(TokenType.SEMICOLON, "Expect ';' after const statement");
+    return { type: "ConstStatement", token, name, initializer };
   }
 
   private parseFunctionDeclaration(): FunctionDeclaration {
@@ -167,7 +253,15 @@ export class Parser {
     let tailExpression: Expression | undefined;
 
     while (!this.check(TokenType.RBRACE) && !this.isAtEnd()) {
-      if (this.check(TokenType.LET) || this.check(TokenType.FN)) {
+      if (
+        this.check(TokenType.LET) ||
+        this.check(TokenType.CONST) ||
+        this.check(TokenType.FN) ||
+        this.check(TokenType.IF) ||
+        this.check(TokenType.LOOP) ||
+        this.check(TokenType.BREAK) ||
+        this.check(TokenType.CONTINUE)
+      ) {
         body.push(this.parseStatement());
         continue;
       }
@@ -211,7 +305,46 @@ export class Parser {
   }
 
   private parseExpression(): Expression {
-    return this.parseBitwiseOr();
+    return this.parseAssignment();
+  }
+
+  private parseAssignment(): Expression {
+    const expr = this.parseComparison();
+    if (this.match(TokenType.EQUALS)) {
+      const token = this.previous();
+      const right = this.parseAssignment();
+      if (expr.type === "Identifier") {
+        return {
+          type: "BinaryExpression",
+          token,
+          operator: "=",
+          left: expr,
+          right,
+        };
+      }
+      throw new Error(formatError(this.source, "Invalid l-value", token));
+    }
+    return expr;
+  }
+
+  private parseComparison(): Expression {
+    let expr = this.parseBitwiseOr();
+    while (
+      this.match(
+        TokenType.EQ_EQ,
+        TokenType.NE_EQ,
+        TokenType.LT,
+        TokenType.GT,
+        TokenType.LT_EQ,
+        TokenType.GT_EQ,
+      )
+    ) {
+      const token = this.previous();
+      const operator = token.value;
+      const right = this.parseBitwiseOr();
+      expr = { type: "BinaryExpression", token, operator, left: expr, right };
+    }
+    return expr;
   }
 
   private parseBitwiseOr(): Expression {

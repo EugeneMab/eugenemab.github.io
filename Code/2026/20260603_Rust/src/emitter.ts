@@ -34,6 +34,17 @@ const OP_I32_OR = 0x72;
 const OP_I32_XOR = 0x73;
 const OP_I32_SHL = 0x74;
 const OP_I32_SHR_S = 0x75;
+const OP_I32_EQ = 0x46;
+const OP_I32_NE = 0x47;
+const OP_I32_LT_S = 0x48;
+const OP_I32_GT_S = 0x4a;
+const OP_I32_LE_S = 0x4c;
+const OP_I32_GE_S = 0x4e;
+const OP_IF = 0x04;
+const OP_ELSE = 0x05;
+const OP_LOOP = 0x03;
+const OP_BR = 0x0c;
+const OP_BLOCK = 0x02;
 const OP_UNREACHABLE = 0x00;
 
 interface VariableInfo {
@@ -57,10 +68,12 @@ export class Emitter {
   private functionIndices: Map<string, number> = new Map();
   private locals: Map<string, number> = new Map();
   private scopeStack: Scope[] = [];
+  private loopStack: { breakDepth: number; continueDepth: number }[] = [];
   private allLocals: Set<string> = new Set();
   private localCounter = 0;
   private stringConstants: Map<string, number> = new Map();
   private stringOffset = 0;
+  private currentBlockDepth = 0;
 
   constructor(program: Program, source: string) {
     this.program = program;
@@ -132,6 +145,7 @@ export class Emitter {
 
   private emitFunctionWAT(fn: FunctionDeclaration) {
     this.localCounter = 0;
+    this.currentBlockDepth = 0;
     this.allLocals.clear();
     this.scopeStack = [
       {
@@ -200,6 +214,84 @@ export class Emitter {
         };
         this.scopeStack[this.scopeStack.length - 1].vars.set(stmt.name, info);
         this.emitWATLine(`local.set $${uniqueName}`);
+      } else if (stmt.type === "ConstStatement") {
+        this.emitExpressionWAT(stmt.initializer);
+        const uniqueName = `${stmt.name}_${++this.localCounter}`;
+        this.allLocals.add(uniqueName);
+        const info: VariableInfo = {
+          uniqueName,
+          isMutable: false,
+          isBorrowedMut: false,
+          borrowCount: 0,
+        };
+        this.scopeStack[this.scopeStack.length - 1].vars.set(stmt.name, info);
+        this.emitWATLine(`local.set $${uniqueName}`);
+      } else if (stmt.type === "IfStatement") {
+        this.emitExpressionWAT(stmt.condition);
+        this.emitWATLine("if (result i32)");
+        this.indent++;
+        this.currentBlockDepth++;
+        this.emitBlockWAT(stmt.thenBranch);
+        this.indent--;
+        if (stmt.elseBranch) {
+          this.emitWATLine("else");
+          this.indent++;
+          if (stmt.elseBranch.type === "BlockStatement") {
+            this.emitBlockWAT(stmt.elseBranch);
+          } else {
+            // else if
+            this.emitBlockWAT({
+              type: "BlockStatement",
+              body: [stmt.elseBranch],
+            });
+          }
+          this.indent--;
+        } else {
+          this.emitWATLine("else");
+          this.indent++;
+          this.emitWATLine("i32.const 0");
+          this.indent--;
+        }
+        this.currentBlockDepth--;
+        this.emitWATLine("end");
+        this.emitWATLine("drop");
+      } else if (stmt.type === "LoopStatement") {
+        this.emitWATLine("block $exit (result i32)");
+        this.indent++;
+        this.currentBlockDepth++;
+        this.emitWATLine("loop $loop (result i32)");
+        this.indent++;
+        this.currentBlockDepth++;
+        this.loopStack.push({
+          breakDepth: this.currentBlockDepth - 1,
+          continueDepth: this.currentBlockDepth,
+        });
+        this.emitBlockWAT(stmt.body);
+        this.emitWATLine("drop");
+        this.emitWATLine("i32.const 0"); // Loop fallthrough value
+        this.emitWATLine("br $loop");
+        this.indent--;
+        this.currentBlockDepth--;
+        this.loopStack.pop();
+        this.emitWATLine("end");
+        this.indent--;
+        this.currentBlockDepth--;
+        this.emitWATLine("end");
+        this.emitWATLine("drop");
+      } else if (stmt.type === "BreakStatement") {
+        if (this.loopStack.length === 0)
+          this.throwError("'break' outside of loop", stmt);
+        const loop = this.loopStack[this.loopStack.length - 1];
+        const levels = this.currentBlockDepth - loop.breakDepth;
+        this.emitWATLine("i32.const 0");
+        this.emitWATLine(`br ${levels}`);
+      } else if (stmt.type === "ContinueStatement") {
+        if (this.loopStack.length === 0)
+          this.throwError("'continue' outside of loop", stmt);
+        const loop = this.loopStack[this.loopStack.length - 1];
+        const levels = this.currentBlockDepth - loop.continueDepth;
+        this.emitWATLine("i32.const 0");
+        this.emitWATLine(`br ${levels}`);
       } else if (stmt.type === "ExpressionStatement") {
         this.emitExpressionWAT(stmt.expression);
         this.emitWATLine("drop");
@@ -208,14 +300,9 @@ export class Emitter {
         this.emitWATLine("drop");
       }
     }
-    if (block.tailExpression) {
-      this.emitExpressionWAT(block.tailExpression);
-    } else {
-      this.emitWATLine("i32.const 0");
-    }
 
     // Release borrows
-    const scope = this.scopeStack.pop()!;
+    const scope = this.scopeStack[this.scopeStack.length - 1];
     for (const borrow of scope.borrows) {
       if (borrow.isMut) {
         borrow.info.isBorrowedMut = false;
@@ -226,6 +313,14 @@ export class Emitter {
 
     this.emitWATLine(`local.get $${heapBackupName}`);
     this.emitWATLine("global.set $heap_ptr");
+
+    if (block.tailExpression) {
+      this.emitExpressionWAT(block.tailExpression);
+    } else {
+      this.emitWATLine("i32.const 0");
+    }
+
+    this.scopeStack.pop();
   }
 
   private resolveVariable(name: string): VariableInfo {
@@ -331,6 +426,22 @@ export class Emitter {
         }
         break;
       case "BinaryExpression":
+        if (expr.operator === "=") {
+          if (expr.left.type !== "Identifier") {
+            this.throwError("Invalid l-value", expr.left);
+          }
+          const info = this.resolveVariable(expr.left.name);
+          if (!info.isMutable) {
+            this.throwError(
+              `Cannot assign to immutable variable: ${expr.left.name}`,
+              expr.left,
+            );
+          }
+          this.emitExpressionWAT(expr.right);
+          this.emitWATLine(`local.tee $${info.uniqueName}`);
+          break;
+        }
+
         this.emitExpressionWAT(expr.left);
         this.emitExpressionWAT(expr.right);
         switch (expr.operator) {
@@ -364,24 +475,80 @@ export class Emitter {
           case ">>":
             this.emitWATLine("i32.shr_s");
             break;
+          case "==":
+            this.emitWATLine("i32.eq");
+            break;
+          case "!=":
+            this.emitWATLine("i32.ne");
+            break;
+          case "<":
+            this.emitWATLine("i32.lt_s");
+            break;
+          case ">":
+            this.emitWATLine("i32.gt_s");
+            break;
+          case "<=":
+            this.emitWATLine("i32.le_s");
+            break;
+          case ">=":
+            this.emitWATLine("i32.ge_s");
+            break;
         }
         break;
       case "MacroInvocation":
         if (expr.name === "print" || expr.name === "println") {
-          const arg = expr.args[0];
-          if (arg.type === "Literal" && arg.rawType === "string") {
-            const strValue = arg.value as string;
-            if (!this.stringConstants.has(strValue)) {
-              this.stringConstants.set(strValue, this.stringOffset);
-              this.stringOffset +=
-                4 + new TextEncoder().encode(strValue).length;
+          const formatArg = expr.args[0];
+          if (
+            formatArg &&
+            formatArg.type === "Literal" &&
+            formatArg.rawType === "string"
+          ) {
+            const formatStr = formatArg.value as string;
+            let argIndex = 1;
+            let lastPos = 0;
+            const regex = /\{([a-zA-Z0-9_]*)\}/g;
+            let match;
+
+            while ((match = regex.exec(formatStr)) !== null) {
+              const textBefore = formatStr.substring(lastPos, match.index);
+              if (textBefore) {
+                this.emitStringPrintWAT(textBefore);
+              }
+
+              const varName = match[1];
+              if (varName) {
+                // {varName}
+                const info = this.resolveVariable(varName);
+                this.emitWATLine(`local.get $${info.uniqueName}`);
+                this.emitWATLine("call $print");
+                this.emitWATLine("drop");
+              } else {
+                // {}
+                if (argIndex < expr.args.length) {
+                  this.emitExpressionWAT(expr.args[argIndex++]);
+                  this.emitWATLine("call $print");
+                  this.emitWATLine("drop");
+                } else {
+                  this.throwError(
+                    "Not enough arguments for format string",
+                    expr,
+                  );
+                }
+              }
+              lastPos = regex.lastIndex;
             }
-            const offset = this.stringConstants.get(strValue)!;
-            this.emitWATLine(`i32.const ${offset}`);
-            this.emitWATLine("call $print_str");
-          } else {
-            this.emitExpressionWAT(arg);
+
+            const textAfter = formatStr.substring(lastPos);
+            if (textAfter) {
+              this.emitStringPrintWAT(textAfter);
+            }
+
+            this.emitWATLine("i32.const 0"); // Result of macro
+          } else if (formatArg) {
+            this.emitExpressionWAT(formatArg);
             this.emitWATLine("call $print");
+          } else {
+            this.emitWATLine("i32.const 0");
           }
         } else if (expr.name === "panic") {
           this.emitExpressionWAT(
@@ -410,6 +577,17 @@ export class Emitter {
 
   private emitWATLine(line: string) {
     this.outputWAT.push("  ".repeat(this.indent) + line);
+  }
+
+  private emitStringPrintWAT(str: string) {
+    if (!this.stringConstants.has(str)) {
+      this.stringConstants.set(str, this.stringOffset);
+      this.stringOffset += 4 + new TextEncoder().encode(str).length;
+    }
+    const offset = this.stringConstants.get(str)!;
+    this.emitWATLine(`i32.const ${offset}`);
+    this.emitWATLine("call $print_str");
+    this.emitWATLine("drop");
   }
 
   emitWASM(): Uint8Array {
@@ -553,6 +731,7 @@ export class Emitter {
 
   private emitFunctionBinary(fn: FunctionDeclaration): number[] {
     this.localCounter = 0;
+    this.currentBlockDepth = 0;
     this.allLocals.clear();
     this.locals.clear();
     this.scopeStack = [
@@ -632,6 +811,71 @@ export class Emitter {
         };
         this.scopeStack[this.scopeStack.length - 1].vars.set(stmt.name, info);
         body.push(OP_LOCAL_SET, 0xfe, uniqueName as any);
+      } else if (stmt.type === "ConstStatement") {
+        this.emitExpressionBinary(stmt.initializer, body);
+        const uniqueName = `${stmt.name}_${++this.localCounter}`;
+        this.allLocals.add(uniqueName);
+        const info: VariableInfo = {
+          uniqueName,
+          isMutable: false,
+          isBorrowedMut: false,
+          borrowCount: 0,
+        };
+        this.scopeStack[this.scopeStack.length - 1].vars.set(stmt.name, info);
+        body.push(OP_LOCAL_SET, 0xfe, uniqueName as any);
+      } else if (stmt.type === "IfStatement") {
+        this.emitExpressionBinary(stmt.condition, body);
+        this.currentBlockDepth++;
+        body.push(OP_IF, TYPE_I32);
+        this.emitBlockBinary(stmt.thenBranch, body);
+        if (stmt.elseBranch) {
+          body.push(OP_ELSE);
+          if (stmt.elseBranch.type === "BlockStatement") {
+            this.emitBlockBinary(stmt.elseBranch, body);
+          } else {
+            this.emitBlockBinary(
+              { type: "BlockStatement", body: [stmt.elseBranch] },
+              body,
+            );
+          }
+        } else {
+          body.push(OP_ELSE, OP_I32_CONST, 0);
+        }
+        this.currentBlockDepth--;
+        body.push(OP_END, OP_DROP);
+      } else if (stmt.type === "LoopStatement") {
+        this.currentBlockDepth++;
+        body.push(OP_BLOCK, TYPE_I32);
+        this.currentBlockDepth++;
+        body.push(OP_LOOP, TYPE_I32);
+        this.loopStack.push({
+          breakDepth: this.currentBlockDepth - 1,
+          continueDepth: this.currentBlockDepth,
+        });
+        this.emitBlockBinary(stmt.body, body);
+        body.push(OP_DROP);
+        body.push(OP_I32_CONST, 0); // Loop fallthrough value
+        body.push(OP_BR, ...this.encodeUnsignedLEB128(0));
+        body.push(OP_END);
+        this.currentBlockDepth--;
+        body.push(OP_END);
+        this.currentBlockDepth--;
+        this.loopStack.pop();
+        body.push(OP_DROP);
+      } else if (stmt.type === "BreakStatement") {
+        if (this.loopStack.length === 0)
+          this.throwError("'break' outside of loop", stmt);
+        const loop = this.loopStack[this.loopStack.length - 1];
+        const levels = this.currentBlockDepth - loop.breakDepth;
+        body.push(OP_I32_CONST, 0);
+        body.push(OP_BR, ...this.encodeUnsignedLEB128(levels));
+      } else if (stmt.type === "ContinueStatement") {
+        if (this.loopStack.length === 0)
+          this.throwError("'continue' outside of loop", stmt);
+        const loop = this.loopStack[this.loopStack.length - 1];
+        const levels = this.currentBlockDepth - loop.continueDepth;
+        body.push(OP_I32_CONST, 0);
+        body.push(OP_BR, ...this.encodeUnsignedLEB128(levels));
       } else if (stmt.type === "ExpressionStatement") {
         this.emitExpressionBinary(stmt.expression, body);
         body.push(OP_DROP);
@@ -640,14 +884,9 @@ export class Emitter {
         body.push(OP_DROP);
       }
     }
-    if (block.tailExpression) {
-      this.emitExpressionBinary(block.tailExpression, body);
-    } else {
-      body.push(OP_I32_CONST, 0);
-    }
 
     // Release borrows
-    const scope = this.scopeStack.pop()!;
+    const scope = this.scopeStack[this.scopeStack.length - 1];
     for (const borrow of scope.borrows) {
       if (borrow.isMut) {
         borrow.info.isBorrowedMut = false;
@@ -658,6 +897,14 @@ export class Emitter {
 
     body.push(OP_LOCAL_GET, 0xfe, heapBackupName as any);
     body.push(0x24, 0x00);
+
+    if (block.tailExpression) {
+      this.emitExpressionBinary(block.tailExpression, body);
+    } else {
+      body.push(OP_I32_CONST, 0);
+    }
+
+    this.scopeStack.pop();
   }
 
   private emitExpressionBinary(expr: Expression, body: number[]) {
@@ -757,6 +1004,22 @@ export class Emitter {
         }
         break;
       case "BinaryExpression":
+        if (expr.operator === "=") {
+          if (expr.left.type !== "Identifier") {
+            this.throwError("Invalid l-value", expr.left);
+          }
+          const info = this.resolveVariable(expr.left.name);
+          if (!info.isMutable) {
+            this.throwError(
+              `Cannot assign to immutable variable: ${expr.left.name}`,
+              expr.left,
+            );
+          }
+          this.emitExpressionBinary(expr.right, body);
+          body.push(0x22, 0xfe, info.uniqueName as any); // local.tee
+          break;
+        }
+
         this.emitExpressionBinary(expr.left, body);
         this.emitExpressionBinary(expr.right, body);
         switch (expr.operator) {
@@ -790,24 +1053,77 @@ export class Emitter {
           case ">>":
             body.push(OP_I32_SHR_S);
             break;
+          case "==":
+            body.push(OP_I32_EQ);
+            break;
+          case "!=":
+            body.push(OP_I32_NE);
+            break;
+          case "<":
+            body.push(OP_I32_LT_S);
+            break;
+          case ">":
+            body.push(OP_I32_GT_S);
+            break;
+          case "<=":
+            body.push(OP_I32_LE_S);
+            break;
+          case ">=":
+            body.push(OP_I32_GE_S);
+            break;
         }
         break;
       case "MacroInvocation":
         if (expr.name === "print" || expr.name === "println") {
-          const arg = expr.args[0];
-          if (arg.type === "Literal" && arg.rawType === "string") {
-            const strValue = arg.value as string;
-            if (!this.stringConstants.has(strValue)) {
-              this.stringConstants.set(strValue, this.stringOffset);
-              this.stringOffset +=
-                4 + new TextEncoder().encode(strValue).length;
+          const formatArg = expr.args[0];
+          if (
+            formatArg &&
+            formatArg.type === "Literal" &&
+            formatArg.rawType === "string"
+          ) {
+            const formatStr = formatArg.value as string;
+            let argIndex = 1;
+            let lastPos = 0;
+            const regex = /\{([a-zA-Z0-9_]*)\}/g;
+            let match;
+
+            while ((match = regex.exec(formatStr)) !== null) {
+              const textBefore = formatStr.substring(lastPos, match.index);
+              if (textBefore) {
+                this.emitStringPrintBinary(textBefore, body);
+              }
+
+              const varName = match[1];
+              if (varName) {
+                const info = this.resolveVariable(varName);
+                body.push(OP_LOCAL_GET, 0xfe, info.uniqueName as any);
+                body.push(OP_CALL, ...this.encodeUnsignedLEB128(0));
+                body.push(OP_DROP);
+              } else {
+                if (argIndex < expr.args.length) {
+                  this.emitExpressionBinary(expr.args[argIndex++], body);
+                  body.push(OP_CALL, ...this.encodeUnsignedLEB128(0));
+                  body.push(OP_DROP);
+                } else {
+                  this.throwError(
+                    "Not enough arguments for format string",
+                    expr,
+                  );
+                }
+              }
+              lastPos = regex.lastIndex;
             }
-            const offset = this.stringConstants.get(strValue)!;
-            body.push(OP_I32_CONST, ...this.encodeSignedLEB128(offset));
-            body.push(OP_CALL, ...this.encodeUnsignedLEB128(1)); // print_str is index 1
+
+            const textAfter = formatStr.substring(lastPos);
+            if (textAfter) {
+              this.emitStringPrintBinary(textAfter, body);
+            }
+            body.push(OP_I32_CONST, 0);
+          } else if (formatArg) {
+            this.emitExpressionBinary(formatArg, body);
+            body.push(OP_CALL, ...this.encodeUnsignedLEB128(0));
           } else {
-            this.emitExpressionBinary(arg, body);
-            body.push(OP_CALL, ...this.encodeUnsignedLEB128(0)); // print is index 0
+            body.push(OP_I32_CONST, 0);
           }
         } else if (expr.name === "panic") {
           this.emitExpressionBinary(
@@ -836,6 +1152,17 @@ export class Emitter {
         body.push(OP_CALL, ...this.encodeUnsignedLEB128(idx));
         break;
     }
+  }
+
+  private emitStringPrintBinary(str: string, body: number[]) {
+    if (!this.stringConstants.has(str)) {
+      this.stringConstants.set(str, this.stringOffset);
+      this.stringOffset += 4 + new TextEncoder().encode(str).length;
+    }
+    const offset = this.stringConstants.get(str)!;
+    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(offset));
+    body.push(OP_CALL, ...this.encodeUnsignedLEB128(1)); // print_str is index 1
+    body.push(OP_DROP);
   }
 
   private encodeSection(id: number, content: number[]): number[] {

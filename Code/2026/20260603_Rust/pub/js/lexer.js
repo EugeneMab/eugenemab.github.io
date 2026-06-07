@@ -3,51 +3,63 @@ export var TokenType;
     // Keywords
     TokenType[TokenType["FN"] = 0] = "FN";
     TokenType[TokenType["LET"] = 1] = "LET";
-    TokenType[TokenType["MUT"] = 2] = "MUT";
-    TokenType[TokenType["IF"] = 3] = "IF";
-    TokenType[TokenType["ELSE"] = 4] = "ELSE";
-    TokenType[TokenType["LOOP"] = 5] = "LOOP";
-    TokenType[TokenType["STRUCT"] = 6] = "STRUCT";
-    TokenType[TokenType["IMPL"] = 7] = "IMPL";
-    TokenType[TokenType["PANIC"] = 8] = "PANIC";
+    TokenType[TokenType["CONST"] = 2] = "CONST";
+    TokenType[TokenType["MUT"] = 3] = "MUT";
+    TokenType[TokenType["IF"] = 4] = "IF";
+    TokenType[TokenType["ELSE"] = 5] = "ELSE";
+    TokenType[TokenType["LOOP"] = 6] = "LOOP";
+    TokenType[TokenType["BREAK"] = 7] = "BREAK";
+    TokenType[TokenType["CONTINUE"] = 8] = "CONTINUE";
+    TokenType[TokenType["STRUCT"] = 9] = "STRUCT";
+    TokenType[TokenType["IMPL"] = 10] = "IMPL";
+    TokenType[TokenType["PANIC"] = 11] = "PANIC";
     // Literals
-    TokenType[TokenType["INTEGER"] = 9] = "INTEGER";
-    TokenType[TokenType["HEX"] = 10] = "HEX";
-    TokenType[TokenType["STRING"] = 11] = "STRING";
-    TokenType[TokenType["IDENTIFIER"] = 12] = "IDENTIFIER";
+    TokenType[TokenType["INTEGER"] = 12] = "INTEGER";
+    TokenType[TokenType["HEX"] = 13] = "HEX";
+    TokenType[TokenType["STRING"] = 14] = "STRING";
+    TokenType[TokenType["IDENTIFIER"] = 15] = "IDENTIFIER";
     // Symbols
-    TokenType[TokenType["LPAREN"] = 13] = "LPAREN";
-    TokenType[TokenType["RPAREN"] = 14] = "RPAREN";
-    TokenType[TokenType["LBRACE"] = 15] = "LBRACE";
-    TokenType[TokenType["RBRACE"] = 16] = "RBRACE";
-    TokenType[TokenType["LBRACKET"] = 17] = "LBRACKET";
-    TokenType[TokenType["RBRACKET"] = 18] = "RBRACKET";
-    TokenType[TokenType["COMMA"] = 19] = "COMMA";
-    TokenType[TokenType["DOT"] = 20] = "DOT";
-    TokenType[TokenType["COLON"] = 21] = "COLON";
-    TokenType[TokenType["SEMICOLON"] = 22] = "SEMICOLON";
-    TokenType[TokenType["ARROW"] = 23] = "ARROW";
-    TokenType[TokenType["PLUS"] = 24] = "PLUS";
-    TokenType[TokenType["MINUS"] = 25] = "MINUS";
-    TokenType[TokenType["STAR"] = 26] = "STAR";
-    TokenType[TokenType["SLASH"] = 27] = "SLASH";
-    TokenType[TokenType["PERCENT"] = 28] = "PERCENT";
-    TokenType[TokenType["AMPERSAND"] = 29] = "AMPERSAND";
-    TokenType[TokenType["PIPE"] = 30] = "PIPE";
-    TokenType[TokenType["CARET"] = 31] = "CARET";
-    TokenType[TokenType["LSHIFT"] = 32] = "LSHIFT";
-    TokenType[TokenType["RSHIFT"] = 33] = "RSHIFT";
-    TokenType[TokenType["EQUALS"] = 34] = "EQUALS";
-    TokenType[TokenType["EXCLAMATION"] = 35] = "EXCLAMATION";
-    TokenType[TokenType["EOF"] = 36] = "EOF";
+    TokenType[TokenType["LPAREN"] = 16] = "LPAREN";
+    TokenType[TokenType["RPAREN"] = 17] = "RPAREN";
+    TokenType[TokenType["LBRACE"] = 18] = "LBRACE";
+    TokenType[TokenType["RBRACE"] = 19] = "RBRACE";
+    TokenType[TokenType["LBRACKET"] = 20] = "LBRACKET";
+    TokenType[TokenType["RBRACKET"] = 21] = "RBRACKET";
+    TokenType[TokenType["COMMA"] = 22] = "COMMA";
+    TokenType[TokenType["DOT"] = 23] = "DOT";
+    TokenType[TokenType["COLON"] = 24] = "COLON";
+    TokenType[TokenType["SEMICOLON"] = 25] = "SEMICOLON";
+    TokenType[TokenType["ARROW"] = 26] = "ARROW";
+    TokenType[TokenType["PLUS"] = 27] = "PLUS";
+    TokenType[TokenType["MINUS"] = 28] = "MINUS";
+    TokenType[TokenType["STAR"] = 29] = "STAR";
+    TokenType[TokenType["SLASH"] = 30] = "SLASH";
+    TokenType[TokenType["PERCENT"] = 31] = "PERCENT";
+    TokenType[TokenType["AMPERSAND"] = 32] = "AMPERSAND";
+    TokenType[TokenType["PIPE"] = 33] = "PIPE";
+    TokenType[TokenType["CARET"] = 34] = "CARET";
+    TokenType[TokenType["LSHIFT"] = 35] = "LSHIFT";
+    TokenType[TokenType["RSHIFT"] = 36] = "RSHIFT";
+    TokenType[TokenType["EQUALS"] = 37] = "EQUALS";
+    TokenType[TokenType["EQ_EQ"] = 38] = "EQ_EQ";
+    TokenType[TokenType["NE_EQ"] = 39] = "NE_EQ";
+    TokenType[TokenType["LT"] = 40] = "LT";
+    TokenType[TokenType["GT"] = 41] = "GT";
+    TokenType[TokenType["LT_EQ"] = 42] = "LT_EQ";
+    TokenType[TokenType["GT_EQ"] = 43] = "GT_EQ";
+    TokenType[TokenType["EXCLAMATION"] = 44] = "EXCLAMATION";
+    TokenType[TokenType["EOF"] = 45] = "EOF";
 })(TokenType || (TokenType = {}));
 const KEYWORDS = {
     fn: TokenType.FN,
     let: TokenType.LET,
+    const: TokenType.CONST,
     mut: TokenType.MUT,
     if: TokenType.IF,
     else: TokenType.ELSE,
     loop: TokenType.LOOP,
+    break: TokenType.BREAK,
+    continue: TokenType.CONTINUE,
     struct: TokenType.STRUCT,
     impl: TokenType.IMPL,
     panic: TokenType.PANIC,
@@ -122,6 +134,42 @@ export class Lexer {
                 });
                 continue;
             }
+            if (this.match("==")) {
+                tokens.push({
+                    type: TokenType.EQ_EQ,
+                    value: "==",
+                    line: startLine,
+                    col: startCol,
+                });
+                continue;
+            }
+            if (this.match("!=")) {
+                tokens.push({
+                    type: TokenType.NE_EQ,
+                    value: "!=",
+                    line: startLine,
+                    col: startCol,
+                });
+                continue;
+            }
+            if (this.match("<=")) {
+                tokens.push({
+                    type: TokenType.LT_EQ,
+                    value: "<=",
+                    line: startLine,
+                    col: startCol,
+                });
+                continue;
+            }
+            if (this.match(">=")) {
+                tokens.push({
+                    type: TokenType.GT_EQ,
+                    value: ">=",
+                    line: startLine,
+                    col: startCol,
+                });
+                continue;
+            }
             const symbols = {
                 "(": TokenType.LPAREN,
                 ")": TokenType.RPAREN,
@@ -142,6 +190,8 @@ export class Lexer {
                 "|": TokenType.PIPE,
                 "^": TokenType.CARET,
                 "=": TokenType.EQUALS,
+                "<": TokenType.LT,
+                ">": TokenType.GT,
                 "!": TokenType.EXCLAMATION,
             };
             if (char in symbols) {
