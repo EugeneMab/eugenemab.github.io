@@ -13,3 +13,4 @@
 - [x] Book 1-3: Hello Cargo (Completed)
 - [x] Book 2-0: Guessing Game Tutorial (Completed)
 - [x] Book 3-1: Variables and Mutability (Completed)
+- [x] Book 3-2: Data Types (Boolean subset)

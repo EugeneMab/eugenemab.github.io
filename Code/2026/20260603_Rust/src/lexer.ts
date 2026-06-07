@@ -12,6 +12,8 @@ export enum TokenType {
   STRUCT,
   IMPL,
   PANIC,
+  TRUE,
+  FALSE,
 
   // Literals
   INTEGER,
@@ -73,6 +75,8 @@ const KEYWORDS: Record<string, TokenType> = {
   struct: TokenType.STRUCT,
   impl: TokenType.IMPL,
   panic: TokenType.PANIC,
+  true: TokenType.TRUE,
+  false: TokenType.FALSE,
 };
 
 export class Lexer {

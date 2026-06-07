@@ -3,7 +3,7 @@ import { Lexer, TokenType } from "./lexer.js";
 
 describe("Lexer", () => {
   it("should tokenize keywords", () => {
-    const input = "fn let mut if else loop struct impl panic";
+    const input = "fn let mut if else loop struct impl panic true false";
     const lexer = new Lexer(input);
     const tokens = lexer.tokenize();
 
@@ -17,6 +17,8 @@ describe("Lexer", () => {
       TokenType.STRUCT,
       TokenType.IMPL,
       TokenType.PANIC,
+      TokenType.TRUE,
+      TokenType.FALSE,
       TokenType.EOF,
     ];
 

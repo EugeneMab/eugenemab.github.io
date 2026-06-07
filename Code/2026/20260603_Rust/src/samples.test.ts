@@ -218,5 +218,12 @@ describe("UI Samples Regression Tests", () => {
       expect(logs).toEqual(["Inner x: ", "12", "Outer x: ", "6"]);
       expect(result).toBe(0);
     });
+
+    it("Book 3-2: Data Types - Boolean", async () => {
+      const code = loadSample("book03_02_booleans.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["t", "false"]);
+      expect(result).toBe(0);
+    });
   });
 });
