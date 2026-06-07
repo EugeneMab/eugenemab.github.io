@@ -36,6 +36,7 @@ const OP_LOOP = 0x03;
 const OP_BR = 0x0c;
 const OP_BLOCK = 0x02;
 const OP_UNREACHABLE = 0x00;
+const OP_I32_EQZ = 0x45;
 export class Emitter {
     program;
     source;
@@ -231,6 +232,43 @@ export class Emitter {
                 this.emitWATLine("end");
                 this.emitWATLine("drop");
             }
+            else if (stmt.type === "WhileStatement") {
+                this.emitWATLine("block (result i32)");
+                this.indent++;
+                this.currentBlockDepth++;
+                this.emitWATLine("loop (result i32)");
+                this.indent++;
+                this.currentBlockDepth++;
+                this.loopStack.push({
+                    breakDepth: this.currentBlockDepth - 1,
+                    continueDepth: this.currentBlockDepth,
+                });
+                // Condition check: if NOT condition, break out
+                this.emitExpressionWAT(stmt.condition);
+                this.emitWATLine("i32.eqz");
+                this.emitWATLine("if");
+                this.indent++;
+                this.currentBlockDepth++;
+                const wLoop = this.loopStack[this.loopStack.length - 1];
+                const wBreakLevels = this.currentBlockDepth - wLoop.breakDepth;
+                this.emitWATLine("i32.const 0");
+                this.emitWATLine(`br ${wBreakLevels}`);
+                this.indent--;
+                this.currentBlockDepth--;
+                this.emitWATLine("end");
+                this.emitBlockWAT(stmt.body);
+                this.emitWATLine("drop");
+                this.emitWATLine("i32.const 0");
+                this.emitWATLine("br 0");
+                this.indent--;
+                this.currentBlockDepth--;
+                this.loopStack.pop();
+                this.emitWATLine("end");
+                this.indent--;
+                this.currentBlockDepth--;
+                this.emitWATLine("end");
+                this.emitWATLine("drop");
+            }
             else if (stmt.type === "BreakStatement") {
                 if (this.loopStack.length === 0)
                     this.throwError("'break' outside of loop", stmt);
@@ -288,6 +326,34 @@ export class Emitter {
             case "BlockStatement":
                 this.emitBlockWAT(expr);
                 break;
+            case "IfStatement": {
+                this.emitExpressionWAT(expr.condition);
+                this.emitWATLine("if (result i32)");
+                this.indent++;
+                this.currentBlockDepth++;
+                this.emitBlockWAT(expr.thenBranch);
+                this.indent--;
+                if (expr.elseBranch) {
+                    this.emitWATLine("else");
+                    this.indent++;
+                    if (expr.elseBranch.type === "BlockStatement") {
+                        this.emitBlockWAT(expr.elseBranch);
+                    }
+                    else {
+                        this.emitBlockWAT({ type: "BlockStatement", body: [expr.elseBranch] });
+                    }
+                    this.indent--;
+                }
+                else {
+                    this.emitWATLine("else");
+                    this.indent++;
+                    this.emitWATLine("i32.const 0");
+                    this.indent--;
+                }
+                this.currentBlockDepth--;
+                this.emitWATLine("end");
+                break;
+            }
             case "Literal":
                 if (expr.rawType === "string") {
                     const strValue = expr.value;
@@ -751,6 +817,37 @@ export class Emitter {
                 this.loopStack.pop();
                 body.push(OP_DROP);
             }
+            else if (stmt.type === "WhileStatement") {
+                this.currentBlockDepth++;
+                body.push(OP_BLOCK, TYPE_I32);
+                this.currentBlockDepth++;
+                body.push(OP_LOOP, TYPE_I32);
+                this.loopStack.push({
+                    breakDepth: this.currentBlockDepth - 1,
+                    continueDepth: this.currentBlockDepth,
+                });
+                // Condition check: if NOT condition, break out
+                this.emitExpressionBinary(stmt.condition, body);
+                body.push(OP_I32_EQZ);
+                this.currentBlockDepth++;
+                body.push(OP_IF, 0x40); // void if block
+                const wbLoop = this.loopStack[this.loopStack.length - 1];
+                const wbBreakLevels = this.currentBlockDepth - wbLoop.breakDepth;
+                body.push(OP_I32_CONST, 0);
+                body.push(OP_BR, ...this.encodeUnsignedLEB128(wbBreakLevels));
+                this.currentBlockDepth--;
+                body.push(OP_END);
+                this.emitBlockBinary(stmt.body, body);
+                body.push(OP_DROP);
+                body.push(OP_I32_CONST, 0);
+                body.push(OP_BR, ...this.encodeUnsignedLEB128(0));
+                body.push(OP_END);
+                this.currentBlockDepth--;
+                body.push(OP_END);
+                this.currentBlockDepth--;
+                this.loopStack.pop();
+                body.push(OP_DROP);
+            }
             else if (stmt.type === "BreakStatement") {
                 if (this.loopStack.length === 0)
                     this.throwError("'break' outside of loop", stmt);
@@ -800,6 +897,28 @@ export class Emitter {
             case "BlockStatement":
                 this.emitBlockBinary(expr, body);
                 break;
+            case "IfStatement": {
+                this.emitExpressionBinary(expr.condition, body);
+                this.currentBlockDepth++;
+                body.push(OP_IF, TYPE_I32);
+                this.emitBlockBinary(expr.thenBranch, body);
+                if (expr.elseBranch) {
+                    body.push(OP_ELSE);
+                    if (expr.elseBranch.type === "BlockStatement") {
+                        this.emitBlockBinary(expr.elseBranch, body);
+                    }
+                    else {
+                        this.emitBlockBinary({ type: "BlockStatement", body: [expr.elseBranch] }, body);
+                    }
+                }
+                else {
+                    body.push(OP_ELSE, OP_I32_CONST, 0);
+                }
+                this.currentBlockDepth--;
+                body.push(OP_END);
+                // no drop - this is an expression
+                break;
+            }
             case "Literal":
                 if (expr.rawType === "string") {
                     const strValue = expr.value;

@@ -225,5 +225,26 @@ describe("UI Samples Regression Tests", () => {
       expect(logs).toEqual(["t", "false"]);
       expect(result).toBe(0);
     });
+
+    it("Book 3-3: Functions", async () => {
+      const code = loadSample("book03_03_functions.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["The value of x is: ", "5", "5"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 3-5: while Loop", async () => {
+      const code = loadSample("book03_05_while.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["3", "2", "1", "LIFTOFF!"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 3-5: if as Expression", async () => {
+      const code = loadSample("book03_05_if_let.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["5"]);
+      expect(result).toBe(0);
+    });
   });
 });

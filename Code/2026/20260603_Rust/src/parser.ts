@@ -20,6 +20,7 @@ export type Statement =
   | FunctionDeclaration
   | IfStatement
   | LoopStatement
+  | WhileStatement
   | BreakStatement
   | ContinueStatement;
 
@@ -45,6 +46,12 @@ export interface IfStatement extends BaseNode {
 
 export interface LoopStatement extends BaseNode {
   type: "LoopStatement";
+  body: BlockStatement;
+}
+
+export interface WhileStatement extends BaseNode {
+  type: "WhileStatement";
+  condition: Expression;
   body: BlockStatement;
 }
 
@@ -82,7 +89,8 @@ export type Expression =
   | Identifier
   | CallExpression
   | MacroInvocation
-  | BlockStatement;
+  | BlockStatement
+  | IfStatement;
 
 export interface BinaryExpression extends BaseNode {
   type: "BinaryExpression";
@@ -150,6 +158,7 @@ export class Parser {
     if (this.match(TokenType.FN)) return this.parseFunctionDeclaration();
     if (this.match(TokenType.IF)) return this.parseIfStatement();
     if (this.match(TokenType.LOOP)) return this.parseLoopStatement();
+    if (this.match(TokenType.WHILE)) return this.parseWhileStatement();
     if (this.match(TokenType.BREAK)) return this.parseBreakStatement();
     if (this.match(TokenType.CONTINUE)) return this.parseContinueStatement();
 
@@ -168,6 +177,13 @@ export class Parser {
     const token = this.previous();
     const body = this.parseBlockStatement();
     return { type: "LoopStatement", token, body };
+  }
+
+  private parseWhileStatement(): WhileStatement {
+    const token = this.previous();
+    const condition = this.parseExpression();
+    const body = this.parseBlockStatement();
+    return { type: "WhileStatement", token, condition, body };
   }
 
   private parseBreakStatement(): BreakStatement {
@@ -240,9 +256,15 @@ export class Parser {
         params.push(
           this.consume(TokenType.IDENTIFIER, "Expect parameter name").value,
         );
+        if (this.match(TokenType.COLON)) {
+          this.consume(TokenType.IDENTIFIER, "Expect type name");
+        }
       } while (this.match(TokenType.COMMA));
     }
     this.consume(TokenType.RPAREN, "Expect ')' after parameters");
+    if (this.match(TokenType.ARROW)) {
+      this.consume(TokenType.IDENTIFIER, "Expect return type");
+    }
     const body = this.parseBlockStatement();
     return { type: "FunctionDeclaration", token, name, params, body };
   }
@@ -259,6 +281,7 @@ export class Parser {
         this.check(TokenType.FN) ||
         this.check(TokenType.IF) ||
         this.check(TokenType.LOOP) ||
+        this.check(TokenType.WHILE) ||
         this.check(TokenType.BREAK) ||
         this.check(TokenType.CONTINUE)
       ) {
@@ -431,6 +454,10 @@ export class Parser {
 
   private parsePrimary(): Expression {
     if (this.check(TokenType.LBRACE)) return this.parseBlockStatement();
+
+    if (this.match(TokenType.IF)) {
+      return this.parseIfStatement();
+    }
 
     if (this.match(TokenType.INTEGER)) {
       const token = this.previous();

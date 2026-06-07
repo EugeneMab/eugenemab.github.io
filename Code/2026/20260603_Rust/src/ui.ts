@@ -62,6 +62,9 @@ export function initUI() {
     book03_01_const: "book03_01_constants.rs",
     book03_01_shadow: "book03_01_shadowing.rs",
     book03_02_bool: "book03_02_booleans.rs",
+    book03_03_fn: "book03_03_functions.rs",
+    book03_05_while: "book03_05_while.rs",
+    book03_05_if_let: "book03_05_if_let.rs",
   };
 
   sampleSelect?.addEventListener("change", async () => {

@@ -14,3 +14,6 @@
 - [x] Book 2-0: Guessing Game Tutorial (Completed)
 - [x] Book 3-1: Variables and Mutability (Completed)
 - [x] Book 3-2: Data Types (Boolean subset)
+- [x] Book 3-3: Functions (Completed - typed params and return types)
+- [x] Book 3-4: Comments (No samples, comment syntax already supported)
+- [x] Book 3-5: Control Flow (while loop + if as expression)
