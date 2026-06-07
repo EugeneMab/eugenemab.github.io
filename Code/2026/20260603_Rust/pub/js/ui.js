@@ -28,7 +28,7 @@ export function initUI() {
     const formatWAT = (wat) => {
         const lines = wat.split("\n");
         const formatted = [];
-        let indent = 0;
+        let blockIndent = 0;
         for (const rawLine of lines) {
             const line = rawLine.trim();
             if (!line) {
@@ -39,14 +39,15 @@ export function initUI() {
             const isEnd = lower === "end" || lower.startsWith("end ");
             const isElse = lower === "else";
             if (isEnd || isElse) {
-                indent = Math.max(0, indent - 1);
+                blockIndent = Math.max(0, blockIndent - 1);
             }
-            formatted.push("  ".repeat(indent) + line);
+            const existingIndent = rawLine.match(/^\s*/)?.[0] ?? "";
+            formatted.push(existingIndent + "  ".repeat(blockIndent) + line);
             const startsBlock = lower.startsWith("if") ||
                 lower.startsWith("block") ||
                 lower.startsWith("loop");
             if (startsBlock || isElse) {
-                indent++;
+                blockIndent++;
             }
         }
         return formatted.join("\n");

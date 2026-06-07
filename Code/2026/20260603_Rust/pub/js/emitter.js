@@ -134,7 +134,7 @@ export class Emitter {
             this.emitWATLine(`(local $${local} i32)`);
         }
         bodyWAT.forEach((line) => {
-            this.outputWAT.push("  ".repeat(this.indent) + line.trim());
+            this.outputWAT.push("  ".repeat(this.indent) + line);
         });
         this.indent--;
         this.emitWATLine(")");
