@@ -18,8 +18,18 @@ export class Parser {
     parseStatement() {
         if (this.match(TokenType.LET))
             return this.parseLetStatement();
+        if (this.match(TokenType.CONST))
+            return this.parseConstStatement();
         if (this.match(TokenType.FN))
             return this.parseFunctionDeclaration();
+        if (this.match(TokenType.IF))
+            return this.parseIfStatement();
+        if (this.match(TokenType.LOOP))
+            return this.parseLoopStatement();
+        if (this.match(TokenType.BREAK))
+            return this.parseBreakStatement();
+        if (this.match(TokenType.CONTINUE))
+            return this.parseContinueStatement();
         if (this.check(TokenType.LBRACE)) {
             const block = this.parseBlockStatement();
             if (this.match(TokenType.SEMICOLON)) {
@@ -29,14 +39,57 @@ export class Parser {
         }
         return this.parseExpressionStatement();
     }
+    parseLoopStatement() {
+        const token = this.previous();
+        const body = this.parseBlockStatement();
+        return { type: "LoopStatement", token, body };
+    }
+    parseBreakStatement() {
+        const token = this.previous();
+        this.consume(TokenType.SEMICOLON, "Expect ';' after 'break'");
+        return { type: "BreakStatement", token };
+    }
+    parseContinueStatement() {
+        const token = this.previous();
+        this.consume(TokenType.SEMICOLON, "Expect ';' after 'continue'");
+        return { type: "ContinueStatement", token };
+    }
+    parseIfStatement() {
+        const token = this.previous();
+        const condition = this.parseExpression();
+        const thenBranch = this.parseBlockStatement();
+        let elseBranch;
+        if (this.match(TokenType.ELSE)) {
+            if (this.match(TokenType.IF)) {
+                elseBranch = this.parseIfStatement();
+            }
+            else {
+                elseBranch = this.parseBlockStatement();
+            }
+        }
+        return { type: "IfStatement", token, condition, thenBranch, elseBranch };
+    }
     parseLetStatement() {
         const token = this.previous();
         const isMutable = this.match(TokenType.MUT);
         const name = this.consume(TokenType.IDENTIFIER, "Expect identifier after 'let'").value;
+        if (this.match(TokenType.COLON)) {
+            this.consume(TokenType.IDENTIFIER, "Expect type name");
+        }
         this.consume(TokenType.EQUALS, "Expect '=' after identifier");
         const initializer = this.parseExpression();
         this.consume(TokenType.SEMICOLON, "Expect ';' after let statement");
         return { type: "LetStatement", token, name, isMutable, initializer };
+    }
+    parseConstStatement() {
+        const token = this.previous();
+        const name = this.consume(TokenType.IDENTIFIER, "Expect identifier after 'const'").value;
+        this.consume(TokenType.COLON, "Expect ':' after identifier");
+        this.consume(TokenType.IDENTIFIER, "Expect type name");
+        this.consume(TokenType.EQUALS, "Expect '=' after type");
+        const initializer = this.parseExpression();
+        this.consume(TokenType.SEMICOLON, "Expect ';' after const statement");
+        return { type: "ConstStatement", token, name, initializer };
     }
     parseFunctionDeclaration() {
         const token = this.previous();
@@ -57,7 +110,13 @@ export class Parser {
         const body = [];
         let tailExpression;
         while (!this.check(TokenType.RBRACE) && !this.isAtEnd()) {
-            if (this.check(TokenType.LET) || this.check(TokenType.FN)) {
+            if (this.check(TokenType.LET) ||
+                this.check(TokenType.CONST) ||
+                this.check(TokenType.FN) ||
+                this.check(TokenType.IF) ||
+                this.check(TokenType.LOOP) ||
+                this.check(TokenType.BREAK) ||
+                this.check(TokenType.CONTINUE)) {
                 body.push(this.parseStatement());
                 continue;
             }
@@ -91,7 +150,35 @@ export class Parser {
         return { type: "ExpressionStatement", token, expression };
     }
     parseExpression() {
-        return this.parseBitwiseOr();
+        return this.parseAssignment();
+    }
+    parseAssignment() {
+        const expr = this.parseComparison();
+        if (this.match(TokenType.EQUALS)) {
+            const token = this.previous();
+            const right = this.parseAssignment();
+            if (expr.type === "Identifier") {
+                return {
+                    type: "BinaryExpression",
+                    token,
+                    operator: "=",
+                    left: expr,
+                    right,
+                };
+            }
+            throw new Error(formatError(this.source, "Invalid l-value", token));
+        }
+        return expr;
+    }
+    parseComparison() {
+        let expr = this.parseBitwiseOr();
+        while (this.match(TokenType.EQ_EQ, TokenType.NE_EQ, TokenType.LT, TokenType.GT, TokenType.LT_EQ, TokenType.GT_EQ)) {
+            const token = this.previous();
+            const operator = token.value;
+            const right = this.parseBitwiseOr();
+            expr = { type: "BinaryExpression", token, operator, left: expr, right };
+        }
+        return expr;
     }
     parseBitwiseOr() {
         let expr = this.parseBitwiseXor();

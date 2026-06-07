@@ -2,10 +2,13 @@ export enum TokenType {
   // Keywords
   FN,
   LET,
+  CONST,
   MUT,
   IF,
   ELSE,
   LOOP,
+  BREAK,
+  CONTINUE,
   STRUCT,
   IMPL,
   PANIC,
@@ -39,6 +42,12 @@ export enum TokenType {
   LSHIFT,
   RSHIFT,
   EQUALS,
+  EQ_EQ,
+  NE_EQ,
+  LT,
+  GT,
+  LT_EQ,
+  GT_EQ,
   EXCLAMATION,
 
   EOF,
@@ -54,10 +63,13 @@ export interface Token {
 const KEYWORDS: Record<string, TokenType> = {
   fn: TokenType.FN,
   let: TokenType.LET,
+  const: TokenType.CONST,
   mut: TokenType.MUT,
   if: TokenType.IF,
   else: TokenType.ELSE,
   loop: TokenType.LOOP,
+  break: TokenType.BREAK,
+  continue: TokenType.CONTINUE,
   struct: TokenType.STRUCT,
   impl: TokenType.IMPL,
   panic: TokenType.PANIC,
@@ -144,6 +156,46 @@ export class Lexer {
         continue;
       }
 
+      if (this.match("==")) {
+        tokens.push({
+          type: TokenType.EQ_EQ,
+          value: "==",
+          line: startLine,
+          col: startCol,
+        });
+        continue;
+      }
+
+      if (this.match("!=")) {
+        tokens.push({
+          type: TokenType.NE_EQ,
+          value: "!=",
+          line: startLine,
+          col: startCol,
+        });
+        continue;
+      }
+
+      if (this.match("<=")) {
+        tokens.push({
+          type: TokenType.LT_EQ,
+          value: "<=",
+          line: startLine,
+          col: startCol,
+        });
+        continue;
+      }
+
+      if (this.match(">=")) {
+        tokens.push({
+          type: TokenType.GT_EQ,
+          value: ">=",
+          line: startLine,
+          col: startCol,
+        });
+        continue;
+      }
+
       const symbols: Record<string, TokenType> = {
         "(": TokenType.LPAREN,
         ")": TokenType.RPAREN,
@@ -164,6 +216,8 @@ export class Lexer {
         "|": TokenType.PIPE,
         "^": TokenType.CARET,
         "=": TokenType.EQUALS,
+        "<": TokenType.LT,
+        ">": TokenType.GT,
         "!": TokenType.EXCLAMATION,
       };
 

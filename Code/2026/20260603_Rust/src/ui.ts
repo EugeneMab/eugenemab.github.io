@@ -52,7 +52,15 @@ export function initUI() {
     regions: "step11_regions.rs",
     borrow: "step12_borrow.rs",
     book01_02_hello: "book01_02_hello_world.rs",
+    book01_03_hello_cargo: "book01_03_hello_cargo.rs",
     book02_00_vars: "book02_00_variables.rs",
+    book02_00_if_else: "book02_00_if_else.rs",
+    book02_00_loop: "book02_00_loop.rs",
+    book02_00_break_error: "book02_00_break_error.rs",
+    book03_01_mut_err: "book03_01_immutability_error.rs",
+    book03_01_mut: "book03_01_mutability.rs",
+    book03_01_const: "book03_01_constants.rs",
+    book03_01_shadow: "book03_01_shadowing.rs",
   };
 
   sampleSelect?.addEventListener("change", async () => {
