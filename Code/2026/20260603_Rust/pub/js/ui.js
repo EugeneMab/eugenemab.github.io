@@ -12,6 +12,128 @@ export function initUI() {
     const timeoutInput = document.getElementById("timeout-input");
     const statusLine = document.getElementById("status-line");
     const sampleSelect = document.getElementById("sample-select");
+    let isEscapedMode = false;
+    const setEditorMode = (escapedMode) => {
+        isEscapedMode = escapedMode;
+        editor.dataset.mode = escapedMode ? "escape" : "edit";
+    };
+    const formatWASMBytes = (bytes) => {
+        const values = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0"));
+        const rows = [];
+        for (let i = 0; i < values.length; i += 16) {
+            rows.push(values.slice(i, i + 16).join(" "));
+        }
+        return rows.join("\n");
+    };
+    const formatWAT = (wat) => {
+        const lines = wat.split("\n");
+        const formatted = [];
+        let indent = 0;
+        for (const rawLine of lines) {
+            const line = rawLine.trim();
+            if (!line) {
+                formatted.push("");
+                continue;
+            }
+            const lower = line.toLowerCase();
+            const isEnd = lower === "end" || lower.startsWith("end ");
+            const isElse = lower === "else";
+            if (isEnd || isElse) {
+                indent = Math.max(0, indent - 1);
+            }
+            formatted.push("  ".repeat(indent) + line);
+            const startsBlock = lower.startsWith("if") ||
+                lower.startsWith("block") ||
+                lower.startsWith("loop");
+            if (startsBlock || isElse) {
+                indent++;
+            }
+        }
+        return formatted.join("\n");
+    };
+    const handleIndentation = (isShift) => {
+        const start = editor.selectionStart;
+        const end = editor.selectionEnd;
+        const value = editor.value;
+        const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+        const lineEndIndex = value.indexOf("\n", end);
+        const lineEnd = lineEndIndex === -1 ? value.length : lineEndIndex;
+        const block = value.substring(lineStart, lineEnd);
+        const lines = block.split("\n");
+        if (isShift) {
+            const removedPerLine = lines.map((line) => {
+                const leadingSpaces = line.match(/^\s*/)?.[0] ?? "";
+                return Math.min(leadingSpaces.length, 4);
+            });
+            const adjusted = lines.map((line, idx) => line.substring(removedPerLine[idx]));
+            editor.value =
+                value.substring(0, lineStart) +
+                    adjusted.join("\n") +
+                    value.substring(lineEnd);
+            const removedFirst = removedPerLine[0] ?? 0;
+            const removedTotal = removedPerLine.reduce((sum, n) => sum + n, 0);
+            if (start === end) {
+                const newPos = Math.max(lineStart, start - removedFirst);
+                editor.selectionStart = newPos;
+                editor.selectionEnd = newPos;
+            }
+            else {
+                editor.selectionStart = Math.max(lineStart, start - removedFirst);
+                editor.selectionEnd = Math.max(editor.selectionStart, end - removedTotal);
+            }
+            return;
+        }
+        const adjusted = lines.map((line) => `    ${line}`);
+        editor.value =
+            value.substring(0, lineStart) + adjusted.join("\n") + value.substring(lineEnd);
+        if (start === end) {
+            const newPos = start + 4;
+            editor.selectionStart = newPos;
+            editor.selectionEnd = newPos;
+        }
+        else {
+            editor.selectionStart = start + 4;
+            editor.selectionEnd = end + 4 * lines.length;
+        }
+    };
+    editor.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            e.preventDefault();
+            e.stopPropagation();
+            setEditorMode(!isEscapedMode);
+            return;
+        }
+        if (isEscapedMode) {
+            if (e.key === "Tab") {
+                return;
+            }
+            if ((e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) ||
+                e.key === "Enter" ||
+                e.key === "Backspace" ||
+                e.key === "Delete") {
+                e.preventDefault();
+            }
+            return;
+        }
+        if (e.key === "Tab") {
+            e.preventDefault();
+            handleIndentation(e.shiftKey);
+            return;
+        }
+        if (e.key === "Enter") {
+            e.preventDefault();
+            const start = editor.selectionStart;
+            const end = editor.selectionEnd;
+            const value = editor.value;
+            const lineStart = value.lastIndexOf("\n", start - 1) + 1;
+            const currentLine = value.substring(lineStart, start);
+            const indentation = currentLine.match(/^\s*/)?.[0] ?? "";
+            editor.value = value.substring(0, start) + "\n" + indentation + value.substring(end);
+            const newPos = start + 1 + indentation.length;
+            editor.selectionStart = newPos;
+            editor.selectionEnd = newPos;
+        }
+    });
     const outputs = {
         info: document.getElementById("info-output"),
         lex: document.getElementById("lex-output"),
@@ -57,6 +179,9 @@ export function initUI() {
         book03_03_fn: "book03_03_functions.rs",
         book03_05_while: "book03_05_while.rs",
         book03_05_if_let: "book03_05_if_let.rs",
+        book04_01_scope: "book04_01_scope.rs",
+        book04_02_borrow: "book04_02_borrow.rs",
+        book04_02_mut_borrow_err: "book04_02_mut_borrow_error.rs",
     };
     sampleSelect?.addEventListener("change", async () => {
         const fileName = sampleFiles[sampleSelect.value];
@@ -120,12 +245,10 @@ export function initUI() {
                     outputs.ast.textContent = JSON.stringify(payload, null, 2);
                     break;
                 case "wat":
-                    outputs.wat.textContent = payload;
+                    outputs.wat.textContent = formatWAT(payload);
                     break;
                 case "wasm":
-                    outputs.wasm.textContent = Array.from(payload)
-                        .map((b) => b.toString(16).padStart(2, "0"))
-                        .join(" ");
+                    outputs.wasm.textContent = formatWASMBytes(payload);
                     break;
                 case "log":
                     outputs.exec.textContent += payload + "\n";
@@ -198,4 +321,5 @@ export function initUI() {
     });
     outputs.info.textContent =
         "Ready. Port: 7878\nRust-to-WASM Compiler Initialized.";
+    setEditorMode(false);
 }

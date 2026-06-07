@@ -5,12 +5,15 @@ test("verify basic compiler flow in UI", async ({ page }) => {
 
   const resultOutput = page.locator("#result-output");
   const statusLine = page.locator("#status-line");
-  const infoOutput = page.locator("#info-output");
 
   const runSample = async (value: string, expectedStatus: string | RegExp) => {
-    const previousInfo = (await infoOutput.textContent()) ?? "";
+    const previousResult = (await resultOutput.textContent()) ?? "";
     await page.selectOption("#sample-select", value);
-    await expect(infoOutput).not.toHaveText(previousInfo, { timeout: 10000 });
+    await expect
+      .poll(async () => (await resultOutput.textContent()) ?? "", {
+        timeout: 10000,
+      })
+      .not.toBe(previousResult);
     await expect(statusLine).toHaveText(expectedStatus, {
       timeout: 10000,
     });
