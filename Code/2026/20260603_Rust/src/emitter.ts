@@ -301,16 +301,6 @@ export class Emitter {
       }
     }
 
-    // Release borrows
-    const scope = this.scopeStack[this.scopeStack.length - 1];
-    for (const borrow of scope.borrows) {
-      if (borrow.isMut) {
-        borrow.info.isBorrowedMut = false;
-      } else {
-        borrow.info.borrowCount--;
-      }
-    }
-
     this.emitWATLine(`local.get $${heapBackupName}`);
     this.emitWATLine("global.set $heap_ptr");
 
@@ -320,7 +310,15 @@ export class Emitter {
       this.emitWATLine("i32.const 0");
     }
 
-    this.scopeStack.pop();
+    // Release borrows
+    const scope = this.scopeStack.pop()!;
+    for (const borrow of scope.borrows) {
+      if (borrow.isMut) {
+        borrow.info.isBorrowedMut = false;
+      } else {
+        borrow.info.borrowCount--;
+      }
+    }
   }
 
   private resolveVariable(name: string): VariableInfo {
@@ -885,16 +883,6 @@ export class Emitter {
       }
     }
 
-    // Release borrows
-    const scope = this.scopeStack[this.scopeStack.length - 1];
-    for (const borrow of scope.borrows) {
-      if (borrow.isMut) {
-        borrow.info.isBorrowedMut = false;
-      } else {
-        borrow.info.borrowCount--;
-      }
-    }
-
     body.push(OP_LOCAL_GET, 0xfe, heapBackupName as any);
     body.push(0x24, 0x00);
 
@@ -904,7 +892,15 @@ export class Emitter {
       body.push(OP_I32_CONST, 0);
     }
 
-    this.scopeStack.pop();
+    // Release borrows
+    const scope = this.scopeStack.pop()!;
+    for (const borrow of scope.borrows) {
+      if (borrow.isMut) {
+        borrow.info.isBorrowedMut = false;
+      } else {
+        borrow.info.borrowCount--;
+      }
+    }
   }
 
   private emitExpressionBinary(expr: Expression, body: number[]) {
