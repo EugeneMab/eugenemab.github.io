@@ -64,7 +64,7 @@ test("verify basic compiler flow in UI", async ({ page }) => {
   // Verify Book 2-0: Guessing Game Loop WAT indentation
   await runSample("book02_00_loop", "Execution Finished");
   const watOutput = (await page.locator("#wat-output").textContent()) ?? "";
-  expect(watOutput).toContain('  (func (export "main")  (result i32)');
+  expect(watOutput).toMatch(/^  \(func \(export "main"\)\s+\(result i32\)/m);
   expect(watOutput).toContain("    block $exit (result i32)");
   expect(watOutput).toContain("      loop $loop (result i32)");
   expect(watOutput).toContain("        if (result i32)");
