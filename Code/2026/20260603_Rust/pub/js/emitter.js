@@ -340,7 +340,10 @@ export class Emitter {
                         this.emitBlockWAT(expr.elseBranch);
                     }
                     else {
-                        this.emitBlockWAT({ type: "BlockStatement", body: [expr.elseBranch] });
+                        this.emitBlockWAT({
+                            type: "BlockStatement",
+                            body: [expr.elseBranch],
+                        });
                     }
                     this.indent--;
                 }

@@ -2,7 +2,6 @@
   "name": "rust-to-wasm-compiler",
   "version": "1.0.0",
   "description": "A Rust-to-WASM compiler and execution environment",
-  "main": "pub/js/index.js",
   "type": "module",
   "scripts": {
     "build": "tsc",
@@ -26,7 +25,6 @@
   },
   "dependencies": {
     "@playwright/test": "^1.60.0",
-    "playwright": "^1.60.0",
-    "wabt": "^1.0.35"
+    "playwright": "^1.60.0"
   }
 }
