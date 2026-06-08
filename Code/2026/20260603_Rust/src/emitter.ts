@@ -485,6 +485,14 @@ export class Emitter {
         this.allLocals.add(objLocal);
         this.allLocals.add(lenLocal);
 
+        const iterableTypeWAT = this.inferExpressionType(stmt.iterable);
+        if (!this.isByteLikeType(iterableTypeWAT) && !this.isStringLikeType(iterableTypeWAT)) {
+          this.throwError(
+            "for-in currently only supports iterating over byte sequences (e.g., s.as_bytes())",
+            stmt,
+          );
+        }
+
         this.emitExpressionWAT(stmt.iterable);
         this.emitWATLine(`local.set $${objLocal}`);
         this.emitWATLine(`local.get $${objLocal}`);
@@ -1090,7 +1098,7 @@ export class Emitter {
     if (pattern.type === "TuplePattern") {
       // (i, &item)
       // i is the index (iterLocal)
-      // &item is a reference to the element at objLocal + 4 + iterLocal
+      // item binds to the current element value (the `&` pattern is ignored here)
       if (pattern.elements.length === 2) {
         // Element 0: i
         const iPattern = pattern.elements[0];
@@ -1443,6 +1451,14 @@ export class Emitter {
         this.allLocals.add(iterLocal);
         this.allLocals.add(objLocal);
         this.allLocals.add(lenLocal);
+
+        const iterableTypeBin = this.inferExpressionType(stmt.iterable);
+        if (!this.isByteLikeType(iterableTypeBin) && !this.isStringLikeType(iterableTypeBin)) {
+          this.throwError(
+            "for-in currently only supports iterating over byte sequences (e.g., s.as_bytes())",
+            stmt,
+          );
+        }
 
         this.emitExpressionBinary(stmt.iterable, body);
         body.push(OP_LOCAL_SET, 0xfe, objLocal as any);
