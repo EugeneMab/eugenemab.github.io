@@ -20,9 +20,17 @@ async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
       },
       print_str: (ptr: number) => {
         const mem = new Uint8Array((instance.exports.memory as any).buffer);
+        if (!Number.isInteger(ptr) || ptr < 0 || ptr + 4 > mem.length) {
+          throw new Error(`Invalid string pointer: ${ptr}`);
+        }
         const view = new DataView(mem.buffer);
         const len = view.getUint32(ptr, true);
         const start = ptr + 4;
+        if (len > mem.length - start) {
+          throw new Error(
+            `Invalid string length ${len} at pointer ${ptr} for memory size ${mem.length}`,
+          );
+        }
         const str = new TextDecoder().decode(mem.subarray(start, start + len));
         logs.push(str);
         return 0;
