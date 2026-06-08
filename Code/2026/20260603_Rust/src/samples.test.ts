@@ -267,5 +267,54 @@ describe("UI Samples Regression Tests", () => {
         "Cannot borrow 'x' as mutable: already borrowed",
       );
     });
+
+    it("Book 4-3: Byte Index", async () => {
+      const code = loadSample("book04_03_index.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["5"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 4-3: String Slice", async () => {
+      const code = loadSample("book04_03_slice.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["hello", "world"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 4-3: First Word Slice", async () => {
+      const code = loadSample("book04_03_first_word_slice.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["hello"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 4-3: Slice Error (Negative at Compile)", async () => {
+      const code = loadSample("book04_03_slice_error.rs");
+      await expect(runRust(code)).rejects.toThrow(
+        "Cannot use 's' while it is mutably borrowed",
+      );
+    });
+
+    it("Book 4-3: Slice as Parameter", async () => {
+      const code = loadSample("book04_03_slice_param.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual([
+        "hello ",
+        "hello world",
+        "hello world",
+        "hello ",
+        "hello world",
+        "hello world",
+      ]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 4-3: Array Slice", async () => {
+      const code = loadSample("book04_03_array_slice.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["2", "3"]);
+      expect(result).toBe(0);
+    });
   });
 });

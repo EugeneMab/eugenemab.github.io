@@ -9,49 +9,55 @@ export var TokenType;
     TokenType[TokenType["ELSE"] = 5] = "ELSE";
     TokenType[TokenType["LOOP"] = 6] = "LOOP";
     TokenType[TokenType["WHILE"] = 7] = "WHILE";
-    TokenType[TokenType["BREAK"] = 8] = "BREAK";
-    TokenType[TokenType["CONTINUE"] = 9] = "CONTINUE";
-    TokenType[TokenType["STRUCT"] = 10] = "STRUCT";
-    TokenType[TokenType["IMPL"] = 11] = "IMPL";
-    TokenType[TokenType["PANIC"] = 12] = "PANIC";
-    TokenType[TokenType["TRUE"] = 13] = "TRUE";
-    TokenType[TokenType["FALSE"] = 14] = "FALSE";
+    TokenType[TokenType["FOR"] = 8] = "FOR";
+    TokenType[TokenType["IN"] = 9] = "IN";
+    TokenType[TokenType["RETURN"] = 10] = "RETURN";
+    TokenType[TokenType["BREAK"] = 11] = "BREAK";
+    TokenType[TokenType["CONTINUE"] = 12] = "CONTINUE";
+    TokenType[TokenType["STRUCT"] = 13] = "STRUCT";
+    TokenType[TokenType["IMPL"] = 14] = "IMPL";
+    TokenType[TokenType["PANIC"] = 15] = "PANIC";
+    TokenType[TokenType["TRUE"] = 16] = "TRUE";
+    TokenType[TokenType["FALSE"] = 17] = "FALSE";
     // Literals
-    TokenType[TokenType["INTEGER"] = 15] = "INTEGER";
-    TokenType[TokenType["HEX"] = 16] = "HEX";
-    TokenType[TokenType["STRING"] = 17] = "STRING";
-    TokenType[TokenType["IDENTIFIER"] = 18] = "IDENTIFIER";
+    TokenType[TokenType["INTEGER"] = 18] = "INTEGER";
+    TokenType[TokenType["HEX"] = 19] = "HEX";
+    TokenType[TokenType["STRING"] = 20] = "STRING";
+    TokenType[TokenType["BYTE_LITERAL"] = 21] = "BYTE_LITERAL";
+    TokenType[TokenType["IDENTIFIER"] = 22] = "IDENTIFIER";
     // Symbols
-    TokenType[TokenType["LPAREN"] = 19] = "LPAREN";
-    TokenType[TokenType["RPAREN"] = 20] = "RPAREN";
-    TokenType[TokenType["LBRACE"] = 21] = "LBRACE";
-    TokenType[TokenType["RBRACE"] = 22] = "RBRACE";
-    TokenType[TokenType["LBRACKET"] = 23] = "LBRACKET";
-    TokenType[TokenType["RBRACKET"] = 24] = "RBRACKET";
-    TokenType[TokenType["COMMA"] = 25] = "COMMA";
-    TokenType[TokenType["DOT"] = 26] = "DOT";
-    TokenType[TokenType["COLON"] = 27] = "COLON";
-    TokenType[TokenType["SEMICOLON"] = 28] = "SEMICOLON";
-    TokenType[TokenType["ARROW"] = 29] = "ARROW";
-    TokenType[TokenType["PLUS"] = 30] = "PLUS";
-    TokenType[TokenType["MINUS"] = 31] = "MINUS";
-    TokenType[TokenType["STAR"] = 32] = "STAR";
-    TokenType[TokenType["SLASH"] = 33] = "SLASH";
-    TokenType[TokenType["PERCENT"] = 34] = "PERCENT";
-    TokenType[TokenType["AMPERSAND"] = 35] = "AMPERSAND";
-    TokenType[TokenType["PIPE"] = 36] = "PIPE";
-    TokenType[TokenType["CARET"] = 37] = "CARET";
-    TokenType[TokenType["LSHIFT"] = 38] = "LSHIFT";
-    TokenType[TokenType["RSHIFT"] = 39] = "RSHIFT";
-    TokenType[TokenType["EQUALS"] = 40] = "EQUALS";
-    TokenType[TokenType["EQ_EQ"] = 41] = "EQ_EQ";
-    TokenType[TokenType["NE_EQ"] = 42] = "NE_EQ";
-    TokenType[TokenType["LT"] = 43] = "LT";
-    TokenType[TokenType["GT"] = 44] = "GT";
-    TokenType[TokenType["LT_EQ"] = 45] = "LT_EQ";
-    TokenType[TokenType["GT_EQ"] = 46] = "GT_EQ";
-    TokenType[TokenType["EXCLAMATION"] = 47] = "EXCLAMATION";
-    TokenType[TokenType["EOF"] = 48] = "EOF";
+    TokenType[TokenType["LPAREN"] = 23] = "LPAREN";
+    TokenType[TokenType["RPAREN"] = 24] = "RPAREN";
+    TokenType[TokenType["LBRACE"] = 25] = "LBRACE";
+    TokenType[TokenType["RBRACE"] = 26] = "RBRACE";
+    TokenType[TokenType["LBRACKET"] = 27] = "LBRACKET";
+    TokenType[TokenType["RBRACKET"] = 28] = "RBRACKET";
+    TokenType[TokenType["COMMA"] = 29] = "COMMA";
+    TokenType[TokenType["DOT"] = 30] = "DOT";
+    TokenType[TokenType["DOT_DOT"] = 31] = "DOT_DOT";
+    TokenType[TokenType["COLON"] = 32] = "COLON";
+    TokenType[TokenType["COLON_COLON"] = 33] = "COLON_COLON";
+    TokenType[TokenType["SEMICOLON"] = 34] = "SEMICOLON";
+    TokenType[TokenType["ARROW"] = 35] = "ARROW";
+    TokenType[TokenType["PLUS"] = 36] = "PLUS";
+    TokenType[TokenType["MINUS"] = 37] = "MINUS";
+    TokenType[TokenType["STAR"] = 38] = "STAR";
+    TokenType[TokenType["SLASH"] = 39] = "SLASH";
+    TokenType[TokenType["PERCENT"] = 40] = "PERCENT";
+    TokenType[TokenType["AMPERSAND"] = 41] = "AMPERSAND";
+    TokenType[TokenType["PIPE"] = 42] = "PIPE";
+    TokenType[TokenType["CARET"] = 43] = "CARET";
+    TokenType[TokenType["LSHIFT"] = 44] = "LSHIFT";
+    TokenType[TokenType["RSHIFT"] = 45] = "RSHIFT";
+    TokenType[TokenType["EQUALS"] = 46] = "EQUALS";
+    TokenType[TokenType["EQ_EQ"] = 47] = "EQ_EQ";
+    TokenType[TokenType["NE_EQ"] = 48] = "NE_EQ";
+    TokenType[TokenType["LT"] = 49] = "LT";
+    TokenType[TokenType["GT"] = 50] = "GT";
+    TokenType[TokenType["LT_EQ"] = 51] = "LT_EQ";
+    TokenType[TokenType["GT_EQ"] = 52] = "GT_EQ";
+    TokenType[TokenType["EXCLAMATION"] = 53] = "EXCLAMATION";
+    TokenType[TokenType["EOF"] = 54] = "EOF";
 })(TokenType || (TokenType = {}));
 const KEYWORDS = {
     fn: TokenType.FN,
@@ -62,6 +68,9 @@ const KEYWORDS = {
     else: TokenType.ELSE,
     loop: TokenType.LOOP,
     while: TokenType.WHILE,
+    for: TokenType.FOR,
+    in: TokenType.IN,
+    return: TokenType.RETURN,
     break: TokenType.BREAK,
     continue: TokenType.CONTINUE,
     struct: TokenType.STRUCT,
@@ -99,6 +108,10 @@ export class Lexer {
                 this.pos++;
                 continue;
             }
+            if (this.input.startsWith("b'", this.pos)) {
+                tokens.push(this.readByteLiteral());
+                continue;
+            }
             if (/[a-zA-Z_]/.test(char)) {
                 tokens.push(this.readIdentifierOrKeyword());
                 continue;
@@ -113,6 +126,24 @@ export class Lexer {
             }
             const startLine = this.line;
             const startCol = this.col;
+            if (this.match("..")) {
+                tokens.push({
+                    type: TokenType.DOT_DOT,
+                    value: "..",
+                    line: startLine,
+                    col: startCol,
+                });
+                continue;
+            }
+            if (this.match("::")) {
+                tokens.push({
+                    type: TokenType.COLON_COLON,
+                    value: "::",
+                    line: startLine,
+                    col: startCol,
+                });
+                continue;
+            }
             if (this.match("->")) {
                 tokens.push({
                     type: TokenType.ARROW,
@@ -278,5 +309,46 @@ export class Lexer {
         }
         this.advance(); // skip closing quote
         return { type: TokenType.STRING, value, line: startLine, col: startCol };
+    }
+    readByteLiteral() {
+        const startLine = this.line;
+        const startCol = this.col;
+        this.advance(); // skip 'b'
+        this.advance(); // skip '
+        let value = "";
+        if (this.input[this.pos] === "\\") {
+            this.advance(); // skip \
+            const escaped = this.advance();
+            if (escaped === "n")
+                value = "\n";
+            else if (escaped === "r")
+                value = "\r";
+            else if (escaped === "t")
+                value = "\t";
+            else if (escaped === "\\")
+                value = "\\";
+            else if (escaped === "'")
+                value = "'";
+            else if (escaped === "0")
+                value = "\0";
+            else
+                throw new Error(`Unknown escape sequence: \\${escaped}`);
+        }
+        else {
+            value = this.advance();
+        }
+        this.consumeByteLiteralEnd();
+        return {
+            type: TokenType.BYTE_LITERAL,
+            value: value.charCodeAt(0).toString(),
+            line: startLine,
+            col: startCol,
+        };
+    }
+    consumeByteLiteralEnd() {
+        if (this.input[this.pos] !== "'") {
+            throw new Error(`Expected ' at end of byte literal, found ${this.input[this.pos]} at ${this.line}:${this.col}`);
+        }
+        this.advance();
     }
 }

@@ -21,6 +21,8 @@ export type Statement =
   | IfStatement
   | LoopStatement
   | WhileStatement
+  | ForStatement
+  | ReturnStatement
   | BreakStatement
   | ContinueStatement;
 
@@ -55,6 +57,23 @@ export interface WhileStatement extends BaseNode {
   body: BlockStatement;
 }
 
+export interface ForStatement extends BaseNode {
+  type: "ForStatement";
+  pattern: Pattern;
+  iterable: Expression;
+  body: BlockStatement;
+}
+
+export interface ReturnStatement extends BaseNode {
+  type: "ReturnStatement";
+  argument?: Expression;
+}
+
+export type Pattern =
+  | { type: "IdentifierPattern"; name: string }
+  | { type: "TuplePattern"; elements: Pattern[] }
+  | { type: "ReferencePattern"; pattern: Pattern };
+
 export interface BreakStatement extends BaseNode {
   type: "BreakStatement";
 }
@@ -77,7 +96,7 @@ export interface BlockStatement extends BaseNode {
 export interface FunctionDeclaration extends BaseNode {
   type: "FunctionDeclaration";
   name: string;
-  params: string[]; // Simple for now
+  params: { name: string; type?: string }[];
   body: BlockStatement;
 }
 
@@ -85,6 +104,10 @@ export type Expression =
   | BinaryExpression
   | UnaryExpression
   | BorrowExpression
+  | RangeExpression
+  | MemberAccessExpression
+  | IndexExpression
+  | ArrayLiteral
   | Literal
   | Identifier
   | CallExpression
@@ -111,10 +134,33 @@ export interface BorrowExpression extends BaseNode {
   argument: Expression;
 }
 
+export interface RangeExpression extends BaseNode {
+  type: "RangeExpression";
+  start?: Expression;
+  end?: Expression;
+}
+
+export interface MemberAccessExpression extends BaseNode {
+  type: "MemberAccessExpression";
+  object: Expression;
+  member: string;
+}
+
+export interface IndexExpression extends BaseNode {
+  type: "IndexExpression";
+  object: Expression;
+  index: Expression;
+}
+
+export interface ArrayLiteral extends BaseNode {
+  type: "ArrayLiteral";
+  elements: Expression[];
+}
+
 export interface Literal extends BaseNode {
   type: "Literal";
   value: string | number;
-  rawType: "integer" | "hex" | "string";
+  rawType: "integer" | "hex" | "string" | "byte";
 }
 
 export interface Identifier extends BaseNode {
@@ -159,6 +205,8 @@ export class Parser {
     if (this.match(TokenType.IF)) return this.parseIfStatement();
     if (this.match(TokenType.LOOP)) return this.parseLoopStatement();
     if (this.match(TokenType.WHILE)) return this.parseWhileStatement();
+    if (this.match(TokenType.FOR)) return this.parseForStatement();
+    if (this.match(TokenType.RETURN)) return this.parseReturnStatement();
     if (this.match(TokenType.BREAK)) return this.parseBreakStatement();
     if (this.match(TokenType.CONTINUE)) return this.parseContinueStatement();
 
@@ -184,6 +232,46 @@ export class Parser {
     const condition = this.parseExpression();
     const body = this.parseBlockStatement();
     return { type: "WhileStatement", token, condition, body };
+  }
+
+  private parseForStatement(): ForStatement {
+    const token = this.previous();
+    const pattern = this.parsePattern();
+    this.consume(TokenType.IN, "Expect 'in' after for pattern");
+    const iterable = this.parseExpression();
+    const body = this.parseBlockStatement();
+    return { type: "ForStatement", token, pattern, iterable, body };
+  }
+
+  private parseReturnStatement(): ReturnStatement {
+    const token = this.previous();
+    let argument: Expression | undefined;
+    if (!this.check(TokenType.SEMICOLON)) {
+      argument = this.parseExpression();
+    }
+    this.consume(TokenType.SEMICOLON, "Expect ';' after return");
+    return { type: "ReturnStatement", token, argument };
+  }
+
+  private parsePattern(): Pattern {
+    if (this.match(TokenType.AMPERSAND)) {
+      return { type: "ReferencePattern", pattern: this.parsePattern() };
+    }
+    if (this.match(TokenType.LPAREN)) {
+      const elements: Pattern[] = [];
+      if (!this.check(TokenType.RPAREN)) {
+        do {
+          elements.push(this.parsePattern());
+        } while (this.match(TokenType.COMMA));
+      }
+      this.consume(TokenType.RPAREN, "Expect ')' after tuple pattern");
+      return { type: "TuplePattern", elements };
+    }
+    const name = this.consume(
+      TokenType.IDENTIFIER,
+      "Expect identifier in pattern",
+    ).value;
+    return { type: "IdentifierPattern", name };
   }
 
   private parseBreakStatement(): BreakStatement {
@@ -250,20 +338,35 @@ export class Parser {
       "Expect function name",
     ).value;
     this.consume(TokenType.LPAREN, "Expect '(' after function name");
-    const params: string[] = [];
+    const params: { name: string; type?: string }[] = [];
     if (!this.check(TokenType.RPAREN)) {
       do {
-        params.push(
-          this.consume(TokenType.IDENTIFIER, "Expect parameter name").value,
-        );
+        const pName = this.consume(
+          TokenType.IDENTIFIER,
+          "Expect parameter name",
+        ).value;
+        let pType: string | undefined;
         if (this.match(TokenType.COLON)) {
-          this.consume(TokenType.IDENTIFIER, "Expect type name");
+          // Allow &str, &String, &mut String, etc.
+          pType = "";
+          while (
+            this.match(TokenType.AMPERSAND, TokenType.MUT, TokenType.IDENTIFIER)
+          ) {
+            pType += (pType ? " " : "") + this.previous().value;
+          }
         }
+        params.push({ name: pName, type: pType });
       } while (this.match(TokenType.COMMA));
     }
     this.consume(TokenType.RPAREN, "Expect ')' after parameters");
+    let returnType: string | undefined;
     if (this.match(TokenType.ARROW)) {
-      this.consume(TokenType.IDENTIFIER, "Expect return type");
+      returnType = "";
+      while (
+        this.match(TokenType.AMPERSAND, TokenType.MUT, TokenType.IDENTIFIER)
+      ) {
+        returnType += (returnType ? " " : "") + this.previous().value;
+      }
     }
     const body = this.parseBlockStatement();
     return { type: "FunctionDeclaration", token, name, params, body };
@@ -282,6 +385,8 @@ export class Parser {
         this.check(TokenType.IF) ||
         this.check(TokenType.LOOP) ||
         this.check(TokenType.WHILE) ||
+        this.check(TokenType.FOR) ||
+        this.check(TokenType.RETURN) ||
         this.check(TokenType.BREAK) ||
         this.check(TokenType.CONTINUE)
       ) {
@@ -332,7 +437,7 @@ export class Parser {
   }
 
   private parseAssignment(): Expression {
-    const expr = this.parseComparison();
+    const expr = this.parseRange();
     if (this.match(TokenType.EQUALS)) {
       const token = this.previous();
       const right = this.parseAssignment();
@@ -346,6 +451,33 @@ export class Parser {
         };
       }
       throw new Error(formatError(this.source, "Invalid l-value", token));
+    }
+    return expr;
+  }
+
+  private parseRange(): Expression {
+    if (this.match(TokenType.DOT_DOT)) {
+      const token = this.previous();
+      const end = this.parseComparison();
+      return { type: "RangeExpression", token, end };
+    }
+    let expr = this.parseComparison();
+    if (this.match(TokenType.DOT_DOT)) {
+      const token = this.previous();
+      let end: Expression | undefined;
+      // Ranges can be open-ended, e.g., s[..] or s[0..]
+      if (
+        !this.check(
+          TokenType.RBRACKET,
+          TokenType.COMMA,
+          TokenType.SEMICOLON,
+          TokenType.RPAREN,
+          TokenType.RBRACE,
+        )
+      ) {
+        end = this.parseComparison();
+      }
+      return { type: "RangeExpression", token, start: expr, end };
     }
     return expr;
   }
@@ -449,11 +581,66 @@ export class Parser {
       const argument = this.parseUnary();
       return { type: "UnaryExpression", token, operator, argument };
     }
-    return this.parsePrimary();
+    return this.parsePostfix();
+  }
+
+  private parsePostfix(): Expression {
+    let expr = this.parsePrimary();
+    while (true) {
+      if (this.match(TokenType.DOT)) {
+        const token = this.previous();
+        const member = this.consume(
+          TokenType.IDENTIFIER,
+          "Expect member name after '.'",
+        ).value;
+        if (this.match(TokenType.LPAREN)) {
+          const args: Expression[] = [];
+          if (!this.check(TokenType.RPAREN)) {
+            do {
+              args.push(this.parseExpression());
+            } while (this.match(TokenType.COMMA));
+          }
+          this.consume(TokenType.RPAREN, "Expect ')' after args");
+          expr = {
+            type: "CallExpression",
+            token,
+            callee: `${member}`,
+            args: [expr, ...args], // Simple method call desugaring
+          };
+        } else {
+          expr = {
+            type: "MemberAccessExpression",
+            token,
+            object: expr,
+            member,
+          };
+        }
+      } else if (this.match(TokenType.LBRACKET)) {
+        const token = this.previous();
+        const index = this.parseExpression();
+        this.consume(TokenType.RBRACKET, "Expect ']' after index");
+        expr = { type: "IndexExpression", token, object: expr, index };
+      } else {
+        break;
+      }
+    }
+    return expr;
   }
 
   private parsePrimary(): Expression {
     if (this.check(TokenType.LBRACE)) return this.parseBlockStatement();
+
+    if (this.match(TokenType.LBRACKET)) {
+      const token = this.previous();
+      const elements: Expression[] = [];
+      if (!this.check(TokenType.RBRACKET)) {
+        do {
+          elements.push(this.parseExpression());
+        } while (this.match(TokenType.COMMA));
+      }
+      this.consume(TokenType.RBRACKET, "Expect ']' after array elements");
+      return { type: "ArrayLiteral", token, elements };
+    }
 
     if (this.match(TokenType.IF)) {
       return this.parseIfStatement();
@@ -486,6 +673,15 @@ export class Parser {
         rawType: "string",
       };
     }
+    if (this.match(TokenType.BYTE_LITERAL)) {
+      const token = this.previous();
+      return {
+        type: "Literal",
+        token,
+        value: parseInt(token.value),
+        rawType: "byte",
+      };
+    }
     if (this.match(TokenType.TRUE)) {
       const token = this.previous();
       return {
@@ -507,7 +703,13 @@ export class Parser {
 
     if (this.match(TokenType.IDENTIFIER, TokenType.PANIC)) {
       const token = this.previous();
-      const name = token.value;
+      let name = token.value;
+      while (this.match(TokenType.COLON_COLON)) {
+        name +=
+          "::" +
+          this.consume(TokenType.IDENTIFIER, "Expect identifier after '::'")
+            .value;
+      }
       if (this.match(TokenType.EXCLAMATION)) {
         this.consume(TokenType.LPAREN, "Expect '(' after macro name");
         const args: Expression[] = [];

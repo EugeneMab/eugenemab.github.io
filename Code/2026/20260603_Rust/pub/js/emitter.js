@@ -35,8 +35,15 @@ const OP_ELSE = 0x05;
 const OP_LOOP = 0x03;
 const OP_BR = 0x0c;
 const OP_BLOCK = 0x02;
+const OP_RETURN = 0x0f;
 const OP_UNREACHABLE = 0x00;
 const OP_I32_EQZ = 0x45;
+const OP_I32_LOAD = [0x28, 0x00, 0x00];
+const OP_I32_LOAD8_U = [0x2d, 0x00, 0x00];
+const OP_I32_STORE = [0x36, 0x00, 0x00];
+const OP_GLOBAL_GET = [0x23, 0x00];
+const OP_GLOBAL_SET = [0x24, 0x00];
+const OP_MEMORY_COPY = [0xfc, 0x0a, 0x00, 0x00];
 export class Emitter {
     program;
     source;
@@ -113,8 +120,8 @@ export class Emitter {
             },
         ];
         for (const p of fn.params) {
-            this.scopeStack[0].vars.set(p, {
-                uniqueName: p,
+            this.scopeStack[0].vars.set(p.name, {
+                uniqueName: p.name,
                 isMutable: false,
                 isBorrowedMut: false,
                 borrowCount: 0,
@@ -127,7 +134,7 @@ export class Emitter {
         const bodyWAT = this.outputWAT;
         this.outputWAT = oldOutput;
         this.indent = 1;
-        const params = fn.params.map((p) => `(param $${p} i32)`).join(" ");
+        const params = fn.params.map((p) => `(param $${p.name} i32)`).join(" ");
         this.emitWATLine(`(func (export "${fn.name}") ${params} (result i32)`);
         this.indent++;
         for (const local of this.allLocals) {
@@ -269,6 +276,60 @@ export class Emitter {
                 this.emitWATLine("end");
                 this.emitWATLine("drop");
             }
+            else if (stmt.type === "ForStatement") {
+                const iterLocal = `iter_idx_${++this.localCounter}`;
+                const objLocal = `iter_obj_${++this.localCounter}`;
+                const lenLocal = `iter_len_${++this.localCounter}`;
+                this.allLocals.add(iterLocal);
+                this.allLocals.add(objLocal);
+                this.allLocals.add(lenLocal);
+                this.emitExpressionWAT(stmt.iterable);
+                this.emitWATLine(`local.set $${objLocal}`);
+                this.emitWATLine(`local.get $${objLocal}`);
+                this.emitWATLine("i32.load");
+                this.emitWATLine(`local.set $${lenLocal}`);
+                this.emitWATLine("i32.const 0");
+                this.emitWATLine(`local.set $${iterLocal}`);
+                this.emitWATLine("block (result i32)");
+                this.indent++;
+                this.currentBlockDepth++;
+                this.emitWATLine("loop (result i32)");
+                this.indent++;
+                this.currentBlockDepth++;
+                this.loopStack.push({
+                    breakDepth: this.currentBlockDepth - 1,
+                    continueDepth: this.currentBlockDepth,
+                });
+                this.emitWATLine(`local.get $${iterLocal}`);
+                this.emitWATLine(`local.get $${lenLocal}`);
+                this.emitWATLine("i32.ge_s");
+                this.emitWATLine("if");
+                this.indent++;
+                this.currentBlockDepth++;
+                const fLoop = this.loopStack[this.loopStack.length - 1];
+                this.emitWATLine("i32.const 0");
+                this.emitWATLine(`br ${this.currentBlockDepth - fLoop.breakDepth}`);
+                this.indent--;
+                this.currentBlockDepth--;
+                this.emitWATLine("end");
+                this.emitForPatternWAT(stmt.pattern, iterLocal, objLocal);
+                this.emitBlockWAT(stmt.body);
+                this.emitWATLine("drop");
+                this.emitWATLine(`local.get $${iterLocal}`);
+                this.emitWATLine("i32.const 1");
+                this.emitWATLine("i32.add");
+                this.emitWATLine(`local.set $${iterLocal}`);
+                this.emitWATLine("i32.const 0");
+                this.emitWATLine("br 0");
+                this.indent--;
+                this.currentBlockDepth--;
+                this.loopStack.pop();
+                this.emitWATLine("end");
+                this.indent--;
+                this.currentBlockDepth--;
+                this.emitWATLine("end");
+                this.emitWATLine("drop");
+            }
             else if (stmt.type === "BreakStatement") {
                 if (this.loopStack.length === 0)
                     this.throwError("'break' outside of loop", stmt);
@@ -284,6 +345,15 @@ export class Emitter {
                 const levels = this.currentBlockDepth - loop.continueDepth;
                 this.emitWATLine("i32.const 0");
                 this.emitWATLine(`br ${levels}`);
+            }
+            else if (stmt.type === "ReturnStatement") {
+                if (stmt.argument) {
+                    this.emitExpressionWAT(stmt.argument);
+                }
+                else {
+                    this.emitWATLine("i32.const 0");
+                }
+                this.emitWATLine("return");
             }
             else if (stmt.type === "ExpressionStatement") {
                 this.emitExpressionWAT(stmt.expression);
@@ -357,6 +427,31 @@ export class Emitter {
                 this.emitWATLine("end");
                 break;
             }
+            case "ArrayLiteral": {
+                const ptrLocal = `array_ptr_${++this.localCounter}`;
+                this.allLocals.add(ptrLocal);
+                this.emitWATLine("global.get $heap_ptr");
+                this.emitWATLine(`local.set $${ptrLocal}`);
+                // Store length
+                this.emitWATLine(`local.get $${ptrLocal}`);
+                this.emitWATLine(`i32.const ${expr.elements.length}`);
+                this.emitWATLine("i32.store");
+                // Store elements
+                expr.elements.forEach((el, i) => {
+                    this.emitWATLine(`local.get $${ptrLocal}`);
+                    this.emitWATLine(`i32.const ${4 + i * 4}`);
+                    this.emitWATLine("i32.add");
+                    this.emitExpressionWAT(el);
+                    this.emitWATLine("i32.store");
+                });
+                // Update heap_ptr
+                this.emitWATLine(`local.get $${ptrLocal}`);
+                this.emitWATLine(`i32.const ${4 + expr.elements.length * 4}`);
+                this.emitWATLine("i32.add");
+                this.emitWATLine("global.set $heap_ptr");
+                this.emitWATLine(`local.get $${ptrLocal}`);
+                break;
+            }
             case "Literal":
                 if (expr.rawType === "string") {
                     const strValue = expr.value;
@@ -367,9 +462,116 @@ export class Emitter {
                     const offset = this.stringConstants.get(strValue);
                     this.emitWATLine(`i32.const ${offset}`);
                 }
+                else if (expr.rawType === "byte") {
+                    this.emitWATLine(`i32.const ${expr.value}`);
+                }
                 else {
                     this.emitWATLine(`i32.const ${expr.value}`);
                 }
+                break;
+            case "RangeExpression":
+                if (expr.start) {
+                    this.emitExpressionWAT(expr.start);
+                }
+                else {
+                    this.emitWATLine("i32.const 0");
+                }
+                if (expr.end) {
+                    this.emitExpressionWAT(expr.end);
+                }
+                else {
+                    this.emitWATLine("i32.const -1");
+                }
+                break;
+            case "MemberAccessExpression":
+                if (expr.member === "len") {
+                    this.emitExpressionWAT(expr.object);
+                    this.emitWATLine("i32.load");
+                }
+                else {
+                    this.throwError(`Unsupported member: ${expr.member}`, expr);
+                }
+                break;
+            case "IndexExpression": {
+                this.emitExpressionWAT(expr.object);
+                if (expr.index.type === "RangeExpression") {
+                    const range = expr.index;
+                    const startLocal = `range_start_${++this.localCounter}`;
+                    const endLocal = `range_end_${++this.localCounter}`;
+                    const objLocal = `obj_ptr_${++this.localCounter}`;
+                    this.allLocals.add(startLocal);
+                    this.allLocals.add(endLocal);
+                    this.allLocals.add(objLocal);
+                    this.emitWATLine(`local.set $${objLocal}`);
+                    this.emitExpressionWAT(range);
+                    this.emitWATLine(`local.set $${endLocal}`);
+                    this.emitWATLine(`local.set $${startLocal}`);
+                    this.emitWATLine(`local.get $${endLocal}`);
+                    this.emitWATLine("i32.const -1");
+                    this.emitWATLine("i32.eq");
+                    this.emitWATLine("if");
+                    this.emitWATLine(`local.get $${objLocal}`);
+                    this.emitWATLine("i32.load");
+                    this.emitWATLine(`local.set $${endLocal}`);
+                    this.emitWATLine("end");
+                    this.emitWATLine("global.get $heap_ptr");
+                    this.emitWATLine(`local.get $${endLocal}`);
+                    this.emitWATLine(`local.get $${startLocal}`);
+                    this.emitWATLine("i32.sub");
+                    this.emitWATLine("i32.store");
+                    this.emitWATLine("global.get $heap_ptr");
+                    this.emitWATLine("i32.const 4");
+                    this.emitWATLine("i32.add");
+                    this.emitWATLine(`local.get $${objLocal}`);
+                    this.emitWATLine("i32.const 4");
+                    this.emitWATLine("i32.add");
+                    this.emitWATLine(`local.get $${startLocal}`);
+                    this.emitWATLine("i32.add");
+                    this.emitWATLine(`local.get $${endLocal}`);
+                    this.emitWATLine(`local.get $${startLocal}`);
+                    this.emitWATLine("i32.sub");
+                    this.emitWATLine("memory.copy");
+                    this.emitWATLine("global.get $heap_ptr");
+                    this.emitWATLine("global.get $heap_ptr");
+                    this.emitWATLine("i32.const 4");
+                    this.emitWATLine("i32.add");
+                    this.emitWATLine(`local.get $${endLocal}`);
+                    this.emitWATLine(`local.get $${startLocal}`);
+                    this.emitWATLine("i32.sub");
+                    this.emitWATLine("i32.add");
+                    this.emitWATLine("global.set $heap_ptr");
+                }
+                else {
+                    this.emitExpressionWAT(expr.index);
+                    this.emitWATLine("i32.add");
+                    this.emitWATLine("i32.const 4");
+                    this.emitWATLine("i32.add");
+                    this.emitWATLine("i32.load8_u");
+                }
+                break;
+            }
+            case "CallExpression":
+                if (expr.callee === "as_bytes" ||
+                    expr.callee === "iter" ||
+                    expr.callee === "enumerate") {
+                    this.emitExpressionWAT(expr.args[0]);
+                    break;
+                }
+                if (expr.callee === "String::from") {
+                    this.emitExpressionWAT(expr.args[0]);
+                    break;
+                }
+                if (expr.callee === "clear") {
+                    this.emitExpressionWAT(expr.args[0]);
+                    this.emitWATLine("i32.const 0");
+                    this.emitWATLine("i32.store");
+                    this.emitWATLine("i32.const 0");
+                    break;
+                }
+                for (const arg of expr.args) {
+                    this.emitExpressionWAT(arg);
+                }
+                this.emitWATLine(`call $${expr.callee}`);
                 break;
             case "Identifier":
                 try {
@@ -413,7 +615,7 @@ export class Emitter {
                                 isMut: false,
                             });
                         }
-                        this.emitWATLine("i32.const 0"); // Placeholder for pointer
+                        this.emitWATLine(`local.get $${info.uniqueName}`);
                     }
                     catch (e) {
                         if (e.message.startsWith("Undefined variable")) {
@@ -422,8 +624,11 @@ export class Emitter {
                         throw e;
                     }
                 }
+                else if (expr.argument.type === "IndexExpression") {
+                    this.emitExpressionWAT(expr.argument);
+                }
                 else {
-                    this.throwError("Can only borrow identifiers", expr);
+                    this.throwError("Can only borrow identifiers or index expressions", expr);
                 }
                 break;
             case "UnaryExpression":
@@ -574,11 +779,6 @@ export class Emitter {
                     this.emitWATLine("global.set $heap_ptr");
                 }
                 break;
-            case "CallExpression":
-                for (const arg of expr.args)
-                    this.emitExpressionWAT(arg);
-                this.emitWATLine(`call $${expr.callee}`);
-                break;
         }
     }
     emitWATLine(line) {
@@ -593,6 +793,59 @@ export class Emitter {
         this.emitWATLine(`i32.const ${offset}`);
         this.emitWATLine("call $print_str");
         this.emitWATLine("drop");
+    }
+    emitForPatternWAT(pattern, // Pattern type
+    iterLocal, objLocal) {
+        if (pattern.type === "TuplePattern") {
+            // (i, &item)
+            // i is the index (iterLocal)
+            // &item is a reference to the element at objLocal + 4 + iterLocal
+            if (pattern.elements.length === 2) {
+                // Element 0: i
+                const iPattern = pattern.elements[0];
+                if (iPattern.type === "IdentifierPattern") {
+                    const uniqueName = `${iPattern.name}_${++this.localCounter}`;
+                    this.allLocals.add(uniqueName);
+                    this.scopeStack[this.scopeStack.length - 1].vars.set(iPattern.name, {
+                        uniqueName,
+                        isMutable: false,
+                        isBorrowedMut: false,
+                        borrowCount: 0,
+                    });
+                    this.emitWATLine(`local.get $${iterLocal}`);
+                    this.emitWATLine(`local.set $${uniqueName}`);
+                }
+                // Element 1: &item
+                const itemPattern = pattern.elements[1];
+                this.emitPatternWAT(itemPattern, iterLocal, objLocal);
+            }
+        }
+        else {
+            this.emitPatternWAT(pattern, iterLocal, objLocal);
+        }
+    }
+    emitPatternWAT(pattern, iterLocal, objLocal) {
+        if (pattern.type === "ReferencePattern") {
+            this.emitPatternWAT(pattern.pattern, iterLocal, objLocal);
+        }
+        else if (pattern.type === "IdentifierPattern") {
+            const uniqueName = `${pattern.name}_${++this.localCounter}`;
+            this.allLocals.add(uniqueName);
+            this.scopeStack[this.scopeStack.length - 1].vars.set(pattern.name, {
+                uniqueName,
+                isMutable: false,
+                isBorrowedMut: false,
+                borrowCount: 0,
+            });
+            // Load value from objLocal + 4 + iterLocal
+            this.emitWATLine(`local.get $${objLocal}`);
+            this.emitWATLine("i32.const 4");
+            this.emitWATLine("i32.add");
+            this.emitWATLine(`local.get $${iterLocal}`);
+            this.emitWATLine("i32.add");
+            this.emitWATLine("i32.load8_u");
+            this.emitWATLine(`local.set $${uniqueName}`);
+        }
     }
     emitWASM() {
         this.stringConstants.clear();
@@ -707,13 +960,13 @@ export class Emitter {
             },
         ];
         fn.params.forEach((p, i) => {
-            this.scopeStack[0].vars.set(p, {
-                uniqueName: p,
+            this.scopeStack[0].vars.set(p.name, {
+                uniqueName: p.name,
                 isMutable: false,
                 isBorrowedMut: false,
                 borrowCount: 0,
             });
-            this.locals.set(p, i);
+            this.locals.set(p.name, i);
         });
         const body = [];
         this.emitBlockBinary(fn.body, body);
@@ -746,7 +999,7 @@ export class Emitter {
     emitBlockBinary(block, body) {
         const heapBackupName = `old_heap_ptr_${++this.localCounter}`;
         this.allLocals.add(heapBackupName);
-        body.push(0x23, 0x00);
+        body.push(...OP_GLOBAL_GET);
         body.push(OP_LOCAL_SET, 0xfe, heapBackupName);
         this.scopeStack.push({
             vars: new Map(),
@@ -851,6 +1104,54 @@ export class Emitter {
                 this.loopStack.pop();
                 body.push(OP_DROP);
             }
+            else if (stmt.type === "ForStatement") {
+                const iterLocal = `iter_idx_${++this.localCounter}`;
+                const objLocal = `iter_obj_${++this.localCounter}`;
+                const lenLocal = `iter_len_${++this.localCounter}`;
+                this.allLocals.add(iterLocal);
+                this.allLocals.add(objLocal);
+                this.allLocals.add(lenLocal);
+                this.emitExpressionBinary(stmt.iterable, body);
+                body.push(OP_LOCAL_SET, 0xfe, objLocal);
+                body.push(OP_LOCAL_GET, 0xfe, objLocal);
+                body.push(...OP_I32_LOAD);
+                body.push(OP_LOCAL_SET, 0xfe, lenLocal);
+                body.push(OP_I32_CONST, ...this.encodeSignedLEB128(0));
+                body.push(OP_LOCAL_SET, 0xfe, iterLocal);
+                this.currentBlockDepth++;
+                body.push(OP_BLOCK, TYPE_I32);
+                this.currentBlockDepth++;
+                body.push(OP_LOOP, TYPE_I32);
+                this.loopStack.push({
+                    breakDepth: this.currentBlockDepth - 1,
+                    continueDepth: this.currentBlockDepth,
+                });
+                body.push(OP_LOCAL_GET, 0xfe, iterLocal);
+                body.push(OP_LOCAL_GET, 0xfe, lenLocal);
+                body.push(OP_I32_GE_S);
+                this.currentBlockDepth++;
+                body.push(OP_IF, 0x40);
+                const fbLoop = this.loopStack[this.loopStack.length - 1];
+                body.push(OP_I32_CONST, 0);
+                body.push(OP_BR, ...this.encodeUnsignedLEB128(this.currentBlockDepth - fbLoop.breakDepth));
+                this.currentBlockDepth--;
+                body.push(OP_END);
+                this.emitForPatternBinary(stmt.pattern, iterLocal, objLocal, body);
+                this.emitBlockBinary(stmt.body, body);
+                body.push(OP_DROP);
+                body.push(OP_LOCAL_GET, 0xfe, iterLocal);
+                body.push(OP_I32_CONST, ...this.encodeSignedLEB128(1));
+                body.push(OP_I32_ADD);
+                body.push(OP_LOCAL_SET, 0xfe, iterLocal);
+                body.push(OP_I32_CONST, 0);
+                body.push(OP_BR, ...this.encodeUnsignedLEB128(0));
+                body.push(OP_END);
+                this.currentBlockDepth--;
+                body.push(OP_END);
+                this.currentBlockDepth--;
+                this.loopStack.pop();
+                body.push(OP_DROP);
+            }
             else if (stmt.type === "BreakStatement") {
                 if (this.loopStack.length === 0)
                     this.throwError("'break' outside of loop", stmt);
@@ -867,6 +1168,15 @@ export class Emitter {
                 body.push(OP_I32_CONST, 0);
                 body.push(OP_BR, ...this.encodeUnsignedLEB128(levels));
             }
+            else if (stmt.type === "ReturnStatement") {
+                if (stmt.argument) {
+                    this.emitExpressionBinary(stmt.argument, body);
+                }
+                else {
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(0));
+                }
+                body.push(OP_RETURN);
+            }
             else if (stmt.type === "ExpressionStatement") {
                 this.emitExpressionBinary(stmt.expression, body);
                 body.push(OP_DROP);
@@ -877,7 +1187,7 @@ export class Emitter {
             }
         }
         body.push(OP_LOCAL_GET, 0xfe, heapBackupName);
-        body.push(0x24, 0x00);
+        body.push(...OP_GLOBAL_SET);
         if (block.tailExpression) {
             this.emitExpressionBinary(block.tailExpression, body);
         }
@@ -922,6 +1232,31 @@ export class Emitter {
                 // no drop - this is an expression
                 break;
             }
+            case "ArrayLiteral": {
+                const ptrLocal = `array_ptr_${++this.localCounter}`;
+                this.allLocals.add(ptrLocal);
+                body.push(...OP_GLOBAL_GET);
+                body.push(OP_LOCAL_SET, 0xfe, ptrLocal);
+                // Store length
+                body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                body.push(OP_I32_CONST, ...this.encodeSignedLEB128(expr.elements.length));
+                body.push(...OP_I32_STORE);
+                // Store elements
+                expr.elements.forEach((el, i) => {
+                    body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(4 + i * 4));
+                    body.push(OP_I32_ADD);
+                    this.emitExpressionBinary(el, body);
+                    body.push(...OP_I32_STORE);
+                });
+                // Update heap_ptr
+                body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                body.push(OP_I32_CONST, ...this.encodeSignedLEB128(4 + expr.elements.length * 4));
+                body.push(OP_I32_ADD);
+                body.push(...OP_GLOBAL_SET);
+                body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                break;
+            }
             case "Literal":
                 if (expr.rawType === "string") {
                     const strValue = expr.value;
@@ -932,10 +1267,94 @@ export class Emitter {
                     const offset = this.stringConstants.get(strValue);
                     body.push(OP_I32_CONST, ...this.encodeSignedLEB128(offset));
                 }
+                else if (expr.rawType === "byte") {
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(Number(expr.value)));
+                }
                 else {
                     body.push(OP_I32_CONST, ...this.encodeSignedLEB128(Number(expr.value)));
                 }
                 break;
+            case "RangeExpression":
+                if (expr.start) {
+                    this.emitExpressionBinary(expr.start, body);
+                }
+                else {
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(0));
+                }
+                if (expr.end) {
+                    this.emitExpressionBinary(expr.end, body);
+                }
+                else {
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(-1));
+                }
+                break;
+            case "MemberAccessExpression":
+                if (expr.member === "len") {
+                    this.emitExpressionBinary(expr.object, body);
+                    body.push(...OP_I32_LOAD);
+                }
+                else {
+                    this.throwError(`Unsupported member: ${expr.member}`, expr);
+                }
+                break;
+            case "IndexExpression": {
+                this.emitExpressionBinary(expr.object, body);
+                if (expr.index.type === "RangeExpression") {
+                    const range = expr.index;
+                    const startLocal = `range_start_${++this.localCounter}`;
+                    const endLocal = `range_end_${++this.localCounter}`;
+                    const objLocal = `obj_ptr_${++this.localCounter}`;
+                    this.allLocals.add(startLocal);
+                    this.allLocals.add(endLocal);
+                    this.allLocals.add(objLocal);
+                    body.push(OP_LOCAL_SET, 0xfe, objLocal);
+                    this.emitExpressionBinary(range, body);
+                    body.push(OP_LOCAL_SET, 0xfe, endLocal);
+                    body.push(OP_LOCAL_SET, 0xfe, startLocal);
+                    body.push(OP_LOCAL_GET, 0xfe, endLocal);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(-1));
+                    body.push(OP_I32_EQ);
+                    body.push(OP_IF, 0x40);
+                    body.push(OP_LOCAL_GET, 0xfe, objLocal);
+                    body.push(...OP_I32_LOAD);
+                    body.push(OP_LOCAL_SET, 0xfe, endLocal);
+                    body.push(OP_END);
+                    body.push(...OP_GLOBAL_GET);
+                    body.push(OP_LOCAL_GET, 0xfe, endLocal);
+                    body.push(OP_LOCAL_GET, 0xfe, startLocal);
+                    body.push(OP_I32_SUB);
+                    body.push(...OP_I32_STORE);
+                    body.push(...OP_GLOBAL_GET);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(4));
+                    body.push(OP_I32_ADD);
+                    body.push(OP_LOCAL_GET, 0xfe, objLocal);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(4));
+                    body.push(OP_I32_ADD);
+                    body.push(OP_LOCAL_GET, 0xfe, startLocal);
+                    body.push(OP_I32_ADD);
+                    body.push(OP_LOCAL_GET, 0xfe, endLocal);
+                    body.push(OP_LOCAL_GET, 0xfe, startLocal);
+                    body.push(OP_I32_SUB);
+                    body.push(...OP_MEMORY_COPY);
+                    body.push(...OP_GLOBAL_GET);
+                    body.push(...OP_GLOBAL_GET);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(4));
+                    body.push(OP_I32_ADD);
+                    body.push(OP_LOCAL_GET, 0xfe, endLocal);
+                    body.push(OP_LOCAL_GET, 0xfe, startLocal);
+                    body.push(OP_I32_SUB);
+                    body.push(OP_I32_ADD);
+                    body.push(...OP_GLOBAL_SET);
+                }
+                else {
+                    this.emitExpressionBinary(expr.index, body);
+                    body.push(OP_I32_ADD);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(4));
+                    body.push(OP_I32_ADD);
+                    body.push(...OP_I32_LOAD8_U);
+                }
+                break;
+            }
             case "Identifier":
                 try {
                     const info = this.resolveVariable(expr.name);
@@ -978,7 +1397,7 @@ export class Emitter {
                                 isMut: false,
                             });
                         }
-                        body.push(OP_I32_CONST, 0);
+                        body.push(OP_LOCAL_GET, 0xfe, info.uniqueName);
                     }
                     catch (e) {
                         if (e.message.startsWith("Undefined variable")) {
@@ -987,8 +1406,11 @@ export class Emitter {
                         throw e;
                     }
                 }
+                else if (expr.argument.type === "IndexExpression") {
+                    this.emitExpressionBinary(expr.argument, body);
+                }
                 else {
-                    this.throwError("Can only borrow identifiers", expr);
+                    this.throwError("Can only borrow identifiers or index expressions", expr);
                 }
                 break;
             case "UnaryExpression":
@@ -1130,14 +1552,31 @@ export class Emitter {
                     if (!sizeExpr) {
                         this.throwError("alloc! expects exactly one argument", expr);
                     }
-                    body.push(0x23, 0x00);
-                    body.push(0x23, 0x00);
+                    body.push(...OP_GLOBAL_GET);
+                    body.push(...OP_GLOBAL_GET);
                     this.emitExpressionBinary(sizeExpr, body);
                     body.push(OP_I32_ADD);
-                    body.push(0x24, 0x00);
+                    body.push(...OP_GLOBAL_SET);
                 }
                 break;
             case "CallExpression":
+                if (expr.callee === "as_bytes" ||
+                    expr.callee === "iter" ||
+                    expr.callee === "enumerate") {
+                    this.emitExpressionBinary(expr.args[0], body);
+                    break;
+                }
+                if (expr.callee === "String::from") {
+                    this.emitExpressionBinary(expr.args[0], body);
+                    break;
+                }
+                if (expr.callee === "clear") {
+                    this.emitExpressionBinary(expr.args[0], body);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(0));
+                    body.push(...OP_I32_STORE);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(0));
+                    break;
+                }
                 for (const arg of expr.args)
                     this.emitExpressionBinary(arg, body);
                 const idx = this.functionIndices.get(expr.callee);
@@ -1156,6 +1595,52 @@ export class Emitter {
         body.push(OP_I32_CONST, ...this.encodeSignedLEB128(offset));
         body.push(OP_CALL, ...this.encodeUnsignedLEB128(1)); // print_str is index 1
         body.push(OP_DROP);
+    }
+    emitForPatternBinary(pattern, iterLocal, objLocal, body) {
+        if (pattern.type === "TuplePattern") {
+            if (pattern.elements.length === 2) {
+                const iPattern = pattern.elements[0];
+                if (iPattern.type === "IdentifierPattern") {
+                    const uniqueName = `${iPattern.name}_${++this.localCounter}`;
+                    this.allLocals.add(uniqueName);
+                    this.scopeStack[this.scopeStack.length - 1].vars.set(iPattern.name, {
+                        uniqueName,
+                        isMutable: false,
+                        isBorrowedMut: false,
+                        borrowCount: 0,
+                    });
+                    body.push(OP_LOCAL_GET, 0xfe, iterLocal);
+                    body.push(OP_LOCAL_SET, 0xfe, uniqueName);
+                }
+                const itemPattern = pattern.elements[1];
+                this.emitPatternBinary(itemPattern, iterLocal, objLocal, body);
+            }
+        }
+        else {
+            this.emitPatternBinary(pattern, iterLocal, objLocal, body);
+        }
+    }
+    emitPatternBinary(pattern, iterLocal, objLocal, body) {
+        if (pattern.type === "ReferencePattern") {
+            this.emitPatternBinary(pattern.pattern, iterLocal, objLocal, body);
+        }
+        else if (pattern.type === "IdentifierPattern") {
+            const uniqueName = `${pattern.name}_${++this.localCounter}`;
+            this.allLocals.add(uniqueName);
+            this.scopeStack[this.scopeStack.length - 1].vars.set(pattern.name, {
+                uniqueName,
+                isMutable: false,
+                isBorrowedMut: false,
+                borrowCount: 0,
+            });
+            body.push(OP_LOCAL_GET, 0xfe, objLocal);
+            body.push(OP_I32_CONST, ...this.encodeSignedLEB128(4));
+            body.push(OP_I32_ADD);
+            body.push(OP_LOCAL_GET, 0xfe, iterLocal);
+            body.push(OP_I32_ADD);
+            body.push(...OP_I32_LOAD8_U);
+            body.push(OP_LOCAL_SET, 0xfe, uniqueName);
+        }
     }
     encodeSection(id, content) {
         return [id, ...this.encodeUnsignedLEB128(content.length), ...content];

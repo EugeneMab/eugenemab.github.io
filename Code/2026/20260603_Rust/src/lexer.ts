@@ -8,6 +8,9 @@ export enum TokenType {
   ELSE,
   LOOP,
   WHILE,
+  FOR,
+  IN,
+  RETURN,
   BREAK,
   CONTINUE,
   STRUCT,
@@ -20,6 +23,7 @@ export enum TokenType {
   INTEGER,
   HEX,
   STRING,
+  BYTE_LITERAL,
   IDENTIFIER,
 
   // Symbols
@@ -31,7 +35,9 @@ export enum TokenType {
   RBRACKET,
   COMMA,
   DOT,
+  DOT_DOT,
   COLON,
+  COLON_COLON,
   SEMICOLON,
   ARROW,
   PLUS,
@@ -72,6 +78,9 @@ const KEYWORDS: Record<string, TokenType> = {
   else: TokenType.ELSE,
   loop: TokenType.LOOP,
   while: TokenType.WHILE,
+  for: TokenType.FOR,
+  in: TokenType.IN,
+  return: TokenType.RETURN,
   break: TokenType.BREAK,
   continue: TokenType.CONTINUE,
   struct: TokenType.STRUCT,
@@ -114,6 +123,11 @@ export class Lexer {
         continue;
       }
 
+      if (this.input.startsWith("b'", this.pos)) {
+        tokens.push(this.readByteLiteral());
+        continue;
+      }
+
       if (/[a-zA-Z_]/.test(char)) {
         tokens.push(this.readIdentifierOrKeyword());
         continue;
@@ -131,6 +145,26 @@ export class Lexer {
 
       const startLine = this.line;
       const startCol = this.col;
+
+      if (this.match("..")) {
+        tokens.push({
+          type: TokenType.DOT_DOT,
+          value: "..",
+          line: startLine,
+          col: startCol,
+        });
+        continue;
+      }
+
+      if (this.match("::")) {
+        tokens.push({
+          type: TokenType.COLON_COLON,
+          value: "::",
+          line: startLine,
+          col: startCol,
+        });
+        continue;
+      }
 
       if (this.match("->")) {
         tokens.push({
@@ -317,5 +351,42 @@ export class Lexer {
     }
     this.advance(); // skip closing quote
     return { type: TokenType.STRING, value, line: startLine, col: startCol };
+  }
+
+  private readByteLiteral(): Token {
+    const startLine = this.line;
+    const startCol = this.col;
+    this.advance(); // skip 'b'
+    this.advance(); // skip '
+    let value = "";
+    if (this.input[this.pos] === "\\") {
+      this.advance(); // skip \
+      const escaped = this.advance();
+      if (escaped === "n") value = "\n";
+      else if (escaped === "r") value = "\r";
+      else if (escaped === "t") value = "\t";
+      else if (escaped === "\\") value = "\\";
+      else if (escaped === "'") value = "'";
+      else if (escaped === "0") value = "\0";
+      else throw new Error(`Unknown escape sequence: \\${escaped}`);
+    } else {
+      value = this.advance();
+    }
+    this.consumeByteLiteralEnd();
+    return {
+      type: TokenType.BYTE_LITERAL,
+      value: value.charCodeAt(0).toString(),
+      line: startLine,
+      col: startCol,
+    };
+  }
+
+  private consumeByteLiteralEnd() {
+    if (this.input[this.pos] !== "'") {
+      throw new Error(
+        `Expected ' at end of byte literal, found ${this.input[this.pos]} at ${this.line}:${this.col}`,
+      );
+    }
+    this.advance();
   }
 }
