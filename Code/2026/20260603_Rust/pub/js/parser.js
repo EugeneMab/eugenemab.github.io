@@ -165,7 +165,7 @@ export class Parser {
             }
         }
         const body = this.parseBlockStatement();
-        return { type: "FunctionDeclaration", token, name, params, body };
+        return { type: "FunctionDeclaration", token, name, params, returnType, body };
     }
     parseBlockStatement() {
         const token = this.consume(TokenType.LBRACE, "Expect '{' to start block");
@@ -238,10 +238,13 @@ export class Parser {
     parseRange() {
         if (this.match(TokenType.DOT_DOT)) {
             const token = this.previous();
-            const end = this.parseComparison();
+            let end;
+            if (!this.check(TokenType.RBRACKET, TokenType.COMMA, TokenType.SEMICOLON, TokenType.RPAREN, TokenType.RBRACE)) {
+                end = this.parseComparison();
+            }
             return { type: "RangeExpression", token, end };
         }
-        let expr = this.parseComparison();
+        const expr = this.parseComparison();
         if (this.match(TokenType.DOT_DOT)) {
             const token = this.previous();
             let end;

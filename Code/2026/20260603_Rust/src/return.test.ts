@@ -100,21 +100,8 @@ describe("Return Statement Tests", () => {
         return "hello";
       }
     `;
-    const { logs, result } = await runRust(code);
-    // Since result is a pointer, we can't easily assert its value,
-    // but we can try to print it.
-    const code2 = `
-      fn main() -> i32 {
-        let s = get_str();
-        print_str!(s);
-        0
-      }
-      fn get_str() -> &str {
-        return "hello";
-      }
-    `;
-    // Wait, the current runner only calls main().
-    // I need to use a single main function or update runRust.
+    const { result } = await runRust(code);
+    expect(typeof result).toBe("number");
   });
 
   it("Return &str from helper", async () => {
