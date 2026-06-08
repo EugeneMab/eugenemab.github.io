@@ -25,7 +25,9 @@ export function initUI() {
   };
 
   const formatWASMBytes = (bytes: Uint8Array): string => {
-    const values = Array.from(bytes).map((b) => b.toString(16).padStart(2, "0"));
+    const values = Array.from(bytes).map((b) =>
+      b.toString(16).padStart(2, "0"),
+    );
     const rows: string[] = [];
     for (let i = 0; i < values.length; i += 16) {
       rows.push(values.slice(i, i + 16).join(" "));
@@ -88,7 +90,9 @@ export function initUI() {
         const leadingSpaces = line.match(/^\s*/)?.[0] ?? "";
         return Math.min(leadingSpaces.length, 4);
       });
-      const adjusted = lines.map((line, idx) => line.substring(removedPerLine[idx]));
+      const adjusted = lines.map((line, idx) =>
+        line.substring(removedPerLine[idx]),
+      );
       editor.value =
         value.substring(0, lineStart) +
         adjusted.join("\n") +
@@ -112,7 +116,9 @@ export function initUI() {
 
     const adjusted = lines.map((line) => `    ${line}`);
     editor.value =
-      value.substring(0, lineStart) + adjusted.join("\n") + value.substring(lineEnd);
+      value.substring(0, lineStart) +
+      adjusted.join("\n") +
+      value.substring(lineEnd);
     if (start === end) {
       const newPos = start + 4;
       editor.selectionStart = newPos;
@@ -160,7 +166,8 @@ export function initUI() {
       const lineStart = value.lastIndexOf("\n", start - 1) + 1;
       const currentLine = value.substring(lineStart, start);
       const indentation = currentLine.match(/^\s*/)?.[0] ?? "";
-      editor.value = value.substring(0, start) + "\n" + indentation + value.substring(end);
+      editor.value =
+        value.substring(0, start) + "\n" + indentation + value.substring(end);
       const newPos = start + 1 + indentation.length;
       editor.selectionStart = newPos;
       editor.selectionEnd = newPos;
