@@ -316,5 +316,19 @@ describe("UI Samples Regression Tests", () => {
       expect(logs).toEqual(["2", "3"]);
       expect(result).toBe(0);
     });
+
+    it("Book 4-3: Array Slice Out of Bounds (Negative at Execute)", async () => {
+      const code = `fn main() {
+    let a = [1, 2, 3, 4, 5];
+    let slice = &a[1..3];
+    if slice[0] == 2 {
+        println!("{}", slice[9]);
+    }
+    if slice[1] == 3 {
+        println!("{}", slice[1]);
+    }
+}`;
+      await expect(runRust(code)).rejects.toThrow("Panic! Error code: 101");
+    });
   });
 });
