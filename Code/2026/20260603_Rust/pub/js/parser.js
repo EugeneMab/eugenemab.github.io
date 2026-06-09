@@ -152,6 +152,9 @@ export class Parser {
                     while (this.match(TokenType.AMPERSAND, TokenType.MUT, TokenType.IDENTIFIER)) {
                         pType += (pType ? " " : "") + this.previous().value;
                     }
+                    if (pType === "") {
+                        throw new Error(formatError(this.source, "Expect type name after ':'", this.peek()));
+                    }
                 }
                 params.push({ name: pName, type: pType });
             } while (this.match(TokenType.COMMA));
@@ -162,6 +165,9 @@ export class Parser {
             returnType = "";
             while (this.match(TokenType.AMPERSAND, TokenType.MUT, TokenType.IDENTIFIER)) {
                 returnType += (returnType ? " " : "") + this.previous().value;
+            }
+            if (returnType === "") {
+                throw new Error(formatError(this.source, "Expect return type after '->'", this.peek()));
             }
         }
         const body = this.parseBlockStatement();
