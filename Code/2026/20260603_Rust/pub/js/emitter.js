@@ -41,10 +41,15 @@ const OP_I32_EQZ = 0x45;
 const OP_I32_LOAD = [0x28, 0x00, 0x00];
 const OP_I32_LOAD8_U = [0x2d, 0x00, 0x00];
 const OP_I32_STORE = [0x36, 0x00, 0x00];
+const OP_I32_STORE8 = [0x3a, 0x00, 0x00];
 const OP_GLOBAL_GET = [0x23, 0x00];
 const OP_GLOBAL_SET = [0x24, 0x00];
 const OP_MEMORY_COPY = [0xfc, 0x0a, 0x00, 0x00];
 const INDEX_OUT_OF_BOUNDS_PANIC_CODE = 101;
+// System helpers defined inside the WASM module (after the 3 imports).
+// Indices: get_item=3, get_item_i32=4, set_item=5, set_item_i32=6.
+// User functions start at HELPER_FN_START.
+const HELPER_FN_START = 7;
 export class Emitter {
     program;
     source;
@@ -192,10 +197,15 @@ export class Emitter {
         this.functionIndices.set("print", 0);
         this.functionIndices.set("print_str", 1);
         this.functionIndices.set("panic", 2);
+        // System helpers defined inside the module (not imported).
+        this.functionIndices.set("get_item", 3);
+        this.functionIndices.set("get_item_i32", 4);
+        this.functionIndices.set("set_item", 5);
+        this.functionIndices.set("set_item_i32", 6);
         this.functionReturnTypes.clear();
         const userFunctions = this.program.body.filter((s) => s.type === "FunctionDeclaration");
         userFunctions.forEach((fn, i) => {
-            this.functionIndices.set(fn.name, 3 + i);
+            this.functionIndices.set(fn.name, HELPER_FN_START + i);
             this.functionReturnTypes.set(fn.name, this.normalizeType(fn.returnType));
         });
         return userFunctions;
@@ -213,6 +223,7 @@ export class Emitter {
         this.emitWATLine('(import "env" "print_str" (func $print_str (param i32) (result i32)))');
         this.emitWATLine('(import "env" "panic" (func $panic (param i32) (result i32)))');
         this.emitWATLine('(memory (export "memory") 1)');
+        this.emitHelperFunctionsWAT();
         for (const fn of userFunctions) {
             this.emitFunctionWAT(fn);
         }
@@ -275,6 +286,120 @@ export class Emitter {
         bodyWAT.forEach((line) => {
             this.outputWAT.push("  ".repeat(this.indent) + line);
         });
+        this.indent--;
+        this.emitWATLine(")");
+    }
+    emitHelperFunctionsWAT() {
+        // get_item: bounds-checked byte (u8) element read — used for strings and byte slices.
+        this.emitWATLine("(func $get_item (param $ptr i32) (param $idx i32) (result i32)");
+        this.indent++;
+        this.emitWATLine("local.get $idx");
+        this.emitWATLine("i32.const 0");
+        this.emitWATLine("i32.lt_s");
+        this.emitWATLine("local.get $idx");
+        this.emitWATLine("local.get $ptr");
+        this.emitWATLine("i32.load");
+        this.emitWATLine("i32.ge_s");
+        this.emitWATLine("i32.or");
+        this.emitWATLine("if");
+        this.indent++;
+        this.emitWATLine(`i32.const ${INDEX_OUT_OF_BOUNDS_PANIC_CODE}`);
+        this.emitWATLine("call $panic");
+        this.emitWATLine("unreachable");
+        this.indent--;
+        this.emitWATLine("end");
+        this.emitWATLine("local.get $ptr");
+        this.emitWATLine("local.get $idx");
+        this.emitWATLine("i32.add");
+        this.emitWATLine("i32.const 4");
+        this.emitWATLine("i32.add");
+        this.emitWATLine("i32.load8_u");
+        this.indent--;
+        this.emitWATLine(")");
+        // get_item_i32: bounds-checked i32 element read — used for i32 arrays.
+        this.emitWATLine("(func $get_item_i32 (param $ptr i32) (param $idx i32) (result i32)");
+        this.indent++;
+        this.emitWATLine("local.get $idx");
+        this.emitWATLine("i32.const 0");
+        this.emitWATLine("i32.lt_s");
+        this.emitWATLine("local.get $idx");
+        this.emitWATLine("local.get $ptr");
+        this.emitWATLine("i32.load");
+        this.emitWATLine("i32.ge_s");
+        this.emitWATLine("i32.or");
+        this.emitWATLine("if");
+        this.indent++;
+        this.emitWATLine(`i32.const ${INDEX_OUT_OF_BOUNDS_PANIC_CODE}`);
+        this.emitWATLine("call $panic");
+        this.emitWATLine("unreachable");
+        this.indent--;
+        this.emitWATLine("end");
+        this.emitWATLine("local.get $ptr");
+        this.emitWATLine("local.get $idx");
+        this.emitWATLine("i32.const 4");
+        this.emitWATLine("i32.mul");
+        this.emitWATLine("i32.add");
+        this.emitWATLine("i32.const 4");
+        this.emitWATLine("i32.add");
+        this.emitWATLine("i32.load");
+        this.indent--;
+        this.emitWATLine(")");
+        // set_item: bounds-checked byte (u8) element write — for mutable byte slices.
+        this.emitWATLine("(func $set_item (param $ptr i32) (param $idx i32) (param $val i32) (result i32)");
+        this.indent++;
+        this.emitWATLine("local.get $idx");
+        this.emitWATLine("i32.const 0");
+        this.emitWATLine("i32.lt_s");
+        this.emitWATLine("local.get $idx");
+        this.emitWATLine("local.get $ptr");
+        this.emitWATLine("i32.load");
+        this.emitWATLine("i32.ge_s");
+        this.emitWATLine("i32.or");
+        this.emitWATLine("if");
+        this.indent++;
+        this.emitWATLine(`i32.const ${INDEX_OUT_OF_BOUNDS_PANIC_CODE}`);
+        this.emitWATLine("call $panic");
+        this.emitWATLine("unreachable");
+        this.indent--;
+        this.emitWATLine("end");
+        this.emitWATLine("local.get $ptr");
+        this.emitWATLine("local.get $idx");
+        this.emitWATLine("i32.add");
+        this.emitWATLine("i32.const 4");
+        this.emitWATLine("i32.add");
+        this.emitWATLine("local.get $val");
+        this.emitWATLine("i32.store8");
+        this.emitWATLine("i32.const 0");
+        this.indent--;
+        this.emitWATLine(")");
+        // set_item_i32: bounds-checked i32 element write — for mutable i32 arrays.
+        this.emitWATLine("(func $set_item_i32 (param $ptr i32) (param $idx i32) (param $val i32) (result i32)");
+        this.indent++;
+        this.emitWATLine("local.get $idx");
+        this.emitWATLine("i32.const 0");
+        this.emitWATLine("i32.lt_s");
+        this.emitWATLine("local.get $idx");
+        this.emitWATLine("local.get $ptr");
+        this.emitWATLine("i32.load");
+        this.emitWATLine("i32.ge_s");
+        this.emitWATLine("i32.or");
+        this.emitWATLine("if");
+        this.indent++;
+        this.emitWATLine(`i32.const ${INDEX_OUT_OF_BOUNDS_PANIC_CODE}`);
+        this.emitWATLine("call $panic");
+        this.emitWATLine("unreachable");
+        this.indent--;
+        this.emitWATLine("end");
+        this.emitWATLine("local.get $ptr");
+        this.emitWATLine("local.get $idx");
+        this.emitWATLine("i32.const 4");
+        this.emitWATLine("i32.mul");
+        this.emitWATLine("i32.add");
+        this.emitWATLine("i32.const 4");
+        this.emitWATLine("i32.add");
+        this.emitWATLine("local.get $val");
+        this.emitWATLine("i32.store");
+        this.emitWATLine("i32.const 0");
         this.indent--;
         this.emitWATLine(")");
     }
@@ -699,42 +824,11 @@ export class Emitter {
                 }
                 else {
                     const objectType = this.inferExpressionType(expr.object);
-                    const objLocal = `index_obj_${++this.localCounter}`;
-                    const indexLocal = `index_${++this.localCounter}`;
-                    this.allLocals.add(objLocal);
-                    this.allLocals.add(indexLocal);
-                    this.emitWATLine(`local.set $${objLocal}`);
+                    const isI32Array = this.isArrayLikeType(objectType) &&
+                        !this.isByteLikeType(objectType) &&
+                        !this.isStringLikeType(objectType);
                     this.emitExpressionWAT(expr.index);
-                    this.emitWATLine(`local.set $${indexLocal}`);
-                    this.emitWATLine(`local.get $${indexLocal}`);
-                    this.emitWATLine("i32.const 0");
-                    this.emitWATLine("i32.lt_s");
-                    this.emitWATLine(`local.get $${indexLocal}`);
-                    this.emitWATLine(`local.get $${objLocal}`);
-                    this.emitWATLine("i32.load");
-                    this.emitWATLine("i32.ge_s");
-                    this.emitWATLine("i32.or");
-                    this.emitWATLine("if");
-                    this.emitWATLine(`i32.const ${INDEX_OUT_OF_BOUNDS_PANIC_CODE}`);
-                    this.emitWATLine("call $panic");
-                    this.emitWATLine("unreachable");
-                    this.emitWATLine("end");
-                    this.emitWATLine(`local.get $${objLocal}`);
-                    this.emitWATLine(`local.get $${indexLocal}`);
-                    if (this.isArrayLikeType(objectType) &&
-                        !this.isByteLikeType(objectType) &&
-                        !this.isStringLikeType(objectType)) {
-                        this.emitWATLine("i32.const 4");
-                        this.emitWATLine("i32.mul");
-                    }
-                    this.emitWATLine("i32.add");
-                    this.emitWATLine("i32.const 4");
-                    this.emitWATLine("i32.add");
-                    this.emitWATLine(this.isArrayLikeType(objectType) &&
-                        !this.isByteLikeType(objectType) &&
-                        !this.isStringLikeType(objectType)
-                        ? "i32.load"
-                        : "i32.load8_u");
+                    this.emitWATLine(`call $${isI32Array ? "get_item_i32" : "get_item"}`);
                 }
                 break;
             }
@@ -1055,7 +1149,9 @@ export class Emitter {
         this.stringOffset = 0;
         const userFunctions = this.prepareFunctionMetadata();
         const typeSection = this.encodeSection(SECTION_TYPE, this.encodeVector([
-            [TYPE_FUNC, 1, TYPE_I32, 1, TYPE_I32], // print / print_str / panic
+            [TYPE_FUNC, 1, TYPE_I32, 1, TYPE_I32], // type 0: (i32) -> i32  — imports
+            [TYPE_FUNC, 2, TYPE_I32, TYPE_I32, 1, TYPE_I32], // type 1: (i32, i32) -> i32  — get_item, get_item_i32
+            [TYPE_FUNC, 3, TYPE_I32, TYPE_I32, TYPE_I32, 1, TYPE_I32], // type 2: (i32, i32, i32) -> i32  — set_item, set_item_i32
             ...userFunctions.map((fn) => [
                 TYPE_FUNC,
                 fn.params.length,
@@ -1084,8 +1180,15 @@ export class Emitter {
                 0x00,
             ],
         ]));
-        const funcSection = this.encodeSection(SECTION_FUNCTION, this.encodeVector(userFunctions.map((_, i) => [i + 1])));
+        const funcSection = this.encodeSection(SECTION_FUNCTION, this.encodeVector([
+            [1], // get_item      -> type 1: (i32, i32) -> i32
+            [1], // get_item_i32  -> type 1: (i32, i32) -> i32
+            [2], // set_item      -> type 2: (i32, i32, i32) -> i32
+            [2], // set_item_i32  -> type 2: (i32, i32, i32) -> i32
+            ...userFunctions.map((_, i) => [i + 3]), // user functions -> types 3+
+        ]));
         const memSection = this.encodeSection(SECTION_MEMORY, this.encodeVector([[0x00, 0x01]]));
+        const helperBodies = this.buildHelperFunctionBodies();
         const functionBodies = userFunctions.map((fn) => this.emitFunctionBinary(fn));
         const initialHeapPtr = Math.max(HEAP_BASE, this.stringOffset);
         const globalSection = this.encodeSection(0x06, this.encodeVector([
@@ -1105,7 +1208,7 @@ export class Emitter {
                 this.functionIndices.get(fn.name),
             ]),
         ]));
-        const codeSection = this.encodeSection(SECTION_CODE, this.encodeVector(functionBodies));
+        const codeSection = this.encodeSection(SECTION_CODE, this.encodeVector([...helperBodies, ...functionBodies]));
         // Data section
         const dataEntries = [];
         for (const [str, offset] of this.stringConstants.entries()) {
@@ -1144,6 +1247,79 @@ export class Emitter {
             ...codeSection,
             ...dataSection,
         ]);
+    }
+    buildHelperFunctionBodies() {
+        // Common bounds-check preamble for (ptr=param0, idx=param1):
+        // panics with INDEX_OUT_OF_BOUNDS_PANIC_CODE when idx < 0 || idx >= mem[ptr].
+        const boundsCheck = () => [
+            OP_LOCAL_GET, 0x01, // local.get idx (param 1)
+            OP_I32_CONST, 0x00, // i32.const 0
+            OP_I32_LT_S, // i32.lt_s
+            OP_LOCAL_GET, 0x01, // local.get idx
+            OP_LOCAL_GET, 0x00, // local.get ptr (param 0)
+            ...OP_I32_LOAD, // i32.load  (mem[ptr] = length)
+            OP_I32_GE_S, // i32.ge_s
+            OP_I32_OR, // i32.or
+            OP_IF, 0x40, // if (void)
+            OP_I32_CONST, ...this.encodeSignedLEB128(INDEX_OUT_OF_BOUNDS_PANIC_CODE),
+            OP_CALL, ...this.encodeUnsignedLEB128(this.functionIndices.get("panic")),
+            OP_UNREACHABLE,
+            OP_END, // end if
+        ];
+        const encodeFn = (body) => {
+            const localBytes = [0x00]; // encodeVector([]) — no additional locals
+            const full = [...localBytes, ...body, OP_END];
+            return [...this.encodeUnsignedLEB128(full.length), ...full];
+        };
+        // get_item(ptr, idx) -> i32: byte read — strings and byte slices.
+        const getItem = encodeFn([
+            ...boundsCheck(),
+            OP_LOCAL_GET, 0x00, // ptr
+            OP_LOCAL_GET, 0x01, // idx
+            OP_I32_ADD,
+            OP_I32_CONST, 0x04, // i32.const 4
+            OP_I32_ADD,
+            ...OP_I32_LOAD8_U, // i32.load8_u
+        ]);
+        // get_item_i32(ptr, idx) -> i32: i32 element read — i32 arrays.
+        const getItemI32 = encodeFn([
+            ...boundsCheck(),
+            OP_LOCAL_GET, 0x00, // ptr
+            OP_LOCAL_GET, 0x01, // idx
+            OP_I32_CONST, 0x04, // i32.const 4
+            OP_I32_MUL,
+            OP_I32_ADD,
+            OP_I32_CONST, 0x04, // i32.const 4
+            OP_I32_ADD,
+            ...OP_I32_LOAD, // i32.load
+        ]);
+        // set_item(ptr, idx, val) -> i32 (0): byte write — mutable byte slices.
+        const setItem = encodeFn([
+            ...boundsCheck(),
+            OP_LOCAL_GET, 0x00, // ptr
+            OP_LOCAL_GET, 0x01, // idx
+            OP_I32_ADD,
+            OP_I32_CONST, 0x04, // i32.const 4
+            OP_I32_ADD,
+            OP_LOCAL_GET, 0x02, // val (param 2)
+            ...OP_I32_STORE8, // i32.store8
+            OP_I32_CONST, 0x00, // i32.const 0  (return value)
+        ]);
+        // set_item_i32(ptr, idx, val) -> i32 (0): i32 element write — mutable i32 arrays.
+        const setItemI32 = encodeFn([
+            ...boundsCheck(),
+            OP_LOCAL_GET, 0x00, // ptr
+            OP_LOCAL_GET, 0x01, // idx
+            OP_I32_CONST, 0x04, // i32.const 4
+            OP_I32_MUL,
+            OP_I32_ADD,
+            OP_I32_CONST, 0x04, // i32.const 4
+            OP_I32_ADD,
+            OP_LOCAL_GET, 0x02, // val
+            ...OP_I32_STORE, // i32.store
+            OP_I32_CONST, 0x00, // i32.const 0  (return value)
+        ]);
+        return [getItem, getItemI32, setItem, setItemI32];
     }
     emitFunctionBinary(fn) {
         this.localCounter = 0;
@@ -1571,42 +1747,11 @@ export class Emitter {
                 }
                 else {
                     const objectType = this.inferExpressionType(expr.object);
-                    const objLocal = `index_obj_${++this.localCounter}`;
-                    const indexLocal = `index_${++this.localCounter}`;
-                    this.allLocals.add(objLocal);
-                    this.allLocals.add(indexLocal);
-                    body.push(OP_LOCAL_SET, 0xfe, objLocal);
+                    const isI32Array = this.isArrayLikeType(objectType) &&
+                        !this.isByteLikeType(objectType) &&
+                        !this.isStringLikeType(objectType);
                     this.emitExpressionBinary(expr.index, body);
-                    body.push(OP_LOCAL_SET, 0xfe, indexLocal);
-                    body.push(OP_LOCAL_GET, 0xfe, indexLocal);
-                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(0));
-                    body.push(OP_I32_LT_S);
-                    body.push(OP_LOCAL_GET, 0xfe, indexLocal);
-                    body.push(OP_LOCAL_GET, 0xfe, objLocal);
-                    body.push(...OP_I32_LOAD);
-                    body.push(OP_I32_GE_S);
-                    body.push(OP_I32_OR);
-                    body.push(OP_IF, 0x40);
-                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(INDEX_OUT_OF_BOUNDS_PANIC_CODE));
-                    body.push(OP_CALL, ...this.encodeUnsignedLEB128(2)); // panic is index 2
-                    body.push(OP_UNREACHABLE);
-                    body.push(OP_END);
-                    body.push(OP_LOCAL_GET, 0xfe, objLocal);
-                    body.push(OP_LOCAL_GET, 0xfe, indexLocal);
-                    if (this.isArrayLikeType(objectType) &&
-                        !this.isByteLikeType(objectType) &&
-                        !this.isStringLikeType(objectType)) {
-                        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(4));
-                        body.push(OP_I32_MUL);
-                    }
-                    body.push(OP_I32_ADD);
-                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(4));
-                    body.push(OP_I32_ADD);
-                    body.push(...(this.isArrayLikeType(objectType) &&
-                        !this.isByteLikeType(objectType) &&
-                        !this.isStringLikeType(objectType)
-                        ? OP_I32_LOAD
-                        : OP_I32_LOAD8_U));
+                    body.push(OP_CALL, ...this.encodeUnsignedLEB128(this.functionIndices.get(isI32Array ? "get_item_i32" : "get_item")));
                 }
                 break;
             }
