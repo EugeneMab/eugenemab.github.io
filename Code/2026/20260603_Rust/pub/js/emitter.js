@@ -44,6 +44,7 @@ const OP_I32_STORE = [0x36, 0x00, 0x00];
 const OP_GLOBAL_GET = [0x23, 0x00];
 const OP_GLOBAL_SET = [0x24, 0x00];
 const OP_MEMORY_COPY = [0xfc, 0x0a, 0x00, 0x00];
+const INDEX_OUT_OF_BOUNDS_PANIC_CODE = 101;
 export class Emitter {
     program;
     source;
@@ -416,6 +417,10 @@ export class Emitter {
                 this.allLocals.add(iterLocal);
                 this.allLocals.add(objLocal);
                 this.allLocals.add(lenLocal);
+                const iterableTypeWAT = this.inferExpressionType(stmt.iterable);
+                if (!this.isByteLikeType(iterableTypeWAT) && !this.isStringLikeType(iterableTypeWAT)) {
+                    this.throwError("for-in currently only supports iterating over byte sequences (e.g., s.as_bytes())", stmt);
+                }
                 this.emitExpressionWAT(stmt.iterable);
                 this.emitWATLine(`local.set $${objLocal}`);
                 this.emitWATLine(`local.get $${objLocal}`);
@@ -694,7 +699,28 @@ export class Emitter {
                 }
                 else {
                     const objectType = this.inferExpressionType(expr.object);
+                    const objLocal = `index_obj_${++this.localCounter}`;
+                    const indexLocal = `index_${++this.localCounter}`;
+                    this.allLocals.add(objLocal);
+                    this.allLocals.add(indexLocal);
+                    this.emitWATLine(`local.set $${objLocal}`);
                     this.emitExpressionWAT(expr.index);
+                    this.emitWATLine(`local.set $${indexLocal}`);
+                    this.emitWATLine(`local.get $${indexLocal}`);
+                    this.emitWATLine("i32.const 0");
+                    this.emitWATLine("i32.lt_s");
+                    this.emitWATLine(`local.get $${indexLocal}`);
+                    this.emitWATLine(`local.get $${objLocal}`);
+                    this.emitWATLine("i32.load");
+                    this.emitWATLine("i32.ge_s");
+                    this.emitWATLine("i32.or");
+                    this.emitWATLine("if");
+                    this.emitWATLine(`i32.const ${INDEX_OUT_OF_BOUNDS_PANIC_CODE}`);
+                    this.emitWATLine("call $panic");
+                    this.emitWATLine("unreachable");
+                    this.emitWATLine("end");
+                    this.emitWATLine(`local.get $${objLocal}`);
+                    this.emitWATLine(`local.get $${indexLocal}`);
                     if (this.isArrayLikeType(objectType) &&
                         !this.isByteLikeType(objectType) &&
                         !this.isStringLikeType(objectType)) {
@@ -976,7 +1002,7 @@ export class Emitter {
         if (pattern.type === "TuplePattern") {
             // (i, &item)
             // i is the index (iterLocal)
-            // &item is a reference to the element at objLocal + 4 + iterLocal
+            // item binds to the current element value (the `&` pattern is ignored here)
             if (pattern.elements.length === 2) {
                 // Element 0: i
                 const iPattern = pattern.elements[0];
@@ -1286,6 +1312,10 @@ export class Emitter {
                 this.allLocals.add(iterLocal);
                 this.allLocals.add(objLocal);
                 this.allLocals.add(lenLocal);
+                const iterableTypeBin = this.inferExpressionType(stmt.iterable);
+                if (!this.isByteLikeType(iterableTypeBin) && !this.isStringLikeType(iterableTypeBin)) {
+                    this.throwError("for-in currently only supports iterating over byte sequences (e.g., s.as_bytes())", stmt);
+                }
                 this.emitExpressionBinary(stmt.iterable, body);
                 body.push(OP_LOCAL_SET, 0xfe, objLocal);
                 body.push(OP_LOCAL_GET, 0xfe, objLocal);
@@ -1541,7 +1571,28 @@ export class Emitter {
                 }
                 else {
                     const objectType = this.inferExpressionType(expr.object);
+                    const objLocal = `index_obj_${++this.localCounter}`;
+                    const indexLocal = `index_${++this.localCounter}`;
+                    this.allLocals.add(objLocal);
+                    this.allLocals.add(indexLocal);
+                    body.push(OP_LOCAL_SET, 0xfe, objLocal);
                     this.emitExpressionBinary(expr.index, body);
+                    body.push(OP_LOCAL_SET, 0xfe, indexLocal);
+                    body.push(OP_LOCAL_GET, 0xfe, indexLocal);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(0));
+                    body.push(OP_I32_LT_S);
+                    body.push(OP_LOCAL_GET, 0xfe, indexLocal);
+                    body.push(OP_LOCAL_GET, 0xfe, objLocal);
+                    body.push(...OP_I32_LOAD);
+                    body.push(OP_I32_GE_S);
+                    body.push(OP_I32_OR);
+                    body.push(OP_IF, 0x40);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(INDEX_OUT_OF_BOUNDS_PANIC_CODE));
+                    body.push(OP_CALL, ...this.encodeUnsignedLEB128(2)); // panic is index 2
+                    body.push(OP_UNREACHABLE);
+                    body.push(OP_END);
+                    body.push(OP_LOCAL_GET, 0xfe, objLocal);
+                    body.push(OP_LOCAL_GET, 0xfe, indexLocal);
                     if (this.isArrayLikeType(objectType) &&
                         !this.isByteLikeType(objectType) &&
                         !this.isStringLikeType(objectType)) {

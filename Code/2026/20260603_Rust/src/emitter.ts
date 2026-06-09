@@ -54,6 +54,7 @@ const OP_I32_STORE = [0x36, 0x00, 0x00];
 const OP_GLOBAL_GET = [0x23, 0x00];
 const OP_GLOBAL_SET = [0x24, 0x00];
 const OP_MEMORY_COPY = [0xfc, 0x0a, 0x00, 0x00];
+const INDEX_OUT_OF_BOUNDS_PANIC_CODE = 101;
 
 interface VariableInfo {
   uniqueName: string;
@@ -775,7 +776,31 @@ export class Emitter {
           this.emitWATLine("global.set $heap_ptr");
         } else {
           const objectType = this.inferExpressionType(expr.object);
+          const objLocal = `index_obj_${++this.localCounter}`;
+          const indexLocal = `index_${++this.localCounter}`;
+          this.allLocals.add(objLocal);
+          this.allLocals.add(indexLocal);
+
+          this.emitWATLine(`local.set $${objLocal}`);
           this.emitExpressionWAT(expr.index);
+          this.emitWATLine(`local.set $${indexLocal}`);
+
+          this.emitWATLine(`local.get $${indexLocal}`);
+          this.emitWATLine("i32.const 0");
+          this.emitWATLine("i32.lt_s");
+          this.emitWATLine(`local.get $${indexLocal}`);
+          this.emitWATLine(`local.get $${objLocal}`);
+          this.emitWATLine("i32.load");
+          this.emitWATLine("i32.ge_s");
+          this.emitWATLine("i32.or");
+          this.emitWATLine("if");
+          this.emitWATLine(`i32.const ${INDEX_OUT_OF_BOUNDS_PANIC_CODE}`);
+          this.emitWATLine("call $panic");
+          this.emitWATLine("unreachable");
+          this.emitWATLine("end");
+
+          this.emitWATLine(`local.get $${objLocal}`);
+          this.emitWATLine(`local.get $${indexLocal}`);
           if (
             this.isArrayLikeType(objectType) &&
             !this.isByteLikeType(objectType) &&
@@ -1738,7 +1763,34 @@ export class Emitter {
           body.push(...OP_GLOBAL_SET);
         } else {
           const objectType = this.inferExpressionType(expr.object);
+          const objLocal = `index_obj_${++this.localCounter}`;
+          const indexLocal = `index_${++this.localCounter}`;
+          this.allLocals.add(objLocal);
+          this.allLocals.add(indexLocal);
+
+          body.push(OP_LOCAL_SET, 0xfe, objLocal as any);
           this.emitExpressionBinary(expr.index, body);
+          body.push(OP_LOCAL_SET, 0xfe, indexLocal as any);
+
+          body.push(OP_LOCAL_GET, 0xfe, indexLocal as any);
+          body.push(OP_I32_CONST, ...this.encodeSignedLEB128(0));
+          body.push(OP_I32_LT_S);
+          body.push(OP_LOCAL_GET, 0xfe, indexLocal as any);
+          body.push(OP_LOCAL_GET, 0xfe, objLocal as any);
+          body.push(...OP_I32_LOAD);
+          body.push(OP_I32_GE_S);
+          body.push(OP_I32_OR);
+          body.push(OP_IF, 0x40);
+          body.push(
+            OP_I32_CONST,
+            ...this.encodeSignedLEB128(INDEX_OUT_OF_BOUNDS_PANIC_CODE),
+          );
+          body.push(OP_CALL, ...this.encodeUnsignedLEB128(2)); // panic is index 2
+          body.push(OP_UNREACHABLE);
+          body.push(OP_END);
+
+          body.push(OP_LOCAL_GET, 0xfe, objLocal as any);
+          body.push(OP_LOCAL_GET, 0xfe, indexLocal as any);
           if (
             this.isArrayLikeType(objectType) &&
             !this.isByteLikeType(objectType) &&
