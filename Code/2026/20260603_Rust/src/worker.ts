@@ -57,12 +57,14 @@ self.onmessage = async (e) => {
       currentPhase = "Execute";
       const execStart = performance.now();
       const INDEX_OUT_OF_BOUNDS_PANIC_CODE = 101;
-      let instance: any;
+      const runtimeState: { instance: any } = { instance: null };
       const getMemoryView = () => {
-        if (!(instance?.exports as any)?.memory) {
+        if (!(runtimeState.instance?.exports as any)?.memory) {
           throw new Error("WASM memory is not initialized");
         }
-        return new DataView(((instance.exports as any).memory as WebAssembly.Memory).buffer);
+        return new DataView(
+          ((runtimeState.instance.exports as any).memory as WebAssembly.Memory).buffer,
+        );
       };
       const validateIndex = (ptr: number, idx: number) => {
         const view = getMemoryView();
@@ -144,7 +146,8 @@ self.onmessage = async (e) => {
         wasm,
         importObject,
       )) as any;
-      instance = inst;
+      runtimeState.instance = inst;
+      const instance = runtimeState.instance;
       if ((instance.exports as any).main) {
         const result = (instance.exports as any).main();
         logPhase("Execute", "leave", performance.now() - execStart);

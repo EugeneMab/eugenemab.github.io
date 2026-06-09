@@ -13,12 +13,14 @@ async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
   const wasm = emitter.emitWASM();
 
   const logs: string[] = [];
-  let instance: any;
+  const runtimeState: { instance: any } = { instance: null };
   const getMemoryView = () => {
-    if (!(instance?.exports as any)?.memory) {
+    if (!(runtimeState.instance?.exports as any)?.memory) {
       throw new Error("WASM memory is not initialized");
     }
-    return new DataView(((instance.exports as any).memory as WebAssembly.Memory).buffer);
+    return new DataView(
+      ((runtimeState.instance.exports as any).memory as WebAssembly.Memory).buffer,
+    );
   };
   const validateIndex = (ptr: number, idx: number) => {
     const view = getMemoryView();
@@ -84,7 +86,8 @@ async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
     wasm,
     importObject,
   )) as any;
-  instance = inst;
+  runtimeState.instance = inst;
+  const instance = runtimeState.instance;
   const result = (instance.exports as any).main();
   return { logs, result };
 }
