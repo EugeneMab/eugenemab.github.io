@@ -76,21 +76,22 @@ export class Emitter {
     normalizeType(type) {
         if (!type)
             return undefined;
-        return type
-            .trim()
-            .replace(/\s+/g, " ")
-            .replace(/&\s+/g, "&");
+        return type.trim().replace(/\s+/g, " ").replace(/&\s+/g, "&");
     }
     isStringLikeType(type) {
         const normalized = this.normalizeType(type);
-        return normalized === "String" || normalized === "&String" || normalized === "&str";
+        return (normalized === "String" ||
+            normalized === "&String" ||
+            normalized === "&str");
     }
     isByteLikeType(type) {
         return this.normalizeType(type) === "bytes";
     }
     isArrayLikeType(type) {
         const normalized = this.normalizeType(type);
-        return normalized === "array" || normalized === "slice" || this.isByteLikeType(normalized);
+        return (normalized === "array" ||
+            normalized === "slice" ||
+            this.isByteLikeType(normalized));
     }
     inferExpressionType(expr) {
         switch (expr.type) {
@@ -123,7 +124,8 @@ export class Emitter {
                         return "slice";
                     return objectType;
                 }
-                if (this.isStringLikeType(objectType) || this.isByteLikeType(objectType)) {
+                if (this.isStringLikeType(objectType) ||
+                    this.isByteLikeType(objectType)) {
                     return "u8";
                 }
                 if (this.isArrayLikeType(objectType))
@@ -430,7 +432,8 @@ export class Emitter {
                 this.allLocals.add(objLocal);
                 this.allLocals.add(lenLocal);
                 const iterableTypeWAT = this.inferExpressionType(stmt.iterable);
-                if (!this.isByteLikeType(iterableTypeWAT) && !this.isStringLikeType(iterableTypeWAT)) {
+                if (!this.isByteLikeType(iterableTypeWAT) &&
+                    !this.isStringLikeType(iterableTypeWAT)) {
                     this.throwError("for-in currently only supports iterating over byte sequences (e.g., s.as_bytes())", stmt);
                 }
                 this.emitExpressionWAT(stmt.iterable);
@@ -1322,7 +1325,8 @@ export class Emitter {
                 this.allLocals.add(objLocal);
                 this.allLocals.add(lenLocal);
                 const iterableTypeBin = this.inferExpressionType(stmt.iterable);
-                if (!this.isByteLikeType(iterableTypeBin) && !this.isStringLikeType(iterableTypeBin)) {
+                if (!this.isByteLikeType(iterableTypeBin) &&
+                    !this.isStringLikeType(iterableTypeBin)) {
                     this.throwError("for-in currently only supports iterating over byte sequences (e.g., s.as_bytes())", stmt);
                 }
                 this.emitExpressionBinary(stmt.iterable, body);

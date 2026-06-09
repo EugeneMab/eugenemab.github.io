@@ -63,7 +63,8 @@ self.onmessage = async (e) => {
           throw new Error("WASM memory is not initialized");
         }
         return new DataView(
-          ((runtimeState.instance.exports as any).memory as WebAssembly.Memory).buffer,
+          ((runtimeState.instance.exports as any).memory as WebAssembly.Memory)
+            .buffer,
         );
       };
       const validateIndex = (ptr: number, idx: number) => {
@@ -73,7 +74,9 @@ self.onmessage = async (e) => {
         }
         const len = view.getUint32(ptr, true);
         if (idx < 0 || idx >= len) {
-          throw new Error(`Panic! Error code: ${INDEX_OUT_OF_BOUNDS_PANIC_CODE}`);
+          throw new Error(
+            `Panic! Error code: ${INDEX_OUT_OF_BOUNDS_PANIC_CODE}`,
+          );
         }
         return view;
       };

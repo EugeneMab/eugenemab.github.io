@@ -51,7 +51,8 @@ self.onmessage = async (e) => {
                 if (!runtimeState.instance?.exports?.memory) {
                     throw new Error("WASM memory is not initialized");
                 }
-                return new DataView(runtimeState.instance.exports.memory.buffer);
+                return new DataView(runtimeState.instance.exports.memory
+                    .buffer);
             };
             const validateIndex = (ptr, idx) => {
                 const view = getMemoryView();

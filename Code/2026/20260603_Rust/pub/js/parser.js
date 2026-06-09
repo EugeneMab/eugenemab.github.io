@@ -171,7 +171,14 @@ export class Parser {
             }
         }
         const body = this.parseBlockStatement();
-        return { type: "FunctionDeclaration", token, name, params, returnType, body };
+        return {
+            type: "FunctionDeclaration",
+            token,
+            name,
+            params,
+            returnType,
+            body,
+        };
     }
     parseBlockStatement() {
         const token = this.consume(TokenType.LBRACE, "Expect '{' to start block");

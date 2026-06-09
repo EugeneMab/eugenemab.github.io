@@ -357,7 +357,11 @@ export class Parser {
           }
           if (pType === "") {
             throw new Error(
-              formatError(this.source, "Expect type name after ':'", this.peek()),
+              formatError(
+                this.source,
+                "Expect type name after ':'",
+                this.peek(),
+              ),
             );
           }
         }
@@ -375,12 +379,23 @@ export class Parser {
       }
       if (returnType === "") {
         throw new Error(
-          formatError(this.source, "Expect return type after '->'", this.peek()),
+          formatError(
+            this.source,
+            "Expect return type after '->'",
+            this.peek(),
+          ),
         );
       }
     }
     const body = this.parseBlockStatement();
-    return { type: "FunctionDeclaration", token, name, params, returnType, body };
+    return {
+      type: "FunctionDeclaration",
+      token,
+      name,
+      params,
+      returnType,
+      body,
+    };
   }
 
   private parseBlockStatement(): BlockStatement {

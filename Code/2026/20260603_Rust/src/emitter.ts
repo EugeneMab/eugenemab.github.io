@@ -103,15 +103,16 @@ export class Emitter {
 
   private normalizeType(type?: string): string | undefined {
     if (!type) return undefined;
-    return type
-      .trim()
-      .replace(/\s+/g, " ")
-      .replace(/&\s+/g, "&");
+    return type.trim().replace(/\s+/g, " ").replace(/&\s+/g, "&");
   }
 
   private isStringLikeType(type?: string): boolean {
     const normalized = this.normalizeType(type);
-    return normalized === "String" || normalized === "&String" || normalized === "&str";
+    return (
+      normalized === "String" ||
+      normalized === "&String" ||
+      normalized === "&str"
+    );
   }
 
   private isByteLikeType(type?: string): boolean {
@@ -120,7 +121,11 @@ export class Emitter {
 
   private isArrayLikeType(type?: string): boolean {
     const normalized = this.normalizeType(type);
-    return normalized === "array" || normalized === "slice" || this.isByteLikeType(normalized);
+    return (
+      normalized === "array" ||
+      normalized === "slice" ||
+      this.isByteLikeType(normalized)
+    );
   }
 
   private inferExpressionType(expr: Expression): string | undefined {
@@ -148,7 +153,10 @@ export class Emitter {
           if (this.isArrayLikeType(objectType)) return "slice";
           return objectType;
         }
-        if (this.isStringLikeType(objectType) || this.isByteLikeType(objectType)) {
+        if (
+          this.isStringLikeType(objectType) ||
+          this.isByteLikeType(objectType)
+        ) {
           return "u8";
         }
         if (this.isArrayLikeType(objectType)) return "i32";
@@ -232,7 +240,9 @@ export class Emitter {
 
   private emitPrintCallForVariable(info: VariableInfo) {
     this.emitWATLine(`local.get $${info.uniqueName}`);
-    this.emitWATLine(`call $${this.isStringLikeType(info.valueType) ? "print_str" : "print"}`);
+    this.emitWATLine(
+      `call $${this.isStringLikeType(info.valueType) ? "print_str" : "print"}`,
+    );
   }
 
   private prepareFunctionMetadata() {
@@ -507,7 +517,10 @@ export class Emitter {
         this.allLocals.add(lenLocal);
 
         const iterableTypeWAT = this.inferExpressionType(stmt.iterable);
-        if (!this.isByteLikeType(iterableTypeWAT) && !this.isStringLikeType(iterableTypeWAT)) {
+        if (
+          !this.isByteLikeType(iterableTypeWAT) &&
+          !this.isStringLikeType(iterableTypeWAT)
+        ) {
           this.throwError(
             "for-in currently only supports iterating over byte sequences (e.g., s.as_bytes())",
             stmt,
@@ -728,11 +741,12 @@ export class Emitter {
         if (expr.index.type === "RangeExpression") {
           const range = expr.index;
           const objectType = this.inferExpressionType(expr.object);
-          const elementSize = this.isArrayLikeType(objectType) &&
+          const elementSize =
+            this.isArrayLikeType(objectType) &&
             !this.isByteLikeType(objectType) &&
             !this.isStringLikeType(objectType)
-            ? 4
-            : 1;
+              ? 4
+              : 1;
           const startLocal = `range_start_${++this.localCounter}`;
           const endLocal = `range_end_${++this.localCounter}`;
           const objLocal = `obj_ptr_${++this.localCounter}`;
@@ -1163,9 +1177,9 @@ export class Emitter {
     const typeSection = this.encodeSection(
       SECTION_TYPE,
       this.encodeVector([
-        [TYPE_FUNC, 1, TYPE_I32, 1, TYPE_I32],                             // type 0: (i32) -> i32  — imports
-        [TYPE_FUNC, 2, TYPE_I32, TYPE_I32, 1, TYPE_I32],                   // type 1: (i32, i32) -> i32  — get_item, get_item_i32
-        [TYPE_FUNC, 3, TYPE_I32, TYPE_I32, TYPE_I32, 1, TYPE_I32],         // type 2: (i32, i32, i32) -> i32  — set_item, set_item_i32
+        [TYPE_FUNC, 1, TYPE_I32, 1, TYPE_I32], // type 0: (i32) -> i32  — imports
+        [TYPE_FUNC, 2, TYPE_I32, TYPE_I32, 1, TYPE_I32], // type 1: (i32, i32) -> i32  — get_item, get_item_i32
+        [TYPE_FUNC, 3, TYPE_I32, TYPE_I32, TYPE_I32, 1, TYPE_I32], // type 2: (i32, i32, i32) -> i32  — set_item, set_item_i32
         ...userFunctions.map((fn) => [
           TYPE_FUNC,
           fn.params.length,
@@ -1489,7 +1503,10 @@ export class Emitter {
         this.allLocals.add(lenLocal);
 
         const iterableTypeBin = this.inferExpressionType(stmt.iterable);
-        if (!this.isByteLikeType(iterableTypeBin) && !this.isStringLikeType(iterableTypeBin)) {
+        if (
+          !this.isByteLikeType(iterableTypeBin) &&
+          !this.isStringLikeType(iterableTypeBin)
+        ) {
           this.throwError(
             "for-in currently only supports iterating over byte sequences (e.g., s.as_bytes())",
             stmt,
@@ -1706,11 +1723,12 @@ export class Emitter {
         if (expr.index.type === "RangeExpression") {
           const range = expr.index;
           const objectType = this.inferExpressionType(expr.object);
-          const elementSize = this.isArrayLikeType(objectType) &&
+          const elementSize =
+            this.isArrayLikeType(objectType) &&
             !this.isByteLikeType(objectType) &&
             !this.isStringLikeType(objectType)
-            ? 4
-            : 1;
+              ? 4
+              : 1;
           const startLocal = `range_start_${++this.localCounter}`;
           const endLocal = `range_end_${++this.localCounter}`;
           const objLocal = `obj_ptr_${++this.localCounter}`;
@@ -1782,7 +1800,9 @@ export class Emitter {
           body.push(
             OP_CALL,
             ...this.encodeUnsignedLEB128(
-              this.functionIndices.get(isI32Array ? "get_item_i32" : "get_item")!,
+              this.functionIndices.get(
+                isI32Array ? "get_item_i32" : "get_item",
+              )!,
             ),
           );
         }
