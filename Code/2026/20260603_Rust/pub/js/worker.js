@@ -45,6 +45,26 @@ self.onmessage = async (e) => {
             logPhase("Execute", "enter");
             currentPhase = "Execute";
             const execStart = performance.now();
+            const INDEX_OUT_OF_BOUNDS_PANIC_CODE = 101;
+            const runtimeState = { instance: null };
+            const getMemoryView = () => {
+                if (!runtimeState.instance?.exports?.memory) {
+                    throw new Error("WASM memory is not initialized");
+                }
+                return new DataView(runtimeState.instance.exports.memory
+                    .buffer);
+            };
+            const validateIndex = (ptr, idx) => {
+                const view = getMemoryView();
+                if (!Number.isInteger(ptr) || ptr < 0 || ptr + 4 > view.byteLength) {
+                    throw new Error(`Invalid collection pointer: ${ptr}`);
+                }
+                const len = view.getUint32(ptr, true);
+                if (idx < 0 || idx >= len) {
+                    throw new Error(`Panic! Error code: ${INDEX_OUT_OF_BOUNDS_PANIC_CODE}`);
+                }
+                return view;
+            };
             const importObject = {
                 env: {
                     print: (val) => {
@@ -69,9 +89,45 @@ self.onmessage = async (e) => {
                     panic: (code) => {
                         throw new Error(`Panic! Error code: ${code}`);
                     },
+                    get_item: (ptr, idx) => {
+                        const view = validateIndex(ptr, idx);
+                        const addr = ptr + 4 + idx;
+                        if (addr < 0 || addr >= view.byteLength) {
+                            throw new Error(`Invalid byte address: ${addr}`);
+                        }
+                        return view.getUint8(addr);
+                    },
+                    get_item_i32: (ptr, idx) => {
+                        const view = validateIndex(ptr, idx);
+                        const addr = ptr + 4 + idx * 4;
+                        if (addr < 0 || addr + 4 > view.byteLength) {
+                            throw new Error(`Invalid i32 address: ${addr}`);
+                        }
+                        return view.getInt32(addr, true);
+                    },
+                    set_item: (ptr, idx, val) => {
+                        const view = validateIndex(ptr, idx);
+                        const addr = ptr + 4 + idx;
+                        if (addr < 0 || addr >= view.byteLength) {
+                            throw new Error(`Invalid byte address: ${addr}`);
+                        }
+                        view.setUint8(addr, val & 0xff);
+                        return 0;
+                    },
+                    set_item_i32: (ptr, idx, val) => {
+                        const view = validateIndex(ptr, idx);
+                        const addr = ptr + 4 + idx * 4;
+                        if (addr < 0 || addr + 4 > view.byteLength) {
+                            throw new Error(`Invalid i32 address: ${addr}`);
+                        }
+                        view.setInt32(addr, val | 0, true);
+                        return 0;
+                    },
                 },
             };
-            const { instance } = (await WebAssembly.instantiate(wasm, importObject));
+            const { instance: inst } = (await WebAssembly.instantiate(wasm, importObject));
+            runtimeState.instance = inst;
+            const instance = runtimeState.instance;
             if (instance.exports.main) {
                 const result = instance.exports.main();
                 logPhase("Execute", "leave", performance.now() - execStart);
