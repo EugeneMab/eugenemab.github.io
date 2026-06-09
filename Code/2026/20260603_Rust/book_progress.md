@@ -4,7 +4,7 @@
 - [x] Chapter 1: Getting Started
 - [x] Chapter 2: Programming a Guessing Game
 - [x] Chapter 3: Common Programming Concepts
-- [ ] Chapter 4: Understanding Ownership (in progress)
+- [x] Chapter 4: Understanding Ownership
 - [ ] Chapter 5: Using Structs to Structure Related Data
 - [ ] Chapter 6: Enums and Pattern Matching
 - [ ] Chapter 7: Packages, Crates, and Modules
@@ -36,6 +36,7 @@
 - [x] Book 3-5: Control Flow (while loop + if as expression)
 - [x] Book 4-1: What Is Ownership? (scope-focused subset sample)
 - [x] Book 4-2: References and Borrowing (subset + mutable borrow conflict)
+- [x] Book 4-3: The Slice Type
 
 ## Next Up
-- [ ] Book 4-3: The Slice Type
+- [ ] Book 5: Using Structs to Structure Related Data

@@ -224,6 +224,12 @@ export function initUI() {
     book04_01_scope: "book04_01_scope.rs",
     book04_02_borrow: "book04_02_borrow.rs",
     book04_02_mut_borrow_err: "book04_02_mut_borrow_error.rs",
+    book04_03_index: "book04_03_index.rs",
+    book04_03_slice: "book04_03_slice.rs",
+    book04_03_first_word_slice: "book04_03_first_word_slice.rs",
+    book04_03_slice_error: "book04_03_slice_error.rs",
+    book04_03_slice_param: "book04_03_slice_param.rs",
+    book04_03_array_slice: "book04_03_array_slice.rs",
   };
 
   sampleSelect?.addEventListener("change", async () => {

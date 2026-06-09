@@ -72,4 +72,39 @@ describe("Lexer", () => {
 
     expect(tokens.map((t) => t.type)).toEqual(expectedTypes);
   });
+
+  it("should tokenize new keywords: for, in, return", () => {
+    const input = "for in return";
+    const lexer = new Lexer(input);
+    const tokens = lexer.tokenize();
+
+    expect(tokens[0].type).toBe(TokenType.FOR);
+    expect(tokens[1].type).toBe(TokenType.IN);
+    expect(tokens[2].type).toBe(TokenType.RETURN);
+    expect(tokens[3].type).toBe(TokenType.EOF);
+  });
+
+  it("should tokenize .. and :: as distinct tokens from . and :", () => {
+    const input = ". .. : ::";
+    const lexer = new Lexer(input);
+    const tokens = lexer.tokenize();
+
+    expect(tokens[0].type).toBe(TokenType.DOT);
+    expect(tokens[1].type).toBe(TokenType.DOT_DOT);
+    expect(tokens[2].type).toBe(TokenType.COLON);
+    expect(tokens[3].type).toBe(TokenType.COLON_COLON);
+    expect(tokens[4].type).toBe(TokenType.EOF);
+  });
+
+  it("should tokenize byte literals b'...'", () => {
+    const input = "b'a' b'\\n'";
+    const lexer = new Lexer(input);
+    const tokens = lexer.tokenize();
+
+    expect(tokens[0].type).toBe(TokenType.BYTE_LITERAL);
+    expect(tokens[0].value).toBe("97"); // ASCII 'a'
+    expect(tokens[1].type).toBe(TokenType.BYTE_LITERAL);
+    expect(tokens[1].value).toBe("10"); // ASCII '\n'
+    expect(tokens[2].type).toBe(TokenType.EOF);
+  });
 });
