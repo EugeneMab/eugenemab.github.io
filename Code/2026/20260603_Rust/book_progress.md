@@ -37,6 +37,9 @@
 - [x] Book 4-1: What Is Ownership? (scope-focused subset sample)
 - [x] Book 4-2: References and Borrowing (subset + mutable borrow conflict)
 - [x] Book 4-3: The Slice Type
+- [x] Book 5-1: Defining and Instantiating Structs (Completed)
+- [ ] Book 5-2: An Example Program Using Structs
+- [ ] Book 5-3: Method Syntax
 
 ## Next Up
 - [ ] Book 5: Using Structs to Structure Related Data

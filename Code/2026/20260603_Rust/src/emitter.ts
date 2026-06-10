@@ -88,6 +88,7 @@ export class Emitter {
   private stringOffset = 0;
   private currentBlockDepth = 0;
   private functionReturnTypes: Map<string, string | undefined> = new Map();
+  private structDefinitions: Map<string, any> = new Map();
 
   constructor(program: Program, source: string) {
     this.program = program;
@@ -104,6 +105,48 @@ export class Emitter {
   private normalizeType(type?: string): string | undefined {
     if (!type) return undefined;
     return type.trim().replace(/\s+/g, " ").replace(/&\s+/g, "&");
+  }
+
+  private getBaseType(type?: string): string | undefined {
+    let t = this.normalizeType(type);
+    if (!t) return undefined;
+    while (t.startsWith("&") || t.startsWith("mut ")) {
+      if (t.startsWith("&")) t = t.substring(1).trim();
+      else if (t.startsWith("mut ")) t = t.substring(4).trim();
+    }
+    return t;
+  }
+
+  private getStructFieldOffset(structName: string, fieldName: string): number {
+    const struct = this.structDefinitions.get(structName);
+    if (!struct) this.throwError(`Unknown struct: ${structName}`, {} as any);
+    if (struct.type === "RegularStructDeclaration") {
+      let offset = 0;
+      for (const field of struct.fields) {
+        if (field.name === fieldName) return offset;
+        offset += 4; // Assume 4 bytes for everything for now
+      }
+    } else if (struct.type === "TupleStructDeclaration") {
+      const index = parseInt(fieldName);
+      if (!isNaN(index)) {
+        return index * 4;
+      }
+    }
+    this.throwError(
+      `Unknown field: ${fieldName} in struct ${structName}`,
+      {} as any,
+    );
+  }
+
+  private getStructSize(structName: string): number {
+    const struct = this.structDefinitions.get(structName);
+    if (!struct) return 4; // Default to 4 if not found (might be a pointer)
+    if (struct.type === "RegularStructDeclaration") {
+      return struct.fields.length * 4;
+    } else if (struct.type === "TupleStructDeclaration") {
+      return struct.fields.length * 4;
+    }
+    return 0; // Unit struct
   }
 
   private isStringLikeType(type?: string): boolean {
@@ -136,15 +179,51 @@ export class Emitter {
         return "i32";
       case "ArrayLiteral":
         return "array";
-      case "Identifier":
-        return this.resolveVariable(expr.name).valueType;
+      case "Identifier": {
+        const info = this.resolveVariable(expr.name);
+        if (info) return info.valueType;
+        if (this.structDefinitions.has(expr.name)) return expr.name;
+        return undefined;
+      }
       case "BorrowExpression":
         return this.inferExpressionType(expr.argument);
       case "RangeExpression":
         return "range";
-      case "MemberAccessExpression":
+      case "MemberAccessExpression": {
         if (expr.member === "len") return "usize";
+        const objectType = this.inferExpressionType(expr.object);
+        const baseType = this.getBaseType(objectType);
+        if (baseType && this.structDefinitions.has(baseType)) {
+          const struct = this.structDefinitions.get(baseType);
+          if (struct.type === "RegularStructDeclaration") {
+            const field = struct.fields.find((f: any) => f.name === expr.member);
+            if (field) return this.normalizeType(field.type);
+          } else if (struct.type === "TupleStructDeclaration") {
+            const index = parseInt(expr.member);
+            if (!isNaN(index) && index < struct.fields.length) {
+              return this.normalizeType(struct.fields[index]);
+            }
+          }
+        } else if (objectType && objectType.startsWith("(")) {
+          const index = parseInt(expr.member);
+          const types = objectType
+            .slice(1, -1)
+            .split(",")
+            .map((s) => s.trim());
+          if (!isNaN(index) && index < types.length) {
+            return types[index];
+          }
+        }
         return undefined;
+      }
+      case "StructLiteral":
+        return expr.name;
+      case "TupleLiteral": {
+        const types = expr.elements.map(
+          (e) => this.inferExpressionType(e) || "i32",
+        );
+        return `(${types.join(", ")})`;
+      }
       case "IndexExpression": {
         const objectType = this.inferExpressionType(expr.object);
         if (expr.index.type === "RangeExpression") {
@@ -169,6 +248,7 @@ export class Emitter {
           return this.inferExpressionType(expr.args[0]);
         }
         if (expr.callee === "len") return "usize";
+        if (this.structDefinitions.has(expr.callee)) return expr.callee;
         return this.normalizeType(this.functionReturnTypes.get(expr.callee));
       case "MacroInvocation":
         return "i32";
@@ -184,14 +264,129 @@ export class Emitter {
     }
   }
 
-  private emitPrintCallForExpression(expr: Expression, body: number[]) {
+  private emitPrintCallForExpression(
+    expr: Expression,
+    body: number[],
+    specifier: string = "",
+  ) {
+    const type = this.inferExpressionType(expr);
+    const baseType = this.getBaseType(type);
+
+    if (specifier === ":?" || specifier === ":#?") {
+      if (
+        this.structDefinitions.has(baseType) ||
+        (baseType && baseType.startsWith("("))
+      ) {
+        this.emitDebugPrint(expr, baseType || "", body);
+        return;
+      }
+    }
+
+    if (
+      this.structDefinitions.has(baseType) ||
+      (baseType && baseType.startsWith("("))
+    ) {
+      if (specifier === "") {
+        this.throwError(
+          `\`${baseType}\` cannot be formatted with the default formatter`,
+          expr,
+        );
+      }
+    }
+
     this.emitExpressionBinary(expr, body);
     body.push(
       OP_CALL,
-      ...this.encodeUnsignedLEB128(
-        this.isStringLikeType(this.inferExpressionType(expr)) ? 1 : 0,
-      ),
+      ...this.encodeUnsignedLEB128(this.isStringLikeType(type) ? 1 : 0),
     );
+  }
+
+  private emitDebugPrint(expr: Expression, baseType: string, body: number[]) {
+    const ptrLocal = `debug_ptr_${++this.localCounter}`;
+    this.allLocals.add(ptrLocal);
+    this.emitExpressionBinary(expr, body);
+    body.push(OP_LOCAL_SET, 0xfe, ptrLocal as any);
+
+    if (baseType.startsWith("(")) {
+      this.emitStringPrintBinary("(", body);
+      const types = baseType
+        .slice(1, -1)
+        .split(",")
+        .map((t) => t.trim());
+      types.forEach((t, i) => {
+        if (i > 0) this.emitStringPrintBinary(", ", body);
+        body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(i * 4));
+        body.push(OP_I32_ADD);
+        body.push(...OP_I32_LOAD);
+        body.push(
+          OP_CALL,
+          ...this.encodeUnsignedLEB128(this.isStringLikeType(t) ? 1 : 0),
+        );
+        body.push(OP_DROP);
+      });
+      this.emitStringPrintBinary(")", body);
+      return;
+    }
+
+    const struct = this.structDefinitions.get(baseType);
+    if (!struct) {
+      // Fallback for non-struct types with :? (just print normally)
+      body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+      body.push(
+        OP_CALL,
+        ...this.encodeUnsignedLEB128(
+          this.isStringLikeType(this.normalizeType(baseType)) ? 1 : 0,
+        ),
+      );
+      body.push(OP_DROP);
+      return;
+    }
+
+    if (struct.type === "RegularStructDeclaration") {
+      this.emitStringPrintBinary(`${baseType} { `, body);
+      struct.fields.forEach((field: any, i: number) => {
+        if (i > 0) this.emitStringPrintBinary(", ", body);
+        this.emitStringPrintBinary(`${field.name}: `, body);
+
+        body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+        const offset = this.getStructFieldOffset(baseType, field.name);
+        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(offset));
+        body.push(OP_I32_ADD);
+        body.push(...OP_I32_LOAD);
+
+        const fieldType = this.normalizeType(field.type);
+        body.push(
+          OP_CALL,
+          ...this.encodeUnsignedLEB128(this.isStringLikeType(fieldType) ? 1 : 0),
+        );
+        body.push(OP_DROP);
+      });
+      this.emitStringPrintBinary(" }", body);
+    } else if (struct.type === "TupleStructDeclaration") {
+      this.emitStringPrintBinary(`${baseType}(`, body);
+      struct.fields.forEach((fieldType: string, i: number) => {
+        if (i > 0) this.emitStringPrintBinary(", ", body);
+
+        body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(i * 4));
+        body.push(OP_I32_ADD);
+        body.push(...OP_I32_LOAD);
+
+        const normalizedFieldType = this.normalizeType(fieldType);
+        body.push(
+          OP_CALL,
+          ...this.encodeUnsignedLEB128(
+            this.isStringLikeType(normalizedFieldType) ? 1 : 0,
+          ),
+        );
+        body.push(OP_DROP);
+      });
+      this.emitStringPrintBinary(")", body);
+    } else if (struct.type === "UnitStructDeclaration") {
+      this.emitStringPrintBinary(baseType, body);
+    }
+    body.push(OP_I32_CONST, 0);
   }
 
   private emitCallArgumentWAT(arg: Expression, retainBorrow: boolean) {
@@ -257,6 +452,24 @@ export class Emitter {
     this.functionIndices.set("set_item_i32", 6);
 
     this.functionReturnTypes.clear();
+    this.structDefinitions.clear();
+    this.program.body.forEach((s) => {
+      if (
+        s.type === "RegularStructDeclaration" ||
+        s.type === "TupleStructDeclaration" ||
+        s.type === "UnitStructDeclaration"
+      ) {
+        this.structDefinitions.set(s.name, s);
+        if (s.type === "RegularStructDeclaration") {
+          s.fields.forEach((f) => {
+            if (f.type.includes("&") && !f.type.includes("'")) {
+              this.throwError("missing lifetime specifier", s);
+            }
+          });
+        }
+      }
+    });
+
     const userFunctions = this.program.body.filter(
       (s) => s.type === "FunctionDeclaration",
     ) as FunctionDeclaration[];
@@ -629,13 +842,13 @@ export class Emitter {
     }
   }
 
-  private resolveVariable(name: string): VariableInfo {
+  private resolveVariable(name: string): VariableInfo | undefined {
     for (let i = this.scopeStack.length - 1; i >= 0; i--) {
       if (this.scopeStack[i].vars.has(name)) {
         return this.scopeStack[i].vars.get(name)!;
       }
     }
-    throw new Error(`Undefined variable: ${name}`);
+    return undefined;
   }
 
   private emitExpressionWAT(expr: Expression) {
@@ -1642,6 +1855,56 @@ export class Emitter {
         // no drop - this is an expression
         break;
       }
+      case "StructLiteral": {
+        const structName = expr.name;
+        const size = this.getStructSize(structName);
+        const ptrLocal = `struct_ptr_${++this.localCounter}`;
+        this.allLocals.add(ptrLocal);
+
+        // Allocate memory
+        body.push(...OP_GLOBAL_GET);
+        body.push(OP_LOCAL_SET, 0xfe, ptrLocal as any);
+
+        // Update heap_ptr
+        body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(size));
+        body.push(OP_I32_ADD);
+        body.push(...OP_GLOBAL_SET);
+
+        // If update base exists, copy fields first
+        if (expr.base) {
+          this.emitExpressionBinary(expr.base, body);
+          const basePtrLocal = `base_ptr_${++this.localCounter}`;
+          this.allLocals.add(basePtrLocal);
+          body.push(OP_LOCAL_SET, 0xfe, basePtrLocal as any);
+
+          for (let i = 0; i < size; i += 4) {
+            body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+            body.push(OP_I32_CONST, ...this.encodeSignedLEB128(i));
+            body.push(OP_I32_ADD);
+
+            body.push(OP_LOCAL_GET, 0xfe, basePtrLocal as any);
+            body.push(OP_I32_CONST, ...this.encodeSignedLEB128(i));
+            body.push(OP_I32_ADD);
+            body.push(...OP_I32_LOAD);
+
+            body.push(...OP_I32_STORE);
+          }
+        }
+
+        // Initialize fields
+        expr.fields.forEach((field) => {
+          const offset = this.getStructFieldOffset(structName, field.name);
+          body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+          body.push(OP_I32_CONST, ...this.encodeSignedLEB128(offset));
+          body.push(OP_I32_ADD);
+          this.emitExpressionBinary(field.value, body);
+          body.push(...OP_I32_STORE);
+        });
+
+        body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+        break;
+      }
       case "ArrayLiteral": {
         const ptrLocal = `array_ptr_${++this.localCounter}`;
         this.allLocals.add(ptrLocal);
@@ -1676,8 +1939,35 @@ export class Emitter {
 
         body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
         break;
+        }
+        case "TupleLiteral": {
+        const ptrLocal = `tuple_ptr_${++this.localCounter}`;
+        this.allLocals.add(ptrLocal);
+        body.push(...OP_GLOBAL_GET);
+        body.push(OP_LOCAL_SET, 0xfe, ptrLocal as any);
+
+        // Store elements (no length prefix for tuples, they are fixed size)
+        expr.elements.forEach((el, i) => {
+          body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+          body.push(OP_I32_CONST, ...this.encodeSignedLEB128(i * 4));
+          body.push(OP_I32_ADD);
+          this.emitExpressionBinary(el, body);
+          body.push(...OP_I32_STORE);
+        });
+
+        // Update heap_ptr
+        body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+        body.push(
+          OP_I32_CONST,
+          ...this.encodeSignedLEB128(expr.elements.length * 4),
+        );
+        body.push(OP_I32_ADD);
+        body.push(...OP_GLOBAL_SET);
+
+        body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+        break;
       }
-      case "Literal":
+      case "Literal": {
         if (expr.rawType === "string") {
           const strValue = expr.value as string;
           if (!this.stringConstants.has(strValue)) {
@@ -1698,6 +1988,7 @@ export class Emitter {
           );
         }
         break;
+      }
       case "RangeExpression":
         if (expr.start) {
           this.emitExpressionBinary(expr.start, body);
@@ -1710,14 +2001,34 @@ export class Emitter {
           body.push(OP_I32_CONST, ...this.encodeSignedLEB128(-1));
         }
         break;
-      case "MemberAccessExpression":
+      case "MemberAccessExpression": {
         if (expr.member === "len") {
           this.emitExpressionBinary(expr.object, body);
           body.push(...OP_I32_LOAD);
         } else {
-          this.throwError(`Unsupported member: ${expr.member}`, expr);
+          const objectType = this.inferExpressionType(expr.object);
+          const baseType = this.getBaseType(objectType);
+          if (baseType && this.structDefinitions.has(baseType)) {
+            const offset = this.getStructFieldOffset(baseType, expr.member);
+            this.emitExpressionBinary(expr.object, body);
+            body.push(OP_I32_CONST, ...this.encodeSignedLEB128(offset));
+            body.push(OP_I32_ADD);
+            body.push(...OP_I32_LOAD);
+          } else if (objectType && objectType.startsWith("(")) {
+            const index = parseInt(expr.member);
+            if (isNaN(index)) {
+              this.throwError(`Invalid tuple index: ${expr.member}`, expr);
+            }
+            this.emitExpressionBinary(expr.object, body);
+            body.push(OP_I32_CONST, ...this.encodeSignedLEB128(index * 4));
+            body.push(OP_I32_ADD);
+            body.push(...OP_I32_LOAD);
+          } else {
+            this.throwError(`Unsupported member: ${expr.member}`, expr);
+          }
         }
         break;
+      }
       case "IndexExpression": {
         this.emitExpressionBinary(expr.object, body);
         if (expr.index.type === "RangeExpression") {
@@ -1808,9 +2119,9 @@ export class Emitter {
         }
         break;
       }
-      case "Identifier":
-        try {
-          const info = this.resolveVariable(expr.name);
+      case "Identifier": {
+        const info = this.resolveVariable(expr.name);
+        if (info) {
           if (info.isBorrowedMut) {
             this.throwError(
               `Cannot use '${expr.name}' while it is mutably borrowed`,
@@ -1818,13 +2129,16 @@ export class Emitter {
             );
           }
           body.push(OP_LOCAL_GET, 0xfe, info.uniqueName as any);
-        } catch (e: any) {
-          if (e.message.startsWith("Undefined variable")) {
-            this.throwError(e.message, expr);
+        } else {
+          const struct = this.structDefinitions.get(expr.name);
+          if (struct && struct.type === "UnitStructDeclaration") {
+            body.push(OP_I32_CONST, 0);
+          } else {
+            this.throwError(`Undefined variable: ${expr.name}`, expr);
           }
-          throw e;
         }
         break;
+      }
       case "BorrowExpression":
         if (expr.argument.type === "Identifier") {
           try {
@@ -1890,18 +2204,49 @@ export class Emitter {
         break;
       case "BinaryExpression":
         if (expr.operator === "=") {
-          if (expr.left.type !== "Identifier") {
+          if (expr.left.type === "Identifier") {
+            const info = this.resolveVariable(expr.left.name);
+            if (!info.isMutable) {
+              this.throwError(
+                `Cannot assign to immutable variable: ${expr.left.name}`,
+                expr.left,
+              );
+            }
+            this.emitExpressionBinary(expr.right, body);
+            body.push(0x22, 0xfe, info.uniqueName as any); // local.tee
+          } else if (expr.left.type === "MemberAccessExpression") {
+            const memberExpr = expr.left;
+            const objectType = this.inferExpressionType(memberExpr.object);
+            const baseType = this.getBaseType(objectType);
+            if (baseType && this.structDefinitions.has(baseType)) {
+              const offset = this.getStructFieldOffset(
+                baseType,
+                memberExpr.member,
+              );
+              this.emitExpressionBinary(memberExpr.object, body);
+              body.push(OP_I32_CONST, ...this.encodeSignedLEB128(offset));
+              body.push(OP_I32_ADD);
+              this.emitExpressionBinary(expr.right, body);
+              body.push(...OP_I32_STORE);
+              // Assignment expression returns the value
+              this.emitExpressionBinary(expr.right, body);
+            } else if (objectType && objectType.startsWith("(")) {
+              const index = parseInt(memberExpr.member);
+              if (isNaN(index)) {
+                this.throwError(`Invalid tuple index: ${memberExpr.member}`, memberExpr);
+              }
+              this.emitExpressionBinary(memberExpr.object, body);
+              body.push(OP_I32_CONST, ...this.encodeSignedLEB128(index * 4));
+              body.push(OP_I32_ADD);
+              this.emitExpressionBinary(expr.right, body);
+              body.push(...OP_I32_STORE);
+              this.emitExpressionBinary(expr.right, body);
+            } else {
+              this.throwError("Invalid l-value", expr.left);
+            }
+          } else {
             this.throwError("Invalid l-value", expr.left);
           }
-          const info = this.resolveVariable(expr.left.name);
-          if (!info.isMutable) {
-            this.throwError(
-              `Cannot assign to immutable variable: ${expr.left.name}`,
-              expr.left,
-            );
-          }
-          this.emitExpressionBinary(expr.right, body);
-          body.push(0x22, 0xfe, info.uniqueName as any); // local.tee
           break;
         }
 
@@ -1969,7 +2314,7 @@ export class Emitter {
             const formatStr = formatArg.value as string;
             let argIndex = 1;
             let lastPos = 0;
-            const regex = /\{([a-zA-Z0-9_]*)\}/g;
+            const regex = /\{([^}]*)\}/g;
             let match;
 
             while ((match = regex.exec(formatStr)) !== null) {
@@ -1978,21 +2323,36 @@ export class Emitter {
                 this.emitStringPrintBinary(textBefore, body);
               }
 
-              const varName = match[1];
+              const spec = match[1];
+              let varName = "";
+              let specifier = "";
+
+              if (spec.startsWith(":")) {
+                specifier = spec;
+              } else if (spec.includes(":")) {
+                const parts = spec.split(":");
+                varName = parts[0];
+                specifier = ":" + parts[1];
+              } else {
+                varName = spec;
+              }
+
               if (varName) {
                 const info = this.resolveVariable(varName);
-                body.push(OP_LOCAL_GET, 0xfe, info.uniqueName as any);
-                body.push(
-                  OP_CALL,
-                  ...this.encodeUnsignedLEB128(
-                    this.isStringLikeType(info.valueType) ? 1 : 0,
-                  ),
-                );
+                if (!info) {
+                  this.throwError(`Undefined variable: ${varName}`, expr);
+                }
+                const fakeExpr: any = {
+                  type: "Identifier",
+                  name: varName,
+                  token: expr.token,
+                };
+                this.emitPrintCallForExpression(fakeExpr, body, specifier);
                 body.push(OP_DROP);
               } else {
                 if (argIndex < expr.args.length) {
                   const arg = expr.args[argIndex++];
-                  this.emitPrintCallForExpression(arg, body);
+                  this.emitPrintCallForExpression(arg, body, specifier);
                   body.push(OP_DROP);
                 } else {
                   this.throwError(
@@ -2039,6 +2399,41 @@ export class Emitter {
           this.emitExpressionBinary(sizeExpr, body);
           body.push(OP_I32_ADD);
           body.push(...OP_GLOBAL_SET);
+        } else if (expr.name === "dbg") {
+          const arg = expr.args[0];
+          if (!arg) {
+            this.throwError("dbg! expects an argument", expr);
+          }
+
+          const valLocal = `dbg_val_${++this.localCounter}`;
+          this.allLocals.add(valLocal);
+          this.emitExpressionBinary(arg, body);
+          body.push(0x22, 0xfe, valLocal as any); // local.tee
+          body.push(OP_DROP); // drop for now while we print
+
+          const line = expr.token?.line || 0;
+          this.emitStringPrintBinary(`[line:${line}] `, body);
+
+          const fakeExpr: any = {
+            type: "Identifier",
+            name: valLocal,
+            token: expr.token,
+          };
+          const currentScope = this.scopeStack[this.scopeStack.length - 1];
+          currentScope.vars.set(valLocal, {
+            uniqueName: valLocal,
+            isMutable: false,
+            isBorrowedMut: false,
+            borrowCount: 0,
+            valueType: this.inferExpressionType(arg),
+          });
+
+          this.emitPrintCallForExpression(fakeExpr, body, ":?");
+          body.push(OP_DROP);
+          this.emitStringPrintBinary("\n", body);
+          currentScope.vars.delete(valLocal);
+
+          body.push(OP_LOCAL_GET, 0xfe, valLocal as any);
         }
         break;
       case "CallExpression":
@@ -2081,6 +2476,36 @@ export class Emitter {
           body.push(OP_I32_CONST, ...this.encodeSignedLEB128(0));
           break;
         }
+
+        const struct = this.structDefinitions.get(expr.callee);
+        if (struct && struct.type === "TupleStructDeclaration") {
+          const size = this.getStructSize(expr.callee);
+          const ptrLocal = `tuple_ptr_${++this.localCounter}`;
+          this.allLocals.add(ptrLocal);
+
+          // Allocate memory
+          body.push(...OP_GLOBAL_GET);
+          body.push(OP_LOCAL_SET, 0xfe, ptrLocal as any);
+
+          // Update heap_ptr
+          body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+          body.push(OP_I32_CONST, ...this.encodeSignedLEB128(size));
+          body.push(OP_I32_ADD);
+          body.push(...OP_GLOBAL_SET);
+
+          // Store args
+          expr.args.forEach((arg, i) => {
+            body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+            body.push(OP_I32_CONST, ...this.encodeSignedLEB128(i * 4));
+            body.push(OP_I32_ADD);
+            this.emitExpressionBinary(arg, body);
+            body.push(...OP_I32_STORE);
+          });
+
+          body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+          break;
+        }
+
         const retainBorrow = this.isStringLikeType(
           this.functionReturnTypes.get(expr.callee),
         );

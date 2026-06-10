@@ -388,5 +388,91 @@ describe("UI Samples Regression Tests", () => {
 }`;
       await expect(runRust(code)).rejects.toThrow("Panic! Error code: 101");
     });
+
+    it("Book 5-1: User Struct", async () => {
+      const code = loadSample("book05_01_user_struct.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["1", "anotheremail@example.com", "1"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-1: Build User", async () => {
+      const code = loadSample("book05_01_build_user.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["1", "someusername123", "someone@example.com"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-1: Struct Update", async () => {
+      const code = loadSample("book05_01_struct_update.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual([
+        "1",
+        "someusername123",
+        "another@example.com",
+        "1",
+      ]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-1: Tuple Structs", async () => {
+      const code = loadSample("book05_01_tuple_structs.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["1", "2", "3", "10", "20", "30"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-1: Unit Structs", async () => {
+      const code = loadSample("book05_01_unit_structs.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["0"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-1: Reference in Struct (Negative at Emitter)", async () => {
+      const code = loadSample("book05_01_reference_in_struct.rs");
+      await expect(runRust(code)).rejects.toThrow("missing lifetime specifier");
+    });
+
+    it("Book 5-2: Separate Variables", async () => {
+      const code = loadSample("book05_02_separate_variables.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe("The area of the rectangle is 1500 square pixels.");
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-2: Tuples", async () => {
+      const code = loadSample("book05_02_tuples.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe("The area of the rectangle is 1500 square pixels.");
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-2: Structs", async () => {
+      const code = loadSample("book05_02_structs.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe("The area of the rectangle is 1500 square pixels.");
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-2: Print Struct Error (Negative at Emitter)", async () => {
+      const code = loadSample("book05_02_print_struct_error.rs");
+      await expect(runRust(code)).rejects.toThrow("cannot be formatted with the default formatter");
+    });
+
+    it("Book 5-2: Debug Trait", async () => {
+      const code = loadSample("book05_02_debug_trait.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe("rect1 is Rectangle { width: 30, height: 50 }");
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-2: dbg! Macro", async () => {
+      const code = loadSample("book05_02_dbg_macro.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toContain("[line:10] 60");
+      expect(logs.join("")).toContain("[line:14] Rectangle { width: 60, height: 50 }");
+      expect(result).toBe(0);
+    });
   });
 });

@@ -58,6 +58,7 @@ export enum TokenType {
   LT_EQ,
   GT_EQ,
   EXCLAMATION,
+  HASH,
 
   EOF,
 }
@@ -259,6 +260,7 @@ export class Lexer {
         "<": TokenType.LT,
         ">": TokenType.GT,
         "!": TokenType.EXCLAMATION,
+        "#": TokenType.HASH,
       };
 
       if (char in symbols) {
