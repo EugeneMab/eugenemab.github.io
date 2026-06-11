@@ -45,20 +45,22 @@ export var TokenType;
     TokenType[TokenType["SLASH"] = 39] = "SLASH";
     TokenType[TokenType["PERCENT"] = 40] = "PERCENT";
     TokenType[TokenType["AMPERSAND"] = 41] = "AMPERSAND";
-    TokenType[TokenType["PIPE"] = 42] = "PIPE";
-    TokenType[TokenType["CARET"] = 43] = "CARET";
-    TokenType[TokenType["LSHIFT"] = 44] = "LSHIFT";
-    TokenType[TokenType["RSHIFT"] = 45] = "RSHIFT";
-    TokenType[TokenType["EQUALS"] = 46] = "EQUALS";
-    TokenType[TokenType["EQ_EQ"] = 47] = "EQ_EQ";
-    TokenType[TokenType["NE_EQ"] = 48] = "NE_EQ";
-    TokenType[TokenType["LT"] = 49] = "LT";
-    TokenType[TokenType["GT"] = 50] = "GT";
-    TokenType[TokenType["LT_EQ"] = 51] = "LT_EQ";
-    TokenType[TokenType["GT_EQ"] = 52] = "GT_EQ";
-    TokenType[TokenType["EXCLAMATION"] = 53] = "EXCLAMATION";
-    TokenType[TokenType["HASH"] = 54] = "HASH";
-    TokenType[TokenType["EOF"] = 55] = "EOF";
+    TokenType[TokenType["AND_AND"] = 42] = "AND_AND";
+    TokenType[TokenType["PIPE"] = 43] = "PIPE";
+    TokenType[TokenType["OR_OR"] = 44] = "OR_OR";
+    TokenType[TokenType["CARET"] = 45] = "CARET";
+    TokenType[TokenType["LSHIFT"] = 46] = "LSHIFT";
+    TokenType[TokenType["RSHIFT"] = 47] = "RSHIFT";
+    TokenType[TokenType["EQUALS"] = 48] = "EQUALS";
+    TokenType[TokenType["EQ_EQ"] = 49] = "EQ_EQ";
+    TokenType[TokenType["NE_EQ"] = 50] = "NE_EQ";
+    TokenType[TokenType["LT"] = 51] = "LT";
+    TokenType[TokenType["GT"] = 52] = "GT";
+    TokenType[TokenType["LT_EQ"] = 53] = "LT_EQ";
+    TokenType[TokenType["GT_EQ"] = 54] = "GT_EQ";
+    TokenType[TokenType["EXCLAMATION"] = 55] = "EXCLAMATION";
+    TokenType[TokenType["HASH"] = 56] = "HASH";
+    TokenType[TokenType["EOF"] = 57] = "EOF";
 })(TokenType || (TokenType = {}));
 const KEYWORDS = {
     fn: TokenType.FN,
@@ -158,6 +160,24 @@ export class Lexer {
                 tokens.push({
                     type: TokenType.LSHIFT,
                     value: "<<",
+                    line: startLine,
+                    col: startCol,
+                });
+                continue;
+            }
+            if (this.match("&&")) {
+                tokens.push({
+                    type: TokenType.AND_AND,
+                    value: "&&",
+                    line: startLine,
+                    col: startCol,
+                });
+                continue;
+            }
+            if (this.match("||")) {
+                tokens.push({
+                    type: TokenType.OR_OR,
+                    value: "||",
                     line: startLine,
                     col: startCol,
                 });

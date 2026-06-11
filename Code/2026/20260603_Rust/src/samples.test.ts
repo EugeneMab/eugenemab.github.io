@@ -486,5 +486,29 @@ describe("UI Samples Regression Tests", () => {
       );
       expect(result).toBe(0);
     });
+
+    it("Book 5-3: Methods", async () => {
+      const code = loadSample("book05_03_methods.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toContain(
+        "The area of the rectangle is 1500 square pixels.",
+      );
+      expect(logs).toContain("1");
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-3: Can Hold", async () => {
+      const code = loadSample("book05_03_can_hold.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["1", "0"]);
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-3: Associated Functions", async () => {
+      const code = loadSample("book05_03_assoc_fn.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs).toEqual(["3", "3"]);
+      expect(result).toBe(0);
+    });
   });
 });

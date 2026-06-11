@@ -5,7 +5,7 @@
 - [x] Chapter 2: Programming a Guessing Game
 - [x] Chapter 3: Common Programming Concepts
 - [x] Chapter 4: Understanding Ownership
-- [ ] Chapter 5: Using Structs to Structure Related Data
+- [x] Chapter 5: Using Structs to Structure Related Data
 - [ ] Chapter 6: Enums and Pattern Matching
 - [ ] Chapter 7: Packages, Crates, and Modules
 - [ ] Chapter 8: Common Collections
@@ -39,7 +39,7 @@
 - [x] Book 4-3: The Slice Type
 - [x] Book 5-1: Defining and Instantiating Structs (Completed)
 - [x] Book 5-2: An Example Program Using Structs (Completed)
-- [ ] Book 5-3: Method Syntax
+- [x] Book 5-3: Method Syntax (Completed)
 
 ## Next Up
-- [ ] Book 5: Using Structs to Structure Related Data
+- [ ] Book 6: Enums and Pattern Matching

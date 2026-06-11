@@ -46,7 +46,9 @@ export enum TokenType {
   SLASH,
   PERCENT,
   AMPERSAND,
+  AND_AND,
   PIPE,
+  OR_OR,
   CARET,
   LSHIFT,
   RSHIFT,
@@ -181,6 +183,26 @@ export class Lexer {
         tokens.push({
           type: TokenType.LSHIFT,
           value: "<<",
+          line: startLine,
+          col: startCol,
+        });
+        continue;
+      }
+
+      if (this.match("&&")) {
+        tokens.push({
+          type: TokenType.AND_AND,
+          value: "&&",
+          line: startLine,
+          col: startCol,
+        });
+        continue;
+      }
+
+      if (this.match("||")) {
+        tokens.push({
+          type: TokenType.OR_OR,
+          value: "||",
           line: startLine,
           col: startCol,
         });

@@ -41,6 +41,8 @@ export class Parser {
             return this.parseFunctionDeclaration(attributes);
         if (this.match(TokenType.STRUCT))
             return this.parseStructDeclaration(attributes);
+        if (this.match(TokenType.IMPL))
+            return this.parseImplDeclaration();
         if (this.match(TokenType.IF))
             return this.parseIfStatement();
         if (this.match(TokenType.LOOP))
@@ -177,25 +179,49 @@ export class Parser {
         }
         return type;
     }
-    parseFunctionDeclaration(attributes = []) {
+    parseFunctionDeclaration(attributes = [], implTarget) {
         const token = this.previous();
         const name = this.consume(TokenType.IDENTIFIER, "Expect function name").value;
         this.consume(TokenType.LPAREN, "Expect '(' after function name");
         const params = [];
         if (!this.check(TokenType.RPAREN)) {
             do {
-                const pName = this.consume(TokenType.IDENTIFIER, "Expect parameter name").value;
-                let pType;
-                if (this.match(TokenType.COLON)) {
-                    pType = this.parseType();
+                if (implTarget !== undefined && this.check(TokenType.AMPERSAND)) {
+                    // &self or &mut self
+                    this.advance(); // consume &
+                    const isMut = this.match(TokenType.MUT);
+                    const selfTok = this.consume(TokenType.IDENTIFIER, "Expect 'self' after '&'");
+                    params.push({
+                        name: selfTok.value,
+                        type: isMut ? `&mut ${implTarget}` : `&${implTarget}`,
+                    });
                 }
-                params.push({ name: pName, type: pType });
+                else if (implTarget !== undefined &&
+                    this.peek().type === TokenType.IDENTIFIER &&
+                    this.peek().value === "self" &&
+                    this.tokens[this.pos + 1]?.type !== TokenType.COLON) {
+                    // bare self (value-consuming)
+                    this.advance();
+                    params.push({ name: "self", type: implTarget });
+                }
+                else {
+                    const pName = this.consume(TokenType.IDENTIFIER, "Expect parameter name").value;
+                    let pType;
+                    if (this.match(TokenType.COLON)) {
+                        pType = this.parseType();
+                    }
+                    params.push({ name: pName, type: pType });
+                }
             } while (this.match(TokenType.COMMA));
         }
         this.consume(TokenType.RPAREN, "Expect ')' after parameters");
         let returnType;
         if (this.match(TokenType.ARROW)) {
             returnType = this.parseType();
+            // Replace "Self" with the impl target type
+            if (implTarget !== undefined && returnType === "Self") {
+                returnType = implTarget;
+            }
         }
         const body = this.parseBlockStatement();
         return {
@@ -207,6 +233,35 @@ export class Parser {
             body,
             attributes,
         };
+    }
+    parseImplDeclaration() {
+        const token = this.previous();
+        const target = this.consume(TokenType.IDENTIFIER, "Expect struct name after 'impl'").value;
+        this.consume(TokenType.LBRACE, "Expect '{' after impl name");
+        const functions = [];
+        while (!this.check(TokenType.RBRACE) && !this.isAtEnd()) {
+            const attributes = [];
+            while (this.match(TokenType.HASH)) {
+                this.consume(TokenType.LBRACKET, "Expect '[' after '#'");
+                let attr = "";
+                while (!this.check(TokenType.RBRACKET) && !this.isAtEnd()) {
+                    const tok = this.advance();
+                    attr += tok.value;
+                    if (tok.type === TokenType.LPAREN) {
+                        while (!this.check(TokenType.RPAREN) && !this.isAtEnd()) {
+                            attr += this.advance().value;
+                        }
+                        attr += this.consume(TokenType.RPAREN, "Expect ')'").value;
+                    }
+                }
+                this.consume(TokenType.RBRACKET, "Expect ']' after attribute");
+                attributes.push(attr);
+            }
+            this.consume(TokenType.FN, "Expect 'fn' in impl block");
+            functions.push(this.parseFunctionDeclaration(attributes, target));
+        }
+        this.consume(TokenType.RBRACE, "Expect '}' after impl block");
+        return { type: "ImplDeclaration", token, target, functions };
     }
     parseStructDeclaration(attributes = []) {
         const token = this.previous();
@@ -335,15 +390,35 @@ export class Parser {
             }
             return { type: "RangeExpression", token, end };
         }
-        const expr = this.parseComparison();
+        const expr = this.parseLogicalOr();
         if (this.match(TokenType.DOT_DOT)) {
             const token = this.previous();
             let end;
             // Ranges can be open-ended, e.g., s[..] or s[0..]
             if (!this.check(TokenType.RBRACKET, TokenType.COMMA, TokenType.SEMICOLON, TokenType.RPAREN, TokenType.RBRACE)) {
-                end = this.parseComparison();
+                end = this.parseLogicalOr();
             }
             return { type: "RangeExpression", token, start: expr, end };
+        }
+        return expr;
+    }
+    parseLogicalOr() {
+        let expr = this.parseLogicalAnd();
+        while (this.match(TokenType.OR_OR)) {
+            const token = this.previous();
+            const operator = token.value;
+            const right = this.parseLogicalAnd();
+            expr = { type: "BinaryExpression", token, operator, left: expr, right };
+        }
+        return expr;
+    }
+    parseLogicalAnd() {
+        let expr = this.parseComparison();
+        while (this.match(TokenType.AND_AND)) {
+            const token = this.previous();
+            const operator = token.value;
+            const right = this.parseComparison();
+            expr = { type: "BinaryExpression", token, operator, left: expr, right };
         }
         return expr;
     }

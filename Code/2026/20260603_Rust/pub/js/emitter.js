@@ -395,11 +395,37 @@ export class Emitter {
             }
         });
         const userFunctions = this.program.body.filter((s) => s.type === "FunctionDeclaration");
-        userFunctions.forEach((fn, i) => {
+        // Collect impl block functions, giving them qualified names for uniqueness.
+        const implFunctions = [];
+        this.program.body.forEach((s) => {
+            if (s.type === "ImplDeclaration") {
+                for (const fn of s.functions) {
+                    const qualifiedName = `${s.target}::${fn.name}`;
+                    implFunctions.push({ ...fn, name: qualifiedName });
+                }
+            }
+        });
+        const allFunctions = [...userFunctions, ...implFunctions];
+        allFunctions.forEach((fn, i) => {
             this.functionIndices.set(fn.name, HELPER_FN_START + i);
             this.functionReturnTypes.set(fn.name, this.normalizeType(fn.returnType));
         });
-        return userFunctions;
+        // Also register impl methods under their short name so that desugared
+        // method calls (callee = "area", first arg = self) resolve correctly.
+        // Qualified registration wins if there is a name conflict.
+        this.program.body.forEach((s) => {
+            if (s.type === "ImplDeclaration") {
+                for (const fn of s.functions) {
+                    const qualifiedName = `${s.target}::${fn.name}`;
+                    const hasSelf = fn.params.length > 0 && fn.params[0].name === "self";
+                    if (hasSelf && !this.functionIndices.has(fn.name)) {
+                        this.functionIndices.set(fn.name, this.functionIndices.get(qualifiedName));
+                        this.functionReturnTypes.set(fn.name, this.functionReturnTypes.get(qualifiedName));
+                    }
+                }
+            }
+        });
+        return allFunctions;
     }
     emitWAT() {
         this.outputWAT = [];
@@ -1060,9 +1086,11 @@ export class Emitter {
                         this.emitWATLine("i32.rem_s");
                         break;
                     case "&":
+                    case "&&":
                         this.emitWATLine("i32.and");
                         break;
                     case "|":
+                    case "||":
                         this.emitWATLine("i32.or");
                         break;
                     case "^":
@@ -2015,9 +2043,11 @@ export class Emitter {
                         body.push(OP_I32_REM_S);
                         break;
                     case "&":
+                    case "&&":
                         body.push(OP_I32_AND);
                         break;
                     case "|":
+                    case "||":
                         body.push(OP_I32_OR);
                         break;
                     case "^":
