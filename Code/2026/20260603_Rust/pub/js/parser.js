@@ -16,12 +16,31 @@ export class Parser {
         return { type: "Program", body };
     }
     parseStatement() {
+        const attributes = [];
+        while (this.match(TokenType.HASH)) {
+            this.consume(TokenType.LBRACKET, "Expect '[' after '#'");
+            let attr = "";
+            while (!this.check(TokenType.RBRACKET) && !this.isAtEnd()) {
+                const token = this.advance();
+                attr += token.value;
+                if (token.type === TokenType.LPAREN) {
+                    while (!this.check(TokenType.RPAREN) && !this.isAtEnd()) {
+                        attr += this.advance().value;
+                    }
+                    attr += this.consume(TokenType.RPAREN, "Expect ')'").value;
+                }
+            }
+            this.consume(TokenType.RBRACKET, "Expect ']' after attribute");
+            attributes.push(attr);
+        }
         if (this.match(TokenType.LET))
             return this.parseLetStatement();
         if (this.match(TokenType.CONST))
             return this.parseConstStatement();
         if (this.match(TokenType.FN))
-            return this.parseFunctionDeclaration();
+            return this.parseFunctionDeclaration(attributes);
+        if (this.match(TokenType.STRUCT))
+            return this.parseStructDeclaration(attributes);
         if (this.match(TokenType.IF))
             return this.parseIfStatement();
         if (this.match(TokenType.LOOP))
@@ -137,7 +156,28 @@ export class Parser {
         this.consume(TokenType.SEMICOLON, "Expect ';' after const statement");
         return { type: "ConstStatement", token, name, initializer };
     }
-    parseFunctionDeclaration() {
+    parseType() {
+        let type = "";
+        if (this.match(TokenType.LPAREN)) {
+            type = "(";
+            if (!this.check(TokenType.RPAREN)) {
+                do {
+                    type += (type === "(" ? "" : ", ") + this.parseType();
+                } while (this.match(TokenType.COMMA));
+            }
+            this.consume(TokenType.RPAREN, "Expect ')' after tuple type");
+            type += ")";
+            return type;
+        }
+        while (this.match(TokenType.AMPERSAND, TokenType.MUT, TokenType.IDENTIFIER)) {
+            type += (type ? " " : "") + this.previous().value;
+        }
+        if (type === "") {
+            throw new Error(formatError(this.source, "Expect type name", this.peek()));
+        }
+        return type;
+    }
+    parseFunctionDeclaration(attributes = []) {
         const token = this.previous();
         const name = this.consume(TokenType.IDENTIFIER, "Expect function name").value;
         this.consume(TokenType.LPAREN, "Expect '(' after function name");
@@ -147,14 +187,7 @@ export class Parser {
                 const pName = this.consume(TokenType.IDENTIFIER, "Expect parameter name").value;
                 let pType;
                 if (this.match(TokenType.COLON)) {
-                    // Allow &str, &String, &mut String, etc.
-                    pType = "";
-                    while (this.match(TokenType.AMPERSAND, TokenType.MUT, TokenType.IDENTIFIER)) {
-                        pType += (pType ? " " : "") + this.previous().value;
-                    }
-                    if (pType === "") {
-                        throw new Error(formatError(this.source, "Expect type name after ':'", this.peek()));
-                    }
+                    pType = this.parseType();
                 }
                 params.push({ name: pName, type: pType });
             } while (this.match(TokenType.COMMA));
@@ -162,13 +195,7 @@ export class Parser {
         this.consume(TokenType.RPAREN, "Expect ')' after parameters");
         let returnType;
         if (this.match(TokenType.ARROW)) {
-            returnType = "";
-            while (this.match(TokenType.AMPERSAND, TokenType.MUT, TokenType.IDENTIFIER)) {
-                returnType += (returnType ? " " : "") + this.previous().value;
-            }
-            if (returnType === "") {
-                throw new Error(formatError(this.source, "Expect return type after '->'", this.peek()));
-            }
+            returnType = this.parseType();
         }
         const body = this.parseBlockStatement();
         return {
@@ -178,7 +205,56 @@ export class Parser {
             params,
             returnType,
             body,
+            attributes,
         };
+    }
+    parseStructDeclaration(attributes = []) {
+        const token = this.previous();
+        const name = this.consume(TokenType.IDENTIFIER, "Expect struct name").value;
+        if (this.match(TokenType.LBRACE)) {
+            const fields = [];
+            if (!this.check(TokenType.RBRACE)) {
+                do {
+                    if (this.check(TokenType.RBRACE))
+                        break;
+                    const fName = this.consume(TokenType.IDENTIFIER, "Expect field name").value;
+                    this.consume(TokenType.COLON, "Expect ':' after field name");
+                    const fType = this.parseType();
+                    fields.push({ name: fName, type: fType });
+                } while (this.match(TokenType.COMMA));
+            }
+            this.consume(TokenType.RBRACE, "Expect '}' after struct fields");
+            return {
+                type: "RegularStructDeclaration",
+                token,
+                name,
+                fields,
+                attributes,
+            };
+        }
+        else if (this.match(TokenType.LPAREN)) {
+            const fields = [];
+            if (!this.check(TokenType.RPAREN)) {
+                do {
+                    if (this.check(TokenType.RPAREN))
+                        break;
+                    fields.push(this.parseType());
+                } while (this.match(TokenType.COMMA));
+            }
+            this.consume(TokenType.RPAREN, "Expect ')' after tuple struct fields");
+            this.consume(TokenType.SEMICOLON, "Expect ';' after tuple struct");
+            return {
+                type: "TupleStructDeclaration",
+                token,
+                name,
+                fields,
+                attributes,
+            };
+        }
+        else {
+            this.consume(TokenType.SEMICOLON, "Expect ';' after unit struct");
+            return { type: "UnitStructDeclaration", token, name, attributes };
+        }
     }
     parseBlockStatement() {
         const token = this.consume(TokenType.LBRACE, "Expect '{' to start block");
@@ -235,7 +311,9 @@ export class Parser {
         if (this.match(TokenType.EQUALS)) {
             const token = this.previous();
             const right = this.parseAssignment();
-            if (expr.type === "Identifier") {
+            if (expr.type === "Identifier" ||
+                expr.type === "MemberAccessExpression" ||
+                expr.type === "IndexExpression") {
                 return {
                     type: "BinaryExpression",
                     token,
@@ -359,7 +437,10 @@ export class Parser {
         while (true) {
             if (this.match(TokenType.DOT)) {
                 const token = this.previous();
-                const member = this.consume(TokenType.IDENTIFIER, "Expect member name after '.'").value;
+                if (!this.match(TokenType.IDENTIFIER, TokenType.INTEGER)) {
+                    throw new Error(formatError(this.source, "Expect member name or index after '.'", this.peek()));
+                }
+                const member = this.previous().value;
                 if (this.match(TokenType.LPAREN)) {
                     const args = [];
                     if (!this.check(TokenType.RPAREN)) {
@@ -491,20 +572,81 @@ export class Parser {
                 const args = [];
                 if (!this.check(TokenType.RPAREN)) {
                     do {
+                        if (this.check(TokenType.RPAREN))
+                            break;
                         args.push(this.parseExpression());
                     } while (this.match(TokenType.COMMA));
                 }
                 this.consume(TokenType.RPAREN, "Expect ')' after args");
                 return { type: "CallExpression", token, callee: name, args };
             }
+            if (this.check(TokenType.LBRACE) && this.isStructLiteralLookahead()) {
+                this.advance(); // consume {
+                const fields = [];
+                let base;
+                if (!this.check(TokenType.RBRACE)) {
+                    do {
+                        if (this.match(TokenType.DOT_DOT)) {
+                            base = this.parseExpression();
+                            break;
+                        }
+                        if (this.check(TokenType.RBRACE))
+                            break;
+                        const fName = this.consume(TokenType.IDENTIFIER, "Expect field name").value;
+                        let value;
+                        if (this.match(TokenType.COLON)) {
+                            value = this.parseExpression();
+                        }
+                        else {
+                            value = { type: "Identifier", token, name: fName };
+                        }
+                        fields.push({ name: fName, value });
+                    } while (this.match(TokenType.COMMA));
+                }
+                this.consume(TokenType.RBRACE, "Expect '}' after struct fields");
+                return { type: "StructLiteral", token, name, fields, base };
+            }
             return { type: "Identifier", token, name };
         }
         if (this.match(TokenType.LPAREN)) {
+            const token = this.previous();
+            if (this.match(TokenType.RPAREN)) {
+                return { type: "TupleLiteral", token, elements: [] };
+            }
             const expr = this.parseExpression();
+            if (this.match(TokenType.COMMA)) {
+                const elements = [expr];
+                if (!this.check(TokenType.RPAREN)) {
+                    do {
+                        elements.push(this.parseExpression());
+                    } while (this.match(TokenType.COMMA));
+                }
+                this.consume(TokenType.RPAREN, "Expect ')' after tuple");
+                return { type: "TupleLiteral", token, elements };
+            }
             this.consume(TokenType.RPAREN, "Expect ')' after expression");
             return expr;
         }
         throw new Error(formatError(this.source, `Expect expression, found '${this.peek().value}'`, this.peek()));
+    }
+    isStructLiteralLookahead() {
+        const next = this.tokens[this.pos + 1];
+        if (!next)
+            return false;
+        if (next.type === TokenType.RBRACE)
+            return true; // Identifier {}
+        if (next.type === TokenType.DOT_DOT)
+            return true; // Identifier { .. }
+        if (next.type === TokenType.IDENTIFIER) {
+            const nextNext = this.tokens[this.pos + 2];
+            if (!nextNext)
+                return false;
+            return (nextNext.type === TokenType.COLON || // Identifier { name:
+                nextNext.type === TokenType.COMMA || // Identifier { name,
+                nextNext.type === TokenType.RBRACE // Identifier { name }
+            );
+        }
+        return false;
     }
     match(...types) {
         for (const type of types) {

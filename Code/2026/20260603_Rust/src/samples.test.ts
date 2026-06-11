@@ -437,33 +437,43 @@ describe("UI Samples Regression Tests", () => {
     it("Book 5-2: Separate Variables", async () => {
       const code = loadSample("book05_02_separate_variables.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("The area of the rectangle is 1500 square pixels.");
+      expect(logs.join("")).toBe(
+        "The area of the rectangle is 1500 square pixels.",
+      );
       expect(result).toBe(0);
     });
 
     it("Book 5-2: Tuples", async () => {
       const code = loadSample("book05_02_tuples.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("The area of the rectangle is 1500 square pixels.");
+      expect(logs.join("")).toBe(
+        "The area of the rectangle is 1500 square pixels.",
+      );
       expect(result).toBe(0);
     });
 
     it("Book 5-2: Structs", async () => {
       const code = loadSample("book05_02_structs.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("The area of the rectangle is 1500 square pixels.");
+      expect(logs.join("")).toBe(
+        "The area of the rectangle is 1500 square pixels.",
+      );
       expect(result).toBe(0);
     });
 
     it("Book 5-2: Print Struct Error (Negative at Emitter)", async () => {
       const code = loadSample("book05_02_print_struct_error.rs");
-      await expect(runRust(code)).rejects.toThrow("cannot be formatted with the default formatter");
+      await expect(runRust(code)).rejects.toThrow(
+        "cannot be formatted with the default formatter",
+      );
     });
 
     it("Book 5-2: Debug Trait", async () => {
       const code = loadSample("book05_02_debug_trait.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("rect1 is Rectangle { width: 30, height: 50 }");
+      expect(logs.join("")).toBe(
+        "rect1 is Rectangle { width: 30, height: 50 }",
+      );
       expect(result).toBe(0);
     });
 
@@ -471,7 +481,9 @@ describe("UI Samples Regression Tests", () => {
       const code = loadSample("book05_02_dbg_macro.rs");
       const { logs, result } = await runRust(code);
       expect(logs.join("")).toContain("[line:10] 60");
-      expect(logs.join("")).toContain("[line:14] Rectangle { width: 60, height: 50 }");
+      expect(logs.join("")).toContain(
+        "[line:14] Rectangle { width: 60, height: 50 }",
+      );
       expect(result).toBe(0);
     });
   });

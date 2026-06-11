@@ -57,7 +57,8 @@ export var TokenType;
     TokenType[TokenType["LT_EQ"] = 51] = "LT_EQ";
     TokenType[TokenType["GT_EQ"] = 52] = "GT_EQ";
     TokenType[TokenType["EXCLAMATION"] = 53] = "EXCLAMATION";
-    TokenType[TokenType["EOF"] = 54] = "EOF";
+    TokenType[TokenType["HASH"] = 54] = "HASH";
+    TokenType[TokenType["EOF"] = 55] = "EOF";
 })(TokenType || (TokenType = {}));
 const KEYWORDS = {
     fn: TokenType.FN,
@@ -230,6 +231,7 @@ export class Lexer {
                 "<": TokenType.LT,
                 ">": TokenType.GT,
                 "!": TokenType.EXCLAMATION,
+                "#": TokenType.HASH,
             };
             if (char in symbols) {
                 tokens.push({

@@ -25,7 +25,14 @@ export type Statement =
   | ForStatement
   | ReturnStatement
   | BreakStatement
-  | ContinueStatement;
+  | ContinueStatement
+  | ImplDeclaration;
+
+export interface ImplDeclaration extends BaseNode {
+  type: "ImplDeclaration";
+  target: string;
+  functions: FunctionDeclaration[];
+}
 
 export interface LetStatement extends BaseNode {
   type: "LetStatement";
@@ -97,7 +104,13 @@ export interface BlockStatement extends BaseNode {
 export interface FunctionDeclaration extends BaseNode {
   type: "FunctionDeclaration";
   name: string;
-  params: { name: string; type?: string }[];
+  params: {
+    name: string;
+    type?: string;
+    isSelf?: boolean;
+    isBorrow?: boolean;
+    isMut?: boolean;
+  }[];
   returnType?: string;
   body: BlockStatement;
   attributes?: string[];
@@ -464,10 +477,7 @@ export class Parser {
 
   private parseStructDeclaration(attributes: string[] = []): StructDeclaration {
     const token = this.previous();
-    const name = this.consume(
-      TokenType.IDENTIFIER,
-      "Expect struct name",
-    ).value;
+    const name = this.consume(TokenType.IDENTIFIER, "Expect struct name").value;
 
     if (this.match(TokenType.LBRACE)) {
       const fields: { name: string; type: string }[] = [];
@@ -501,7 +511,13 @@ export class Parser {
       }
       this.consume(TokenType.RPAREN, "Expect ')' after tuple struct fields");
       this.consume(TokenType.SEMICOLON, "Expect ';' after tuple struct");
-      return { type: "TupleStructDeclaration", token, name, fields, attributes };
+      return {
+        type: "TupleStructDeclaration",
+        token,
+        name,
+        fields,
+        attributes,
+      };
     } else {
       this.consume(TokenType.SEMICOLON, "Expect ';' after unit struct");
       return { type: "UnitStructDeclaration", token, name, attributes };

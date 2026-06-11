@@ -197,12 +197,12 @@ export function initUI() {
         book04_03_slice_error: "book04_03_slice_error.rs",
         book04_03_slice_param: "book04_03_slice_param.rs",
         book04_03_array_slice: "book04_03_array_slice.rs",
-        book05_01_user_struct: "book05_01_user_struct.rs",
-        book05_01_build_user: "book05_01_build_user.rs",
-        book05_01_struct_update: "book05_01_struct_update.rs",
-        book05_01_tuple_structs: "book05_01_tuple_structs.rs",
-        book05_01_unit_structs: "book05_01_unit_structs.rs",
-        book05_01_reference_in_struct: "book05_01_reference_in_struct.rs",
+        book05_02_separate_variables: "book05_02_separate_variables.rs",
+        book05_02_tuples: "book05_02_tuples.rs",
+        book05_02_structs: "book05_02_structs.rs",
+        book05_02_print_struct_error: "book05_02_print_struct_error.rs",
+        book05_02_debug_trait: "book05_02_debug_trait.rs",
+        book05_02_dbg_macro: "book05_02_dbg_macro.rs",
     };
     sampleSelect?.addEventListener("change", async () => {
         const fileName = sampleFiles[sampleSelect.value];

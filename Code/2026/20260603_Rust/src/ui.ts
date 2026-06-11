@@ -230,6 +230,12 @@ export function initUI() {
     book04_03_slice_error: "book04_03_slice_error.rs",
     book04_03_slice_param: "book04_03_slice_param.rs",
     book04_03_array_slice: "book04_03_array_slice.rs",
+    book05_02_separate_variables: "book05_02_separate_variables.rs",
+    book05_02_tuples: "book05_02_tuples.rs",
+    book05_02_structs: "book05_02_structs.rs",
+    book05_02_print_struct_error: "book05_02_print_struct_error.rs",
+    book05_02_debug_trait: "book05_02_debug_trait.rs",
+    book05_02_dbg_macro: "book05_02_dbg_macro.rs",
   };
 
   sampleSelect?.addEventListener("change", async () => {
