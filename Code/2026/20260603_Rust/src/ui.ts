@@ -236,6 +236,11 @@ export function initUI() {
     book05_02_print_struct_error: "book05_02_print_struct_error.rs",
     book05_02_debug_trait: "book05_02_debug_trait.rs",
     book05_02_dbg_macro: "book05_02_dbg_macro.rs",
+    book05_03_method_syntax: "book05_03_method_syntax.rs",
+    book05_03_method_field_interaction: "book05_03_method_field_interaction.rs",
+    book05_03_can_hold: "book05_03_can_hold.rs",
+    book05_03_associated_functions: "book05_03_associated_functions.rs",
+    book05_03_multiple_impl_blocks: "book05_03_multiple_impl_blocks.rs",
   };
 
   sampleSelect?.addEventListener("change", async () => {

@@ -15,6 +15,8 @@ export enum TokenType {
   CONTINUE,
   STRUCT,
   IMPL,
+  SELF,
+  SELF_TYPE,
   PANIC,
   TRUE,
   FALSE,
@@ -46,7 +48,9 @@ export enum TokenType {
   SLASH,
   PERCENT,
   AMPERSAND,
+  AND_AND,
   PIPE,
+  OR_OR,
   CARET,
   LSHIFT,
   RSHIFT,
@@ -86,6 +90,8 @@ const KEYWORDS: Record<string, TokenType> = {
   continue: TokenType.CONTINUE,
   struct: TokenType.STRUCT,
   impl: TokenType.IMPL,
+  self: TokenType.SELF,
+  Self: TokenType.SELF_TYPE,
   panic: TokenType.PANIC,
   true: TokenType.TRUE,
   false: TokenType.FALSE,
@@ -151,6 +157,26 @@ export class Lexer {
         tokens.push({
           type: TokenType.DOT_DOT,
           value: "..",
+          line: startLine,
+          col: startCol,
+        });
+        continue;
+      }
+
+      if (this.match("&&")) {
+        tokens.push({
+          type: TokenType.AND_AND,
+          value: "&&",
+          line: startLine,
+          col: startCol,
+        });
+        continue;
+      }
+
+      if (this.match("||")) {
+        tokens.push({
+          type: TokenType.OR_OR,
+          value: "||",
           line: startLine,
           col: startCol,
         });

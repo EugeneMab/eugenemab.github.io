@@ -486,5 +486,44 @@ describe("UI Samples Regression Tests", () => {
       );
       expect(result).toBe(0);
     });
+
+    it("Book 5-3: Method Syntax", async () => {
+      const code = loadSample("book05_03_method_syntax.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe(
+        "The area of the rectangle is 1500 square pixels.",
+      );
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-3: Method Field Interaction", async () => {
+      const code = loadSample("book05_03_method_field_interaction.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe("The rectangle has a nonzero width; it is 30");
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-3: Can Hold", async () => {
+      const code = loadSample("book05_03_can_hold.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toContain("Can rect1 hold rect2? 1");
+      expect(logs.join("")).toContain("Can rect1 hold rect3? 0");
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-3: Associated Functions", async () => {
+      const code = loadSample("book05_03_associated_functions.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe("sq: Rectangle { width: 3, height: 3 }");
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-3: Multiple Impl Blocks", async () => {
+      const code = loadSample("book05_03_multiple_impl_blocks.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toContain("Can rect1 hold rect2? 1");
+      expect(logs.join("")).toContain("Can rect1 hold rect3? 0");
+      expect(result).toBe(0);
+    });
   });
 });

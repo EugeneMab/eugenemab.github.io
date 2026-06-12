@@ -394,7 +394,35 @@ export class Emitter {
                 }
             }
         });
-        const userFunctions = this.program.body.filter((s) => s.type === "FunctionDeclaration");
+        const userFunctions = [];
+        this.program.body.forEach((s) => {
+            if (s.type === "FunctionDeclaration") {
+                userFunctions.push(s);
+            }
+            else if (s.type === "ImplDeclaration") {
+                s.functions.forEach((fn) => {
+                    const mangledName = `${s.target}::${fn.name}`;
+                    const params = fn.params.map((p) => {
+                        if (p.isSelf && !p.type) {
+                            return {
+                                ...p,
+                                type: (p.isBorrow ? "&" : "") + (p.isMut ? "mut " : "") + s.target,
+                            };
+                        }
+                        return {
+                            ...p,
+                            type: p.type === "Self" ? s.target : p.type,
+                        };
+                    });
+                    userFunctions.push({
+                        ...fn,
+                        name: mangledName,
+                        params,
+                        returnType: fn.returnType === "Self" ? s.target : fn.returnType,
+                    });
+                });
+            }
+        });
         userFunctions.forEach((fn, i) => {
             this.functionIndices.set(fn.name, HELPER_FN_START + i);
             this.functionReturnTypes.set(fn.name, this.normalizeType(fn.returnType));
@@ -827,15 +855,37 @@ export class Emitter {
                     this.emitWATLine("i32.const -1");
                 }
                 break;
-            case "MemberAccessExpression":
+            case "MemberAccessExpression": {
                 if (expr.member === "len") {
                     this.emitExpressionWAT(expr.object);
                     this.emitWATLine("i32.load");
                 }
                 else {
-                    this.throwError(`Unsupported member: ${expr.member}`, expr);
+                    const objectType = this.inferExpressionType(expr.object);
+                    const baseType = this.getBaseType(objectType);
+                    if (baseType && this.structDefinitions.has(baseType)) {
+                        const offset = this.getStructFieldOffset(baseType, expr.member);
+                        this.emitExpressionWAT(expr.object);
+                        this.emitWATLine(`i32.const ${offset}`);
+                        this.emitWATLine("i32.add");
+                        this.emitWATLine("i32.load");
+                    }
+                    else if (objectType && objectType.startsWith("(")) {
+                        const index = parseInt(expr.member);
+                        if (isNaN(index)) {
+                            this.throwError(`Invalid tuple index: ${expr.member}`, expr);
+                        }
+                        this.emitExpressionWAT(expr.object);
+                        this.emitWATLine(`i32.const ${index * 4}`);
+                        this.emitWATLine("i32.add");
+                        this.emitWATLine("i32.load");
+                    }
+                    else {
+                        this.throwError(`Unsupported member: ${expr.member}`, expr);
+                    }
                 }
                 break;
+            }
             case "IndexExpression": {
                 this.emitExpressionWAT(expr.object);
                 if (expr.index.type === "RangeExpression") {
@@ -949,10 +999,21 @@ export class Emitter {
                     break;
                 }
                 const retainBorrow = this.isStringLikeType(this.functionReturnTypes.get(expr.callee));
+                let callee = expr.callee;
+                if (!this.functionIndices.has(callee) && expr.args.length > 0) {
+                    const type = this.inferExpressionType(expr.args[0]);
+                    const baseType = this.getBaseType(type);
+                    if (baseType) {
+                        const mangled = `${baseType}::${callee}`;
+                        if (this.functionIndices.has(mangled)) {
+                            callee = mangled;
+                        }
+                    }
+                }
                 for (const arg of expr.args) {
                     this.emitCallArgumentWAT(arg, retainBorrow);
                 }
-                this.emitWATLine(`call $${expr.callee}`);
+                this.emitWATLine(`call $${callee}`);
                 break;
             case "Identifier": {
                 const info = this.resolveVariable(expr.name);
@@ -1356,7 +1417,9 @@ export class Emitter {
             ...dataSection,
         ]);
     }
+    currentFunctionName;
     emitFunctionBinary(fn) {
+        this.currentFunctionName = fn.name;
         this.localCounter = 0;
         this.currentBlockDepth = 0;
         this.allLocals.clear();
@@ -1650,7 +1713,14 @@ export class Emitter {
                 break;
             }
             case "StructLiteral": {
-                const structName = expr.name;
+                let structName = expr.name;
+                if (structName === "Self") {
+                    // Find target struct from the current function's name if it's mangled
+                    const fnName = Array.from(this.functionIndices.entries()).find(([, idx]) => idx === this.functionIndices.get(this.currentFunctionName || ""))?.[0];
+                    if (fnName && fnName.includes("::")) {
+                        structName = fnName.split("::")[0];
+                    }
+                }
                 const size = this.getStructSize(structName);
                 const ptrLocal = `struct_ptr_${++this.localCounter}`;
                 this.allLocals.add(ptrLocal);
@@ -1996,6 +2066,24 @@ export class Emitter {
                     }
                     break;
                 }
+                if (expr.operator === "&&") {
+                    this.emitExpressionBinary(expr.left, body);
+                    body.push(OP_IF, TYPE_I32);
+                    this.emitExpressionBinary(expr.right, body);
+                    body.push(OP_ELSE);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(0));
+                    body.push(OP_END);
+                    break;
+                }
+                if (expr.operator === "||") {
+                    this.emitExpressionBinary(expr.left, body);
+                    body.push(OP_IF, TYPE_I32);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(1));
+                    body.push(OP_ELSE);
+                    this.emitExpressionBinary(expr.right, body);
+                    body.push(OP_END);
+                    break;
+                }
                 this.emitExpressionBinary(expr.left, body);
                 this.emitExpressionBinary(expr.right, body);
                 switch (expr.operator) {
@@ -2228,12 +2316,23 @@ export class Emitter {
                     break;
                 }
                 const retainBorrow = this.isStringLikeType(this.functionReturnTypes.get(expr.callee));
+                let callee = expr.callee;
+                if (!this.functionIndices.has(callee) && expr.args.length > 0) {
+                    const type = this.inferExpressionType(expr.args[0]);
+                    const baseType = this.getBaseType(type);
+                    if (baseType) {
+                        const mangled = `${baseType}::${callee}`;
+                        if (this.functionIndices.has(mangled)) {
+                            callee = mangled;
+                        }
+                    }
+                }
                 for (const arg of expr.args) {
                     this.emitCallArgumentBinary(arg, body, retainBorrow);
                 }
-                const idx = this.functionIndices.get(expr.callee);
+                const idx = this.functionIndices.get(callee);
                 if (idx === undefined)
-                    throw new Error(`Unknown function: ${expr.callee}`);
+                    throw new Error(`Unknown function: ${callee}`);
                 body.push(OP_CALL, ...this.encodeUnsignedLEB128(idx));
                 break;
         }

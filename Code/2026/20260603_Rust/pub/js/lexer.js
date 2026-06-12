@@ -16,49 +16,53 @@ export var TokenType;
     TokenType[TokenType["CONTINUE"] = 12] = "CONTINUE";
     TokenType[TokenType["STRUCT"] = 13] = "STRUCT";
     TokenType[TokenType["IMPL"] = 14] = "IMPL";
-    TokenType[TokenType["PANIC"] = 15] = "PANIC";
-    TokenType[TokenType["TRUE"] = 16] = "TRUE";
-    TokenType[TokenType["FALSE"] = 17] = "FALSE";
+    TokenType[TokenType["SELF"] = 15] = "SELF";
+    TokenType[TokenType["SELF_TYPE"] = 16] = "SELF_TYPE";
+    TokenType[TokenType["PANIC"] = 17] = "PANIC";
+    TokenType[TokenType["TRUE"] = 18] = "TRUE";
+    TokenType[TokenType["FALSE"] = 19] = "FALSE";
     // Literals
-    TokenType[TokenType["INTEGER"] = 18] = "INTEGER";
-    TokenType[TokenType["HEX"] = 19] = "HEX";
-    TokenType[TokenType["STRING"] = 20] = "STRING";
-    TokenType[TokenType["BYTE_LITERAL"] = 21] = "BYTE_LITERAL";
-    TokenType[TokenType["IDENTIFIER"] = 22] = "IDENTIFIER";
+    TokenType[TokenType["INTEGER"] = 20] = "INTEGER";
+    TokenType[TokenType["HEX"] = 21] = "HEX";
+    TokenType[TokenType["STRING"] = 22] = "STRING";
+    TokenType[TokenType["BYTE_LITERAL"] = 23] = "BYTE_LITERAL";
+    TokenType[TokenType["IDENTIFIER"] = 24] = "IDENTIFIER";
     // Symbols
-    TokenType[TokenType["LPAREN"] = 23] = "LPAREN";
-    TokenType[TokenType["RPAREN"] = 24] = "RPAREN";
-    TokenType[TokenType["LBRACE"] = 25] = "LBRACE";
-    TokenType[TokenType["RBRACE"] = 26] = "RBRACE";
-    TokenType[TokenType["LBRACKET"] = 27] = "LBRACKET";
-    TokenType[TokenType["RBRACKET"] = 28] = "RBRACKET";
-    TokenType[TokenType["COMMA"] = 29] = "COMMA";
-    TokenType[TokenType["DOT"] = 30] = "DOT";
-    TokenType[TokenType["DOT_DOT"] = 31] = "DOT_DOT";
-    TokenType[TokenType["COLON"] = 32] = "COLON";
-    TokenType[TokenType["COLON_COLON"] = 33] = "COLON_COLON";
-    TokenType[TokenType["SEMICOLON"] = 34] = "SEMICOLON";
-    TokenType[TokenType["ARROW"] = 35] = "ARROW";
-    TokenType[TokenType["PLUS"] = 36] = "PLUS";
-    TokenType[TokenType["MINUS"] = 37] = "MINUS";
-    TokenType[TokenType["STAR"] = 38] = "STAR";
-    TokenType[TokenType["SLASH"] = 39] = "SLASH";
-    TokenType[TokenType["PERCENT"] = 40] = "PERCENT";
-    TokenType[TokenType["AMPERSAND"] = 41] = "AMPERSAND";
-    TokenType[TokenType["PIPE"] = 42] = "PIPE";
-    TokenType[TokenType["CARET"] = 43] = "CARET";
-    TokenType[TokenType["LSHIFT"] = 44] = "LSHIFT";
-    TokenType[TokenType["RSHIFT"] = 45] = "RSHIFT";
-    TokenType[TokenType["EQUALS"] = 46] = "EQUALS";
-    TokenType[TokenType["EQ_EQ"] = 47] = "EQ_EQ";
-    TokenType[TokenType["NE_EQ"] = 48] = "NE_EQ";
-    TokenType[TokenType["LT"] = 49] = "LT";
-    TokenType[TokenType["GT"] = 50] = "GT";
-    TokenType[TokenType["LT_EQ"] = 51] = "LT_EQ";
-    TokenType[TokenType["GT_EQ"] = 52] = "GT_EQ";
-    TokenType[TokenType["EXCLAMATION"] = 53] = "EXCLAMATION";
-    TokenType[TokenType["HASH"] = 54] = "HASH";
-    TokenType[TokenType["EOF"] = 55] = "EOF";
+    TokenType[TokenType["LPAREN"] = 25] = "LPAREN";
+    TokenType[TokenType["RPAREN"] = 26] = "RPAREN";
+    TokenType[TokenType["LBRACE"] = 27] = "LBRACE";
+    TokenType[TokenType["RBRACE"] = 28] = "RBRACE";
+    TokenType[TokenType["LBRACKET"] = 29] = "LBRACKET";
+    TokenType[TokenType["RBRACKET"] = 30] = "RBRACKET";
+    TokenType[TokenType["COMMA"] = 31] = "COMMA";
+    TokenType[TokenType["DOT"] = 32] = "DOT";
+    TokenType[TokenType["DOT_DOT"] = 33] = "DOT_DOT";
+    TokenType[TokenType["COLON"] = 34] = "COLON";
+    TokenType[TokenType["COLON_COLON"] = 35] = "COLON_COLON";
+    TokenType[TokenType["SEMICOLON"] = 36] = "SEMICOLON";
+    TokenType[TokenType["ARROW"] = 37] = "ARROW";
+    TokenType[TokenType["PLUS"] = 38] = "PLUS";
+    TokenType[TokenType["MINUS"] = 39] = "MINUS";
+    TokenType[TokenType["STAR"] = 40] = "STAR";
+    TokenType[TokenType["SLASH"] = 41] = "SLASH";
+    TokenType[TokenType["PERCENT"] = 42] = "PERCENT";
+    TokenType[TokenType["AMPERSAND"] = 43] = "AMPERSAND";
+    TokenType[TokenType["AND_AND"] = 44] = "AND_AND";
+    TokenType[TokenType["PIPE"] = 45] = "PIPE";
+    TokenType[TokenType["OR_OR"] = 46] = "OR_OR";
+    TokenType[TokenType["CARET"] = 47] = "CARET";
+    TokenType[TokenType["LSHIFT"] = 48] = "LSHIFT";
+    TokenType[TokenType["RSHIFT"] = 49] = "RSHIFT";
+    TokenType[TokenType["EQUALS"] = 50] = "EQUALS";
+    TokenType[TokenType["EQ_EQ"] = 51] = "EQ_EQ";
+    TokenType[TokenType["NE_EQ"] = 52] = "NE_EQ";
+    TokenType[TokenType["LT"] = 53] = "LT";
+    TokenType[TokenType["GT"] = 54] = "GT";
+    TokenType[TokenType["LT_EQ"] = 55] = "LT_EQ";
+    TokenType[TokenType["GT_EQ"] = 56] = "GT_EQ";
+    TokenType[TokenType["EXCLAMATION"] = 57] = "EXCLAMATION";
+    TokenType[TokenType["HASH"] = 58] = "HASH";
+    TokenType[TokenType["EOF"] = 59] = "EOF";
 })(TokenType || (TokenType = {}));
 const KEYWORDS = {
     fn: TokenType.FN,
@@ -76,6 +80,8 @@ const KEYWORDS = {
     continue: TokenType.CONTINUE,
     struct: TokenType.STRUCT,
     impl: TokenType.IMPL,
+    self: TokenType.SELF,
+    Self: TokenType.SELF_TYPE,
     panic: TokenType.PANIC,
     true: TokenType.TRUE,
     false: TokenType.FALSE,
@@ -131,6 +137,24 @@ export class Lexer {
                 tokens.push({
                     type: TokenType.DOT_DOT,
                     value: "..",
+                    line: startLine,
+                    col: startCol,
+                });
+                continue;
+            }
+            if (this.match("&&")) {
+                tokens.push({
+                    type: TokenType.AND_AND,
+                    value: "&&",
+                    line: startLine,
+                    col: startCol,
+                });
+                continue;
+            }
+            if (this.match("||")) {
+                tokens.push({
+                    type: TokenType.OR_OR,
+                    value: "||",
                     line: startLine,
                     col: startCol,
                 });
