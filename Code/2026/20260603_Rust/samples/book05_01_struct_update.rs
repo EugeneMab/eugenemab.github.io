@@ -18,9 +18,9 @@ fn main() {
         ..user1
     };
 
-    print!(user2.active);
-    print!(user2.username);
-    print!(user2.email);
-    print!(user2.sign_in_count);
+    println!(user2.active);
+    println!(user2.username);
+    println!(user2.email);
+    println!(user2.sign_in_count);
     0
 }

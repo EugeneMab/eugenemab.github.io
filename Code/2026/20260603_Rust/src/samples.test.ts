@@ -121,7 +121,7 @@ describe("UI Samples Regression Tests", () => {
   it("Step 2: Literals & Keywords", async () => {
     const code = loadSample("step02_lexer.rs");
     const { logs, result } = await runRust(code);
-    expect(logs.join("")).toBe("4242");
+    expect(logs.join("")).toBe("42\n42\n");
     expect(result).toBe(0);
   });
 
@@ -134,14 +134,14 @@ describe("UI Samples Regression Tests", () => {
   it("Step 6: Math & Logic", async () => {
     const code = loadSample("step06_math.rs");
     const { logs, result } = await runRust(code);
-    expect(logs.join("")).toBe("20301");
+    expect(logs.join("")).toBe("20\n30\n1\n");
     expect(result).toBe(51);
   });
 
   it("Step 6: Bitwise Ops", async () => {
     const code = loadSample("step06_bitwise.rs");
     const { logs, result } = await runRust(code);
-    expect(logs.join("")).toBe("025516");
+    expect(logs.join("")).toBe("0\n255\n16\n");
     expect(result).toBe(8);
   });
 
@@ -155,7 +155,7 @@ describe("UI Samples Regression Tests", () => {
   it("Step 8: Print Macro", async () => {
     const code = loadSample("step08_print.rs");
     const { logs, result } = await runRust(code);
-    expect(logs.join("")).toBe("111222333");
+    expect(logs.join("")).toBe("111\n222\n333\n");
     expect(result).toBe(0);
   });
 
@@ -167,14 +167,14 @@ describe("UI Samples Regression Tests", () => {
   it("Step 10: Scope Detection", async () => {
     const code = loadSample("step10_scope.rs");
     const { logs, result } = await runRust(code);
-    expect(logs.join("")).toBe("21");
+    expect(logs.join("")).toBe("2\n1\n");
     expect(result).toBe(0);
   });
 
   it("Step 11: Region-Based Memory", async () => {
     const code = loadSample("step11_regions.rs");
     const { logs, result } = await runRust(code);
-    expect(logs.join("")).toBe("1616");
+    expect(logs.join("")).toBe("16\n16\n");
     expect(result).toBe(0);
   });
 
@@ -221,21 +221,21 @@ describe("UI Samples Regression Tests", () => {
     it("Book 2-0: Guessing Game Variables", async () => {
       const code = loadSample("book02_00_variables.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("55");
+      expect(logs.join("")).toBe("5\n5\n");
       expect(result).toBe(0);
     });
 
     it("Book 2-0: Guessing Game If/Else", async () => {
       const code = loadSample("book02_00_if_else.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("x is fivex is small");
+      expect(logs.join("")).toBe("x is five\nx is small\n");
       expect(result).toBe(0);
     });
 
     it("Book 2-0: Guessing Game Loop", async () => {
       const code = loadSample("book02_00_loop.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("134done");
+      expect(logs.join("")).toBe("1\n3\n4\ndone\n");
       expect(result).toBe(0);
     });
 
@@ -277,43 +277,42 @@ describe("UI Samples Regression Tests", () => {
     it("Book 3-2: Data Types - Boolean", async () => {
       const code = loadSample("book03_02_booleans.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("tfalse");
+      expect(logs.join("")).toBe("true\nfalse\n");
       expect(result).toBe(0);
     });
 
     it("Book 3-3: Functions", async () => {
       const code = loadSample("book03_03_functions.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("The value of x is: 55");
+      expect(logs.join("")).toBe("The value of x is: 5\n5\n");
       expect(result).toBe(0);
     });
 
     it("Book 3-5: while Loop", async () => {
       const code = loadSample("book03_05_while.rs");
       const { logs, result } = await runRust(code);
-      // Based on previous failure: println! added no newlines for this specific sample structure
-      expect(logs.join("")).toBe("321LIFTOFF!");
+      expect(logs.join("")).toBe("3\n2\n1\nLIFTOFF!\n");
       expect(result).toBe(0);
     });
 
     it("Book 3-5: if as Expression", async () => {
       const code = loadSample("book03_05_if_let.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("5");
+      expect(logs.join("")).toBe("5\n");
       expect(result).toBe(0);
     });
 
     it("Book 4-1: Variable Scope", async () => {
       const code = loadSample("book04_01_scope.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("inner y: 20outer x: 10");
+      expect(logs.join("")).toBe("inner y: 20\nouter x: 10\n");
       expect(result).toBe(0);
     });
 
     it("Book 4-2: References and Borrowing", async () => {
       const code = loadSample("book04_02_borrow.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("borrowed mutablyx after borrow: 6");
+      expect(logs.join("")).toBe("borrowed mutably\nx after borrow: 6\n");
       expect(result).toBe(0);
     });
 
@@ -385,35 +384,35 @@ describe("UI Samples Regression Tests", () => {
     it("Book 5-1: User Struct", async () => {
       const code = loadSample("book05_01_user_struct.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("1anotheremail@example.com1");
+      expect(logs.join("")).toBe("true\nanotheremail@example.com\n1\n");
       expect(result).toBe(0);
     });
 
     it("Book 5-1: Build User", async () => {
       const code = loadSample("book05_01_build_user.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("1someusername123someone@example.com");
+      expect(logs.join("")).toBe("true\nsomeusername123\nsomeone@example.com\n");
       expect(result).toBe(0);
     });
 
     it("Book 5-1: Struct Update", async () => {
       const code = loadSample("book05_01_struct_update.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("1someusername123another@example.com1");
+      expect(logs.join("")).toBe("true\nsomeusername123\nanother@example.com\n1\n");
       expect(result).toBe(0);
     });
 
     it("Book 5-1: Tuple Structs", async () => {
       const code = loadSample("book05_01_tuple_structs.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("123102030");
+      expect(logs.join("")).toBe("1\n2\n3\n10\n20\n30\n");
       expect(result).toBe(0);
     });
 
     it("Book 5-1: Unit Structs", async () => {
       const code = loadSample("book05_01_unit_structs.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("0");
+      expect(logs.join("")).toBe("0\n");
       expect(result).toBe(0);
     });
 
@@ -426,7 +425,7 @@ describe("UI Samples Regression Tests", () => {
       const code = loadSample("book05_02_separate_variables.rs");
       const { logs, result } = await runRust(code);
       expect(logs.join("")).toBe(
-        "The area of the rectangle is 1500 square pixels.",
+        "The area of the rectangle is 1500 square pixels.\n",
       );
       expect(result).toBe(0);
     });
@@ -435,7 +434,7 @@ describe("UI Samples Regression Tests", () => {
       const code = loadSample("book05_02_tuples.rs");
       const { logs, result } = await runRust(code);
       expect(logs.join("")).toBe(
-        "The area of the rectangle is 1500 square pixels.",
+        "The area of the rectangle is 1500 square pixels.\n",
       );
       expect(result).toBe(0);
     });
@@ -444,7 +443,7 @@ describe("UI Samples Regression Tests", () => {
       const code = loadSample("book05_02_structs.rs");
       const { logs, result } = await runRust(code);
       expect(logs.join("")).toBe(
-        "The area of the rectangle is 1500 square pixels.",
+        "The area of the rectangle is 1500 square pixels.\n",
       );
       expect(result).toBe(0);
     });
@@ -460,7 +459,7 @@ describe("UI Samples Regression Tests", () => {
       const code = loadSample("book05_02_debug_trait.rs");
       const { logs, result } = await runRust(code);
       expect(logs.join("")).toBe(
-        "rect1 is Rectangle { width: 30, height: 50 }",
+        "rect1 is Rectangle { width: 30, height: 50 }\n",
       );
       expect(result).toBe(0);
     });
@@ -496,8 +495,8 @@ describe("UI Samples Regression Tests", () => {
     it("Book 5-3: Can Hold", async () => {
       const code = loadSample("book05_03_can_hold.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toContain("Can rect1 hold rect2? 1\n");
-      expect(logs.join("")).toContain("Can rect1 hold rect3? 0\n");
+      expect(logs.join("")).toContain("Can rect1 hold rect2? true\n");
+      expect(logs.join("")).toContain("Can rect1 hold rect3? false\n");
       expect(result).toBe(0);
     });
 
@@ -511,8 +510,8 @@ describe("UI Samples Regression Tests", () => {
     it("Book 5-3: Multiple Impl Blocks", async () => {
       const code = loadSample("book05_03_multiple_impl_blocks.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toContain("Can rect1 hold rect2? 1\n");
-      expect(logs.join("")).toContain("Can rect1 hold rect3? 0\n");
+      expect(logs.join("")).toContain("Can rect1 hold rect2? true\n");
+      expect(logs.join("")).toContain("Can rect1 hold rect3? false\n");
       expect(result).toBe(0);
     });
   });

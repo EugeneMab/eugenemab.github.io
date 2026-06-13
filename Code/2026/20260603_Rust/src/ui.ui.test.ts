@@ -41,12 +41,12 @@ test("verify basic compiler flow in UI", async ({ page }) => {
   // Verify Step 10: Scope
   await runSample("scope", "Execution Finished");
   const scopeOutput = (await resultOutput.textContent()) ?? "";
-  expect(scopeOutput.trim()).toBe("21");
+  expect(scopeOutput.trim()).toBe("2\n1");
 
   // Verify Step 11: Regions
   await runSample("regions", "Execution Finished");
   const regionsOutput = (await resultOutput.textContent()) ?? "";
-  expect(regionsOutput.trim()).toBe("1616");
+  expect(regionsOutput.trim()).toBe("16\n16");
 
   // Verify Step 12: Borrow
   await runSample("borrow", "Execution Finished");
@@ -59,7 +59,7 @@ test("verify basic compiler flow in UI", async ({ page }) => {
   // Verify Book 2-0: Guessing Game Variables
   await runSample("book02_00_vars", "Execution Finished");
   const varsOutput = (await resultOutput.textContent()) ?? "";
-  expect(varsOutput.trim()).toBe("55");
+  expect(varsOutput.trim()).toBe("5\n5");
 
   // Verify Book 2-0: Guessing Game Loop WAT indentation
   await runSample("book02_00_loop", "Execution Finished");
@@ -73,5 +73,5 @@ test("verify basic compiler flow in UI", async ({ page }) => {
   // Verify Book 4-1: Scope
   await runSample("book04_01_scope", "Execution Finished");
   const scopeChapterOutput = (await resultOutput.textContent()) ?? "";
-  expect(scopeChapterOutput.trim()).toBe("inner y: 20outer x: 10");
+  expect(scopeChapterOutput.trim()).toBe("inner y: 20\nouter x: 10");
 });

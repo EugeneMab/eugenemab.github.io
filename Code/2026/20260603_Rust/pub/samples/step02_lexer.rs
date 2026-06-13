@@ -3,7 +3,7 @@ fn main() {
     let dec = 42;
     let hex = 0x2A;
     let s = "Rust";
-    print!(dec);
-    print!(hex);
+    println!(dec);
+    println!(hex);
     0
 }

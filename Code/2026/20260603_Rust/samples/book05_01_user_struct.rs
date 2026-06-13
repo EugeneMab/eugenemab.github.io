@@ -15,8 +15,8 @@ fn main() {
 
     user1.email = String::from("anotheremail@example.com");
 
-    print!(user1.active);
-    print!(user1.email);
-    print!(user1.sign_in_count);
+    println!(user1.active);
+    println!(user1.email);
+    println!(user1.sign_in_count);
     0
 }

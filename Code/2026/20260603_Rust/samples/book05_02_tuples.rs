@@ -1,7 +1,7 @@
 fn main() {
     let rect1 = (30, 50);
 
-    print!(
+    println!(
         "The area of the rectangle is {} square pixels.",
         area(rect1)
     );

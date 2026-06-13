@@ -2,6 +2,6 @@
 fn main() {
     let condition = true;
     let number = if condition { 5 } else { 6 };
-    print!(number);
+    println!(number);
     0
 }

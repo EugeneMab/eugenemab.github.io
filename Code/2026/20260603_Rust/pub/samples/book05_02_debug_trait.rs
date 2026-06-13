@@ -10,6 +10,6 @@ fn main() {
         height: 50,
     };
 
-    print!("rect1 is {:?}", rect1);
+    println!("rect1 is {:?}", rect1);
     0
 }

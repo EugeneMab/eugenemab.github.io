@@ -145,6 +145,8 @@ export class Emitter {
                     return "&str";
                 if (expr.rawType === "byte")
                     return "u8";
+                if (expr.rawType === "bool")
+                    return "bool";
                 return "i32";
             case "ArrayLiteral":
                 return "array";
@@ -232,7 +234,13 @@ export class Emitter {
             case "MacroInvocation":
                 return "i32";
             case "UnaryExpression":
+                if (expr.operator === "!")
+                    return "bool";
+                return "i32";
             case "BinaryExpression":
+                if (["==", "!=", "<", ">", "<=", ">=", "&&", "||"].includes(expr.operator)) {
+                    return "bool";
+                }
                 return "i32";
             case "BlockStatement":
                 return expr.tailExpression
@@ -259,7 +267,16 @@ export class Emitter {
             }
         }
         this.emitExpressionBinary(expr, body);
-        body.push(OP_CALL, ...this.encodeUnsignedLEB128(this.isStringLikeType(type) ? 1 : 0));
+        if (type === "bool") {
+            body.push(OP_IF, TYPE_I32);
+            this.emitStringPrintBinary("true", body);
+            body.push(OP_ELSE);
+            this.emitStringPrintBinary("false", body);
+            body.push(OP_END);
+        }
+        else {
+            body.push(OP_CALL, ...this.encodeUnsignedLEB128(this.isStringLikeType(type) ? 1 : 0));
+        }
     }
     emitDebugPrint(expr, baseType, body) {
         const ptrLocal = `debug_ptr_${++this.localCounter}`;
@@ -366,7 +383,31 @@ export class Emitter {
     }
     emitPrintCallForVariable(info) {
         this.emitWATLine(`local.get $${info.uniqueName}`);
-        this.emitWATLine(`call $${this.isStringLikeType(info.valueType) ? "print_str" : "print"}`);
+        if (info.valueType === "bool") {
+            this.emitWATLine("if (result i32)");
+            this.emitStringPrintWAT("true");
+            this.emitWATLine("else");
+            this.emitStringPrintWAT("false");
+            this.emitWATLine("end");
+        }
+        else {
+            this.emitWATLine(`call $${this.isStringLikeType(info.valueType) ? "print_str" : "print"}`);
+        }
+    }
+    emitPrintCallForExpressionWAT(expr) {
+        const type = this.inferExpressionType(expr);
+        if (type === "bool") {
+            this.emitExpressionWAT(expr);
+            this.emitWATLine("if (result i32)");
+            this.emitStringPrintWAT("true");
+            this.emitWATLine("else");
+            this.emitStringPrintWAT("false");
+            this.emitWATLine("end");
+        }
+        else {
+            this.emitExpressionWAT(expr);
+            this.emitWATLine(`call $${this.isStringLikeType(type) ? "print_str" : "print"}`);
+        }
     }
     prepareFunctionMetadata() {
         this.functionIndices.clear();
@@ -1217,8 +1258,7 @@ export class Emitter {
                                 // {}
                                 if (argIndex < expr.args.length) {
                                     const arg = expr.args[argIndex++];
-                                    this.emitExpressionWAT(arg);
-                                    this.emitWATLine(`call $${this.isStringLikeType(this.inferExpressionType(arg)) ? "print_str" : "print"}`);
+                                    this.emitPrintCallForExpressionWAT(arg);
                                     this.emitWATLine("drop");
                                 }
                                 else {
@@ -1237,8 +1277,7 @@ export class Emitter {
                         this.emitWATLine("i32.const 0"); // Result of macro
                     }
                     else if (formatArg) {
-                        this.emitExpressionWAT(formatArg);
-                        this.emitWATLine(`call $${this.isStringLikeType(this.inferExpressionType(formatArg)) ? "print_str" : "print"}`);
+                        this.emitPrintCallForExpressionWAT(formatArg);
                         this.emitWATLine("drop");
                         if (expr.name === "println") {
                             this.emitStringPrintWAT("\n");
@@ -2242,10 +2281,7 @@ export class Emitter {
                         body.push(OP_I32_CONST, 0);
                     }
                     else if (formatArg) {
-                        this.emitExpressionBinary(formatArg, body);
-                        body.push(OP_CALL, ...this.encodeUnsignedLEB128(this.isStringLikeType(this.inferExpressionType(formatArg))
-                            ? 1
-                            : 0));
+                        this.emitPrintCallForExpression(formatArg, body);
                         body.push(OP_DROP);
                         if (expr.name === "println") {
                             this.emitStringPrintBinary("\n", body);

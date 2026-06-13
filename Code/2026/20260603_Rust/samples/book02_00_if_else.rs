@@ -1,13 +1,13 @@
 fn main() {
     let x = 5;
     if x == 5 {
-        print!("x is five");
+        println!("x is five");
     } else {
-        print!("x is not five");
+        println!("x is not five");
     }
-    
+
     if x < 10 {
-        print!("x is small");
+        println!("x is small");
     }
     
     0

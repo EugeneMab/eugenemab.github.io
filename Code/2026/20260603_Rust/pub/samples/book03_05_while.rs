@@ -3,10 +3,10 @@ fn main() {
     let mut number = 3;
 
     while number != 0 {
-        print!(number);
+        println!(number);
         number = number - 1;
     }
 
-    print!("LIFTOFF!");
+    println!("LIFTOFF!");
     0
 }

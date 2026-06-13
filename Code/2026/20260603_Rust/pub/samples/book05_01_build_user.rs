@@ -19,8 +19,8 @@ fn main() {
         String::from("someone@example.com"),
         String::from("someusername123"),
     );
-    print!(user1.active);
-    print!(user1.username);
-    print!(user1.email);
+    println!(user1.active);
+    println!(user1.username);
+    println!(user1.email);
     0
 }

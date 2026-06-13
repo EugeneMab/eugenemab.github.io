@@ -215,7 +215,7 @@ export interface ArrayLiteral extends BaseNode {
 export interface Literal extends BaseNode {
   type: "Literal";
   value: string | number;
-  rawType: "integer" | "hex" | "string" | "byte";
+  rawType: "integer" | "hex" | "string" | "byte" | "bool";
 }
 
 export interface Identifier extends BaseNode {
@@ -961,7 +961,7 @@ export class Parser {
         type: "Literal",
         token,
         value: 1,
-        rawType: "integer",
+        rawType: "bool",
       };
     }
     if (this.match(TokenType.FALSE)) {
@@ -970,7 +970,7 @@ export class Parser {
         type: "Literal",
         token,
         value: 0,
-        rawType: "integer",
+        rawType: "bool",
       };
     }
 

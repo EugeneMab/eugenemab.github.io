@@ -9,7 +9,7 @@ fn main() {
         height: 50,
     };
 
-    print!(
+    println!(
         "The area of the rectangle is {} square pixels.",
         area(&rect1)
     );

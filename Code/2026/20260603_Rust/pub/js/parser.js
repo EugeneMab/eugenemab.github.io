@@ -618,7 +618,7 @@ export class Parser {
                 type: "Literal",
                 token,
                 value: 1,
-                rawType: "integer",
+                rawType: "bool",
             };
         }
         if (this.match(TokenType.FALSE)) {
@@ -627,7 +627,7 @@ export class Parser {
                 type: "Literal",
                 token,
                 value: 0,
-                rawType: "integer",
+                rawType: "bool",
             };
         }
         if (this.match(TokenType.IDENTIFIER, TokenType.PANIC, TokenType.SELF, TokenType.SELF_TYPE)) {
