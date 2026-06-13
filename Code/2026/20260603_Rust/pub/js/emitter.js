@@ -1088,18 +1088,50 @@ export class Emitter {
                 break;
             case "BinaryExpression":
                 if (expr.operator === "=") {
-                    if (expr.left.type !== "Identifier") {
+                    if (expr.left.type === "Identifier") {
+                        const info = this.resolveVariable(expr.left.name);
+                        if (!info) {
+                            this.throwError(`Undefined variable: ${expr.left.name}`, expr.left);
+                        }
+                        if (!info.isMutable) {
+                            this.throwError(`Cannot assign to immutable variable: ${expr.left.name}`, expr.left);
+                        }
+                        this.emitExpressionWAT(expr.right);
+                        this.emitWATLine(`local.tee $${info.uniqueName}`);
+                    }
+                    else if (expr.left.type === "MemberAccessExpression") {
+                        const memberExpr = expr.left;
+                        const objectType = this.inferExpressionType(memberExpr.object);
+                        const baseType = this.getBaseType(objectType);
+                        if (baseType && this.structDefinitions.has(baseType)) {
+                            const offset = this.getStructFieldOffset(baseType, memberExpr.member);
+                            this.emitExpressionWAT(memberExpr.object);
+                            this.emitWATLine(`i32.const ${offset}`);
+                            this.emitWATLine("i32.add");
+                            this.emitExpressionWAT(expr.right);
+                            this.emitWATLine("i32.store");
+                            // Assignment expression returns the value
+                            this.emitExpressionWAT(expr.right);
+                        }
+                        else if (objectType && objectType.startsWith("(")) {
+                            const index = parseInt(memberExpr.member);
+                            if (isNaN(index)) {
+                                this.throwError(`Invalid tuple index: ${memberExpr.member}`, memberExpr);
+                            }
+                            this.emitExpressionWAT(memberExpr.object);
+                            this.emitWATLine(`i32.const ${index * 4}`);
+                            this.emitWATLine("i32.add");
+                            this.emitExpressionWAT(expr.right);
+                            this.emitWATLine("i32.store");
+                            this.emitExpressionWAT(expr.right);
+                        }
+                        else {
+                            this.throwError("Invalid l-value", expr.left);
+                        }
+                    }
+                    else {
                         this.throwError("Invalid l-value", expr.left);
                     }
-                    const info = this.resolveVariable(expr.left.name);
-                    if (!info) {
-                        this.throwError(`Undefined variable: ${expr.left.name}`, expr.left);
-                    }
-                    if (!info.isMutable) {
-                        this.throwError(`Cannot assign to immutable variable: ${expr.left.name}`, expr.left);
-                    }
-                    this.emitExpressionWAT(expr.right);
-                    this.emitWATLine(`local.tee $${info.uniqueName}`);
                     break;
                 }
                 this.emitExpressionWAT(expr.left);
@@ -1198,6 +1230,9 @@ export class Emitter {
                         const textAfter = formatStr.substring(lastPos);
                         if (textAfter) {
                             this.emitStringPrintWAT(textAfter);
+                        }
+                        if (expr.name === "println") {
+                            this.emitStringPrintWAT("\n");
                         }
                         this.emitWATLine("i32.const 0"); // Result of macro
                     }
@@ -2195,6 +2230,9 @@ export class Emitter {
                         const textAfter = formatStr.substring(lastPos);
                         if (textAfter) {
                             this.emitStringPrintBinary(textAfter, body);
+                        }
+                        if (expr.name === "println") {
+                            this.emitStringPrintBinary("\n", body);
                         }
                         body.push(OP_I32_CONST, 0);
                     }

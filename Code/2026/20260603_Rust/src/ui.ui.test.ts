@@ -41,12 +41,12 @@ test("verify basic compiler flow in UI", async ({ page }) => {
   // Verify Step 10: Scope
   await runSample("scope", "Execution Finished");
   const scopeOutput = (await resultOutput.textContent()) ?? "";
-  expect(scopeOutput.trim()).toBe("2\n1");
+  expect(scopeOutput.trim()).toBe("21");
 
   // Verify Step 11: Regions
   await runSample("regions", "Execution Finished");
   const regionsOutput = (await resultOutput.textContent()) ?? "";
-  expect(regionsOutput.trim()).toBe("16\n16");
+  expect(regionsOutput.trim()).toBe("1616");
 
   // Verify Step 12: Borrow
   await runSample("borrow", "Execution Finished");

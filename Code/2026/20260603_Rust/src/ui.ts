@@ -230,6 +230,12 @@ export function initUI() {
     book04_03_slice_error: "book04_03_slice_error.rs",
     book04_03_slice_param: "book04_03_slice_param.rs",
     book04_03_array_slice: "book04_03_array_slice.rs",
+    book05_01_user_struct: "book05_01_user_struct.rs",
+    book05_01_build_user: "book05_01_build_user.rs",
+    book05_01_struct_update: "book05_01_struct_update.rs",
+    book05_01_tuple_structs: "book05_01_tuple_structs.rs",
+    book05_01_unit_structs: "book05_01_unit_structs.rs",
+    book05_01_reference_in_struct: "book05_01_reference_in_struct.rs",
     book05_02_separate_variables: "book05_02_separate_variables.rs",
     book05_02_tuples: "book05_02_tuples.rs",
     book05_02_structs: "book05_02_structs.rs",
@@ -315,7 +321,7 @@ export function initUI() {
           outputs.wasm.textContent = formatWASMBytes(payload as Uint8Array);
           break;
         case "log":
-          outputs.exec.textContent += payload + "\n";
+          outputs.exec.textContent += payload;
           break;
         case "result":
           clearTimer();
