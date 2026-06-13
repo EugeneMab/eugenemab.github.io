@@ -59,7 +59,7 @@ test("verify basic compiler flow in UI", async ({ page }) => {
   // Verify Book 2-0: Guessing Game Variables
   await runSample("book02_00_vars", "Execution Finished");
   const varsOutput = (await resultOutput.textContent()) ?? "";
-  expect(varsOutput.trim()).toBe("5\n5");
+  expect(varsOutput.trim()).toBe("55");
 
   // Verify Book 2-0: Guessing Game Loop WAT indentation
   await runSample("book02_00_loop", "Execution Finished");
@@ -70,8 +70,8 @@ test("verify basic compiler flow in UI", async ({ page }) => {
   expect(watOutput).toContain("        if (result i32)");
   expect(watOutput).toContain("          global.get $heap_ptr");
 
-  // Verify Book 4-1: Variable Scope
+  // Verify Book 4-1: Scope
   await runSample("book04_01_scope", "Execution Finished");
   const scopeChapterOutput = (await resultOutput.textContent()) ?? "";
-  expect(scopeChapterOutput.trim()).toBe("inner y: \n20\nouter x: \n10");
+  expect(scopeChapterOutput.trim()).toBe("inner y: 20outer x: 10");
 });

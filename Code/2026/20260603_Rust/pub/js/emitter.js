@@ -1239,6 +1239,11 @@ export class Emitter {
                     else if (formatArg) {
                         this.emitExpressionWAT(formatArg);
                         this.emitWATLine(`call $${this.isStringLikeType(this.inferExpressionType(formatArg)) ? "print_str" : "print"}`);
+                        this.emitWATLine("drop");
+                        if (expr.name === "println") {
+                            this.emitStringPrintWAT("\n");
+                        }
+                        this.emitWATLine("i32.const 0");
                     }
                     else {
                         this.emitWATLine("i32.const 0");
@@ -2241,6 +2246,11 @@ export class Emitter {
                         body.push(OP_CALL, ...this.encodeUnsignedLEB128(this.isStringLikeType(this.inferExpressionType(formatArg))
                             ? 1
                             : 0));
+                        body.push(OP_DROP);
+                        if (expr.name === "println") {
+                            this.emitStringPrintBinary("\n", body);
+                        }
+                        body.push(OP_I32_CONST, 0);
                     }
                     else {
                         body.push(OP_I32_CONST, 0);

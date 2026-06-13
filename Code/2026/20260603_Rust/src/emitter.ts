@@ -1417,6 +1417,11 @@ export class Emitter {
             this.emitWATLine(
               `call $${this.isStringLikeType(this.inferExpressionType(formatArg)) ? "print_str" : "print"}`,
             );
+            this.emitWATLine("drop");
+            if (expr.name === "println") {
+              this.emitStringPrintWAT("\n");
+            }
+            this.emitWATLine("i32.const 0");
           } else {
             this.emitWATLine("i32.const 0");
           }
@@ -2556,6 +2561,11 @@ export class Emitter {
                   : 0,
               ),
             );
+            body.push(OP_DROP);
+            if (expr.name === "println") {
+              this.emitStringPrintBinary("\n", body);
+            }
+            body.push(OP_I32_CONST, 0);
           } else {
             body.push(OP_I32_CONST, 0);
           }
