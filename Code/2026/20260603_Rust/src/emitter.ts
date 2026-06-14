@@ -128,7 +128,7 @@ export class Emitter {
       }
     } else if (struct.type === "TupleStructDeclaration") {
       const index = parseInt(fieldName);
-      if (!isNaN(index)) {
+      if (!isNaN(index) && index >= 0 && index < struct.fields.length) {
         return index * 4;
       }
     }
@@ -345,10 +345,13 @@ export class Emitter {
 
     if (baseType.startsWith("(")) {
       this.emitStringPrintBinary("(", body);
-      const types = baseType
-        .slice(1, -1)
-        .split(",")
-        .map((t) => t.trim());
+      const inner = baseType.slice(1, -1).trim();
+      const types = inner
+        ? inner
+            .split(",")
+            .map((t) => t.trim())
+            .filter((t) => t.length > 0)
+        : [];
       types.forEach((t, i) => {
         if (i > 0) this.emitStringPrintBinary(", ", body);
         body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
@@ -931,6 +934,23 @@ export class Emitter {
     return undefined;
   }
 
+  private isMutableExpression(expr: Expression): boolean {
+    if (expr.type === "Identifier") {
+      const info = this.resolveVariable(expr.name);
+      return info ? info.isMutable : false;
+    }
+    if (expr.type === "BorrowExpression") {
+      return expr.isMutable;
+    }
+    if (expr.type === "MemberAccessExpression") {
+      return this.isMutableExpression(expr.object);
+    }
+    if (expr.type === "IndexExpression") {
+      return this.isMutableExpression(expr.object);
+    }
+    return false;
+  }
+
   private emitExpressionWAT(expr: Expression) {
     switch (expr.type) {
       case "BlockStatement":
@@ -994,6 +1014,86 @@ export class Emitter {
         this.emitWATLine(`local.get $${ptrLocal}`);
         break;
       }
+      case "StructLiteral": {
+        let structName = expr.name;
+        if (structName === "Self") {
+          const fnName = Array.from(this.functionIndices.entries()).find(
+            ([, idx]) =>
+              idx === this.functionIndices.get(this.currentFunctionName || ""),
+          )?.[0];
+          if (fnName && fnName.includes("::")) {
+            structName = fnName.split("::")[0];
+          }
+        }
+        const size = this.getStructSize(structName);
+        const ptrLocal = `struct_ptr_${++this.localCounter}`;
+        this.allLocals.add(ptrLocal);
+
+        this.emitWATLine("global.get $heap_ptr");
+        this.emitWATLine(`local.set $${ptrLocal}`);
+
+        this.emitWATLine(`local.get $${ptrLocal}`);
+        this.emitWATLine(`i32.const ${size}`);
+        this.emitWATLine("i32.add");
+        this.emitWATLine("global.set $heap_ptr");
+
+        if (expr.base) {
+          this.emitExpressionWAT(expr.base);
+          const basePtrLocal = `base_ptr_${++this.localCounter}`;
+          this.allLocals.add(basePtrLocal);
+          this.emitWATLine(`local.set $${basePtrLocal}`);
+
+          for (let i = 0; i < size; i += 4) {
+            this.emitWATLine(`local.get $${ptrLocal}`);
+            this.emitWATLine(`i32.const ${i}`);
+            this.emitWATLine("i32.add");
+
+            this.emitWATLine(`local.get $${basePtrLocal}`);
+            this.emitWATLine(`i32.const ${i}`);
+            this.emitWATLine("i32.add");
+            this.emitWATLine("i32.load");
+            this.emitWATLine("i32.store");
+          }
+        }
+
+        expr.fields.forEach((field) => {
+          const offset = this.getStructFieldOffset(structName, field.name);
+          this.emitWATLine(`local.get $${ptrLocal}`);
+          this.emitWATLine(`i32.const ${offset}`);
+          this.emitWATLine("i32.add");
+          this.emitExpressionWAT(field.value);
+          this.emitWATLine("i32.store");
+        });
+
+        this.emitWATLine(`local.get $${ptrLocal}`);
+        break;
+      }
+      case "TupleLiteral": {
+        if (expr.elements.length === 0) {
+          this.emitWATLine("i32.const 0");
+          break;
+        }
+        const ptrLocal = `tuple_ptr_${++this.localCounter}`;
+        this.allLocals.add(ptrLocal);
+        this.emitWATLine("global.get $heap_ptr");
+        this.emitWATLine(`local.set $${ptrLocal}`);
+
+        expr.elements.forEach((el, i) => {
+          this.emitWATLine(`local.get $${ptrLocal}`);
+          this.emitWATLine(`i32.const ${i * 4}`);
+          this.emitWATLine("i32.add");
+          this.emitExpressionWAT(el);
+          this.emitWATLine("i32.store");
+        });
+
+        this.emitWATLine(`local.get $${ptrLocal}`);
+        this.emitWATLine(`i32.const ${expr.elements.length * 4}`);
+        this.emitWATLine("i32.add");
+        this.emitWATLine("global.set $heap_ptr");
+
+        this.emitWATLine(`local.get $${ptrLocal}`);
+        break;
+      }
       case "Literal":
         if (expr.rawType === "string") {
           const strValue = expr.value as string;
@@ -1036,7 +1136,12 @@ export class Emitter {
             this.emitWATLine("i32.load");
           } else if (objectType && objectType.startsWith("(")) {
             const index = parseInt(expr.member);
-            if (isNaN(index)) {
+            const types = objectType
+              .slice(1, -1)
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0);
+            if (isNaN(index) || index < 0 || index >= types.length) {
               this.throwError(`Invalid tuple index: ${expr.member}`, expr);
             }
             this.emitExpressionWAT(expr.object);
@@ -1301,6 +1406,12 @@ export class Emitter {
             this.emitWATLine(`local.tee $${info.uniqueName}`);
           } else if (expr.left.type === "MemberAccessExpression") {
             const memberExpr = expr.left;
+            if (!this.isMutableExpression(memberExpr.object)) {
+              this.throwError(
+                "Cannot assign to fields of an immutable object",
+                memberExpr.object,
+              );
+            }
             const objectType = this.inferExpressionType(memberExpr.object);
             const baseType = this.getBaseType(objectType);
             if (baseType && this.structDefinitions.has(baseType)) {
@@ -1317,7 +1428,12 @@ export class Emitter {
               this.emitExpressionWAT(expr.right);
             } else if (objectType && objectType.startsWith("(")) {
               const index = parseInt(memberExpr.member);
-              if (isNaN(index)) {
+              const types = objectType
+                .slice(1, -1)
+                .split(",")
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0);
+              if (isNaN(index) || index < 0 || index >= types.length) {
                 this.throwError(
                   `Invalid tuple index: ${memberExpr.member}`,
                   memberExpr,
@@ -2124,6 +2240,10 @@ export class Emitter {
         break;
       }
       case "TupleLiteral": {
+        if (expr.elements.length === 0) {
+          body.push(OP_I32_CONST, 0);
+          break;
+        }
         const ptrLocal = `tuple_ptr_${++this.localCounter}`;
         this.allLocals.add(ptrLocal);
         body.push(...OP_GLOBAL_GET);
@@ -2199,7 +2319,12 @@ export class Emitter {
             body.push(...OP_I32_LOAD);
           } else if (objectType && objectType.startsWith("(")) {
             const index = parseInt(expr.member);
-            if (isNaN(index)) {
+            const types = objectType
+              .slice(1, -1)
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0);
+            if (isNaN(index) || index < 0 || index >= types.length) {
               this.throwError(`Invalid tuple index: ${expr.member}`, expr);
             }
             this.emitExpressionBinary(expr.object, body);
@@ -2404,6 +2529,12 @@ export class Emitter {
             body.push(0x22, 0xfe, info.uniqueName as any); // local.tee
           } else if (expr.left.type === "MemberAccessExpression") {
             const memberExpr = expr.left;
+            if (!this.isMutableExpression(memberExpr.object)) {
+              this.throwError(
+                "Cannot assign to fields of an immutable object",
+                memberExpr.object,
+              );
+            }
             const objectType = this.inferExpressionType(memberExpr.object);
             const baseType = this.getBaseType(objectType);
             if (baseType && this.structDefinitions.has(baseType)) {
@@ -2420,7 +2551,12 @@ export class Emitter {
               this.emitExpressionBinary(expr.right, body);
             } else if (objectType && objectType.startsWith("(")) {
               const index = parseInt(memberExpr.member);
-              if (isNaN(index)) {
+              const types = objectType
+                .slice(1, -1)
+                .split(",")
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0);
+              if (isNaN(index) || index < 0 || index >= types.length) {
                 this.throwError(
                   `Invalid tuple index: ${memberExpr.member}`,
                   memberExpr,
