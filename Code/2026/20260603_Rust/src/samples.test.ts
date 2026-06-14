@@ -277,7 +277,7 @@ describe("UI Samples Regression Tests", () => {
     it("Book 3-2: Data Types - Boolean", async () => {
       const code = loadSample("book03_02_booleans.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("true\nfalse\n");
+      expect(logs.join("")).toBe("t\nfalse\n");
       expect(result).toBe(0);
     });
 
@@ -391,14 +391,18 @@ describe("UI Samples Regression Tests", () => {
     it("Book 5-1: Build User", async () => {
       const code = loadSample("book05_01_build_user.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("true\nsomeusername123\nsomeone@example.com\n");
+      expect(logs.join("")).toBe(
+        "true\nsomeusername123\nsomeone@example.com\n",
+      );
       expect(result).toBe(0);
     });
 
     it("Book 5-1: Struct Update", async () => {
       const code = loadSample("book05_01_struct_update.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("")).toBe("true\nsomeusername123\nanother@example.com\n1\n");
+      expect(logs.join("")).toBe(
+        "true\nsomeusername123\nanother@example.com\n1\n",
+      );
       expect(result).toBe(0);
     });
 

@@ -252,7 +252,20 @@ export class Emitter {
         }
         if (expr.callee === "len") return "usize";
         if (this.structDefinitions.has(expr.callee)) return expr.callee;
-        return this.normalizeType(this.functionReturnTypes.get(expr.callee));
+
+        let callee = expr.callee;
+        if (!this.functionReturnTypes.has(callee) && expr.args.length > 0) {
+          const firstArgType = this.inferExpressionType(expr.args[0]);
+          const baseType = this.getBaseType(firstArgType);
+          if (baseType) {
+            const mangled = `${baseType}::${callee}`;
+            if (this.functionReturnTypes.has(mangled)) {
+              callee = mangled;
+            }
+          }
+        }
+
+        return this.normalizeType(this.functionReturnTypes.get(callee));
       case "MacroInvocation":
         return "i32";
       case "UnaryExpression":
@@ -271,6 +284,22 @@ export class Emitter {
           : "i32";
       case "IfStatement":
         return this.inferExpressionType(expr.thenBranch);
+    }
+  }
+
+  private emitPrintCallForTypeBinary(type: string | undefined, body: number[]) {
+    if (type === "bool") {
+      body.push(OP_IF, 0x40);
+      this.emitStringPrintBinary("true", body);
+      body.push(OP_ELSE);
+      this.emitStringPrintBinary("false", body);
+      body.push(OP_END);
+      body.push(OP_I32_CONST, 0); // Result of printing for the caller
+    } else {
+      body.push(
+        OP_CALL,
+        ...this.encodeUnsignedLEB128(this.isStringLikeType(type) ? 1 : 0),
+      );
     }
   }
 
@@ -305,19 +334,7 @@ export class Emitter {
     }
 
     this.emitExpressionBinary(expr, body);
-    if (type === "bool") {
-      body.push(OP_IF, 0x40);
-      this.emitStringPrintBinary("true", body);
-      body.push(OP_ELSE);
-      this.emitStringPrintBinary("false", body);
-      body.push(OP_END);
-      body.push(OP_I32_CONST, 0); // Result of printing for the caller
-    } else {
-      body.push(
-        OP_CALL,
-        ...this.encodeUnsignedLEB128(this.isStringLikeType(type) ? 1 : 0),
-      );
-    }
+    this.emitPrintCallForTypeBinary(type, body);
   }
 
   private emitDebugPrint(expr: Expression, baseType: string, body: number[]) {
@@ -338,13 +355,11 @@ export class Emitter {
         body.push(OP_I32_CONST, ...this.encodeSignedLEB128(i * 4));
         body.push(OP_I32_ADD);
         body.push(...OP_I32_LOAD);
-        body.push(
-          OP_CALL,
-          ...this.encodeUnsignedLEB128(this.isStringLikeType(t) ? 1 : 0),
-        );
+        this.emitPrintCallForTypeBinary(t, body);
         body.push(OP_DROP);
       });
       this.emitStringPrintBinary(")", body);
+      body.push(OP_I32_CONST, 0);
       return;
     }
 
@@ -352,13 +367,9 @@ export class Emitter {
     if (!struct) {
       // Fallback for non-struct types with :? (just print normally)
       body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
-      body.push(
-        OP_CALL,
-        ...this.encodeUnsignedLEB128(
-          this.isStringLikeType(this.normalizeType(baseType)) ? 1 : 0,
-        ),
-      );
+      this.emitPrintCallForTypeBinary(this.normalizeType(baseType), body);
       body.push(OP_DROP);
+      body.push(OP_I32_CONST, 0);
       return;
     }
 
@@ -375,12 +386,7 @@ export class Emitter {
         body.push(...OP_I32_LOAD);
 
         const fieldType = this.normalizeType(field.type);
-        body.push(
-          OP_CALL,
-          ...this.encodeUnsignedLEB128(
-            this.isStringLikeType(fieldType) ? 1 : 0,
-          ),
-        );
+        this.emitPrintCallForTypeBinary(fieldType, body);
         body.push(OP_DROP);
       });
       this.emitStringPrintBinary(" }", body);
@@ -395,12 +401,7 @@ export class Emitter {
         body.push(...OP_I32_LOAD);
 
         const normalizedFieldType = this.normalizeType(fieldType);
-        body.push(
-          OP_CALL,
-          ...this.encodeUnsignedLEB128(
-            this.isStringLikeType(normalizedFieldType) ? 1 : 0,
-          ),
-        );
+        this.emitPrintCallForTypeBinary(normalizedFieldType, body);
         body.push(OP_DROP);
       });
       this.emitStringPrintBinary(")", body);
@@ -466,26 +467,8 @@ export class Emitter {
     this.emitExpressionBinary(arg, body);
   }
 
-  private emitPrintCallForVariable(info: VariableInfo) {
-    this.emitWATLine(`local.get $${info.uniqueName}`);
-    if (info.valueType === "bool") {
-      this.emitWATLine("if");
-      this.emitStringPrintWAT("true");
-      this.emitWATLine("else");
-      this.emitStringPrintWAT("false");
-      this.emitWATLine("end");
-      this.emitWATLine("i32.const 0");
-    } else {
-      this.emitWATLine(
-        `call $${this.isStringLikeType(info.valueType) ? "print_str" : "print"}`,
-      );
-    }
-  }
-
-  private emitPrintCallForExpressionWAT(expr: Expression) {
-    const type = this.inferExpressionType(expr);
+  private emitPrintCallForTypeWAT(type: string | undefined) {
     if (type === "bool") {
-      this.emitExpressionWAT(expr);
       this.emitWATLine("if");
       this.emitStringPrintWAT("true");
       this.emitWATLine("else");
@@ -493,11 +476,21 @@ export class Emitter {
       this.emitWATLine("end");
       this.emitWATLine("i32.const 0");
     } else {
-      this.emitExpressionWAT(expr);
       this.emitWATLine(
         `call $${this.isStringLikeType(type) ? "print_str" : "print"}`,
       );
     }
+  }
+
+  private emitPrintCallForVariable(info: VariableInfo) {
+    this.emitWATLine(`local.get $${info.uniqueName}`);
+    this.emitPrintCallForTypeWAT(info.valueType);
+  }
+
+  private emitPrintCallForExpressionWAT(expr: Expression) {
+    const type = this.inferExpressionType(expr);
+    this.emitExpressionWAT(expr);
+    this.emitPrintCallForTypeWAT(type);
   }
 
   private prepareFunctionMetadata() {
@@ -1461,6 +1454,9 @@ export class Emitter {
             }
             this.emitWATLine("i32.const 0");
           } else {
+            if (expr.name === "println") {
+              this.emitStringPrintWAT("\n");
+            }
             this.emitWATLine("i32.const 0");
           }
         } else if (expr.name === "panic") {
@@ -2597,6 +2593,9 @@ export class Emitter {
             }
             body.push(OP_I32_CONST, 0);
           } else {
+            if (expr.name === "println") {
+              this.emitStringPrintBinary("\n", body);
+            }
             body.push(OP_I32_CONST, 0);
           }
         } else if (expr.name === "panic") {
