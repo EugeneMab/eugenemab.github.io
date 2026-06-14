@@ -2,7 +2,7 @@
 fn main() {
     let apples = 5;
     let mut bananas = 5;
-    print!(apples);
-    print!(bananas);
+    println!(apples);
+    println!(bananas);
     0
 }

@@ -3,13 +3,13 @@ fn main() {
     let f: bool = false;
 
     if t {
-        print!("t");
+        println!("t");
     }
 
     if f {
-        print!("f");
+        println!("f");
     } else {
-        print!("false");
+        println!("false");
     }
 
     0

@@ -8,8 +8,8 @@ fn main() {
         if i == 2 {
             continue;
         }
-        print!(i);
+        println!(i);
     }
-    print!("done");
+    println!("done");
     0
 }

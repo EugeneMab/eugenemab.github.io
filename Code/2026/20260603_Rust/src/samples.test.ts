@@ -121,7 +121,7 @@ describe("UI Samples Regression Tests", () => {
   it("Step 2: Literals & Keywords", async () => {
     const code = loadSample("step02_lexer.rs");
     const { logs, result } = await runRust(code);
-    expect(logs).toEqual(["42", "42"]);
+    expect(logs.join("")).toBe("42\n42\n");
     expect(result).toBe(0);
   });
 
@@ -134,28 +134,28 @@ describe("UI Samples Regression Tests", () => {
   it("Step 6: Math & Logic", async () => {
     const code = loadSample("step06_math.rs");
     const { logs, result } = await runRust(code);
-    expect(logs).toEqual(["20", "30", "1"]);
+    expect(logs.join("")).toBe("20\n30\n1\n");
     expect(result).toBe(51);
   });
 
   it("Step 6: Bitwise Ops", async () => {
     const code = loadSample("step06_bitwise.rs");
     const { logs, result } = await runRust(code);
-    expect(logs).toEqual(["0", "255", "16"]);
+    expect(logs.join("")).toBe("0\n255\n16\n");
     expect(result).toBe(8);
   });
 
   it("Step 7: Comments", async () => {
     const code = loadSample("step07_comments.rs");
     const { logs, result } = await runRust(code);
-    expect(logs).toEqual(["1"]);
+    expect(logs.join("")).toBe("1");
     expect(result).toBe(1);
   });
 
   it("Step 8: Print Macro", async () => {
     const code = loadSample("step08_print.rs");
     const { logs, result } = await runRust(code);
-    expect(logs).toEqual(["111", "222", "333"]);
+    expect(logs.join("")).toBe("111\n222\n333\n");
     expect(result).toBe(0);
   });
 
@@ -167,14 +167,14 @@ describe("UI Samples Regression Tests", () => {
   it("Step 10: Scope Detection", async () => {
     const code = loadSample("step10_scope.rs");
     const { logs, result } = await runRust(code);
-    expect(logs).toEqual(["2", "1"]);
+    expect(logs.join("")).toBe("2\n1\n");
     expect(result).toBe(0);
   });
 
   it("Step 11: Region-Based Memory", async () => {
     const code = loadSample("step11_regions.rs");
     const { logs, result } = await runRust(code);
-    expect(logs).toEqual(["16", "16"]);
+    expect(logs.join("")).toBe("16\n16\n");
     expect(result).toBe(0);
   });
 
@@ -207,35 +207,35 @@ describe("UI Samples Regression Tests", () => {
     it("Book 1-2: Hello World", async () => {
       const code = loadSample("book01_02_hello_world.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["Hello, world!"]);
+      expect(logs.join("")).toBe("Hello, world!\n");
       expect(result).toBe(0);
     });
 
     it("Book 1-3: Hello Cargo", async () => {
       const code = loadSample("book01_03_hello_cargo.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["Hello, world!"]);
+      expect(logs.join("")).toBe("Hello, world!\n");
       expect(result).toBe(0);
     });
 
     it("Book 2-0: Guessing Game Variables", async () => {
       const code = loadSample("book02_00_variables.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["5", "5"]);
+      expect(logs.join("")).toBe("5\n5\n");
       expect(result).toBe(0);
     });
 
     it("Book 2-0: Guessing Game If/Else", async () => {
       const code = loadSample("book02_00_if_else.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["x is five", "x is small"]);
+      expect(logs.join("")).toBe("x is five\nx is small\n");
       expect(result).toBe(0);
     });
 
     it("Book 2-0: Guessing Game Loop", async () => {
       const code = loadSample("book02_00_loop.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["1", "3", "4", "done"]);
+      expect(logs.join("")).toBe("1\n3\n4\ndone\n");
       expect(result).toBe(0);
     });
 
@@ -254,68 +254,65 @@ describe("UI Samples Regression Tests", () => {
     it("Book 3-1: Mutability", async () => {
       const code = loadSample("book03_01_mutability.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual([
-        "The value of x is: ",
-        "5",
-        "The value of x is: ",
-        "6",
-      ]);
+      expect(logs.join("")).toBe(
+        "The value of x is: 5\nThe value of x is: 6\n",
+      );
       expect(result).toBe(0);
     });
 
     it("Book 3-1: Constants", async () => {
       const code = loadSample("book03_01_constants.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["Seconds: ", "10800"]);
+      expect(logs.join("")).toBe("Seconds: 10800\n");
       expect(result).toBe(0);
     });
 
     it("Book 3-1: Shadowing", async () => {
       const code = loadSample("book03_01_shadowing.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["Inner x: ", "12", "Outer x: ", "6"]);
+      expect(logs.join("")).toBe("Inner x: 12\nOuter x: 6\n");
       expect(result).toBe(0);
     });
 
     it("Book 3-2: Data Types - Boolean", async () => {
       const code = loadSample("book03_02_booleans.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["t", "false"]);
+      expect(logs.join("")).toBe("t\nfalse\n");
       expect(result).toBe(0);
     });
 
     it("Book 3-3: Functions", async () => {
       const code = loadSample("book03_03_functions.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["The value of x is: ", "5", "5"]);
+      expect(logs.join("")).toBe("The value of x is: 5\n5\n");
       expect(result).toBe(0);
     });
 
     it("Book 3-5: while Loop", async () => {
       const code = loadSample("book03_05_while.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["3", "2", "1", "LIFTOFF!"]);
+      expect(logs.join("")).toBe("3\n2\n1\nLIFTOFF!\n");
       expect(result).toBe(0);
     });
 
     it("Book 3-5: if as Expression", async () => {
       const code = loadSample("book03_05_if_let.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["5"]);
+      expect(logs.join("")).toBe("5\n");
       expect(result).toBe(0);
     });
 
     it("Book 4-1: Variable Scope", async () => {
       const code = loadSample("book04_01_scope.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["inner y: ", "20", "outer x: ", "10"]);
+      expect(logs.join("")).toBe("inner y: 20\nouter x: 10\n");
       expect(result).toBe(0);
     });
 
     it("Book 4-2: References and Borrowing", async () => {
       const code = loadSample("book04_02_borrow.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["borrowed mutably", "x after borrow: ", "6"]);
+      expect(logs.join("")).toBe("borrowed mutably\nx after borrow: 6\n");
       expect(result).toBe(0);
     });
 
@@ -329,21 +326,21 @@ describe("UI Samples Regression Tests", () => {
     it("Book 4-3: Byte Index", async () => {
       const code = loadSample("book04_03_index.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["5"]);
+      expect(logs.join("")).toBe("5\n");
       expect(result).toBe(0);
     });
 
     it("Book 4-3: String Slice", async () => {
       const code = loadSample("book04_03_slice.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["hello", "world"]);
+      expect(logs.join("")).toBe("hello\nworld\n");
       expect(result).toBe(0);
     });
 
     it("Book 4-3: First Word Slice", async () => {
       const code = loadSample("book04_03_first_word_slice.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["hello"]);
+      expect(logs.join("")).toBe("hello\n");
       expect(result).toBe(0);
     });
 
@@ -357,21 +354,16 @@ describe("UI Samples Regression Tests", () => {
     it("Book 4-3: Slice as Parameter", async () => {
       const code = loadSample("book04_03_slice_param.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual([
-        "hello ",
-        "hello world",
-        "hello world",
-        "hello ",
-        "hello world",
-        "hello world",
-      ]);
+      expect(logs.join("")).toBe(
+        "hello \nhello world\nhello world\nhello \nhello world\nhello world\n",
+      );
       expect(result).toBe(0);
     });
 
     it("Book 4-3: Array Slice", async () => {
       const code = loadSample("book04_03_array_slice.rs");
       const { logs, result } = await runRust(code);
-      expect(logs).toEqual(["2", "3"]);
+      expect(logs.join("")).toBe("2\n3\n");
       expect(result).toBe(0);
     });
 
@@ -387,6 +379,144 @@ describe("UI Samples Regression Tests", () => {
     }
 }`;
       await expect(runRust(code)).rejects.toThrow("Panic! Error code: 101");
+    });
+
+    it("Book 5-1: User Struct", async () => {
+      const code = loadSample("book05_01_user_struct.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe("true\nanotheremail@example.com\n1\n");
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-1: Build User", async () => {
+      const code = loadSample("book05_01_build_user.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe(
+        "true\nsomeusername123\nsomeone@example.com\n",
+      );
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-1: Struct Update", async () => {
+      const code = loadSample("book05_01_struct_update.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe(
+        "true\nsomeusername123\nanother@example.com\n1\n",
+      );
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-1: Tuple Structs", async () => {
+      const code = loadSample("book05_01_tuple_structs.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe("1\n2\n3\n10\n20\n30\n");
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-1: Unit Structs", async () => {
+      const code = loadSample("book05_01_unit_structs.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe("0\n");
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-1: Reference in Struct (Negative at Emitter)", async () => {
+      const code = loadSample("book05_01_reference_in_struct.rs");
+      await expect(runRust(code)).rejects.toThrow("missing lifetime specifier");
+    });
+
+    it("Book 5-2: Separate Variables", async () => {
+      const code = loadSample("book05_02_separate_variables.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe(
+        "The area of the rectangle is 1500 square pixels.\n",
+      );
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-2: Tuples", async () => {
+      const code = loadSample("book05_02_tuples.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe(
+        "The area of the rectangle is 1500 square pixels.\n",
+      );
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-2: Structs", async () => {
+      const code = loadSample("book05_02_structs.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe(
+        "The area of the rectangle is 1500 square pixels.\n",
+      );
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-2: Print Struct Error (Negative at Emitter)", async () => {
+      const code = loadSample("book05_02_print_struct_error.rs");
+      await expect(runRust(code)).rejects.toThrow(
+        "cannot be formatted with the default formatter",
+      );
+    });
+
+    it("Book 5-2: Debug Trait", async () => {
+      const code = loadSample("book05_02_debug_trait.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe(
+        "rect1 is Rectangle { width: 30, height: 50 }\n",
+      );
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-2: dbg! Macro", async () => {
+      const code = loadSample("book05_02_dbg_macro.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toContain("[line:10] 60\n");
+      expect(logs.join("")).toContain(
+        "[line:14] Rectangle { width: 60, height: 50 }\n",
+      );
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-3: Method Syntax", async () => {
+      const code = loadSample("book05_03_method_syntax.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe(
+        "The area of the rectangle is 1500 square pixels.\n",
+      );
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-3: Method Field Interaction", async () => {
+      const code = loadSample("book05_03_method_field_interaction.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe(
+        "The rectangle has a nonzero width; it is 30\n",
+      );
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-3: Can Hold", async () => {
+      const code = loadSample("book05_03_can_hold.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toContain("Can rect1 hold rect2? true\n");
+      expect(logs.join("")).toContain("Can rect1 hold rect3? false\n");
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-3: Associated Functions", async () => {
+      const code = loadSample("book05_03_associated_functions.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe("sq: Rectangle { width: 3, height: 3 }\n");
+      expect(result).toBe(0);
+    });
+
+    it("Book 5-3: Multiple Impl Blocks", async () => {
+      const code = loadSample("book05_03_multiple_impl_blocks.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toContain("Can rect1 hold rect2? true\n");
+      expect(logs.join("")).toContain("Can rect1 hold rect3? false\n");
+      expect(result).toBe(0);
     });
   });
 });

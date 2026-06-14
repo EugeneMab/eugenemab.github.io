@@ -88,6 +88,7 @@ export class Emitter {
   private stringOffset = 0;
   private currentBlockDepth = 0;
   private functionReturnTypes: Map<string, string | undefined> = new Map();
+  private structDefinitions: Map<string, any> = new Map();
 
   constructor(program: Program, source: string) {
     this.program = program;
@@ -104,6 +105,48 @@ export class Emitter {
   private normalizeType(type?: string): string | undefined {
     if (!type) return undefined;
     return type.trim().replace(/\s+/g, " ").replace(/&\s+/g, "&");
+  }
+
+  private getBaseType(type?: string): string | undefined {
+    let t = this.normalizeType(type);
+    if (!t) return undefined;
+    while (t.startsWith("&") || t.startsWith("mut ")) {
+      if (t.startsWith("&")) t = t.substring(1).trim();
+      else if (t.startsWith("mut ")) t = t.substring(4).trim();
+    }
+    return t;
+  }
+
+  private getStructFieldOffset(structName: string, fieldName: string): number {
+    const struct = this.structDefinitions.get(structName);
+    if (!struct) this.throwError(`Unknown struct: ${structName}`, {} as any);
+    if (struct.type === "RegularStructDeclaration") {
+      let offset = 0;
+      for (const field of struct.fields) {
+        if (field.name === fieldName) return offset;
+        offset += 4; // Assume 4 bytes for everything for now
+      }
+    } else if (struct.type === "TupleStructDeclaration") {
+      const index = parseInt(fieldName);
+      if (!isNaN(index) && index >= 0 && index < struct.fields.length) {
+        return index * 4;
+      }
+    }
+    this.throwError(
+      `Unknown field: ${fieldName} in struct ${structName}`,
+      {} as any,
+    );
+  }
+
+  private getStructSize(structName: string): number {
+    const struct = this.structDefinitions.get(structName);
+    if (!struct) return 4; // Default to 4 if not found (might be a pointer)
+    if (struct.type === "RegularStructDeclaration") {
+      return struct.fields.length * 4;
+    } else if (struct.type === "TupleStructDeclaration") {
+      return struct.fields.length * 4;
+    }
+    return 0; // Unit struct
   }
 
   private isStringLikeType(type?: string): boolean {
@@ -133,18 +176,57 @@ export class Emitter {
       case "Literal":
         if (expr.rawType === "string") return "&str";
         if (expr.rawType === "byte") return "u8";
+        if (expr.rawType === "bool") return "bool";
         return "i32";
       case "ArrayLiteral":
         return "array";
-      case "Identifier":
-        return this.resolveVariable(expr.name).valueType;
+      case "Identifier": {
+        const info = this.resolveVariable(expr.name);
+        if (info) return info.valueType;
+        if (this.structDefinitions.has(expr.name)) return expr.name;
+        return undefined;
+      }
       case "BorrowExpression":
         return this.inferExpressionType(expr.argument);
       case "RangeExpression":
         return "range";
-      case "MemberAccessExpression":
+      case "MemberAccessExpression": {
         if (expr.member === "len") return "usize";
+        const objectType = this.inferExpressionType(expr.object);
+        const baseType = this.getBaseType(objectType);
+        if (baseType && this.structDefinitions.has(baseType)) {
+          const struct = this.structDefinitions.get(baseType);
+          if (struct.type === "RegularStructDeclaration") {
+            const field = struct.fields.find(
+              (f: any) => f.name === expr.member,
+            );
+            if (field) return this.normalizeType(field.type);
+          } else if (struct.type === "TupleStructDeclaration") {
+            const index = parseInt(expr.member);
+            if (!isNaN(index) && index < struct.fields.length) {
+              return this.normalizeType(struct.fields[index]);
+            }
+          }
+        } else if (objectType && objectType.startsWith("(")) {
+          const index = parseInt(expr.member);
+          const types = objectType
+            .slice(1, -1)
+            .split(",")
+            .map((s) => s.trim());
+          if (!isNaN(index) && index < types.length) {
+            return types[index];
+          }
+        }
         return undefined;
+      }
+      case "StructLiteral":
+        return expr.name;
+      case "TupleLiteral": {
+        const types = expr.elements.map(
+          (e) => this.inferExpressionType(e) || "i32",
+        );
+        return `(${types.join(", ")})`;
+      }
       case "IndexExpression": {
         const objectType = this.inferExpressionType(expr.object);
         if (expr.index.type === "RangeExpression") {
@@ -169,11 +251,32 @@ export class Emitter {
           return this.inferExpressionType(expr.args[0]);
         }
         if (expr.callee === "len") return "usize";
-        return this.normalizeType(this.functionReturnTypes.get(expr.callee));
+        if (this.structDefinitions.has(expr.callee)) return expr.callee;
+
+        let callee = expr.callee;
+        if (!this.functionReturnTypes.has(callee) && expr.args.length > 0) {
+          const firstArgType = this.inferExpressionType(expr.args[0]);
+          const baseType = this.getBaseType(firstArgType);
+          if (baseType) {
+            const mangled = `${baseType}::${callee}`;
+            if (this.functionReturnTypes.has(mangled)) {
+              callee = mangled;
+            }
+          }
+        }
+
+        return this.normalizeType(this.functionReturnTypes.get(callee));
       case "MacroInvocation":
         return "i32";
       case "UnaryExpression":
+        if (expr.operator === "!") return "bool";
+        return "i32";
       case "BinaryExpression":
+        if (
+          ["==", "!=", "<", ">", "<=", ">=", "&&", "||"].includes(expr.operator)
+        ) {
+          return "bool";
+        }
         return "i32";
       case "BlockStatement":
         return expr.tailExpression
@@ -184,14 +287,131 @@ export class Emitter {
     }
   }
 
-  private emitPrintCallForExpression(expr: Expression, body: number[]) {
+  private emitPrintCallForTypeBinary(type: string | undefined, body: number[]) {
+    if (type === "bool") {
+      body.push(OP_IF, 0x40);
+      this.emitStringPrintBinary("true", body);
+      body.push(OP_ELSE);
+      this.emitStringPrintBinary("false", body);
+      body.push(OP_END);
+      body.push(OP_I32_CONST, 0); // Result of printing for the caller
+    } else {
+      body.push(
+        OP_CALL,
+        ...this.encodeUnsignedLEB128(this.isStringLikeType(type) ? 1 : 0),
+      );
+    }
+  }
+
+  private emitPrintCallForExpression(
+    expr: Expression,
+    body: number[],
+    specifier: string = "",
+  ) {
+    const type = this.inferExpressionType(expr);
+    const baseType = this.getBaseType(type);
+
+    if (specifier === ":?" || specifier === ":#?") {
+      if (
+        (baseType && this.structDefinitions.has(baseType)) ||
+        (baseType && baseType.startsWith("("))
+      ) {
+        this.emitDebugPrint(expr, baseType || "", body);
+        return;
+      }
+    }
+
+    if (
+      (baseType && this.structDefinitions.has(baseType)) ||
+      (baseType && baseType.startsWith("("))
+    ) {
+      if (specifier === "") {
+        this.throwError(
+          `\`${baseType}\` cannot be formatted with the default formatter`,
+          expr,
+        );
+      }
+    }
+
     this.emitExpressionBinary(expr, body);
-    body.push(
-      OP_CALL,
-      ...this.encodeUnsignedLEB128(
-        this.isStringLikeType(this.inferExpressionType(expr)) ? 1 : 0,
-      ),
-    );
+    this.emitPrintCallForTypeBinary(type, body);
+  }
+
+  private emitDebugPrint(expr: Expression, baseType: string, body: number[]) {
+    const ptrLocal = `debug_ptr_${++this.localCounter}`;
+    this.allLocals.add(ptrLocal);
+    this.emitExpressionBinary(expr, body);
+    body.push(OP_LOCAL_SET, 0xfe, ptrLocal as any);
+
+    if (baseType.startsWith("(")) {
+      this.emitStringPrintBinary("(", body);
+      const inner = baseType.slice(1, -1).trim();
+      const types = inner
+        ? inner
+            .split(",")
+            .map((t) => t.trim())
+            .filter((t) => t.length > 0)
+        : [];
+      types.forEach((t, i) => {
+        if (i > 0) this.emitStringPrintBinary(", ", body);
+        body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(i * 4));
+        body.push(OP_I32_ADD);
+        body.push(...OP_I32_LOAD);
+        this.emitPrintCallForTypeBinary(t, body);
+        body.push(OP_DROP);
+      });
+      this.emitStringPrintBinary(")", body);
+      body.push(OP_I32_CONST, 0);
+      return;
+    }
+
+    const struct = this.structDefinitions.get(baseType);
+    if (!struct) {
+      // Fallback for non-struct types with :? (just print normally)
+      body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+      this.emitPrintCallForTypeBinary(this.normalizeType(baseType), body);
+      body.push(OP_DROP);
+      body.push(OP_I32_CONST, 0);
+      return;
+    }
+
+    if (struct.type === "RegularStructDeclaration") {
+      this.emitStringPrintBinary(`${baseType} { `, body);
+      struct.fields.forEach((field: any, i: number) => {
+        if (i > 0) this.emitStringPrintBinary(", ", body);
+        this.emitStringPrintBinary(`${field.name}: `, body);
+
+        body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+        const offset = this.getStructFieldOffset(baseType, field.name);
+        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(offset));
+        body.push(OP_I32_ADD);
+        body.push(...OP_I32_LOAD);
+
+        const fieldType = this.normalizeType(field.type);
+        this.emitPrintCallForTypeBinary(fieldType, body);
+        body.push(OP_DROP);
+      });
+      this.emitStringPrintBinary(" }", body);
+    } else if (struct.type === "TupleStructDeclaration") {
+      this.emitStringPrintBinary(`${baseType}(`, body);
+      struct.fields.forEach((fieldType: string, i: number) => {
+        if (i > 0) this.emitStringPrintBinary(", ", body);
+
+        body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(i * 4));
+        body.push(OP_I32_ADD);
+        body.push(...OP_I32_LOAD);
+
+        const normalizedFieldType = this.normalizeType(fieldType);
+        this.emitPrintCallForTypeBinary(normalizedFieldType, body);
+        body.push(OP_DROP);
+      });
+      this.emitStringPrintBinary(")", body);
+    } else if (struct.type === "UnitStructDeclaration") {
+      this.emitStringPrintBinary(baseType, body);
+    }
+    body.push(OP_I32_CONST, 0);
   }
 
   private emitCallArgumentWAT(arg: Expression, retainBorrow: boolean) {
@@ -202,6 +422,12 @@ export class Emitter {
       arg.argument.type === "Identifier"
     ) {
       const info = this.resolveVariable(arg.argument.name);
+      if (!info) {
+        this.throwError(
+          `Undefined variable: ${arg.argument.name}`,
+          arg.argument,
+        );
+      }
       if (info.isBorrowedMut) {
         this.throwError(
           `Cannot borrow '${arg.argument.name}' as immutable: already borrowed as mutable`,
@@ -226,6 +452,12 @@ export class Emitter {
       arg.argument.type === "Identifier"
     ) {
       const info = this.resolveVariable(arg.argument.name);
+      if (!info) {
+        this.throwError(
+          `Undefined variable: ${arg.argument.name}`,
+          arg.argument,
+        );
+      }
       if (info.isBorrowedMut) {
         this.throwError(
           `Cannot borrow '${arg.argument.name}' as immutable: already borrowed as mutable`,
@@ -238,11 +470,30 @@ export class Emitter {
     this.emitExpressionBinary(arg, body);
   }
 
+  private emitPrintCallForTypeWAT(type: string | undefined) {
+    if (type === "bool") {
+      this.emitWATLine("if");
+      this.emitStringPrintWAT("true");
+      this.emitWATLine("else");
+      this.emitStringPrintWAT("false");
+      this.emitWATLine("end");
+      this.emitWATLine("i32.const 0");
+    } else {
+      this.emitWATLine(
+        `call $${this.isStringLikeType(type) ? "print_str" : "print"}`,
+      );
+    }
+  }
+
   private emitPrintCallForVariable(info: VariableInfo) {
     this.emitWATLine(`local.get $${info.uniqueName}`);
-    this.emitWATLine(
-      `call $${this.isStringLikeType(info.valueType) ? "print_str" : "print"}`,
-    );
+    this.emitPrintCallForTypeWAT(info.valueType);
+  }
+
+  private emitPrintCallForExpressionWAT(expr: Expression) {
+    const type = this.inferExpressionType(expr);
+    this.emitExpressionWAT(expr);
+    this.emitPrintCallForTypeWAT(type);
   }
 
   private prepareFunctionMetadata() {
@@ -257,9 +508,54 @@ export class Emitter {
     this.functionIndices.set("set_item_i32", 6);
 
     this.functionReturnTypes.clear();
-    const userFunctions = this.program.body.filter(
-      (s) => s.type === "FunctionDeclaration",
-    ) as FunctionDeclaration[];
+    this.structDefinitions.clear();
+    this.program.body.forEach((s) => {
+      if (
+        s.type === "RegularStructDeclaration" ||
+        s.type === "TupleStructDeclaration" ||
+        s.type === "UnitStructDeclaration"
+      ) {
+        this.structDefinitions.set(s.name, s);
+        if (s.type === "RegularStructDeclaration") {
+          s.fields.forEach((f) => {
+            if (f.type.includes("&") && !f.type.includes("'")) {
+              this.throwError("missing lifetime specifier", s);
+            }
+          });
+        }
+      }
+    });
+
+    const userFunctions: FunctionDeclaration[] = [];
+    this.program.body.forEach((s) => {
+      if (s.type === "FunctionDeclaration") {
+        userFunctions.push(s);
+      } else if (s.type === "ImplDeclaration") {
+        s.functions.forEach((fn) => {
+          const mangledName = `${s.target}::${fn.name}`;
+          const params = fn.params.map((p) => {
+            if (p.isSelf && !p.type) {
+              return {
+                ...p,
+                type:
+                  (p.isBorrow ? "&" : "") + (p.isMut ? "mut " : "") + s.target,
+              };
+            }
+            return {
+              ...p,
+              type: p.type === "Self" ? s.target : p.type,
+            };
+          });
+          userFunctions.push({
+            ...fn,
+            name: mangledName,
+            params,
+            returnType: fn.returnType === "Self" ? s.target : fn.returnType,
+          });
+        });
+      }
+    });
+
     userFunctions.forEach((fn, i) => {
       this.functionIndices.set(fn.name, HELPER_FN_START + i);
       this.functionReturnTypes.set(fn.name, this.normalizeType(fn.returnType));
@@ -629,13 +925,30 @@ export class Emitter {
     }
   }
 
-  private resolveVariable(name: string): VariableInfo {
+  private resolveVariable(name: string): VariableInfo | undefined {
     for (let i = this.scopeStack.length - 1; i >= 0; i--) {
       if (this.scopeStack[i].vars.has(name)) {
         return this.scopeStack[i].vars.get(name)!;
       }
     }
-    throw new Error(`Undefined variable: ${name}`);
+    return undefined;
+  }
+
+  private isMutableExpression(expr: Expression): boolean {
+    if (expr.type === "Identifier") {
+      const info = this.resolveVariable(expr.name);
+      return info ? info.isMutable : false;
+    }
+    if (expr.type === "BorrowExpression") {
+      return expr.isMutable;
+    }
+    if (expr.type === "MemberAccessExpression") {
+      return this.isMutableExpression(expr.object);
+    }
+    if (expr.type === "IndexExpression") {
+      return this.isMutableExpression(expr.object);
+    }
+    return false;
   }
 
   private emitExpressionWAT(expr: Expression) {
@@ -701,6 +1014,86 @@ export class Emitter {
         this.emitWATLine(`local.get $${ptrLocal}`);
         break;
       }
+      case "StructLiteral": {
+        let structName = expr.name;
+        if (structName === "Self") {
+          const fnName = Array.from(this.functionIndices.entries()).find(
+            ([, idx]) =>
+              idx === this.functionIndices.get(this.currentFunctionName || ""),
+          )?.[0];
+          if (fnName && fnName.includes("::")) {
+            structName = fnName.split("::")[0];
+          }
+        }
+        const size = this.getStructSize(structName);
+        const ptrLocal = `struct_ptr_${++this.localCounter}`;
+        this.allLocals.add(ptrLocal);
+
+        this.emitWATLine("global.get $heap_ptr");
+        this.emitWATLine(`local.set $${ptrLocal}`);
+
+        this.emitWATLine(`local.get $${ptrLocal}`);
+        this.emitWATLine(`i32.const ${size}`);
+        this.emitWATLine("i32.add");
+        this.emitWATLine("global.set $heap_ptr");
+
+        if (expr.base) {
+          this.emitExpressionWAT(expr.base);
+          const basePtrLocal = `base_ptr_${++this.localCounter}`;
+          this.allLocals.add(basePtrLocal);
+          this.emitWATLine(`local.set $${basePtrLocal}`);
+
+          for (let i = 0; i < size; i += 4) {
+            this.emitWATLine(`local.get $${ptrLocal}`);
+            this.emitWATLine(`i32.const ${i}`);
+            this.emitWATLine("i32.add");
+
+            this.emitWATLine(`local.get $${basePtrLocal}`);
+            this.emitWATLine(`i32.const ${i}`);
+            this.emitWATLine("i32.add");
+            this.emitWATLine("i32.load");
+            this.emitWATLine("i32.store");
+          }
+        }
+
+        expr.fields.forEach((field) => {
+          const offset = this.getStructFieldOffset(structName, field.name);
+          this.emitWATLine(`local.get $${ptrLocal}`);
+          this.emitWATLine(`i32.const ${offset}`);
+          this.emitWATLine("i32.add");
+          this.emitExpressionWAT(field.value);
+          this.emitWATLine("i32.store");
+        });
+
+        this.emitWATLine(`local.get $${ptrLocal}`);
+        break;
+      }
+      case "TupleLiteral": {
+        if (expr.elements.length === 0) {
+          this.emitWATLine("i32.const 0");
+          break;
+        }
+        const ptrLocal = `tuple_ptr_${++this.localCounter}`;
+        this.allLocals.add(ptrLocal);
+        this.emitWATLine("global.get $heap_ptr");
+        this.emitWATLine(`local.set $${ptrLocal}`);
+
+        expr.elements.forEach((el, i) => {
+          this.emitWATLine(`local.get $${ptrLocal}`);
+          this.emitWATLine(`i32.const ${i * 4}`);
+          this.emitWATLine("i32.add");
+          this.emitExpressionWAT(el);
+          this.emitWATLine("i32.store");
+        });
+
+        this.emitWATLine(`local.get $${ptrLocal}`);
+        this.emitWATLine(`i32.const ${expr.elements.length * 4}`);
+        this.emitWATLine("i32.add");
+        this.emitWATLine("global.set $heap_ptr");
+
+        this.emitWATLine(`local.get $${ptrLocal}`);
+        break;
+      }
       case "Literal":
         if (expr.rawType === "string") {
           const strValue = expr.value as string;
@@ -728,14 +1121,39 @@ export class Emitter {
           this.emitWATLine("i32.const -1");
         }
         break;
-      case "MemberAccessExpression":
+      case "MemberAccessExpression": {
         if (expr.member === "len") {
           this.emitExpressionWAT(expr.object);
           this.emitWATLine("i32.load");
         } else {
-          this.throwError(`Unsupported member: ${expr.member}`, expr);
+          const objectType = this.inferExpressionType(expr.object);
+          const baseType = this.getBaseType(objectType);
+          if (baseType && this.structDefinitions.has(baseType)) {
+            const offset = this.getStructFieldOffset(baseType, expr.member);
+            this.emitExpressionWAT(expr.object);
+            this.emitWATLine(`i32.const ${offset}`);
+            this.emitWATLine("i32.add");
+            this.emitWATLine("i32.load");
+          } else if (objectType && objectType.startsWith("(")) {
+            const index = parseInt(expr.member);
+            const types = objectType
+              .slice(1, -1)
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0);
+            if (isNaN(index) || index < 0 || index >= types.length) {
+              this.throwError(`Invalid tuple index: ${expr.member}`, expr);
+            }
+            this.emitExpressionWAT(expr.object);
+            this.emitWATLine(`i32.const ${index * 4}`);
+            this.emitWATLine("i32.add");
+            this.emitWATLine("i32.load");
+          } else {
+            this.throwError(`Unsupported member: ${expr.member}`, expr);
+          }
         }
         break;
+      }
       case "IndexExpression": {
         this.emitExpressionWAT(expr.object);
         if (expr.index.type === "RangeExpression") {
@@ -840,6 +1258,12 @@ export class Emitter {
         if (expr.callee === "clear") {
           if (expr.args[0]?.type === "Identifier") {
             const info = this.resolveVariable(expr.args[0].name);
+            if (!info) {
+              this.throwError(
+                `Undefined variable: ${expr.args[0].name}`,
+                expr.args[0],
+              );
+            }
             if (info.isBorrowedMut || info.borrowCount > 0) {
               this.throwError(
                 `Cannot use '${expr.args[0].name}' while it is mutably borrowed`,
@@ -862,14 +1286,27 @@ export class Emitter {
         const retainBorrow = this.isStringLikeType(
           this.functionReturnTypes.get(expr.callee),
         );
+
+        let callee = expr.callee;
+        if (!this.functionIndices.has(callee) && expr.args.length > 0) {
+          const type = this.inferExpressionType(expr.args[0]);
+          const baseType = this.getBaseType(type);
+          if (baseType) {
+            const mangled = `${baseType}::${callee}`;
+            if (this.functionIndices.has(mangled)) {
+              callee = mangled;
+            }
+          }
+        }
+
         for (const arg of expr.args) {
           this.emitCallArgumentWAT(arg, retainBorrow);
         }
-        this.emitWATLine(`call $${expr.callee}`);
+        this.emitWATLine(`call $${callee}`);
         break;
-      case "Identifier":
-        try {
-          const info = this.resolveVariable(expr.name);
+      case "Identifier": {
+        const info = this.resolveVariable(expr.name);
+        if (info) {
           if (info.isBorrowedMut) {
             this.throwError(
               `Cannot use '${expr.name}' while it is mutably borrowed`,
@@ -877,55 +1314,57 @@ export class Emitter {
             );
           }
           this.emitWATLine(`local.get $${info.uniqueName}`);
-        } catch (e: any) {
-          if (e.message.startsWith("Undefined variable")) {
-            this.throwError(e.message, expr);
+        } else {
+          const struct = this.structDefinitions.get(expr.name);
+          if (struct && struct.type === "UnitStructDeclaration") {
+            this.emitWATLine("i32.const 0");
+          } else {
+            this.throwError(`Undefined variable: ${expr.name}`, expr);
           }
-          throw e;
         }
         break;
+      }
       case "BorrowExpression":
         if (expr.argument.type === "Identifier") {
-          try {
-            const info = this.resolveVariable(expr.argument.name);
-            if (expr.isMutable) {
-              if (info.isBorrowedMut || info.borrowCount > 0) {
-                this.throwError(
-                  `Cannot borrow '${expr.argument.name}' as mutable: already borrowed`,
-                  expr,
-                );
-              }
-              if (!info.isMutable) {
-                this.throwError(
-                  `Cannot borrow '${expr.argument.name}' as mutable: it is not declared as mutable`,
-                  expr,
-                );
-              }
-              info.isBorrowedMut = true;
-              this.scopeStack[this.scopeStack.length - 1].borrows.push({
-                info,
-                isMut: true,
-              });
-            } else {
-              if (info.isBorrowedMut) {
-                this.throwError(
-                  `Cannot borrow '${expr.argument.name}' as immutable: already borrowed as mutable`,
-                  expr,
-                );
-              }
-              info.borrowCount++;
-              this.scopeStack[this.scopeStack.length - 1].borrows.push({
-                info,
-                isMut: false,
-              });
-            }
-            this.emitWATLine(`local.get $${info.uniqueName}`);
-          } catch (e: any) {
-            if (e.message.startsWith("Undefined variable")) {
-              this.throwError(e.message, expr);
-            }
-            throw e;
+          const info = this.resolveVariable(expr.argument.name);
+          if (!info) {
+            this.throwError(
+              `Undefined variable: ${expr.argument.name}`,
+              expr.argument,
+            );
           }
+          if (expr.isMutable) {
+            if (info.isBorrowedMut || info.borrowCount > 0) {
+              this.throwError(
+                `Cannot borrow '${expr.argument.name}' as mutable: already borrowed`,
+                expr,
+              );
+            }
+            if (!info.isMutable) {
+              this.throwError(
+                `Cannot borrow '${expr.argument.name}' as mutable: it is not declared as mutable`,
+                expr,
+              );
+            }
+            info.isBorrowedMut = true;
+            this.scopeStack[this.scopeStack.length - 1].borrows.push({
+              info,
+              isMut: true,
+            });
+          } else {
+            if (info.isBorrowedMut) {
+              this.throwError(
+                `Cannot borrow '${expr.argument.name}' as immutable: already borrowed as mutable`,
+                expr,
+              );
+            }
+            info.borrowCount++;
+            this.scopeStack[this.scopeStack.length - 1].borrows.push({
+              info,
+              isMut: false,
+            });
+          }
+          this.emitWATLine(`local.get $${info.uniqueName}`);
         } else if (expr.argument.type === "IndexExpression") {
           this.emitExpressionWAT(expr.argument);
         } else {
@@ -949,18 +1388,69 @@ export class Emitter {
         break;
       case "BinaryExpression":
         if (expr.operator === "=") {
-          if (expr.left.type !== "Identifier") {
+          if (expr.left.type === "Identifier") {
+            const info = this.resolveVariable(expr.left.name);
+            if (!info) {
+              this.throwError(
+                `Undefined variable: ${expr.left.name}`,
+                expr.left,
+              );
+            }
+            if (!info.isMutable) {
+              this.throwError(
+                `Cannot assign to immutable variable: ${expr.left.name}`,
+                expr.left,
+              );
+            }
+            this.emitExpressionWAT(expr.right);
+            this.emitWATLine(`local.tee $${info.uniqueName}`);
+          } else if (expr.left.type === "MemberAccessExpression") {
+            const memberExpr = expr.left;
+            if (!this.isMutableExpression(memberExpr.object)) {
+              this.throwError(
+                "Cannot assign to fields of an immutable object",
+                memberExpr.object,
+              );
+            }
+            const objectType = this.inferExpressionType(memberExpr.object);
+            const baseType = this.getBaseType(objectType);
+            if (baseType && this.structDefinitions.has(baseType)) {
+              const offset = this.getStructFieldOffset(
+                baseType,
+                memberExpr.member,
+              );
+              this.emitExpressionWAT(memberExpr.object);
+              this.emitWATLine(`i32.const ${offset}`);
+              this.emitWATLine("i32.add");
+              this.emitExpressionWAT(expr.right);
+              this.emitWATLine("i32.store");
+              // Assignment expression returns the value
+              this.emitExpressionWAT(expr.right);
+            } else if (objectType && objectType.startsWith("(")) {
+              const index = parseInt(memberExpr.member);
+              const types = objectType
+                .slice(1, -1)
+                .split(",")
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0);
+              if (isNaN(index) || index < 0 || index >= types.length) {
+                this.throwError(
+                  `Invalid tuple index: ${memberExpr.member}`,
+                  memberExpr,
+                );
+              }
+              this.emitExpressionWAT(memberExpr.object);
+              this.emitWATLine(`i32.const ${index * 4}`);
+              this.emitWATLine("i32.add");
+              this.emitExpressionWAT(expr.right);
+              this.emitWATLine("i32.store");
+              this.emitExpressionWAT(expr.right);
+            } else {
+              this.throwError("Invalid l-value", expr.left);
+            }
+          } else {
             this.throwError("Invalid l-value", expr.left);
           }
-          const info = this.resolveVariable(expr.left.name);
-          if (!info.isMutable) {
-            this.throwError(
-              `Cannot assign to immutable variable: ${expr.left.name}`,
-              expr.left,
-            );
-          }
-          this.emitExpressionWAT(expr.right);
-          this.emitWATLine(`local.tee $${info.uniqueName}`);
           break;
         }
 
@@ -1041,16 +1531,16 @@ export class Emitter {
               if (varName) {
                 // {varName}
                 const info = this.resolveVariable(varName);
+                if (!info) {
+                  this.throwError(`Undefined variable: ${varName}`, expr);
+                }
                 this.emitPrintCallForVariable(info);
                 this.emitWATLine("drop");
               } else {
                 // {}
                 if (argIndex < expr.args.length) {
                   const arg = expr.args[argIndex++];
-                  this.emitExpressionWAT(arg);
-                  this.emitWATLine(
-                    `call $${this.isStringLikeType(this.inferExpressionType(arg)) ? "print_str" : "print"}`,
-                  );
+                  this.emitPrintCallForExpressionWAT(arg);
                   this.emitWATLine("drop");
                 } else {
                   this.throwError(
@@ -1067,13 +1557,22 @@ export class Emitter {
               this.emitStringPrintWAT(textAfter);
             }
 
+            if (expr.name === "println") {
+              this.emitStringPrintWAT("\n");
+            }
+
             this.emitWATLine("i32.const 0"); // Result of macro
           } else if (formatArg) {
-            this.emitExpressionWAT(formatArg);
-            this.emitWATLine(
-              `call $${this.isStringLikeType(this.inferExpressionType(formatArg)) ? "print_str" : "print"}`,
-            );
+            this.emitPrintCallForExpressionWAT(formatArg);
+            this.emitWATLine("drop");
+            if (expr.name === "println") {
+              this.emitStringPrintWAT("\n");
+            }
+            this.emitWATLine("i32.const 0");
           } else {
+            if (expr.name === "println") {
+              this.emitStringPrintWAT("\n");
+            }
             this.emitWATLine("i32.const 0");
           }
         } else if (expr.name === "panic") {
@@ -1328,7 +1827,10 @@ export class Emitter {
     ]);
   }
 
+  private currentFunctionName: string | undefined;
+
   private emitFunctionBinary(fn: FunctionDeclaration): number[] {
+    this.currentFunctionName = fn.name;
     this.localCounter = 0;
     this.currentBlockDepth = 0;
     this.allLocals.clear();
@@ -1642,6 +2144,66 @@ export class Emitter {
         // no drop - this is an expression
         break;
       }
+      case "StructLiteral": {
+        let structName = expr.name;
+        if (structName === "Self") {
+          // Find target struct from the current function's name if it's mangled
+          const fnName = Array.from(this.functionIndices.entries()).find(
+            ([, idx]) =>
+              idx === this.functionIndices.get(this.currentFunctionName || ""),
+          )?.[0];
+          if (fnName && fnName.includes("::")) {
+            structName = fnName.split("::")[0];
+          }
+        }
+        const size = this.getStructSize(structName);
+        const ptrLocal = `struct_ptr_${++this.localCounter}`;
+        this.allLocals.add(ptrLocal);
+
+        // Allocate memory
+        body.push(...OP_GLOBAL_GET);
+        body.push(OP_LOCAL_SET, 0xfe, ptrLocal as any);
+
+        // Update heap_ptr
+        body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(size));
+        body.push(OP_I32_ADD);
+        body.push(...OP_GLOBAL_SET);
+
+        // If update base exists, copy fields first
+        if (expr.base) {
+          this.emitExpressionBinary(expr.base, body);
+          const basePtrLocal = `base_ptr_${++this.localCounter}`;
+          this.allLocals.add(basePtrLocal);
+          body.push(OP_LOCAL_SET, 0xfe, basePtrLocal as any);
+
+          for (let i = 0; i < size; i += 4) {
+            body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+            body.push(OP_I32_CONST, ...this.encodeSignedLEB128(i));
+            body.push(OP_I32_ADD);
+
+            body.push(OP_LOCAL_GET, 0xfe, basePtrLocal as any);
+            body.push(OP_I32_CONST, ...this.encodeSignedLEB128(i));
+            body.push(OP_I32_ADD);
+            body.push(...OP_I32_LOAD);
+
+            body.push(...OP_I32_STORE);
+          }
+        }
+
+        // Initialize fields
+        expr.fields.forEach((field) => {
+          const offset = this.getStructFieldOffset(structName, field.name);
+          body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+          body.push(OP_I32_CONST, ...this.encodeSignedLEB128(offset));
+          body.push(OP_I32_ADD);
+          this.emitExpressionBinary(field.value, body);
+          body.push(...OP_I32_STORE);
+        });
+
+        body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+        break;
+      }
       case "ArrayLiteral": {
         const ptrLocal = `array_ptr_${++this.localCounter}`;
         this.allLocals.add(ptrLocal);
@@ -1677,7 +2239,38 @@ export class Emitter {
         body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
         break;
       }
-      case "Literal":
+      case "TupleLiteral": {
+        if (expr.elements.length === 0) {
+          body.push(OP_I32_CONST, 0);
+          break;
+        }
+        const ptrLocal = `tuple_ptr_${++this.localCounter}`;
+        this.allLocals.add(ptrLocal);
+        body.push(...OP_GLOBAL_GET);
+        body.push(OP_LOCAL_SET, 0xfe, ptrLocal as any);
+
+        // Store elements (no length prefix for tuples, they are fixed size)
+        expr.elements.forEach((el, i) => {
+          body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+          body.push(OP_I32_CONST, ...this.encodeSignedLEB128(i * 4));
+          body.push(OP_I32_ADD);
+          this.emitExpressionBinary(el, body);
+          body.push(...OP_I32_STORE);
+        });
+
+        // Update heap_ptr
+        body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+        body.push(
+          OP_I32_CONST,
+          ...this.encodeSignedLEB128(expr.elements.length * 4),
+        );
+        body.push(OP_I32_ADD);
+        body.push(...OP_GLOBAL_SET);
+
+        body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+        break;
+      }
+      case "Literal": {
         if (expr.rawType === "string") {
           const strValue = expr.value as string;
           if (!this.stringConstants.has(strValue)) {
@@ -1698,6 +2291,7 @@ export class Emitter {
           );
         }
         break;
+      }
       case "RangeExpression":
         if (expr.start) {
           this.emitExpressionBinary(expr.start, body);
@@ -1710,14 +2304,39 @@ export class Emitter {
           body.push(OP_I32_CONST, ...this.encodeSignedLEB128(-1));
         }
         break;
-      case "MemberAccessExpression":
+      case "MemberAccessExpression": {
         if (expr.member === "len") {
           this.emitExpressionBinary(expr.object, body);
           body.push(...OP_I32_LOAD);
         } else {
-          this.throwError(`Unsupported member: ${expr.member}`, expr);
+          const objectType = this.inferExpressionType(expr.object);
+          const baseType = this.getBaseType(objectType);
+          if (baseType && this.structDefinitions.has(baseType)) {
+            const offset = this.getStructFieldOffset(baseType, expr.member);
+            this.emitExpressionBinary(expr.object, body);
+            body.push(OP_I32_CONST, ...this.encodeSignedLEB128(offset));
+            body.push(OP_I32_ADD);
+            body.push(...OP_I32_LOAD);
+          } else if (objectType && objectType.startsWith("(")) {
+            const index = parseInt(expr.member);
+            const types = objectType
+              .slice(1, -1)
+              .split(",")
+              .map((s) => s.trim())
+              .filter((s) => s.length > 0);
+            if (isNaN(index) || index < 0 || index >= types.length) {
+              this.throwError(`Invalid tuple index: ${expr.member}`, expr);
+            }
+            this.emitExpressionBinary(expr.object, body);
+            body.push(OP_I32_CONST, ...this.encodeSignedLEB128(index * 4));
+            body.push(OP_I32_ADD);
+            body.push(...OP_I32_LOAD);
+          } else {
+            this.throwError(`Unsupported member: ${expr.member}`, expr);
+          }
         }
         break;
+      }
       case "IndexExpression": {
         this.emitExpressionBinary(expr.object, body);
         if (expr.index.type === "RangeExpression") {
@@ -1808,9 +2427,9 @@ export class Emitter {
         }
         break;
       }
-      case "Identifier":
-        try {
-          const info = this.resolveVariable(expr.name);
+      case "Identifier": {
+        const info = this.resolveVariable(expr.name);
+        if (info) {
           if (info.isBorrowedMut) {
             this.throwError(
               `Cannot use '${expr.name}' while it is mutably borrowed`,
@@ -1818,55 +2437,57 @@ export class Emitter {
             );
           }
           body.push(OP_LOCAL_GET, 0xfe, info.uniqueName as any);
-        } catch (e: any) {
-          if (e.message.startsWith("Undefined variable")) {
-            this.throwError(e.message, expr);
+        } else {
+          const struct = this.structDefinitions.get(expr.name);
+          if (struct && struct.type === "UnitStructDeclaration") {
+            body.push(OP_I32_CONST, 0);
+          } else {
+            this.throwError(`Undefined variable: ${expr.name}`, expr);
           }
-          throw e;
         }
         break;
+      }
       case "BorrowExpression":
         if (expr.argument.type === "Identifier") {
-          try {
-            const info = this.resolveVariable(expr.argument.name);
-            if (expr.isMutable) {
-              if (info.isBorrowedMut || info.borrowCount > 0) {
-                this.throwError(
-                  `Cannot borrow '${expr.argument.name}' as mutable: already borrowed`,
-                  expr,
-                );
-              }
-              if (!info.isMutable) {
-                this.throwError(
-                  `Cannot borrow '${expr.argument.name}' as mutable: it is not declared as mutable`,
-                  expr,
-                );
-              }
-              info.isBorrowedMut = true;
-              this.scopeStack[this.scopeStack.length - 1].borrows.push({
-                info,
-                isMut: true,
-              });
-            } else {
-              if (info.isBorrowedMut) {
-                this.throwError(
-                  `Cannot borrow '${expr.argument.name}' as immutable: already borrowed as mutable`,
-                  expr,
-                );
-              }
-              info.borrowCount++;
-              this.scopeStack[this.scopeStack.length - 1].borrows.push({
-                info,
-                isMut: false,
-              });
-            }
-            body.push(OP_LOCAL_GET, 0xfe, info.uniqueName as any);
-          } catch (e: any) {
-            if (e.message.startsWith("Undefined variable")) {
-              this.throwError(e.message, expr);
-            }
-            throw e;
+          const info = this.resolveVariable(expr.argument.name);
+          if (!info) {
+            this.throwError(
+              `Undefined variable: ${expr.argument.name}`,
+              expr.argument,
+            );
           }
+          if (expr.isMutable) {
+            if (info.isBorrowedMut || info.borrowCount > 0) {
+              this.throwError(
+                `Cannot borrow '${expr.argument.name}' as mutable: already borrowed`,
+                expr,
+              );
+            }
+            if (!info.isMutable) {
+              this.throwError(
+                `Cannot borrow '${expr.argument.name}' as mutable: it is not declared as mutable`,
+                expr,
+              );
+            }
+            info.isBorrowedMut = true;
+            this.scopeStack[this.scopeStack.length - 1].borrows.push({
+              info,
+              isMut: true,
+            });
+          } else {
+            if (info.isBorrowedMut) {
+              this.throwError(
+                `Cannot borrow '${expr.argument.name}' as immutable: already borrowed as mutable`,
+                expr,
+              );
+            }
+            info.borrowCount++;
+            this.scopeStack[this.scopeStack.length - 1].borrows.push({
+              info,
+              isMut: false,
+            });
+          }
+          body.push(OP_LOCAL_GET, 0xfe, info.uniqueName as any);
         } else if (expr.argument.type === "IndexExpression") {
           this.emitExpressionBinary(expr.argument, body);
         } else {
@@ -1890,18 +2511,89 @@ export class Emitter {
         break;
       case "BinaryExpression":
         if (expr.operator === "=") {
-          if (expr.left.type !== "Identifier") {
+          if (expr.left.type === "Identifier") {
+            const info = this.resolveVariable(expr.left.name);
+            if (!info) {
+              this.throwError(
+                `Undefined variable: ${expr.left.name}`,
+                expr.left,
+              );
+            }
+            if (!info.isMutable) {
+              this.throwError(
+                `Cannot assign to immutable variable: ${expr.left.name}`,
+                expr.left,
+              );
+            }
+            this.emitExpressionBinary(expr.right, body);
+            body.push(0x22, 0xfe, info.uniqueName as any); // local.tee
+          } else if (expr.left.type === "MemberAccessExpression") {
+            const memberExpr = expr.left;
+            if (!this.isMutableExpression(memberExpr.object)) {
+              this.throwError(
+                "Cannot assign to fields of an immutable object",
+                memberExpr.object,
+              );
+            }
+            const objectType = this.inferExpressionType(memberExpr.object);
+            const baseType = this.getBaseType(objectType);
+            if (baseType && this.structDefinitions.has(baseType)) {
+              const offset = this.getStructFieldOffset(
+                baseType,
+                memberExpr.member,
+              );
+              this.emitExpressionBinary(memberExpr.object, body);
+              body.push(OP_I32_CONST, ...this.encodeSignedLEB128(offset));
+              body.push(OP_I32_ADD);
+              this.emitExpressionBinary(expr.right, body);
+              body.push(...OP_I32_STORE);
+              // Assignment expression returns the value
+              this.emitExpressionBinary(expr.right, body);
+            } else if (objectType && objectType.startsWith("(")) {
+              const index = parseInt(memberExpr.member);
+              const types = objectType
+                .slice(1, -1)
+                .split(",")
+                .map((s) => s.trim())
+                .filter((s) => s.length > 0);
+              if (isNaN(index) || index < 0 || index >= types.length) {
+                this.throwError(
+                  `Invalid tuple index: ${memberExpr.member}`,
+                  memberExpr,
+                );
+              }
+              this.emitExpressionBinary(memberExpr.object, body);
+              body.push(OP_I32_CONST, ...this.encodeSignedLEB128(index * 4));
+              body.push(OP_I32_ADD);
+              this.emitExpressionBinary(expr.right, body);
+              body.push(...OP_I32_STORE);
+              this.emitExpressionBinary(expr.right, body);
+            } else {
+              this.throwError("Invalid l-value", expr.left);
+            }
+          } else {
             this.throwError("Invalid l-value", expr.left);
           }
-          const info = this.resolveVariable(expr.left.name);
-          if (!info.isMutable) {
-            this.throwError(
-              `Cannot assign to immutable variable: ${expr.left.name}`,
-              expr.left,
-            );
-          }
+          break;
+        }
+
+        if (expr.operator === "&&") {
+          this.emitExpressionBinary(expr.left, body);
+          body.push(OP_IF, TYPE_I32);
           this.emitExpressionBinary(expr.right, body);
-          body.push(0x22, 0xfe, info.uniqueName as any); // local.tee
+          body.push(OP_ELSE);
+          body.push(OP_I32_CONST, ...this.encodeSignedLEB128(0));
+          body.push(OP_END);
+          break;
+        }
+
+        if (expr.operator === "||") {
+          this.emitExpressionBinary(expr.left, body);
+          body.push(OP_IF, TYPE_I32);
+          body.push(OP_I32_CONST, ...this.encodeSignedLEB128(1));
+          body.push(OP_ELSE);
+          this.emitExpressionBinary(expr.right, body);
+          body.push(OP_END);
           break;
         }
 
@@ -1969,7 +2661,7 @@ export class Emitter {
             const formatStr = formatArg.value as string;
             let argIndex = 1;
             let lastPos = 0;
-            const regex = /\{([a-zA-Z0-9_]*)\}/g;
+            const regex = /\{([^}]*)\}/g;
             let match;
 
             while ((match = regex.exec(formatStr)) !== null) {
@@ -1978,21 +2670,36 @@ export class Emitter {
                 this.emitStringPrintBinary(textBefore, body);
               }
 
-              const varName = match[1];
+              const spec = match[1];
+              let varName = "";
+              let specifier = "";
+
+              if (spec.startsWith(":")) {
+                specifier = spec;
+              } else if (spec.includes(":")) {
+                const parts = spec.split(":");
+                varName = parts[0];
+                specifier = ":" + parts[1];
+              } else {
+                varName = spec;
+              }
+
               if (varName) {
                 const info = this.resolveVariable(varName);
-                body.push(OP_LOCAL_GET, 0xfe, info.uniqueName as any);
-                body.push(
-                  OP_CALL,
-                  ...this.encodeUnsignedLEB128(
-                    this.isStringLikeType(info.valueType) ? 1 : 0,
-                  ),
-                );
+                if (!info) {
+                  this.throwError(`Undefined variable: ${varName}`, expr);
+                }
+                const fakeExpr: any = {
+                  type: "Identifier",
+                  name: varName,
+                  token: expr.token,
+                };
+                this.emitPrintCallForExpression(fakeExpr, body, specifier);
                 body.push(OP_DROP);
               } else {
                 if (argIndex < expr.args.length) {
                   const arg = expr.args[argIndex++];
-                  this.emitPrintCallForExpression(arg, body);
+                  this.emitPrintCallForExpression(arg, body, specifier);
                   body.push(OP_DROP);
                 } else {
                   this.throwError(
@@ -2008,18 +2715,23 @@ export class Emitter {
             if (textAfter) {
               this.emitStringPrintBinary(textAfter, body);
             }
+
+            if (expr.name === "println") {
+              this.emitStringPrintBinary("\n", body);
+            }
+
             body.push(OP_I32_CONST, 0);
           } else if (formatArg) {
-            this.emitExpressionBinary(formatArg, body);
-            body.push(
-              OP_CALL,
-              ...this.encodeUnsignedLEB128(
-                this.isStringLikeType(this.inferExpressionType(formatArg))
-                  ? 1
-                  : 0,
-              ),
-            );
+            this.emitPrintCallForExpression(formatArg, body);
+            body.push(OP_DROP);
+            if (expr.name === "println") {
+              this.emitStringPrintBinary("\n", body);
+            }
+            body.push(OP_I32_CONST, 0);
           } else {
+            if (expr.name === "println") {
+              this.emitStringPrintBinary("\n", body);
+            }
             body.push(OP_I32_CONST, 0);
           }
         } else if (expr.name === "panic") {
@@ -2039,6 +2751,41 @@ export class Emitter {
           this.emitExpressionBinary(sizeExpr, body);
           body.push(OP_I32_ADD);
           body.push(...OP_GLOBAL_SET);
+        } else if (expr.name === "dbg") {
+          const arg = expr.args[0];
+          if (!arg) {
+            this.throwError("dbg! expects an argument", expr);
+          }
+
+          const valLocal = `dbg_val_${++this.localCounter}`;
+          this.allLocals.add(valLocal);
+          this.emitExpressionBinary(arg, body);
+          body.push(0x22, 0xfe, valLocal as any); // local.tee
+          body.push(OP_DROP); // drop for now while we print
+
+          const line = expr.token?.line || 0;
+          this.emitStringPrintBinary(`[line:${line}] `, body);
+
+          const fakeExpr: any = {
+            type: "Identifier",
+            name: valLocal,
+            token: expr.token,
+          };
+          const currentScope = this.scopeStack[this.scopeStack.length - 1];
+          currentScope.vars.set(valLocal, {
+            uniqueName: valLocal,
+            isMutable: false,
+            isBorrowedMut: false,
+            borrowCount: 0,
+            valueType: this.inferExpressionType(arg),
+          });
+
+          this.emitPrintCallForExpression(fakeExpr, body, ":?");
+          body.push(OP_DROP);
+          this.emitStringPrintBinary("\n", body);
+          currentScope.vars.delete(valLocal);
+
+          body.push(OP_LOCAL_GET, 0xfe, valLocal as any);
         }
         break;
       case "CallExpression":
@@ -2062,6 +2809,12 @@ export class Emitter {
         if (expr.callee === "clear") {
           if (expr.args[0]?.type === "Identifier") {
             const info = this.resolveVariable(expr.args[0].name);
+            if (!info) {
+              this.throwError(
+                `Undefined variable: ${expr.args[0].name}`,
+                expr.args[0],
+              );
+            }
             if (info.isBorrowedMut || info.borrowCount > 0) {
               this.throwError(
                 `Cannot use '${expr.args[0].name}' while it is mutably borrowed`,
@@ -2081,15 +2834,57 @@ export class Emitter {
           body.push(OP_I32_CONST, ...this.encodeSignedLEB128(0));
           break;
         }
+
+        const struct = this.structDefinitions.get(expr.callee);
+        if (struct && struct.type === "TupleStructDeclaration") {
+          const size = this.getStructSize(expr.callee);
+          const ptrLocal = `tuple_ptr_${++this.localCounter}`;
+          this.allLocals.add(ptrLocal);
+
+          // Allocate memory
+          body.push(...OP_GLOBAL_GET);
+          body.push(OP_LOCAL_SET, 0xfe, ptrLocal as any);
+
+          // Update heap_ptr
+          body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+          body.push(OP_I32_CONST, ...this.encodeSignedLEB128(size));
+          body.push(OP_I32_ADD);
+          body.push(...OP_GLOBAL_SET);
+
+          // Store args
+          expr.args.forEach((arg, i) => {
+            body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+            body.push(OP_I32_CONST, ...this.encodeSignedLEB128(i * 4));
+            body.push(OP_I32_ADD);
+            this.emitExpressionBinary(arg, body);
+            body.push(...OP_I32_STORE);
+          });
+
+          body.push(OP_LOCAL_GET, 0xfe, ptrLocal as any);
+          break;
+        }
+
         const retainBorrow = this.isStringLikeType(
           this.functionReturnTypes.get(expr.callee),
         );
+
+        let callee = expr.callee;
+        if (!this.functionIndices.has(callee) && expr.args.length > 0) {
+          const type = this.inferExpressionType(expr.args[0]);
+          const baseType = this.getBaseType(type);
+          if (baseType) {
+            const mangled = `${baseType}::${callee}`;
+            if (this.functionIndices.has(mangled)) {
+              callee = mangled;
+            }
+          }
+        }
+
         for (const arg of expr.args) {
           this.emitCallArgumentBinary(arg, body, retainBorrow);
         }
-        const idx = this.functionIndices.get(expr.callee);
-        if (idx === undefined)
-          throw new Error(`Unknown function: ${expr.callee}`);
+        const idx = this.functionIndices.get(callee);
+        if (idx === undefined) throw new Error(`Unknown function: ${callee}`);
         body.push(OP_CALL, ...this.encodeUnsignedLEB128(idx));
         break;
     }
