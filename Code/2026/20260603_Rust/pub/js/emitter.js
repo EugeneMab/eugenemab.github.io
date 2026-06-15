@@ -64,6 +64,7 @@ export class Emitter {
     currentBlockDepth = 0;
     functionReturnTypes = new Map();
     structDefinitions = new Map();
+    enumDefinitions = new Map();
     constructor(program, source) {
         this.program = program;
         this.source = source;
@@ -241,6 +242,13 @@ export class Emitter {
                     return "usize";
                 if (this.structDefinitions.has(expr.callee))
                     return expr.callee;
+                // Namespaced constructors like Enum::Variant produce the enum type
+                if (expr.callee.includes("::")) {
+                    const parts = expr.callee.split("::");
+                    const enumName = parts[0];
+                    if (this.enumDefinitions.has(enumName))
+                        return enumName;
+                }
                 let callee = expr.callee;
                 if (!this.functionReturnTypes.has(callee) && expr.args.length > 0) {
                     const firstArgType = this.inferExpressionType(expr.args[0]);
@@ -270,6 +278,11 @@ export class Emitter {
                     : "i32";
             case "IfStatement":
                 return this.inferExpressionType(expr.thenBranch);
+            case "MatchExpression":
+                if (expr.arms && expr.arms.length > 0) {
+                    return this.inferExpressionType(expr.arms[0].body);
+                }
+                return "i32";
         }
     }
     emitPrintCallForTypeBinary(type, body) {
@@ -446,6 +459,7 @@ export class Emitter {
         this.functionIndices.set("set_item_i32", 6);
         this.functionReturnTypes.clear();
         this.structDefinitions.clear();
+        this.enumDefinitions.clear();
         this.program.body.forEach((s) => {
             if (s.type === "RegularStructDeclaration" ||
                 s.type === "TupleStructDeclaration" ||
@@ -458,6 +472,10 @@ export class Emitter {
                         }
                     });
                 }
+            }
+            else if (s.type === "EnumDeclaration") {
+                // Record enum definitions for minimal constructor support
+                this.enumDefinitions.set(s.name, s);
             }
         });
         const userFunctions = [];
@@ -884,6 +902,88 @@ export class Emitter {
                 this.emitWATLine("end");
                 break;
             }
+            case "MatchExpression": {
+                // evaluate discriminant pointer
+                const ptrLocal = `match_ptr_${++this.localCounter}`;
+                this.allLocals.add(ptrLocal);
+                this.emitExpressionWAT(expr.discriminant);
+                this.emitWATLine(`local.set $${ptrLocal}`);
+                const tagLocal = `match_tag_${++this.localCounter}`;
+                this.allLocals.add(tagLocal);
+                this.emitWATLine(`local.get $${ptrLocal}`);
+                this.emitWATLine(`i32.load`);
+                this.emitWATLine(`local.set $${tagLocal}`);
+                let opens = 0;
+                for (let i = 0; i < expr.arms.length; i++) {
+                    const arm = expr.arms[i];
+                    const isLast = i === expr.arms.length - 1;
+                    // wildcard pattern
+                    if (arm.pattern &&
+                        arm.pattern.type === "Identifier" &&
+                        arm.pattern.name === "_") {
+                        this.emitExpressionWAT(arm.body);
+                        // close previously opened ifs
+                        for (let k = 0; k < opens; k++) {
+                            this.currentBlockDepth--;
+                            this.emitWATLine(`end`);
+                        }
+                        break;
+                    }
+                    // determine variant index
+                    let variantIndex = null;
+                    if (arm.pattern &&
+                        arm.pattern.type === "Identifier" &&
+                        arm.pattern.name.includes("::")) {
+                        const parts = arm.pattern.name.split("::");
+                        const enumName = parts[0];
+                        const variantName = parts[1];
+                        const enumDef = this.enumDefinitions.get(enumName);
+                        if (enumDef) {
+                            variantIndex = enumDef.variants.findIndex((v) => v.name === variantName);
+                        }
+                    }
+                    else if (arm.pattern && arm.pattern.type === "CallExpression") {
+                        const callee = arm.pattern.callee;
+                        if (typeof callee === "string" && callee.includes("::")) {
+                            const enumName = callee.split("::")[0];
+                            const variantName = callee.split("::")[1];
+                            const enumDef = this.enumDefinitions.get(enumName);
+                            if (enumDef) {
+                                variantIndex = enumDef.variants.findIndex((v) => v.name === variantName);
+                            }
+                        }
+                    }
+                    if (variantIndex === null) {
+                        if (isLast)
+                            this.emitWATLine(`i32.const 0`);
+                        continue;
+                    }
+                    // emit comparison and open an if with result
+                    this.emitWATLine(`local.get $${tagLocal}`);
+                    this.emitWATLine(`i32.const ${variantIndex}`);
+                    this.emitWATLine(`i32.eq`);
+                    this.emitWATLine(`if (result i32)`);
+                    this.indent++;
+                    this.currentBlockDepth++;
+                    opens++;
+                    // emit arm body
+                    this.emitExpressionWAT(arm.body);
+                    this.indent--;
+                    // always emit else to ensure balanced arity
+                    this.emitWATLine(`else`);
+                    if (isLast) {
+                        this.indent++;
+                        this.emitWATLine(`i32.const 0`);
+                        this.indent--;
+                    }
+                }
+                // close all opened ifs
+                for (let k = 0; k < opens; k++) {
+                    this.currentBlockDepth--;
+                    this.emitWATLine(`end`);
+                }
+                break;
+            }
             case "ArrayLiteral": {
                 const ptrLocal = `array_ptr_${++this.localCounter}`;
                 this.allLocals.add(ptrLocal);
@@ -1156,6 +1256,68 @@ export class Emitter {
                     break;
                 }
                 const retainBorrow = this.isStringLikeType(this.functionReturnTypes.get(expr.callee));
+                // Enum variant constructor support (WAT path)
+                if (expr.callee.includes("::")) {
+                    const parts = expr.callee.split("::");
+                    const enumName = parts[0];
+                    const variantName = parts[1];
+                    const enumDef = this.enumDefinitions.get(enumName);
+                    if (enumDef) {
+                        const variantIndex = enumDef.variants.findIndex((v) => v.name === variantName);
+                        if (variantIndex === -1) {
+                            this.throwError(`Unknown enum variant: ${expr.callee}`, expr);
+                        }
+                        // Allocate memory: tag (4 bytes) + payloads (4 bytes each)
+                        const size = 4 + expr.args.length * 4;
+                        const ptrLocal = `enum_ptr_${++this.localCounter}`;
+                        this.allLocals.add(ptrLocal);
+                        this.emitWATLine("global.get $heap_ptr");
+                        this.emitWATLine(`local.set $${ptrLocal}`);
+                        this.emitWATLine(`local.get $${ptrLocal}`);
+                        this.emitWATLine(`i32.const ${size}`);
+                        this.emitWATLine("i32.add");
+                        this.emitWATLine("global.set $heap_ptr");
+                        // store tag
+                        this.emitWATLine(`local.get $${ptrLocal}`);
+                        this.emitWATLine(`i32.const ${variantIndex}`);
+                        this.emitWATLine("i32.store");
+                        // store payloads
+                        expr.args.forEach((arg, i) => {
+                            this.emitCallArgumentWAT(arg, retainBorrow);
+                            this.emitWATLine(`local.get $${ptrLocal}`);
+                            this.emitWATLine(`i32.const ${4 + i * 4}`);
+                            this.emitWATLine("i32.add");
+                            this.emitWATLine("i32.store");
+                        });
+                        this.emitWATLine(`local.get $${ptrLocal}`);
+                        break;
+                    }
+                }
+                // Heuristic: Support Option-like Some/None constructors
+                if (expr.callee === "Some") {
+                    const variantIndex = 0;
+                    const size = 4 + expr.args.length * 4;
+                    const ptrLocal = `enum_ptr_${++this.localCounter}`;
+                    this.allLocals.add(ptrLocal);
+                    this.emitWATLine("global.get $heap_ptr");
+                    this.emitWATLine(`local.set $${ptrLocal}`);
+                    this.emitWATLine(`local.get $${ptrLocal}`);
+                    this.emitWATLine(`i32.const ${size}`);
+                    this.emitWATLine("i32.add");
+                    this.emitWATLine("global.set $heap_ptr");
+                    this.emitWATLine(`local.get $${ptrLocal}`);
+                    this.emitWATLine(`i32.const ${variantIndex}`);
+                    this.emitWATLine("i32.store");
+                    expr.args.forEach((arg, i) => {
+                        this.emitCallArgumentWAT(arg, retainBorrow);
+                        this.emitWATLine(`local.get $${ptrLocal}`);
+                        this.emitWATLine(`i32.const ${4 + i * 4}`);
+                        this.emitWATLine("i32.add");
+                        this.emitWATLine("i32.store");
+                    });
+                    this.emitWATLine(`local.get $${ptrLocal}`);
+                    break;
+                }
                 let callee = expr.callee;
                 if (!this.functionIndices.has(callee) && expr.args.length > 0) {
                     const type = this.inferExpressionType(expr.args[0]);
@@ -1183,6 +1345,10 @@ export class Emitter {
                 else {
                     const struct = this.structDefinitions.get(expr.name);
                     if (struct && struct.type === "UnitStructDeclaration") {
+                        this.emitWATLine("i32.const 0");
+                    }
+                    else if (expr.name === "None") {
+                        // Treat None as a null pointer for Option-like heuristics
                         this.emitWATLine("i32.const 0");
                     }
                     else if (expr.name.includes("::")) {
@@ -1896,6 +2062,28 @@ export class Emitter {
         }
     }
     emitExpressionBinary(expr, body) {
+        // Early type checks for binary arithmetic to catch mismatches (negative samples)
+        if (expr.type === "BinaryExpression") {
+            const arithmeticOps = [
+                "+",
+                "-",
+                "*",
+                "/",
+                "%",
+                "<<",
+                ">>",
+                "&",
+                "|",
+                "^",
+            ];
+            if (arithmeticOps.includes(expr.operator)) {
+                const leftType = this.inferExpressionType(expr.left);
+                const rightType = this.inferExpressionType(expr.right);
+                if (leftType !== rightType) {
+                    this.throwError(`Type error: cannot apply '${expr.operator}' to types ${leftType} and ${rightType}`, expr);
+                }
+            }
+        }
         switch (expr.type) {
             case "BlockStatement":
                 this.emitBlockBinary(expr, body);
@@ -1920,6 +2108,78 @@ export class Emitter {
                 this.currentBlockDepth--;
                 body.push(OP_END);
                 // no drop - this is an expression
+                break;
+            }
+            case "MatchExpression": {
+                // Evaluate discriminant and store pointer
+                const ptrLocal = `match_ptr_${++this.localCounter}`;
+                this.allLocals.add(ptrLocal);
+                this.emitExpressionBinary(expr.discriminant, body);
+                body.push(OP_LOCAL_SET, 0xfe, ptrLocal);
+                // Load tag into local
+                const tagLocal = `match_tag_${++this.localCounter}`;
+                this.allLocals.add(tagLocal);
+                body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                body.push(...OP_I32_LOAD);
+                body.push(OP_LOCAL_SET, 0xfe, tagLocal);
+                let opens = 0;
+                for (let i = 0; i < expr.arms.length; i++) {
+                    const arm = expr.arms[i];
+                    const isLast = i === expr.arms.length - 1;
+                    // wildcard or underscore pattern
+                    if (arm.pattern &&
+                        arm.pattern.type === "Identifier" &&
+                        arm.pattern.name === "_") {
+                        this.emitExpressionBinary(arm.body, body);
+                        // close previously opened ifs
+                        for (let k = 0; k < opens; k++)
+                            body.push(OP_END);
+                        break;
+                    }
+                    // Determine variant index if pattern is namespaced (e.g., Message::Write)
+                    let variantIndex = null;
+                    if (arm.pattern &&
+                        arm.pattern.type === "Identifier" &&
+                        arm.pattern.name.includes("::")) {
+                        const parts = arm.pattern.name.split("::");
+                        const enumName = parts[0];
+                        const variantName = parts[1];
+                        const enumDef = this.enumDefinitions.get(enumName);
+                        if (enumDef) {
+                            variantIndex = enumDef.variants.findIndex((v) => v.name === variantName);
+                        }
+                    }
+                    else if (arm.pattern && arm.pattern.type === "CallExpression") {
+                        const callee = arm.pattern.callee;
+                        if (typeof callee === "string" && callee.includes("::")) {
+                            const enumName = callee.split("::")[0];
+                            const variantName = callee.split("::")[1];
+                            const enumDef = this.enumDefinitions.get(enumName);
+                            if (enumDef) {
+                                variantIndex = enumDef.variants.findIndex((v) => v.name === variantName);
+                            }
+                        }
+                    }
+                    if (variantIndex === null) {
+                        if (isLast)
+                            body.push(OP_I32_CONST, 0);
+                        continue;
+                    }
+                    body.push(OP_LOCAL_GET, 0xfe, tagLocal);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(variantIndex));
+                    body.push(OP_I32_EQ);
+                    body.push(OP_IF, TYPE_I32);
+                    opens++;
+                    this.emitExpressionBinary(arm.body, body);
+                    if (isLast) {
+                        body.push(OP_ELSE, OP_I32_CONST, ...this.encodeSignedLEB128(0));
+                    }
+                    else {
+                        body.push(OP_ELSE);
+                    }
+                }
+                for (let k = 0; k < opens; k++)
+                    body.push(OP_END);
                 break;
             }
             case "StructLiteral": {
@@ -2182,6 +2442,23 @@ export class Emitter {
                     else if (expr.name.includes("::")) {
                         // Enum variant or namespaced constant: treat as unit-like zero for now
                         body.push(OP_I32_CONST, 0);
+                    }
+                    else if (expr.name === "None") {
+                        // Heuristic: support None as an Option-like unit variant
+                        const size = 4; // tag only
+                        const ptrLocal = `enum_ptr_${++this.localCounter}`;
+                        this.allLocals.add(ptrLocal);
+                        body.push(...OP_GLOBAL_GET);
+                        body.push(OP_LOCAL_SET, 0xfe, ptrLocal);
+                        body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(size));
+                        body.push(OP_I32_ADD);
+                        body.push(...OP_GLOBAL_SET);
+                        // store tag = 1 (None)
+                        body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(1));
+                        body.push(...OP_I32_STORE);
+                        body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
                     }
                     else {
                         this.throwError(`Undefined variable: ${expr.name}`, expr);
@@ -2530,6 +2807,7 @@ export class Emitter {
                     body.push(OP_I32_CONST, ...this.encodeSignedLEB128(0));
                     break;
                 }
+                // Tuple struct constructor
                 const struct = this.structDefinitions.get(expr.callee);
                 if (struct && struct.type === "TupleStructDeclaration") {
                     const size = this.getStructSize(expr.callee);
@@ -2549,6 +2827,73 @@ export class Emitter {
                         body.push(OP_I32_CONST, ...this.encodeSignedLEB128(i * 4));
                         body.push(OP_I32_ADD);
                         this.emitExpressionBinary(arg, body);
+                        body.push(...OP_I32_STORE);
+                    });
+                    body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                    break;
+                }
+                // Enum variant constructor (binary path)
+                if (expr.callee.includes("::")) {
+                    const parts = expr.callee.split("::");
+                    const enumName = parts[0];
+                    const variantName = parts[1];
+                    const enumDef = this.enumDefinitions.get(enumName);
+                    if (enumDef) {
+                        const variantIndex = enumDef.variants.findIndex((v) => v.name === variantName);
+                        if (variantIndex === -1) {
+                            this.throwError(`Unknown enum variant: ${expr.callee}`, expr);
+                        }
+                        const size = 4 + expr.args.length * 4;
+                        const ptrLocal = `enum_ptr_${++this.localCounter}`;
+                        this.allLocals.add(ptrLocal);
+                        // Allocate memory
+                        body.push(...OP_GLOBAL_GET);
+                        body.push(OP_LOCAL_SET, 0xfe, ptrLocal);
+                        // Update heap_ptr
+                        body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(size));
+                        body.push(OP_I32_ADD);
+                        body.push(...OP_GLOBAL_SET);
+                        // store tag
+                        body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(variantIndex));
+                        body.push(...OP_I32_STORE);
+                        // Store payloads
+                        expr.args.forEach((arg, i) => {
+                            this.emitExpressionBinary(arg, body);
+                            body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                            body.push(OP_I32_CONST, ...this.encodeSignedLEB128(4 + i * 4));
+                            body.push(OP_I32_ADD);
+                            body.push(...OP_I32_STORE);
+                        });
+                        body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                        break;
+                    }
+                }
+                // Heuristic: Support Option-like Some constructor (binary path)
+                if (expr.callee === "Some") {
+                    const variantIndex = 0;
+                    const size = 4 + expr.args.length * 4;
+                    const ptrLocal = `enum_ptr_${++this.localCounter}`;
+                    this.allLocals.add(ptrLocal);
+                    // Allocate memory
+                    body.push(...OP_GLOBAL_GET);
+                    body.push(OP_LOCAL_SET, 0xfe, ptrLocal);
+                    // Update heap_ptr
+                    body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(size));
+                    body.push(OP_I32_ADD);
+                    body.push(...OP_GLOBAL_SET);
+                    // store tag
+                    body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(variantIndex));
+                    body.push(...OP_I32_STORE);
+                    // Store payloads
+                    expr.args.forEach((arg, i) => {
+                        this.emitExpressionBinary(arg, body);
+                        body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                        body.push(OP_I32_CONST, ...this.encodeSignedLEB128(4 + i * 4));
+                        body.push(OP_I32_ADD);
                         body.push(...OP_I32_STORE);
                     });
                     body.push(OP_LOCAL_GET, 0xfe, ptrLocal);

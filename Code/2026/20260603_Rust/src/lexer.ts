@@ -1,3 +1,5 @@
+import { formatError } from "./error.js";
+
 export enum TokenType {
   // Keywords
   FN,
@@ -21,6 +23,8 @@ export enum TokenType {
   PANIC,
   TRUE,
   FALSE,
+  MATCH,
+  FAT_ARROW,
 
   // Literals
   INTEGER,
@@ -97,6 +101,7 @@ const KEYWORDS: Record<string, TokenType> = {
   panic: TokenType.PANIC,
   true: TokenType.TRUE,
   false: TokenType.FALSE,
+  match: TokenType.MATCH,
 };
 
 export class Lexer {
@@ -134,6 +139,18 @@ export class Lexer {
 
       if (this.input.startsWith("b'", this.pos)) {
         tokens.push(this.readByteLiteral());
+        continue;
+      }
+
+      // Char literal like 'e' or '\n'
+      if (char === "'" && this.input[this.pos + 2] === "'") {
+        tokens.push(this.readCharLiteral());
+        continue;
+      }
+
+      // Lifetime annotation like 'static
+      if (char === "'" && /[a-zA-Z_]/.test(this.input[this.pos + 1] || "")) {
+        tokens.push(this.readLifetime());
         continue;
       }
 
@@ -195,6 +212,15 @@ export class Lexer {
         continue;
       }
 
+      if (this.match("=>")) {
+        tokens.push({
+          type: TokenType.FAT_ARROW,
+          value: "=>",
+          line: startLine,
+          col: startCol,
+        });
+        continue;
+      }
       if (this.match("->")) {
         tokens.push({
           type: TokenType.ARROW,
@@ -302,8 +328,14 @@ export class Lexer {
         continue;
       }
 
+      const t = {
+        type: TokenType.EOF,
+        value: char,
+        line: this.line,
+        col: this.col,
+      };
       throw new Error(
-        `Unexpected character: ${char} at line ${this.line}:${this.col}`,
+        formatError(this.input, `Unexpected character: ${char}`, t as any),
       );
     }
 
@@ -398,7 +430,62 @@ export class Lexer {
       else if (escaped === "\\") value = "\\";
       else if (escaped === "'") value = "'";
       else if (escaped === "0") value = "\0";
-      else throw new Error(`Unknown escape sequence: \\${escaped}`);
+      else {
+        const t = {
+          type: TokenType.EOF,
+          value: escaped,
+          line: this.line,
+          col: this.col,
+        };
+        throw new Error(
+          formatError(
+            this.input,
+            `Unknown escape sequence: \\${escaped}`,
+            t as any,
+          ),
+        );
+      }
+    } else {
+      value = this.advance();
+    }
+    this.consumeByteLiteralEnd();
+    return {
+      type: TokenType.BYTE_LITERAL,
+      value: value.charCodeAt(0).toString(),
+      line: startLine,
+      col: startCol,
+    };
+  }
+
+  private readCharLiteral(): Token {
+    const startLine = this.line;
+    const startCol = this.col;
+    this.advance(); // skip opening '\"' (')
+    let value = "";
+    if (this.input[this.pos] === "\\") {
+      this.advance();
+      const escaped = this.advance();
+      if (escaped === "n") value = "\n";
+      else if (escaped === "r") value = "\r";
+      else if (escaped === "t") value = "\t";
+      else if (escaped === "\\") value = "\\";
+      else if (escaped === "'") value = "'";
+      else if (escaped === "0") value = "\0";
+      else {
+        const t = {
+          type: TokenType.EOF,
+          value: escaped,
+          line: this.line,
+          col: this.col,
+        };
+        throw new Error(
+          formatError(
+            this.input,
+            `Unknown escape sequence: \\${escaped}`,
+            t as any,
+          ),
+        );
+      }
     } else {
       value = this.advance();
     }
@@ -413,10 +500,40 @@ export class Lexer {
 
   private consumeByteLiteralEnd() {
     if (this.input[this.pos] !== "'") {
+      const t = {
+        type: TokenType.EOF,
+        value: this.input[this.pos] || "",
+        line: this.line,
+        col: this.col,
+      };
       throw new Error(
-        `Expected ' at end of byte literal, found ${this.input[this.pos]} at ${this.line}:${this.col}`,
+        formatError(
+          this.input,
+          `Expected ' at end of byte literal, found ${this.input[this.pos]}`,
+          t as any,
+        ),
       );
     }
     this.advance();
+  }
+
+  private readLifetime(): Token {
+    const startLine = this.line;
+    const startCol = this.col;
+    this.advance(); // skip '\''
+    let value = "'";
+    while (
+      this.pos < this.input.length &&
+      /[a-zA-Z0-9_]/.test(this.input[this.pos])
+    ) {
+      value += this.advance();
+    }
+    // Treat lifetime as identifier token value like 'static
+    return {
+      type: TokenType.IDENTIFIER,
+      value,
+      line: startLine,
+      col: startCol,
+    };
   }
 }
