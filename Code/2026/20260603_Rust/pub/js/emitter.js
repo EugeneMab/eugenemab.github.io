@@ -1171,6 +1171,10 @@ export class Emitter {
                     if (struct && struct.type === "UnitStructDeclaration") {
                         this.emitWATLine("i32.const 0");
                     }
+                    else if (expr.name.includes("::")) {
+                        // Enum variant or namespaced constant: treat as unit-like zero for now
+                        this.emitWATLine("i32.const 0");
+                    }
                     else {
                         this.throwError(`Undefined variable: ${expr.name}`, expr);
                     }
@@ -2159,6 +2163,10 @@ export class Emitter {
                 else {
                     const struct = this.structDefinitions.get(expr.name);
                     if (struct && struct.type === "UnitStructDeclaration") {
+                        body.push(OP_I32_CONST, 0);
+                    }
+                    else if (expr.name.includes("::")) {
+                        // Enum variant or namespaced constant: treat as unit-like zero for now
                         body.push(OP_I32_CONST, 0);
                     }
                     else {
