@@ -216,29 +216,18 @@ export function initUI() {
         book05_03_multiple_impl_blocks: "book05_03_multiple_impl_blocks.rs",
     };
     sampleSelect?.addEventListener("change", async () => {
-        const mapped = sampleFiles[sampleSelect.value];
-        // Fallbacks: try mapped name, then try value + .rs
-        const candidates = [];
-        if (mapped) candidates.push(mapped);
-        if (sampleSelect.value) candidates.push(`${sampleSelect.value}.rs`);
-
-        let loaded = false;
-        for (const fileName of candidates) {
+        const fileName = sampleFiles[sampleSelect.value];
+        if (fileName) {
             try {
                 const response = await fetch(`./samples/${fileName}`);
-                if (!response.ok) continue;
+                if (!response.ok)
+                    throw new Error(`Failed to load ${fileName}`);
                 editor.value = await response.text();
                 runCode();
-                loaded = true;
-                break;
             }
             catch (err) {
-                // try next candidate
-                continue;
+                outputs.exec.textContent = `Error loading sample: ${err.message}`;
             }
-        }
-        if (!loaded) {
-            outputs.exec.textContent = `Error loading sample: no candidate succeeded for ${sampleSelect.value}`;
         }
     });
     const clearTimer = () => {

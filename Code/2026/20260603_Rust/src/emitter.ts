@@ -96,8 +96,13 @@ export class Emitter {
   }
 
   private throwError(message: string, node: ASTNode): never {
-    if (node.token) {
-      throw new Error(formatError(this.source, message, node.token));
+    // Prefer precise location when available
+    if (node && (node as any).token) {
+      throw new Error(formatError(this.source, message, (node as any).token));
+    }
+    // Fall back to annotating with current function context for better diagnostics
+    if (this.currentFunctionName) {
+      throw new Error(`${message} (in ${this.currentFunctionName})`);
     }
     throw new Error(message);
   }
@@ -118,6 +123,14 @@ export class Emitter {
   }
 
   private getStructFieldOffset(structName: string, fieldName: string): number {
+    // Support 'Self' inside impls by resolving to current function's impl target
+    if (
+      structName === "Self" &&
+      this.currentFunctionName &&
+      this.currentFunctionName.includes("::")
+    ) {
+      structName = this.currentFunctionName.split("::")[0];
+    }
     const struct = this.structDefinitions.get(structName);
     if (!struct) this.throwError(`Unknown struct: ${structName}`, {} as any);
     if (struct.type === "RegularStructDeclaration") {
@@ -655,7 +668,10 @@ export class Emitter {
     this.outputWAT = [];
     this.indent = 0;
 
+    // Record current function context so 'Self' resolution works inside impls
+    this.currentFunctionName = fn.name;
     this.emitBlockWAT(fn.body);
+    this.currentFunctionName = undefined;
     const bodyWAT = this.outputWAT;
     this.outputWAT = oldOutput;
     this.indent = 1;
