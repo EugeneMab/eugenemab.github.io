@@ -26,12 +26,20 @@ export type Statement =
   | ReturnStatement
   | BreakStatement
   | ContinueStatement
-  | ImplDeclaration;
+  | ImplDeclaration
+  | EnumDeclaration;
 
 export interface ImplDeclaration extends BaseNode {
   type: "ImplDeclaration";
   target: string;
   functions: FunctionDeclaration[];
+}
+
+export interface EnumDeclaration extends BaseNode {
+  type: "EnumDeclaration";
+  name: string;
+  variants: { name: string }[];
+  attributes?: string[];
 }
 
 export interface LetStatement extends BaseNode {
@@ -278,6 +286,8 @@ export class Parser {
       return this.parseFunctionDeclaration(attributes);
     if (this.match(TokenType.STRUCT))
       return this.parseStructDeclaration(attributes);
+    if (this.match(TokenType.ENUM))
+      return this.parseEnumDeclaration(attributes);
     if (this.match(TokenType.IMPL)) return this.parseImplDeclaration();
     if (this.match(TokenType.IF)) return this.parseIfStatement();
     if (this.match(TokenType.LOOP)) return this.parseLoopStatement();
@@ -600,6 +610,39 @@ export class Parser {
       this.consume(TokenType.SEMICOLON, "Expect ';' after unit struct");
       return { type: "UnitStructDeclaration", token, name, attributes };
     }
+  }
+
+  private parseEnumDeclaration(attributes: string[] = []): EnumDeclaration {
+    const token = this.previous();
+    const name = this.consume(TokenType.IDENTIFIER, "Expect enum name").value;
+    this.consume(TokenType.LBRACE, "Expect '{' after enum name");
+    const variants: { name: string }[] = [];
+    if (!this.check(TokenType.RBRACE)) {
+      do {
+        if (this.check(TokenType.RBRACE)) break;
+        const vName = this.consume(
+          TokenType.IDENTIFIER,
+          "Expect variant name",
+        ).value;
+        // Skip optional data for variant (e.g., tuple or struct-like variant)
+        if (this.match(TokenType.LPAREN)) {
+          // skip until matching RPAREN
+          while (!this.check(TokenType.RPAREN) && !this.isAtEnd()) {
+            this.advance();
+          }
+          this.consume(TokenType.RPAREN, "Expect ')' after variant data");
+        } else if (this.match(TokenType.LBRACE)) {
+          // skip struct-like fields until '}'
+          while (!this.check(TokenType.RBRACE) && !this.isAtEnd()) {
+            this.advance();
+          }
+          this.consume(TokenType.RBRACE, "Expect '}' after variant fields");
+        }
+        variants.push({ name: vName });
+      } while (this.match(TokenType.COMMA));
+    }
+    this.consume(TokenType.RBRACE, "Expect '}' after enum variants");
+    return { type: "EnumDeclaration", token, name, variants, attributes };
   }
 
   private parseBlockStatement(): BlockStatement {

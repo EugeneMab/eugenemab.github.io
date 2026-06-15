@@ -518,5 +518,12 @@ describe("UI Samples Regression Tests", () => {
       expect(logs.join("")).toContain("Can rect1 hold rect3? false\n");
       expect(result).toBe(0);
     });
+
+    it("Book 6-1: Defining an Enum", async () => {
+      const code = loadSample("book06_01_defining_enum.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe("");
+      expect(result).toBe(0);
+    });
   });
 });
