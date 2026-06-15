@@ -1,3 +1,4 @@
+import { formatError } from "./error.js";
 export var TokenType;
 (function (TokenType) {
     // Keywords
@@ -22,48 +23,50 @@ export var TokenType;
     TokenType[TokenType["PANIC"] = 18] = "PANIC";
     TokenType[TokenType["TRUE"] = 19] = "TRUE";
     TokenType[TokenType["FALSE"] = 20] = "FALSE";
+    TokenType[TokenType["MATCH"] = 21] = "MATCH";
+    TokenType[TokenType["FAT_ARROW"] = 22] = "FAT_ARROW";
     // Literals
-    TokenType[TokenType["INTEGER"] = 21] = "INTEGER";
-    TokenType[TokenType["HEX"] = 22] = "HEX";
-    TokenType[TokenType["STRING"] = 23] = "STRING";
-    TokenType[TokenType["BYTE_LITERAL"] = 24] = "BYTE_LITERAL";
-    TokenType[TokenType["IDENTIFIER"] = 25] = "IDENTIFIER";
+    TokenType[TokenType["INTEGER"] = 23] = "INTEGER";
+    TokenType[TokenType["HEX"] = 24] = "HEX";
+    TokenType[TokenType["STRING"] = 25] = "STRING";
+    TokenType[TokenType["BYTE_LITERAL"] = 26] = "BYTE_LITERAL";
+    TokenType[TokenType["IDENTIFIER"] = 27] = "IDENTIFIER";
     // Symbols
-    TokenType[TokenType["LPAREN"] = 26] = "LPAREN";
-    TokenType[TokenType["RPAREN"] = 27] = "RPAREN";
-    TokenType[TokenType["LBRACE"] = 28] = "LBRACE";
-    TokenType[TokenType["RBRACE"] = 29] = "RBRACE";
-    TokenType[TokenType["LBRACKET"] = 30] = "LBRACKET";
-    TokenType[TokenType["RBRACKET"] = 31] = "RBRACKET";
-    TokenType[TokenType["COMMA"] = 32] = "COMMA";
-    TokenType[TokenType["DOT"] = 33] = "DOT";
-    TokenType[TokenType["DOT_DOT"] = 34] = "DOT_DOT";
-    TokenType[TokenType["COLON"] = 35] = "COLON";
-    TokenType[TokenType["COLON_COLON"] = 36] = "COLON_COLON";
-    TokenType[TokenType["SEMICOLON"] = 37] = "SEMICOLON";
-    TokenType[TokenType["ARROW"] = 38] = "ARROW";
-    TokenType[TokenType["PLUS"] = 39] = "PLUS";
-    TokenType[TokenType["MINUS"] = 40] = "MINUS";
-    TokenType[TokenType["STAR"] = 41] = "STAR";
-    TokenType[TokenType["SLASH"] = 42] = "SLASH";
-    TokenType[TokenType["PERCENT"] = 43] = "PERCENT";
-    TokenType[TokenType["AMPERSAND"] = 44] = "AMPERSAND";
-    TokenType[TokenType["AND_AND"] = 45] = "AND_AND";
-    TokenType[TokenType["PIPE"] = 46] = "PIPE";
-    TokenType[TokenType["OR_OR"] = 47] = "OR_OR";
-    TokenType[TokenType["CARET"] = 48] = "CARET";
-    TokenType[TokenType["LSHIFT"] = 49] = "LSHIFT";
-    TokenType[TokenType["RSHIFT"] = 50] = "RSHIFT";
-    TokenType[TokenType["EQUALS"] = 51] = "EQUALS";
-    TokenType[TokenType["EQ_EQ"] = 52] = "EQ_EQ";
-    TokenType[TokenType["NE_EQ"] = 53] = "NE_EQ";
-    TokenType[TokenType["LT"] = 54] = "LT";
-    TokenType[TokenType["GT"] = 55] = "GT";
-    TokenType[TokenType["LT_EQ"] = 56] = "LT_EQ";
-    TokenType[TokenType["GT_EQ"] = 57] = "GT_EQ";
-    TokenType[TokenType["EXCLAMATION"] = 58] = "EXCLAMATION";
-    TokenType[TokenType["HASH"] = 59] = "HASH";
-    TokenType[TokenType["EOF"] = 60] = "EOF";
+    TokenType[TokenType["LPAREN"] = 28] = "LPAREN";
+    TokenType[TokenType["RPAREN"] = 29] = "RPAREN";
+    TokenType[TokenType["LBRACE"] = 30] = "LBRACE";
+    TokenType[TokenType["RBRACE"] = 31] = "RBRACE";
+    TokenType[TokenType["LBRACKET"] = 32] = "LBRACKET";
+    TokenType[TokenType["RBRACKET"] = 33] = "RBRACKET";
+    TokenType[TokenType["COMMA"] = 34] = "COMMA";
+    TokenType[TokenType["DOT"] = 35] = "DOT";
+    TokenType[TokenType["DOT_DOT"] = 36] = "DOT_DOT";
+    TokenType[TokenType["COLON"] = 37] = "COLON";
+    TokenType[TokenType["COLON_COLON"] = 38] = "COLON_COLON";
+    TokenType[TokenType["SEMICOLON"] = 39] = "SEMICOLON";
+    TokenType[TokenType["ARROW"] = 40] = "ARROW";
+    TokenType[TokenType["PLUS"] = 41] = "PLUS";
+    TokenType[TokenType["MINUS"] = 42] = "MINUS";
+    TokenType[TokenType["STAR"] = 43] = "STAR";
+    TokenType[TokenType["SLASH"] = 44] = "SLASH";
+    TokenType[TokenType["PERCENT"] = 45] = "PERCENT";
+    TokenType[TokenType["AMPERSAND"] = 46] = "AMPERSAND";
+    TokenType[TokenType["AND_AND"] = 47] = "AND_AND";
+    TokenType[TokenType["PIPE"] = 48] = "PIPE";
+    TokenType[TokenType["OR_OR"] = 49] = "OR_OR";
+    TokenType[TokenType["CARET"] = 50] = "CARET";
+    TokenType[TokenType["LSHIFT"] = 51] = "LSHIFT";
+    TokenType[TokenType["RSHIFT"] = 52] = "RSHIFT";
+    TokenType[TokenType["EQUALS"] = 53] = "EQUALS";
+    TokenType[TokenType["EQ_EQ"] = 54] = "EQ_EQ";
+    TokenType[TokenType["NE_EQ"] = 55] = "NE_EQ";
+    TokenType[TokenType["LT"] = 56] = "LT";
+    TokenType[TokenType["GT"] = 57] = "GT";
+    TokenType[TokenType["LT_EQ"] = 58] = "LT_EQ";
+    TokenType[TokenType["GT_EQ"] = 59] = "GT_EQ";
+    TokenType[TokenType["EXCLAMATION"] = 60] = "EXCLAMATION";
+    TokenType[TokenType["HASH"] = 61] = "HASH";
+    TokenType[TokenType["EOF"] = 62] = "EOF";
 })(TokenType || (TokenType = {}));
 const KEYWORDS = {
     fn: TokenType.FN,
@@ -87,6 +90,7 @@ const KEYWORDS = {
     panic: TokenType.PANIC,
     true: TokenType.TRUE,
     false: TokenType.FALSE,
+    match: TokenType.MATCH,
 };
 export class Lexer {
     pos = 0;
@@ -119,6 +123,16 @@ export class Lexer {
             }
             if (this.input.startsWith("b'", this.pos)) {
                 tokens.push(this.readByteLiteral());
+                continue;
+            }
+            // Char literal like 'e' or '\n'
+            if (char === "'" && this.input[this.pos + 2] === "'") {
+                tokens.push(this.readCharLiteral());
+                continue;
+            }
+            // Lifetime annotation like 'static
+            if (char === "'" && /[a-zA-Z_]/.test(this.input[this.pos + 1] || "")) {
+                tokens.push(this.readLifetime());
                 continue;
             }
             if (/[a-zA-Z_]/.test(char)) {
@@ -166,6 +180,15 @@ export class Lexer {
                 tokens.push({
                     type: TokenType.COLON_COLON,
                     value: "::",
+                    line: startLine,
+                    col: startCol,
+                });
+                continue;
+            }
+            if (this.match("=>")) {
+                tokens.push({
+                    type: TokenType.FAT_ARROW,
+                    value: "=>",
                     line: startLine,
                     col: startCol,
                 });
@@ -269,7 +292,13 @@ export class Lexer {
                 this.advance();
                 continue;
             }
-            throw new Error(`Unexpected character: ${char} at line ${this.line}:${this.col}`);
+            const t = {
+                type: TokenType.EOF,
+                value: char,
+                line: this.line,
+                col: this.col,
+            };
+            throw new Error(formatError(this.input, `Unexpected character: ${char}`, t));
         }
         tokens.push({
             type: TokenType.EOF,
@@ -359,8 +388,56 @@ export class Lexer {
                 value = "'";
             else if (escaped === "0")
                 value = "\0";
-            else
-                throw new Error(`Unknown escape sequence: \\${escaped}`);
+            else {
+                const t = {
+                    type: TokenType.EOF,
+                    value: escaped,
+                    line: this.line,
+                    col: this.col,
+                };
+                throw new Error(formatError(this.input, `Unknown escape sequence: \\${escaped}`, t));
+            }
+        }
+        else {
+            value = this.advance();
+        }
+        this.consumeByteLiteralEnd();
+        return {
+            type: TokenType.BYTE_LITERAL,
+            value: value.charCodeAt(0).toString(),
+            line: startLine,
+            col: startCol,
+        };
+    }
+    readCharLiteral() {
+        const startLine = this.line;
+        const startCol = this.col;
+        this.advance(); // skip opening '\"' (')
+        let value = "";
+        if (this.input[this.pos] === "\\") {
+            this.advance();
+            const escaped = this.advance();
+            if (escaped === "n")
+                value = "\n";
+            else if (escaped === "r")
+                value = "\r";
+            else if (escaped === "t")
+                value = "\t";
+            else if (escaped === "\\")
+                value = "\\";
+            else if (escaped === "'")
+                value = "'";
+            else if (escaped === "0")
+                value = "\0";
+            else {
+                const t = {
+                    type: TokenType.EOF,
+                    value: escaped,
+                    line: this.line,
+                    col: this.col,
+                };
+                throw new Error(formatError(this.input, `Unknown escape sequence: \\${escaped}`, t));
+            }
         }
         else {
             value = this.advance();
@@ -375,8 +452,31 @@ export class Lexer {
     }
     consumeByteLiteralEnd() {
         if (this.input[this.pos] !== "'") {
-            throw new Error(`Expected ' at end of byte literal, found ${this.input[this.pos]} at ${this.line}:${this.col}`);
+            const t = {
+                type: TokenType.EOF,
+                value: this.input[this.pos] || "",
+                line: this.line,
+                col: this.col,
+            };
+            throw new Error(formatError(this.input, `Expected ' at end of byte literal, found ${this.input[this.pos]}`, t));
         }
         this.advance();
+    }
+    readLifetime() {
+        const startLine = this.line;
+        const startCol = this.col;
+        this.advance(); // skip '\''
+        let value = "'";
+        while (this.pos < this.input.length &&
+            /[a-zA-Z0-9_]/.test(this.input[this.pos])) {
+            value += this.advance();
+        }
+        // Treat lifetime as identifier token value like 'static
+        return {
+            type: TokenType.IDENTIFIER,
+            value,
+            line: startLine,
+            col: startCol,
+        };
     }
 }

@@ -138,12 +138,39 @@ export class Parser {
         }
         return { type: "IfStatement", token, condition, thenBranch, elseBranch };
     }
+    parseMatchExpression() {
+        const token = this.previous();
+        const discriminant = this.parseExpression();
+        this.consume(TokenType.LBRACE, "Expect '{' after match expression");
+        const arms = [];
+        if (!this.check(TokenType.RBRACE)) {
+            do {
+                // parse pattern (simple expressions or '_' wildcard)
+                let pattern;
+                if (this.check(TokenType.IDENTIFIER) && this.peek().value === "_") {
+                    const tok = this.advance();
+                    pattern = { type: "Identifier", token: tok, name: "_" };
+                }
+                else {
+                    pattern = this.parseExpression();
+                }
+                this.consume(TokenType.FAT_ARROW, "Expect '=>' after match pattern");
+                const body = this.parseExpression();
+                if (this.match(TokenType.COMMA)) {
+                    // continue
+                }
+                arms.push({ pattern, body });
+            } while (!this.check(TokenType.RBRACE) && !this.isAtEnd());
+        }
+        this.consume(TokenType.RBRACE, "Expect '}' after match arms");
+        return { type: "MatchExpression", token, discriminant, arms };
+    }
     parseLetStatement() {
         const token = this.previous();
         const isMutable = this.match(TokenType.MUT);
         const name = this.consume(TokenType.IDENTIFIER, "Expect identifier after 'let'").value;
         if (this.match(TokenType.COLON)) {
-            this.consume(TokenType.IDENTIFIER, "Expect type name");
+            this.parseType();
         }
         this.consume(TokenType.EQUALS, "Expect '=' after identifier");
         const initializer = this.parseExpression();
@@ -178,6 +205,17 @@ export class Parser {
         }
         if (type === "") {
             throw new Error(formatError(this.source, "Expect type name", this.peek()));
+        }
+        // Generic type arguments: Identifier<Inner, ...>
+        if (this.match(TokenType.LT)) {
+            const args = [];
+            if (!this.check(TokenType.GT)) {
+                do {
+                    args.push(this.parseType());
+                } while (this.match(TokenType.COMMA));
+            }
+            this.consume(TokenType.GT, "Expect '>' after generic args");
+            type += `<${args.join(", ")}>`;
         }
         return type;
     }
@@ -608,6 +646,12 @@ export class Parser {
         }
         if (this.match(TokenType.IF)) {
             return this.parseIfStatement();
+        }
+        if (this.match(TokenType.MATCH)) {
+            return this.parseMatchExpression();
+        }
+        if (this.match(TokenType.MATCH)) {
+            return this.parseMatchExpression();
         }
         if (this.match(TokenType.INTEGER)) {
             const token = this.previous();

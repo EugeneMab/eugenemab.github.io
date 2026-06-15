@@ -214,31 +214,46 @@ export function initUI() {
         book05_03_can_hold: "book05_03_can_hold.rs",
         book05_03_associated_functions: "book05_03_associated_functions.rs",
         book05_03_multiple_impl_blocks: "book05_03_multiple_impl_blocks.rs",
+        // Chapter 6-1 samples
+        book06_01_defining_enum: "book06_01_defining_enum.rs",
+        book06_01_listing_06_01_struct: "book06_01_listing_06_01_struct.rs",
+        book06_01_enum_with_data: "book06_01_enum_with_data.rs",
+        book06_01_message_enum: "book06_01_message_enum.rs",
+        book06_01_structs_similar_to_message: "book06_01_structs_similar_to_message.rs",
+        book06_01_methods_on_enums: "book06_01_methods_on_enums.rs",
+        book06_01_option_examples: "book06_01_option_examples.rs",
+        book06_01_option_negative: "book06_01_option_negative.rs",
     };
     sampleSelect?.addEventListener("change", async () => {
         const mapped = sampleFiles[sampleSelect.value];
-        // Fallbacks: try mapped name, then try value + .rs
         const candidates = [];
-        if (mapped) candidates.push(mapped);
-        if (sampleSelect.value) candidates.push(`${sampleSelect.value}.rs`);
-
+        if (mapped)
+            candidates.push(mapped);
+        if (sampleSelect.value)
+            candidates.push(`${sampleSelect.value}.rs`);
         let loaded = false;
         for (const fileName of candidates) {
             try {
+                outputs.info.textContent += `Trying sample candidate: ./samples/${fileName}\n`;
                 const response = await fetch(`./samples/${fileName}`);
-                if (!response.ok) continue;
+                outputs.info.textContent += `Fetch status: ${response.status} ${fileName}\n`;
+                if (!response.ok)
+                    continue;
                 editor.value = await response.text();
+                outputs.info.textContent += `Loaded sample ${fileName}\n`;
                 runCode();
                 loaded = true;
                 break;
             }
             catch (err) {
-                // try next candidate
+                outputs.info.textContent += `Fetch error for ${fileName}: ${err.message}\n`;
                 continue;
             }
         }
         if (!loaded) {
-            outputs.exec.textContent = `Error loading sample: no candidate succeeded for ${sampleSelect.value}`;
+            const msg = `Error loading sample: no candidate succeeded for ${sampleSelect.value}`;
+            outputs.exec.textContent = msg;
+            outputs.info.textContent += msg + "\n";
         }
     });
     const clearTimer = () => {
@@ -264,7 +279,7 @@ export function initUI() {
             if (worker) {
                 worker.terminate();
                 worker = null;
-                statusLine.textContent = "Execution Timed Out";
+                statusLine.textContent = `Execution Timed Out (${new Date().toISOString()})`;
                 const duration = performance.now() - startPerf;
                 outputs.info.textContent += `[${new Date().toLocaleTimeString()}] End Error: Timeout duration=${duration.toFixed(2)}ms\n`;
             }
@@ -299,7 +314,7 @@ export function initUI() {
                 case "result":
                     clearTimer();
                     worker = null; // Mark as finished
-                    statusLine.textContent = "Execution Finished";
+                    statusLine.textContent = `Execution Finished (${new Date().toISOString()})`;
                     const successDuration = performance.now() - startPerf;
                     outputs.info.textContent += `[${new Date().toLocaleTimeString()}] End okay return code=${payload} duration=${successDuration.toFixed(2)}ms\n`;
                     break;
@@ -310,9 +325,26 @@ export function initUI() {
                     outputs.info.textContent += payload.detail + "\n";
                     const errDuration = performance.now() - startPerf;
                     outputs.info.textContent += `[${new Date().toLocaleTimeString()}] End Error: ${payload.short} duration=${errDuration.toFixed(2)}ms\n`;
-                    statusLine.textContent = payload.short;
+                    statusLine.textContent = `${payload.short} (${new Date().toISOString()})`;
                     break;
             }
+        };
+        // Surface worker script/initialization errors quickly so UI/tests don't just wait silently
+        worker.onerror = (ev) => {
+            clearTimer();
+            worker = null;
+            const msg = `Worker script error: ${ev.message} at ${ev.filename}:${ev.lineno}:${ev.colno}`;
+            outputs.exec.textContent += msg + "\n";
+            outputs.info.textContent += msg + "\n";
+            statusLine.textContent = `Worker Error (${new Date().toISOString()})`;
+        };
+        worker.onmessageerror = () => {
+            clearTimer();
+            worker = null;
+            const msg = `Worker message error`;
+            outputs.exec.textContent += msg + "\n";
+            outputs.info.textContent += msg + "\n";
+            statusLine.textContent = `Worker Message Error (${new Date().toISOString()})`;
         };
         worker.postMessage({ type: "compile", code: editor.value });
     };
@@ -322,7 +354,7 @@ export function initUI() {
             worker.terminate();
             worker = null;
             clearTimer();
-            statusLine.textContent = "Aborted";
+            statusLine.textContent = `Aborted (${new Date().toISOString()})`;
             const abortDuration = performance.now() - startPerf;
             outputs.info.textContent += `[${new Date().toLocaleTimeString()}] End Error: Aborted duration=${abortDuration.toFixed(2)}ms\n`;
         }
