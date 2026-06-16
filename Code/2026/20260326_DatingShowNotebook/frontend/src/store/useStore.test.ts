@@ -108,9 +108,11 @@ describe('useStore', () => {
   });
 
   it('openFolder handles error', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockedNetClient.post.mockRejectedValueOnce(new Error('Fetch failed'));
     await expect(store.getState().openFolder('fail')).rejects.toThrow('Fetch failed');
     expect(store.getState().isOpening).toBe(false);
+    spy.mockRestore();
   });
 
   /* Ensures that multiple concurrent folder opening requests are prevented. */
@@ -276,6 +278,51 @@ describe('useStore', () => {
     expect(store.getState().currentFolderPath).toBe('ssr-path');
     expect(store.getState().selectedEpisodeId).toBe(1);
     expect(store.getState().selectedEventId).toBe(2);
+  });
+
+  it('getInitialView finds the last event in the last episode with events', () => {
+    const mockData = {
+      people: [],
+      episodes: [
+        { id: 1, title: 'Ep 1', events: [{ id: 10, title: 'Ev 1-1', messages: [], teams: {} }] },
+        { id: 2, title: 'Ep 2', events: [] }, // Empty last episode
+      ],
+      nextUniqueId: 3,
+      bodyScale: 1,
+      descriptionScale: 1,
+    };
+    store.getState().initializeSSR(mockData, 'path');
+    expect(store.getState().selectedEpisodeId).toBe(1);
+    expect(store.getState().selectedEventId).toBe(10);
+  });
+
+  it('getInitialView returns null if no events found in any episode', () => {
+    const mockData = {
+      people: [],
+      episodes: [
+        { id: 1, title: 'Ep 1', events: [] },
+        { id: 2, title: 'Ep 2', events: [] },
+      ],
+      nextUniqueId: 3,
+      bodyScale: 1,
+      descriptionScale: 1,
+    };
+    store.getState().initializeSSR(mockData, 'path');
+    expect(store.getState().selectedEpisodeId).toBeNull();
+    expect(store.getState().selectedEventId).toBeNull();
+  });
+
+  it('getInitialView returns null if there are no episodes', () => {
+    const mockData = {
+      people: [],
+      episodes: [],
+      nextUniqueId: 1,
+      bodyScale: 1,
+      descriptionScale: 1,
+    };
+    store.getState().initializeSSR(mockData, 'path');
+    expect(store.getState().selectedEpisodeId).toBeNull();
+    expect(store.getState().selectedEventId).toBeNull();
   });
 
   it('createAppStore reads from window.__INITIAL_DATA__', () => {

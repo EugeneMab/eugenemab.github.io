@@ -6,8 +6,8 @@
 - [x] Chapter 3: Common Programming Concepts
 - [x] Chapter 4: Understanding Ownership
 - [x] Chapter 5: Using Structs to Structure Related Data
-- [ ] Chapter 6: Enums and Pattern Matching
-- [ ] Chapter 7: Packages, Crates, and Modules
+- [x] Chapter 6: Enums and Pattern Matching
+- [ ] Chapter 7: Packages, Crates, and Modules (started)
 - [ ] Chapter 8: Common Collections
 - [ ] Chapter 9: Error Handling
 - [ ] Chapter 10: Generic Types, Traits, and Lifetimes
@@ -40,6 +40,20 @@
 - [x] Book 5-1: Defining and Instantiating Structs (Completed)
 - [x] Book 5-2: An Example Program Using Structs (Completed)
 - [x] Book 5-3: Method Syntax (Completed)
+- [x] Chapter 6: Enums and Pattern Matching (samples added)
 
 ## Next Up
-- [ ] Chapter 6: Enums and Pattern Matching
+- Chapter 7: Packages, Crates, and Modules — kickoff
+
+### Chapter 7 initial checklist (start here)
+- [ ] Book 7-1: Packages and Crates (add samples demonstrating cargo package creation)
+- [ ] Book 7-2: Defining Modules (module syntax, mod/use examples)
+- [ ] Book 7-3: Paths for Referring to an Item in the Module Tree
+- [ ] Book 7-4: Bringing Paths into Scope with the use Keyword
+- [ ] Book 7-5: Separating Modules into Different Files
+
+Notes:
+- Chapter 6 samples were generated and included under `samples/` and `pub/samples/`.
+- Start Chapter 7 by extracting code blocks from the Rust book source and adding
+  sample files named `book07_<section>_<shortname>.rs` (UI titles: "Book 7-1: ...").
+- Follow existing naming conventions and run the UI tests after adding each section.

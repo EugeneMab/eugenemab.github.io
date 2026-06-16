@@ -162,16 +162,16 @@ const defaultAppData: AppData = {
 };
 
 function getInitialView(data: AppData) {
-  let lastEpisodeId = null;
-  let lastEventId = null;
-  if (data.episodes.length > 0) {
-    const lastEpisode = data.episodes[data.episodes.length - 1];
-    lastEpisodeId = lastEpisode.id;
-    if (lastEpisode.events.length > 0) {
-      lastEventId = lastEpisode.events[lastEpisode.events.length - 1].id;
+  for (let i = data.episodes.length - 1; i >= 0; i--) {
+    const episode = data.episodes[i];
+    if (episode.events.length > 0) {
+      return {
+        lastEpisodeId: episode.id,
+        lastEventId: episode.events[episode.events.length - 1].id,
+      };
     }
   }
-  return { lastEpisodeId, lastEventId };
+  return { lastEpisodeId: null, lastEventId: null };
 }
 
 let globalSaveTimeout: ReturnType<typeof setTimeout> | null = null;

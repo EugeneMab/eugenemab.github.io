@@ -33,16 +33,21 @@ export class Parser {
             this.consume(TokenType.RBRACKET, "Expect ']' after attribute");
             attributes.push(attr);
         }
+        const isPublic = this.match(TokenType.PUB);
         if (this.match(TokenType.LET))
             return this.parseLetStatement();
         if (this.match(TokenType.CONST))
-            return this.parseConstStatement();
+            return this.parseConstStatement(isPublic);
+        if (this.match(TokenType.MOD))
+            return this.parseModuleDeclaration(isPublic);
+        if (this.match(TokenType.USE))
+            return this.parseUseDeclaration(isPublic);
         if (this.match(TokenType.FN))
-            return this.parseFunctionDeclaration(attributes);
+            return this.parseFunctionDeclaration(isPublic, attributes);
         if (this.match(TokenType.STRUCT))
-            return this.parseStructDeclaration(attributes);
+            return this.parseStructDeclaration(isPublic, attributes);
         if (this.match(TokenType.ENUM))
-            return this.parseEnumDeclaration(attributes);
+            return this.parseEnumDeclaration(isPublic, attributes);
         if (this.match(TokenType.IMPL))
             return this.parseImplDeclaration();
         if (this.match(TokenType.IF))
@@ -177,7 +182,7 @@ export class Parser {
         this.consume(TokenType.SEMICOLON, "Expect ';' after let statement");
         return { type: "LetStatement", token, name, isMutable, initializer };
     }
-    parseConstStatement() {
+    parseConstStatement(isPublic) {
         const token = this.previous();
         const name = this.consume(TokenType.IDENTIFIER, "Expect identifier after 'const'").value;
         this.consume(TokenType.COLON, "Expect ':' after identifier");
@@ -185,7 +190,7 @@ export class Parser {
         this.consume(TokenType.EQUALS, "Expect '=' after type");
         const initializer = this.parseExpression();
         this.consume(TokenType.SEMICOLON, "Expect ';' after const statement");
-        return { type: "ConstStatement", token, name, initializer };
+        return { type: "ConstStatement", token, name, initializer, isPublic };
     }
     parseType() {
         let type = "";
@@ -219,7 +224,7 @@ export class Parser {
         }
         return type;
     }
-    parseFunctionDeclaration(attributes = []) {
+    parseFunctionDeclaration(isPublic, attributes = []) {
         const token = this.previous();
         const name = this.consume(TokenType.IDENTIFIER, "Expect function name").value;
         this.consume(TokenType.LPAREN, "Expect '(' after function name");
@@ -285,6 +290,7 @@ export class Parser {
             params,
             returnType,
             body,
+            isPublic,
             attributes,
         };
     }
@@ -304,13 +310,14 @@ export class Parser {
                 this.consume(TokenType.RBRACKET, "Expect ']' after attribute");
                 attributes.push(attr);
             }
+            const isPublic = this.match(TokenType.PUB);
             this.consume(TokenType.FN, "Expect 'fn' in impl block");
-            functions.push(this.parseFunctionDeclaration(attributes));
+            functions.push(this.parseFunctionDeclaration(isPublic, attributes));
         }
         this.consume(TokenType.RBRACE, "Expect '}' after impl block");
         return { type: "ImplDeclaration", token, target, functions };
     }
-    parseStructDeclaration(attributes = []) {
+    parseStructDeclaration(isPublic, attributes = []) {
         const token = this.previous();
         const name = this.consume(TokenType.IDENTIFIER, "Expect struct name").value;
         if (this.match(TokenType.LBRACE)) {
@@ -319,10 +326,11 @@ export class Parser {
                 do {
                     if (this.check(TokenType.RBRACE))
                         break;
+                    const fIsPublic = this.match(TokenType.PUB);
                     const fName = this.consume(TokenType.IDENTIFIER, "Expect field name").value;
                     this.consume(TokenType.COLON, "Expect ':' after field name");
                     const fType = this.parseType();
-                    fields.push({ name: fName, type: fType });
+                    fields.push({ name: fName, type: fType, isPublic: fIsPublic });
                 } while (this.match(TokenType.COMMA));
             }
             this.consume(TokenType.RBRACE, "Expect '}' after struct fields");
@@ -331,6 +339,7 @@ export class Parser {
                 token,
                 name,
                 fields,
+                isPublic,
                 attributes,
             };
         }
@@ -350,15 +359,22 @@ export class Parser {
                 token,
                 name,
                 fields,
+                isPublic,
                 attributes,
             };
         }
         else {
             this.consume(TokenType.SEMICOLON, "Expect ';' after unit struct");
-            return { type: "UnitStructDeclaration", token, name, attributes };
+            return {
+                type: "UnitStructDeclaration",
+                token,
+                name,
+                isPublic,
+                attributes,
+            };
         }
     }
-    parseEnumDeclaration(attributes = []) {
+    parseEnumDeclaration(isPublic, attributes = []) {
         const token = this.previous();
         const name = this.consume(TokenType.IDENTIFIER, "Expect enum name").value;
         this.consume(TokenType.LBRACE, "Expect '{' after enum name");
@@ -387,7 +403,49 @@ export class Parser {
             } while (this.match(TokenType.COMMA));
         }
         this.consume(TokenType.RBRACE, "Expect '}' after enum variants");
-        return { type: "EnumDeclaration", token, name, variants, attributes };
+        return {
+            type: "EnumDeclaration",
+            token,
+            name,
+            variants,
+            isPublic,
+            attributes,
+        };
+    }
+    parseModuleDeclaration(isPublic) {
+        const token = this.previous();
+        const name = this.consume(TokenType.IDENTIFIER, "Expect module name").value;
+        const body = this.parseBlockStatement();
+        return { type: "ModuleDeclaration", token, name, body, isPublic };
+    }
+    parseUseDeclaration(isPublic) {
+        const token = this.previous();
+        let path = "";
+        if (this.match(TokenType.COLON_COLON)) {
+            path += "::";
+        }
+        else if (this.match(TokenType.CRATE)) {
+            path += "crate";
+        }
+        else if (this.match(TokenType.SUPER)) {
+            path += "super";
+        }
+        else if (this.match(TokenType.SELF)) {
+            path += "self";
+        }
+        if (path === "" || path === "::") {
+            path += this.consume(TokenType.IDENTIFIER, "Expect path after 'use'").value;
+        }
+        while (this.match(TokenType.COLON_COLON)) {
+            path += "::";
+            if (this.match(TokenType.STAR)) {
+                path += "*";
+                break;
+            }
+            path += this.consume(TokenType.IDENTIFIER, "Expect identifier").value;
+        }
+        this.consume(TokenType.SEMICOLON, "Expect ';' after use declaration");
+        return { type: "UseDeclaration", token, path, isPublic };
     }
     parseBlockStatement() {
         const token = this.consume(TokenType.LBRACE, "Expect '{' to start block");
@@ -403,7 +461,13 @@ export class Parser {
                 this.check(TokenType.FOR) ||
                 this.check(TokenType.RETURN) ||
                 this.check(TokenType.BREAK) ||
-                this.check(TokenType.CONTINUE)) {
+                this.check(TokenType.CONTINUE) ||
+                this.check(TokenType.PUB) ||
+                this.check(TokenType.MOD) ||
+                this.check(TokenType.USE) ||
+                this.check(TokenType.STRUCT) ||
+                this.check(TokenType.ENUM) ||
+                this.check(TokenType.IMPL)) {
                 body.push(this.parseStatement());
                 continue;
             }
@@ -707,7 +771,7 @@ export class Parser {
                 rawType: "bool",
             };
         }
-        if (this.match(TokenType.IDENTIFIER, TokenType.PANIC, TokenType.SELF, TokenType.SELF_TYPE)) {
+        if (this.match(TokenType.IDENTIFIER, TokenType.PANIC, TokenType.SELF, TokenType.SELF_TYPE, TokenType.CRATE, TokenType.SUPER)) {
             const token = this.previous();
             let name = token.value;
             while (this.match(TokenType.COLON_COLON)) {

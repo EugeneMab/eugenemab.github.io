@@ -65,6 +65,8 @@ export class Emitter {
     functionReturnTypes = new Map();
     structDefinitions = new Map();
     enumDefinitions = new Map();
+    moduleUseMappings = new Map();
+    itemIsPublic = new Map();
     constructor(program, source) {
         this.program = program;
         this.source = source;
@@ -102,9 +104,10 @@ export class Emitter {
         if (structName === "Self" &&
             this.currentFunctionName &&
             this.currentFunctionName.includes("::")) {
-            structName = this.currentFunctionName.split("::")[0];
+            structName = this.currentFunctionName.split("::").slice(0, -1).join("::");
         }
-        const struct = this.structDefinitions.get(structName);
+        const fullName = this.resolvePath(structName);
+        const struct = this.structDefinitions.get(fullName);
         if (!struct)
             this.throwError(`Unknown struct: ${structName}`, {});
         if (struct.type === "RegularStructDeclaration") {
@@ -124,7 +127,8 @@ export class Emitter {
         this.throwError(`Unknown field: ${fieldName} in struct ${structName}`, {});
     }
     getStructSize(structName) {
-        const struct = this.structDefinitions.get(structName);
+        const fullName = this.resolvePath(structName);
+        const struct = this.structDefinitions.get(fullName);
         if (!struct)
             return 4; // Default to 4 if not found (might be a pointer)
         if (struct.type === "RegularStructDeclaration") {
@@ -178,7 +182,7 @@ export class Emitter {
                 if (expr.member === "len")
                     return "usize";
                 const objectType = this.inferExpressionType(expr.object);
-                const baseType = this.getBaseType(objectType);
+                const baseType = this.resolvePath(this.getBaseType(objectType) || "");
                 if (baseType && this.structDefinitions.has(baseType)) {
                     const struct = this.structDefinitions.get(baseType);
                     if (struct.type === "RegularStructDeclaration") {
@@ -460,56 +464,84 @@ export class Emitter {
         this.functionReturnTypes.clear();
         this.structDefinitions.clear();
         this.enumDefinitions.clear();
-        this.program.body.forEach((s) => {
-            if (s.type === "RegularStructDeclaration" ||
-                s.type === "TupleStructDeclaration" ||
-                s.type === "UnitStructDeclaration") {
-                this.structDefinitions.set(s.name, s);
-                if (s.type === "RegularStructDeclaration") {
-                    s.fields.forEach((f) => {
-                        if (f.type.includes("&") && !f.type.includes("'")) {
-                            this.throwError("missing lifetime specifier", s);
-                        }
-                    });
-                }
-            }
-            else if (s.type === "EnumDeclaration") {
-                // Record enum definitions for minimal constructor support
-                this.enumDefinitions.set(s.name, s);
-            }
-        });
+        this.moduleUseMappings.clear();
+        this.itemIsPublic.clear();
         const userFunctions = [];
-        this.program.body.forEach((s) => {
-            if (s.type === "FunctionDeclaration") {
-                userFunctions.push(s);
-            }
-            else if (s.type === "ImplDeclaration") {
-                s.functions.forEach((fn) => {
-                    const mangledName = `${s.target}::${fn.name}`;
-                    const params = fn.params.map((p) => {
-                        if (p.isSelf && !p.type) {
+        const collect = (statements, prefix) => {
+            const mappings = new Map();
+            this.moduleUseMappings.set(prefix, mappings);
+            statements.forEach((s) => {
+                if (s.type === "ModuleDeclaration") {
+                    const fullName = prefix + s.name;
+                    this.itemIsPublic.set(fullName, s.isPublic);
+                    collect(s.body.body, fullName + "::");
+                }
+                else if (s.type === "UseDeclaration") {
+                    let path = s.path;
+                    if (path.startsWith("crate::"))
+                        path = path.substring(7);
+                    const alias = path.split("::").pop();
+                    mappings.set(alias, path);
+                }
+                else if (s.type === "RegularStructDeclaration" ||
+                    s.type === "TupleStructDeclaration" ||
+                    s.type === "UnitStructDeclaration") {
+                    const fullName = prefix + s.name;
+                    this.structDefinitions.set(fullName, s);
+                    this.itemIsPublic.set(fullName, s.isPublic);
+                    if (s.type === "RegularStructDeclaration") {
+                        s.fields.forEach((f) => {
+                            if (f.type.includes("&") && !f.type.includes("'")) {
+                                this.throwError("missing lifetime specifier", s);
+                            }
+                        });
+                    }
+                }
+                else if (s.type === "EnumDeclaration") {
+                    const fullName = prefix + s.name;
+                    this.enumDefinitions.set(fullName, s);
+                    this.itemIsPublic.set(fullName, s.isPublic);
+                }
+                else if (s.type === "FunctionDeclaration") {
+                    const fullName = prefix + s.name;
+                    userFunctions.push({ ...s, name: fullName });
+                    this.itemIsPublic.set(fullName, s.isPublic);
+                }
+                else if (s.type === "ImplDeclaration") {
+                    s.functions.forEach((fn) => {
+                        const mangledName = `${prefix}${s.target}::${fn.name}`;
+                        const params = fn.params.map((p) => {
+                            if (p.isSelf && !p.type) {
+                                return {
+                                    ...p,
+                                    type: (p.isBorrow ? "&" : "") +
+                                        (p.isMut ? "mut " : "") +
+                                        s.target,
+                                };
+                            }
                             return {
                                 ...p,
-                                type: (p.isBorrow ? "&" : "") + (p.isMut ? "mut " : "") + s.target,
+                                type: p.type === "Self" ? s.target : p.type,
                             };
-                        }
-                        return {
-                            ...p,
-                            type: p.type === "Self" ? s.target : p.type,
-                        };
+                        });
+                        userFunctions.push({
+                            ...fn,
+                            name: mangledName,
+                            params,
+                            returnType: fn.returnType === "Self" ? s.target : fn.returnType,
+                        });
+                        this.itemIsPublic.set(mangledName, fn.isPublic);
                     });
-                    userFunctions.push({
-                        ...fn,
-                        name: mangledName,
-                        params,
-                        returnType: fn.returnType === "Self" ? s.target : fn.returnType,
-                    });
-                });
-            }
-        });
+                }
+            });
+        };
+        collect(this.program.body, "");
         userFunctions.forEach((fn, i) => {
             this.functionIndices.set(fn.name, HELPER_FN_START + i);
-            this.functionReturnTypes.set(fn.name, this.normalizeType(fn.returnType));
+            const resolvedReturnType = fn.returnType
+                ? this.resolvePath(fn.returnType, fn.name)
+                : undefined;
+            this.functionReturnTypes.set(fn.name, this.normalizeType(resolvedReturnType));
         });
         return userFunctions;
     }
@@ -565,6 +597,7 @@ export class Emitter {
                 vars: new Map(),
                 borrows: [],
                 heapBackupName: "",
+                useMappings: new Map(),
             },
         ];
         for (const p of fn.params) {
@@ -607,6 +640,7 @@ export class Emitter {
             vars: new Map(),
             borrows: [],
             heapBackupName,
+            useMappings: new Map(),
         });
         for (const stmt of block.body) {
             if (stmt.type === "LetStatement") {
@@ -622,6 +656,13 @@ export class Emitter {
                 };
                 this.scopeStack[this.scopeStack.length - 1].vars.set(stmt.name, info);
                 this.emitWATLine(`local.set $${uniqueName}`);
+            }
+            else if (stmt.type === "UseDeclaration") {
+                let path = stmt.path;
+                if (path.startsWith("crate::"))
+                    path = path.substring(7);
+                const alias = path.split("::").pop();
+                this.scopeStack[this.scopeStack.length - 1].useMappings.set(alias, path);
             }
             else if (stmt.type === "ConstStatement") {
                 this.emitExpressionWAT(stmt.initializer);
@@ -850,6 +891,137 @@ export class Emitter {
         }
         return undefined;
     }
+    resolvePath(name, context) {
+        const current = context ?? this.currentFunctionName;
+        let resolved = name;
+        if (name.startsWith("crate::")) {
+            resolved = name.substring(7);
+        }
+        else {
+            let foundMapping = false;
+            // Check local use mappings
+            for (let i = this.scopeStack.length - 1; i >= 0; i--) {
+                const mapping = this.scopeStack[i].useMappings;
+                if (mapping) {
+                    const parts = name.split("::");
+                    const first = parts[0];
+                    if (mapping.has(first)) {
+                        resolved =
+                            mapping.get(first) +
+                                (parts.length > 1 ? "::" + parts.slice(1).join("::") : "");
+                        foundMapping = true;
+                        break;
+                    }
+                }
+            }
+            // Check module-level use mappings
+            if (!foundMapping && current) {
+                const contextParts = current.split("::").slice(0, -1);
+                while (contextParts.length >= 0) {
+                    const contextPrefix = contextParts.length > 0 ? contextParts.join("::") + "::" : "";
+                    const mappings = this.moduleUseMappings.get(contextPrefix);
+                    if (mappings) {
+                        const parts = name.split("::");
+                        const first = parts[0];
+                        if (mappings.has(first)) {
+                            resolved =
+                                mappings.get(first) +
+                                    (parts.length > 1 ? "::" + parts.slice(1).join("::") : "");
+                            foundMapping = true;
+                            break;
+                        }
+                    }
+                    if (contextParts.length === 0)
+                        break;
+                    contextParts.pop();
+                }
+            }
+            if (!foundMapping) {
+                if (name.startsWith("super::")) {
+                    if (!current || !current.includes("::")) {
+                        resolved = name.substring(7); // Already at root
+                    }
+                    else {
+                        const parts = current.split("::");
+                        if (parts.length <= 2) {
+                            resolved = name.substring(7); // super is root
+                        }
+                        else {
+                            resolved =
+                                parts.slice(0, -2).join("::") + "::" + name.substring(7);
+                        }
+                    }
+                }
+                else if (name.startsWith("self::")) {
+                    if (!current || !current.includes("::")) {
+                        resolved = name.substring(6);
+                    }
+                    else {
+                        const parts = current.split("::");
+                        resolved = parts.slice(0, -1).join("::") + "::" + name.substring(6);
+                    }
+                }
+                else if (!name.startsWith("::") &&
+                    current &&
+                    current.includes("::")) {
+                    // If it's a relative name, check if it exists in current module or parent modules
+                    const parts = current.split("::").slice(0, -1);
+                    while (parts.length > 0) {
+                        const prefix = parts.join("::") + "::";
+                        const fullName = prefix + name;
+                        if (this.functionIndices.has(fullName) ||
+                            this.structDefinitions.has(fullName) ||
+                            this.enumDefinitions.has(fullName)) {
+                            resolved = fullName;
+                            break;
+                        }
+                        parts.pop();
+                    }
+                }
+            }
+        }
+        this.checkVisibility(resolved, current);
+        return resolved;
+    }
+    checkVisibility(path, context) {
+        if (this.functionIndices.has(path) ||
+            this.structDefinitions.has(path) ||
+            this.enumDefinitions.has(path) ||
+            this.itemIsPublic.has(path)) {
+            const parts = path.split("::");
+            let currentPath = "";
+            for (let i = 0; i < parts.length; i++) {
+                currentPath += (i > 0 ? "::" : "") + parts[i];
+                const isPublic = this.itemIsPublic.get(currentPath);
+                if (isPublic === false) {
+                    let parent = currentPath.includes("::")
+                        ? currentPath.split("::").slice(0, -1).join("::")
+                        : "";
+                    if (this.structDefinitions.has(parent) ||
+                        this.enumDefinitions.has(parent)) {
+                        parent = parent.includes("::")
+                            ? parent.split("::").slice(0, -1).join("::")
+                            : "";
+                    }
+                    const ctx = context || "";
+                    let ctxModule = ctx.includes("::")
+                        ? ctx.split("::").slice(0, -1).join("::")
+                        : "";
+                    if (this.structDefinitions.has(ctxModule) ||
+                        this.enumDefinitions.has(ctxModule)) {
+                        ctxModule = ctxModule.includes("::")
+                            ? ctxModule.split("::").slice(0, -1).join("::")
+                            : "";
+                    }
+                    const isInsideParent = parent === "" || ctxModule.startsWith(parent + "::");
+                    // Context can see it if context's module is same as parent or is inside parent
+                    if (ctxModule !== parent && !isInsideParent) {
+                        throw new Error(`Item \`${currentPath}\` is private`);
+                    }
+                }
+            }
+        }
+    }
     isMutableExpression(expr) {
         if (expr.type === "Identifier") {
             const info = this.resolveVariable(expr.name);
@@ -934,10 +1106,12 @@ export class Emitter {
                     if (arm.pattern &&
                         arm.pattern.type === "Identifier" &&
                         arm.pattern.name.includes("::")) {
-                        const parts = arm.pattern.name.split("::");
-                        const enumName = parts[0];
-                        const variantName = parts[1];
-                        const enumDef = this.enumDefinitions.get(enumName);
+                        const name = arm.pattern.name;
+                        const lastColon = name.lastIndexOf("::");
+                        const enumNamePart = name.substring(0, lastColon);
+                        const variantName = name.substring(lastColon + 2);
+                        const resolvedEnumName = this.resolvePath(enumNamePart);
+                        const enumDef = this.enumDefinitions.get(resolvedEnumName);
                         if (enumDef) {
                             variantIndex = enumDef.variants.findIndex((v) => v.name === variantName);
                         }
@@ -945,9 +1119,11 @@ export class Emitter {
                     else if (arm.pattern && arm.pattern.type === "CallExpression") {
                         const callee = arm.pattern.callee;
                         if (typeof callee === "string" && callee.includes("::")) {
-                            const enumName = callee.split("::")[0];
-                            const variantName = callee.split("::")[1];
-                            const enumDef = this.enumDefinitions.get(enumName);
+                            const lastColon = callee.lastIndexOf("::");
+                            const enumNamePart = callee.substring(0, lastColon);
+                            const variantName = callee.substring(lastColon + 2);
+                            const resolvedEnumName = this.resolvePath(enumNamePart);
+                            const enumDef = this.enumDefinitions.get(resolvedEnumName);
                             if (enumDef) {
                                 variantIndex = enumDef.variants.findIndex((v) => v.name === variantName);
                             }
@@ -1014,7 +1190,7 @@ export class Emitter {
                 if (structName === "Self") {
                     const fnName = Array.from(this.functionIndices.entries()).find(([, idx]) => idx === this.functionIndices.get(this.currentFunctionName || ""))?.[0];
                     if (fnName && fnName.includes("::")) {
-                        structName = fnName.split("::")[0];
+                        structName = fnName.split("::").slice(0, -1).join("::");
                     }
                 }
                 const size = this.getStructSize(structName);
@@ -1114,7 +1290,7 @@ export class Emitter {
                 }
                 else {
                     const objectType = this.inferExpressionType(expr.object);
-                    const baseType = this.getBaseType(objectType);
+                    const baseType = this.resolvePath(this.getBaseType(objectType) || "");
                     if (baseType && this.structDefinitions.has(baseType)) {
                         const offset = this.getStructFieldOffset(baseType, expr.member);
                         this.emitExpressionWAT(expr.object);
@@ -1256,12 +1432,13 @@ export class Emitter {
                     break;
                 }
                 const retainBorrow = this.isStringLikeType(this.functionReturnTypes.get(expr.callee));
-                // Enum variant constructor support (WAT path)
+                // Enum variant constructor support
                 if (expr.callee.includes("::")) {
-                    const parts = expr.callee.split("::");
-                    const enumName = parts[0];
-                    const variantName = parts[1];
-                    const enumDef = this.enumDefinitions.get(enumName);
+                    const lastColon = expr.callee.lastIndexOf("::");
+                    const enumNamePart = expr.callee.substring(0, lastColon);
+                    const variantName = expr.callee.substring(lastColon + 2);
+                    const resolvedEnumName = this.resolvePath(enumNamePart);
+                    const enumDef = this.enumDefinitions.get(resolvedEnumName);
                     if (enumDef) {
                         const variantIndex = enumDef.variants.findIndex((v) => v.name === variantName);
                         if (variantIndex === -1) {
@@ -1318,7 +1495,7 @@ export class Emitter {
                     this.emitWATLine(`local.get $${ptrLocal}`);
                     break;
                 }
-                let callee = expr.callee;
+                let callee = this.resolvePath(expr.callee);
                 if (!this.functionIndices.has(callee) && expr.args.length > 0) {
                     const type = this.inferExpressionType(expr.args[0]);
                     const baseType = this.getBaseType(type);
@@ -1432,7 +1609,7 @@ export class Emitter {
                             this.throwError("Cannot assign to fields of an immutable object", memberExpr.object);
                         }
                         const objectType = this.inferExpressionType(memberExpr.object);
-                        const baseType = this.getBaseType(objectType);
+                        const baseType = this.resolvePath(this.getBaseType(objectType) || "");
                         if (baseType && this.structDefinitions.has(baseType)) {
                             const offset = this.getStructFieldOffset(baseType, memberExpr.member);
                             this.emitExpressionWAT(memberExpr.object);
@@ -1805,6 +1982,7 @@ export class Emitter {
                 vars: new Map(),
                 borrows: [],
                 heapBackupName: "",
+                useMappings: new Map(),
             },
         ];
         fn.params.forEach((p, i) => {
@@ -1854,6 +2032,7 @@ export class Emitter {
             vars: new Map(),
             borrows: [],
             heapBackupName,
+            useMappings: new Map(),
         });
         for (const stmt of block.body) {
             if (stmt.type === "LetStatement") {
@@ -1869,6 +2048,13 @@ export class Emitter {
                 };
                 this.scopeStack[this.scopeStack.length - 1].vars.set(stmt.name, info);
                 body.push(OP_LOCAL_SET, 0xfe, uniqueName);
+            }
+            else if (stmt.type === "UseDeclaration") {
+                let path = stmt.path;
+                if (path.startsWith("crate::"))
+                    path = path.substring(7);
+                const alias = path.split("::").pop();
+                this.scopeStack[this.scopeStack.length - 1].useMappings.set(alias, path);
             }
             else if (stmt.type === "ConstStatement") {
                 this.emitExpressionBinary(stmt.initializer, body);
@@ -2141,10 +2327,12 @@ export class Emitter {
                     if (arm.pattern &&
                         arm.pattern.type === "Identifier" &&
                         arm.pattern.name.includes("::")) {
-                        const parts = arm.pattern.name.split("::");
-                        const enumName = parts[0];
-                        const variantName = parts[1];
-                        const enumDef = this.enumDefinitions.get(enumName);
+                        const name = arm.pattern.name;
+                        const lastColon = name.lastIndexOf("::");
+                        const enumNamePart = name.substring(0, lastColon);
+                        const variantName = name.substring(lastColon + 2);
+                        const resolvedEnumName = this.resolvePath(enumNamePart);
+                        const enumDef = this.enumDefinitions.get(resolvedEnumName);
                         if (enumDef) {
                             variantIndex = enumDef.variants.findIndex((v) => v.name === variantName);
                         }
@@ -2152,9 +2340,11 @@ export class Emitter {
                     else if (arm.pattern && arm.pattern.type === "CallExpression") {
                         const callee = arm.pattern.callee;
                         if (typeof callee === "string" && callee.includes("::")) {
-                            const enumName = callee.split("::")[0];
-                            const variantName = callee.split("::")[1];
-                            const enumDef = this.enumDefinitions.get(enumName);
+                            const lastColon = callee.lastIndexOf("::");
+                            const enumNamePart = callee.substring(0, lastColon);
+                            const variantName = callee.substring(lastColon + 2);
+                            const resolvedEnumName = this.resolvePath(enumNamePart);
+                            const enumDef = this.enumDefinitions.get(resolvedEnumName);
                             if (enumDef) {
                                 variantIndex = enumDef.variants.findIndex((v) => v.name === variantName);
                             }
@@ -2188,7 +2378,7 @@ export class Emitter {
                     // Find target struct from the current function's name if it's mangled
                     const fnName = Array.from(this.functionIndices.entries()).find(([, idx]) => idx === this.functionIndices.get(this.currentFunctionName || ""))?.[0];
                     if (fnName && fnName.includes("::")) {
-                        structName = fnName.split("::")[0];
+                        structName = fnName.split("::").slice(0, -1).join("::");
                     }
                 }
                 const size = this.getStructSize(structName);
@@ -2320,7 +2510,7 @@ export class Emitter {
                 }
                 else {
                     const objectType = this.inferExpressionType(expr.object);
-                    const baseType = this.getBaseType(objectType);
+                    const baseType = this.resolvePath(this.getBaseType(objectType) || "");
                     if (baseType && this.structDefinitions.has(baseType)) {
                         const offset = this.getStructFieldOffset(baseType, expr.member);
                         this.emitExpressionBinary(expr.object, body);
@@ -2537,7 +2727,7 @@ export class Emitter {
                             this.throwError("Cannot assign to fields of an immutable object", memberExpr.object);
                         }
                         const objectType = this.inferExpressionType(memberExpr.object);
-                        const baseType = this.getBaseType(objectType);
+                        const baseType = this.resolvePath(this.getBaseType(objectType) || "");
                         if (baseType && this.structDefinitions.has(baseType)) {
                             const offset = this.getStructFieldOffset(baseType, memberExpr.member);
                             this.emitExpressionBinary(memberExpr.object, body);
@@ -2832,12 +3022,13 @@ export class Emitter {
                     body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
                     break;
                 }
-                // Enum variant constructor (binary path)
+                // Enum variant constructor
                 if (expr.callee.includes("::")) {
-                    const parts = expr.callee.split("::");
-                    const enumName = parts[0];
-                    const variantName = parts[1];
-                    const enumDef = this.enumDefinitions.get(enumName);
+                    const lastColon = expr.callee.lastIndexOf("::");
+                    const enumNamePart = expr.callee.substring(0, lastColon);
+                    const variantName = expr.callee.substring(lastColon + 2);
+                    const resolvedEnumName = this.resolvePath(enumNamePart);
+                    const enumDef = this.enumDefinitions.get(resolvedEnumName);
                     if (enumDef) {
                         const variantIndex = enumDef.variants.findIndex((v) => v.name === variantName);
                         if (variantIndex === -1) {
@@ -2900,7 +3091,7 @@ export class Emitter {
                     break;
                 }
                 const retainBorrow = this.isStringLikeType(this.functionReturnTypes.get(expr.callee));
-                let callee = expr.callee;
+                let callee = this.resolvePath(expr.callee);
                 if (!this.functionIndices.has(callee) && expr.args.length > 0) {
                     const type = this.inferExpressionType(expr.args[0]);
                     const baseType = this.getBaseType(type);

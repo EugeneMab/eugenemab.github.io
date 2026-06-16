@@ -27,7 +27,22 @@ export type Statement =
   | BreakStatement
   | ContinueStatement
   | ImplDeclaration
-  | EnumDeclaration;
+  | EnumDeclaration
+  | ModuleDeclaration
+  | UseDeclaration;
+
+export interface ModuleDeclaration extends BaseNode {
+  type: "ModuleDeclaration";
+  name: string;
+  body: BlockStatement;
+  isPublic: boolean;
+}
+
+export interface UseDeclaration extends BaseNode {
+  type: "UseDeclaration";
+  path: string;
+  isPublic: boolean;
+}
 
 export interface ImplDeclaration extends BaseNode {
   type: "ImplDeclaration";
@@ -39,6 +54,7 @@ export interface EnumDeclaration extends BaseNode {
   type: "EnumDeclaration";
   name: string;
   variants: { name: string }[];
+  isPublic: boolean;
   attributes?: string[];
 }
 
@@ -53,6 +69,7 @@ export interface ConstStatement extends BaseNode {
   type: "ConstStatement";
   name: string;
   initializer: Expression;
+  isPublic: boolean;
 }
 
 export interface IfStatement extends BaseNode {
@@ -121,6 +138,7 @@ export interface FunctionDeclaration extends BaseNode {
   }[];
   returnType?: string;
   body: BlockStatement;
+  isPublic: boolean;
   attributes?: string[];
 }
 
@@ -132,7 +150,8 @@ export type StructDeclaration =
 export interface RegularStructDeclaration extends BaseNode {
   type: "RegularStructDeclaration";
   name: string;
-  fields: { name: string; type: string }[];
+  fields: { name: string; type: string; isPublic: boolean }[];
+  isPublic: boolean;
   attributes?: string[];
 }
 
@@ -140,12 +159,14 @@ export interface TupleStructDeclaration extends BaseNode {
   type: "TupleStructDeclaration";
   name: string;
   fields: string[];
+  isPublic: boolean;
   attributes?: string[];
 }
 
 export interface UnitStructDeclaration extends BaseNode {
   type: "UnitStructDeclaration";
   name: string;
+  isPublic: boolean;
   attributes?: string[];
 }
 
@@ -287,14 +308,18 @@ export class Parser {
       attributes.push(attr);
     }
 
+    const isPublic = this.match(TokenType.PUB);
+
     if (this.match(TokenType.LET)) return this.parseLetStatement();
-    if (this.match(TokenType.CONST)) return this.parseConstStatement();
+    if (this.match(TokenType.CONST)) return this.parseConstStatement(isPublic);
+    if (this.match(TokenType.MOD)) return this.parseModuleDeclaration(isPublic);
+    if (this.match(TokenType.USE)) return this.parseUseDeclaration(isPublic);
     if (this.match(TokenType.FN))
-      return this.parseFunctionDeclaration(attributes);
+      return this.parseFunctionDeclaration(isPublic, attributes);
     if (this.match(TokenType.STRUCT))
-      return this.parseStructDeclaration(attributes);
+      return this.parseStructDeclaration(isPublic, attributes);
     if (this.match(TokenType.ENUM))
-      return this.parseEnumDeclaration(attributes);
+      return this.parseEnumDeclaration(isPublic, attributes);
     if (this.match(TokenType.IMPL)) return this.parseImplDeclaration();
     if (this.match(TokenType.IF)) return this.parseIfStatement();
     if (this.match(TokenType.LOOP)) return this.parseLoopStatement();
@@ -439,7 +464,7 @@ export class Parser {
     return { type: "LetStatement", token, name, isMutable, initializer };
   }
 
-  private parseConstStatement(): ConstStatement {
+  private parseConstStatement(isPublic: boolean): ConstStatement {
     const token = this.previous();
     const name = this.consume(
       TokenType.IDENTIFIER,
@@ -450,7 +475,7 @@ export class Parser {
     this.consume(TokenType.EQUALS, "Expect '=' after type");
     const initializer = this.parseExpression();
     this.consume(TokenType.SEMICOLON, "Expect ';' after const statement");
-    return { type: "ConstStatement", token, name, initializer };
+    return { type: "ConstStatement", token, name, initializer, isPublic };
   }
 
   private parseType(): string {
@@ -500,6 +525,7 @@ export class Parser {
   }
 
   private parseFunctionDeclaration(
+    isPublic: boolean,
     attributes: string[] = [],
   ): FunctionDeclaration {
     const token = this.previous();
@@ -581,6 +607,7 @@ export class Parser {
       params,
       returnType,
       body,
+      isPublic,
       attributes,
     };
   }
@@ -604,29 +631,35 @@ export class Parser {
         this.consume(TokenType.RBRACKET, "Expect ']' after attribute");
         attributes.push(attr);
       }
+      const isPublic = this.match(TokenType.PUB);
       this.consume(TokenType.FN, "Expect 'fn' in impl block");
-      functions.push(this.parseFunctionDeclaration(attributes));
+      functions.push(this.parseFunctionDeclaration(isPublic, attributes));
     }
     this.consume(TokenType.RBRACE, "Expect '}' after impl block");
+
     return { type: "ImplDeclaration", token, target, functions };
   }
 
-  private parseStructDeclaration(attributes: string[] = []): StructDeclaration {
+  private parseStructDeclaration(
+    isPublic: boolean,
+    attributes: string[] = [],
+  ): StructDeclaration {
     const token = this.previous();
     const name = this.consume(TokenType.IDENTIFIER, "Expect struct name").value;
 
     if (this.match(TokenType.LBRACE)) {
-      const fields: { name: string; type: string }[] = [];
+      const fields: { name: string; type: string; isPublic: boolean }[] = [];
       if (!this.check(TokenType.RBRACE)) {
         do {
           if (this.check(TokenType.RBRACE)) break;
+          const fIsPublic = this.match(TokenType.PUB);
           const fName = this.consume(
             TokenType.IDENTIFIER,
             "Expect field name",
           ).value;
           this.consume(TokenType.COLON, "Expect ':' after field name");
           const fType = this.parseType();
-          fields.push({ name: fName, type: fType });
+          fields.push({ name: fName, type: fType, isPublic: fIsPublic });
         } while (this.match(TokenType.COMMA));
       }
       this.consume(TokenType.RBRACE, "Expect '}' after struct fields");
@@ -635,6 +668,7 @@ export class Parser {
         token,
         name,
         fields,
+        isPublic,
         attributes,
       };
     } else if (this.match(TokenType.LPAREN)) {
@@ -652,15 +686,25 @@ export class Parser {
         token,
         name,
         fields,
+        isPublic,
         attributes,
       };
     } else {
       this.consume(TokenType.SEMICOLON, "Expect ';' after unit struct");
-      return { type: "UnitStructDeclaration", token, name, attributes };
+      return {
+        type: "UnitStructDeclaration",
+        token,
+        name,
+        isPublic,
+        attributes,
+      };
     }
   }
 
-  private parseEnumDeclaration(attributes: string[] = []): EnumDeclaration {
+  private parseEnumDeclaration(
+    isPublic: boolean,
+    attributes: string[] = [],
+  ): EnumDeclaration {
     const token = this.previous();
     const name = this.consume(TokenType.IDENTIFIER, "Expect enum name").value;
     this.consume(TokenType.LBRACE, "Expect '{' after enum name");
@@ -690,7 +734,53 @@ export class Parser {
       } while (this.match(TokenType.COMMA));
     }
     this.consume(TokenType.RBRACE, "Expect '}' after enum variants");
-    return { type: "EnumDeclaration", token, name, variants, attributes };
+    return {
+      type: "EnumDeclaration",
+      token,
+      name,
+      variants,
+      isPublic,
+      attributes,
+    };
+  }
+
+  private parseModuleDeclaration(isPublic: boolean): ModuleDeclaration {
+    const token = this.previous();
+    const name = this.consume(TokenType.IDENTIFIER, "Expect module name").value;
+    const body = this.parseBlockStatement();
+    return { type: "ModuleDeclaration", token, name, body, isPublic };
+  }
+
+  private parseUseDeclaration(isPublic: boolean): UseDeclaration {
+    const token = this.previous();
+    let path = "";
+    if (this.match(TokenType.COLON_COLON)) {
+      path += "::";
+    } else if (this.match(TokenType.CRATE)) {
+      path += "crate";
+    } else if (this.match(TokenType.SUPER)) {
+      path += "super";
+    } else if (this.match(TokenType.SELF)) {
+      path += "self";
+    }
+
+    if (path === "" || path === "::") {
+      path += this.consume(
+        TokenType.IDENTIFIER,
+        "Expect path after 'use'",
+      ).value;
+    }
+
+    while (this.match(TokenType.COLON_COLON)) {
+      path += "::";
+      if (this.match(TokenType.STAR)) {
+        path += "*";
+        break;
+      }
+      path += this.consume(TokenType.IDENTIFIER, "Expect identifier").value;
+    }
+    this.consume(TokenType.SEMICOLON, "Expect ';' after use declaration");
+    return { type: "UseDeclaration", token, path, isPublic };
   }
 
   private parseBlockStatement(): BlockStatement {
@@ -709,7 +799,13 @@ export class Parser {
         this.check(TokenType.FOR) ||
         this.check(TokenType.RETURN) ||
         this.check(TokenType.BREAK) ||
-        this.check(TokenType.CONTINUE)
+        this.check(TokenType.CONTINUE) ||
+        this.check(TokenType.PUB) ||
+        this.check(TokenType.MOD) ||
+        this.check(TokenType.USE) ||
+        this.check(TokenType.STRUCT) ||
+        this.check(TokenType.ENUM) ||
+        this.check(TokenType.IMPL)
       ) {
         body.push(this.parseStatement());
         continue;
@@ -1077,6 +1173,8 @@ export class Parser {
         TokenType.PANIC,
         TokenType.SELF,
         TokenType.SELF_TYPE,
+        TokenType.CRATE,
+        TokenType.SUPER,
       )
     ) {
       const token = this.previous();
