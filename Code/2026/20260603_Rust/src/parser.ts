@@ -312,8 +312,7 @@ export class Parser {
 
     if (this.match(TokenType.LET)) return this.parseLetStatement();
     if (this.match(TokenType.CONST)) return this.parseConstStatement(isPublic);
-    if (this.match(TokenType.MOD))
-      return this.parseModuleDeclaration(isPublic);
+    if (this.match(TokenType.MOD)) return this.parseModuleDeclaration(isPublic);
     if (this.match(TokenType.USE)) return this.parseUseDeclaration(isPublic);
     if (this.match(TokenType.FN))
       return this.parseFunctionDeclaration(isPublic, attributes);
@@ -622,19 +621,19 @@ export class Parser {
     this.consume(TokenType.LBRACE, "Expect '{' after impl target");
     const functions: FunctionDeclaration[] = [];
     while (!this.check(TokenType.RBRACE) && !this.isAtEnd()) {
-    const attributes: string[] = [];
-    while (this.match(TokenType.HASH)) {
-      this.consume(TokenType.LBRACKET, "Expect '[' after '#'");
-      let attr = "";
-      while (!this.check(TokenType.RBRACKET) && !this.isAtEnd()) {
-        attr += this.advance().value;
+      const attributes: string[] = [];
+      while (this.match(TokenType.HASH)) {
+        this.consume(TokenType.LBRACKET, "Expect '[' after '#'");
+        let attr = "";
+        while (!this.check(TokenType.RBRACKET) && !this.isAtEnd()) {
+          attr += this.advance().value;
+        }
+        this.consume(TokenType.RBRACKET, "Expect ']' after attribute");
+        attributes.push(attr);
       }
-      this.consume(TokenType.RBRACKET, "Expect ']' after attribute");
-      attributes.push(attr);
-    }
-    const isPublic = this.match(TokenType.PUB);
-    this.consume(TokenType.FN, "Expect 'fn' in impl block");
-    functions.push(this.parseFunctionDeclaration(isPublic, attributes));
+      const isPublic = this.match(TokenType.PUB);
+      this.consume(TokenType.FN, "Expect 'fn' in impl block");
+      functions.push(this.parseFunctionDeclaration(isPublic, attributes));
     }
     this.consume(TokenType.RBRACE, "Expect '}' after impl block");
 
@@ -735,15 +734,19 @@ export class Parser {
       } while (this.match(TokenType.COMMA));
     }
     this.consume(TokenType.RBRACE, "Expect '}' after enum variants");
-    return { type: "EnumDeclaration", token, name, variants, isPublic, attributes };
+    return {
+      type: "EnumDeclaration",
+      token,
+      name,
+      variants,
+      isPublic,
+      attributes,
+    };
   }
 
   private parseModuleDeclaration(isPublic: boolean): ModuleDeclaration {
     const token = this.previous();
-    const name = this.consume(
-      TokenType.IDENTIFIER,
-      "Expect module name",
-    ).value;
+    const name = this.consume(TokenType.IDENTIFIER, "Expect module name").value;
     const body = this.parseBlockStatement();
     return { type: "ModuleDeclaration", token, name, body, isPublic };
   }

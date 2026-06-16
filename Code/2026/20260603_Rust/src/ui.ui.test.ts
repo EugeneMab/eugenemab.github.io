@@ -90,7 +90,7 @@ test("verify basic compiler flow in UI", async ({ page }) => {
     );
 
     const status = (await statusLine.textContent()) ?? "";
-    await writeLog(`case:${value}`, `status:${status.replace(/\r?\n/g, ' ')}`);
+    await writeLog(`case:${value}`, `status:${status.replace(/\r?\n/g, " ")}`);
 
     if (expectedStatus) {
       await expect(statusLine).toHaveText(expectedStatus, { timeout: 20000 });
@@ -111,7 +111,10 @@ test("verify basic compiler flow in UI", async ({ page }) => {
   for (const opt of options) {
     const val = opt.value;
     try {
-      await writeLog(`case:${val}`, "fetching sample text to determine expectation");
+      await writeLog(
+        `case:${val}`,
+        "fetching sample text to determine expectation",
+      );
       // Fetch sample text to decide positive vs negative expectations
       const sampleUrl = new URL(`/samples/${val}.rs`, origin).href;
       let sampleText = "";
@@ -130,22 +133,36 @@ test("verify basic compiler flow in UI", async ({ page }) => {
       if (isNegative) {
         // Negative case: must produce an error status
         const { status } = await runSample(val);
-        await writeLog(`case:${val}`, `expect negative; final status:${status}`);
+        await writeLog(
+          `case:${val}`,
+          `expect negative; final status:${status}`,
+        );
         const lower = status.toLowerCase();
         if (!lower.includes("error")) {
           const debugOut = await resultOutput.textContent();
-          await writeLog(`case:${val}`, `unexpected success; output:${(debugOut||'').replace(/\r?\n/g,' ')}`);
-          throw new Error(`Negative sample '${val}' did not error as expected. Status: ${status}`);
+          await writeLog(
+            `case:${val}`,
+            `unexpected success; output:${(debugOut || "").replace(/\r?\n/g, " ")}`,
+          );
+          throw new Error(
+            `Negative sample '${val}' did not error as expected. Status: ${status}`,
+          );
         }
       } else {
         // Positive case: must finish successfully (no Error status)
         const { status } = await runSample(val);
-        await writeLog(`case:${val}`, `expect positive; final status:${status}`);
+        await writeLog(
+          `case:${val}`,
+          `expect positive; final status:${status}`,
+        );
         // Strict: require Execution Finished
         const finished = /^Execution Finished/.test(status);
         if (!finished) {
           const debugOut = await resultOutput.textContent();
-          await writeLog(`case:${val}`, `failure; output:${(debugOut||'').replace(/\r?\n/g,' ')}`);
+          await writeLog(
+            `case:${val}`,
+            `failure; output:${(debugOut || "").replace(/\r?\n/g, " ")}`,
+          );
           throw new Error(
             `Positive sample '${val}' did not finish successfully. Status: ${status}\nResult output:\n${debugOut}`,
           );
@@ -155,7 +172,10 @@ test("verify basic compiler flow in UI", async ({ page }) => {
       await writeLog(`case:${val}`, "completed sample run successfully");
     } catch (err) {
       const debugOut = await resultOutput.textContent();
-      await writeLog(`case:${val}`, `sample failed; output:${(debugOut||'').replace(/\r?\n/g,' ')}`);
+      await writeLog(
+        `case:${val}`,
+        `sample failed; output:${(debugOut || "").replace(/\r?\n/g, " ")}`,
+      );
       // eslint-disable-next-line no-console
       console.error(`Sample '${val}' failed. Result output:`, debugOut);
       throw err;

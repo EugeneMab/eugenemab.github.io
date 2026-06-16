@@ -128,9 +128,8 @@ describe('imageGen utils', () => {
     });
 
     // Simulate image load
-    const instance = lastInstance as any;
-    if (instance && instance.onload) {
-      instance.onload();
+    if (lastInstance && lastInstance.onload) {
+      lastInstance.onload();
     }
 
     const result = await promise;
@@ -171,8 +170,8 @@ describe('imageGen utils', () => {
       return setTimeout(r, 0);
     });
 
-    if (lastInstance && (lastInstance as any).onload) {
-      (lastInstance as any).onload();
+    if (lastInstance && lastInstance.onload) {
+      lastInstance.onload();
     }
 
     await expect(promise).rejects.toThrow('Failed to get canvas context');
@@ -200,8 +199,8 @@ describe('imageGen utils', () => {
       return setTimeout(r, 0);
     });
 
-    if (lastInstance && (lastInstance as any).onerror) {
-      (lastInstance as any).onerror(new Error('Load failed'));
+    if (lastInstance && lastInstance.onerror) {
+      lastInstance.onerror(new Error('Load failed'));
     }
 
     await expect(promise).rejects.toThrow('Load failed');

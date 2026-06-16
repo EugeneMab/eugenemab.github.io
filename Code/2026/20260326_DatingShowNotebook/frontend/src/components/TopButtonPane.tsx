@@ -15,10 +15,10 @@ import PopupSlider from './PopupSlider';
 
 const MAX_IMAGE_HEIGHT = 10240;
 
-const ICON_SIZE_18 = 18;
+const _ICON_SIZE_18 = 18;
 const ICON_SIZE_20 = 20;
 const ICON_SIZE_24 = 24;
-const RANGE_STEP = 0.02;
+const _RANGE_STEP = 0.02;
 const BODY_SCALE_MIN = 0.25;
 const BODY_SCALE_MAX = 2.5;
 const DESC_SCALE_MIN = 0.25;

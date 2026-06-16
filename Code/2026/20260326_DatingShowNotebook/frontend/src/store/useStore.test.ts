@@ -108,9 +108,11 @@ describe('useStore', () => {
   });
 
   it('openFolder handles error', async () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockedNetClient.post.mockRejectedValueOnce(new Error('Fetch failed'));
     await expect(store.getState().openFolder('fail')).rejects.toThrow('Fetch failed');
     expect(store.getState().isOpening).toBe(false);
+    spy.mockRestore();
   });
 
   /* Ensures that multiple concurrent folder opening requests are prevented. */

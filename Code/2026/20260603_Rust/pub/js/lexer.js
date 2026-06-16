@@ -15,58 +15,63 @@ export var TokenType;
     TokenType[TokenType["RETURN"] = 10] = "RETURN";
     TokenType[TokenType["BREAK"] = 11] = "BREAK";
     TokenType[TokenType["CONTINUE"] = 12] = "CONTINUE";
-    TokenType[TokenType["STRUCT"] = 13] = "STRUCT";
-    TokenType[TokenType["ENUM"] = 14] = "ENUM";
-    TokenType[TokenType["IMPL"] = 15] = "IMPL";
-    TokenType[TokenType["SELF"] = 16] = "SELF";
-    TokenType[TokenType["SELF_TYPE"] = 17] = "SELF_TYPE";
-    TokenType[TokenType["PANIC"] = 18] = "PANIC";
-    TokenType[TokenType["TRUE"] = 19] = "TRUE";
-    TokenType[TokenType["FALSE"] = 20] = "FALSE";
-    TokenType[TokenType["MATCH"] = 21] = "MATCH";
-    TokenType[TokenType["FAT_ARROW"] = 22] = "FAT_ARROW";
+    TokenType[TokenType["MOD"] = 13] = "MOD";
+    TokenType[TokenType["PUB"] = 14] = "PUB";
+    TokenType[TokenType["USE"] = 15] = "USE";
+    TokenType[TokenType["SUPER"] = 16] = "SUPER";
+    TokenType[TokenType["CRATE"] = 17] = "CRATE";
+    TokenType[TokenType["STRUCT"] = 18] = "STRUCT";
+    TokenType[TokenType["ENUM"] = 19] = "ENUM";
+    TokenType[TokenType["IMPL"] = 20] = "IMPL";
+    TokenType[TokenType["SELF"] = 21] = "SELF";
+    TokenType[TokenType["SELF_TYPE"] = 22] = "SELF_TYPE";
+    TokenType[TokenType["PANIC"] = 23] = "PANIC";
+    TokenType[TokenType["TRUE"] = 24] = "TRUE";
+    TokenType[TokenType["FALSE"] = 25] = "FALSE";
+    TokenType[TokenType["MATCH"] = 26] = "MATCH";
+    TokenType[TokenType["FAT_ARROW"] = 27] = "FAT_ARROW";
     // Literals
-    TokenType[TokenType["INTEGER"] = 23] = "INTEGER";
-    TokenType[TokenType["HEX"] = 24] = "HEX";
-    TokenType[TokenType["STRING"] = 25] = "STRING";
-    TokenType[TokenType["BYTE_LITERAL"] = 26] = "BYTE_LITERAL";
-    TokenType[TokenType["IDENTIFIER"] = 27] = "IDENTIFIER";
+    TokenType[TokenType["INTEGER"] = 28] = "INTEGER";
+    TokenType[TokenType["HEX"] = 29] = "HEX";
+    TokenType[TokenType["STRING"] = 30] = "STRING";
+    TokenType[TokenType["BYTE_LITERAL"] = 31] = "BYTE_LITERAL";
+    TokenType[TokenType["IDENTIFIER"] = 32] = "IDENTIFIER";
     // Symbols
-    TokenType[TokenType["LPAREN"] = 28] = "LPAREN";
-    TokenType[TokenType["RPAREN"] = 29] = "RPAREN";
-    TokenType[TokenType["LBRACE"] = 30] = "LBRACE";
-    TokenType[TokenType["RBRACE"] = 31] = "RBRACE";
-    TokenType[TokenType["LBRACKET"] = 32] = "LBRACKET";
-    TokenType[TokenType["RBRACKET"] = 33] = "RBRACKET";
-    TokenType[TokenType["COMMA"] = 34] = "COMMA";
-    TokenType[TokenType["DOT"] = 35] = "DOT";
-    TokenType[TokenType["DOT_DOT"] = 36] = "DOT_DOT";
-    TokenType[TokenType["COLON"] = 37] = "COLON";
-    TokenType[TokenType["COLON_COLON"] = 38] = "COLON_COLON";
-    TokenType[TokenType["SEMICOLON"] = 39] = "SEMICOLON";
-    TokenType[TokenType["ARROW"] = 40] = "ARROW";
-    TokenType[TokenType["PLUS"] = 41] = "PLUS";
-    TokenType[TokenType["MINUS"] = 42] = "MINUS";
-    TokenType[TokenType["STAR"] = 43] = "STAR";
-    TokenType[TokenType["SLASH"] = 44] = "SLASH";
-    TokenType[TokenType["PERCENT"] = 45] = "PERCENT";
-    TokenType[TokenType["AMPERSAND"] = 46] = "AMPERSAND";
-    TokenType[TokenType["AND_AND"] = 47] = "AND_AND";
-    TokenType[TokenType["PIPE"] = 48] = "PIPE";
-    TokenType[TokenType["OR_OR"] = 49] = "OR_OR";
-    TokenType[TokenType["CARET"] = 50] = "CARET";
-    TokenType[TokenType["LSHIFT"] = 51] = "LSHIFT";
-    TokenType[TokenType["RSHIFT"] = 52] = "RSHIFT";
-    TokenType[TokenType["EQUALS"] = 53] = "EQUALS";
-    TokenType[TokenType["EQ_EQ"] = 54] = "EQ_EQ";
-    TokenType[TokenType["NE_EQ"] = 55] = "NE_EQ";
-    TokenType[TokenType["LT"] = 56] = "LT";
-    TokenType[TokenType["GT"] = 57] = "GT";
-    TokenType[TokenType["LT_EQ"] = 58] = "LT_EQ";
-    TokenType[TokenType["GT_EQ"] = 59] = "GT_EQ";
-    TokenType[TokenType["EXCLAMATION"] = 60] = "EXCLAMATION";
-    TokenType[TokenType["HASH"] = 61] = "HASH";
-    TokenType[TokenType["EOF"] = 62] = "EOF";
+    TokenType[TokenType["LPAREN"] = 33] = "LPAREN";
+    TokenType[TokenType["RPAREN"] = 34] = "RPAREN";
+    TokenType[TokenType["LBRACE"] = 35] = "LBRACE";
+    TokenType[TokenType["RBRACE"] = 36] = "RBRACE";
+    TokenType[TokenType["LBRACKET"] = 37] = "LBRACKET";
+    TokenType[TokenType["RBRACKET"] = 38] = "RBRACKET";
+    TokenType[TokenType["COMMA"] = 39] = "COMMA";
+    TokenType[TokenType["DOT"] = 40] = "DOT";
+    TokenType[TokenType["DOT_DOT"] = 41] = "DOT_DOT";
+    TokenType[TokenType["COLON"] = 42] = "COLON";
+    TokenType[TokenType["COLON_COLON"] = 43] = "COLON_COLON";
+    TokenType[TokenType["SEMICOLON"] = 44] = "SEMICOLON";
+    TokenType[TokenType["ARROW"] = 45] = "ARROW";
+    TokenType[TokenType["PLUS"] = 46] = "PLUS";
+    TokenType[TokenType["MINUS"] = 47] = "MINUS";
+    TokenType[TokenType["STAR"] = 48] = "STAR";
+    TokenType[TokenType["SLASH"] = 49] = "SLASH";
+    TokenType[TokenType["PERCENT"] = 50] = "PERCENT";
+    TokenType[TokenType["AMPERSAND"] = 51] = "AMPERSAND";
+    TokenType[TokenType["AND_AND"] = 52] = "AND_AND";
+    TokenType[TokenType["PIPE"] = 53] = "PIPE";
+    TokenType[TokenType["OR_OR"] = 54] = "OR_OR";
+    TokenType[TokenType["CARET"] = 55] = "CARET";
+    TokenType[TokenType["LSHIFT"] = 56] = "LSHIFT";
+    TokenType[TokenType["RSHIFT"] = 57] = "RSHIFT";
+    TokenType[TokenType["EQUALS"] = 58] = "EQUALS";
+    TokenType[TokenType["EQ_EQ"] = 59] = "EQ_EQ";
+    TokenType[TokenType["NE_EQ"] = 60] = "NE_EQ";
+    TokenType[TokenType["LT"] = 61] = "LT";
+    TokenType[TokenType["GT"] = 62] = "GT";
+    TokenType[TokenType["LT_EQ"] = 63] = "LT_EQ";
+    TokenType[TokenType["GT_EQ"] = 64] = "GT_EQ";
+    TokenType[TokenType["EXCLAMATION"] = 65] = "EXCLAMATION";
+    TokenType[TokenType["HASH"] = 66] = "HASH";
+    TokenType[TokenType["EOF"] = 67] = "EOF";
 })(TokenType || (TokenType = {}));
 const KEYWORDS = {
     fn: TokenType.FN,
@@ -82,6 +87,11 @@ const KEYWORDS = {
     return: TokenType.RETURN,
     break: TokenType.BREAK,
     continue: TokenType.CONTINUE,
+    mod: TokenType.MOD,
+    pub: TokenType.PUB,
+    use: TokenType.USE,
+    super: TokenType.SUPER,
+    crate: TokenType.CRATE,
     struct: TokenType.STRUCT,
     enum: TokenType.ENUM,
     impl: TokenType.IMPL,

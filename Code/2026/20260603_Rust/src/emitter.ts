@@ -591,7 +591,9 @@ export class Emitter {
                 return {
                   ...p,
                   type:
-                    (p.isBorrow ? "&" : "") + (p.isMut ? "mut " : "") + s.target,
+                    (p.isBorrow ? "&" : "") +
+                    (p.isMut ? "mut " : "") +
+                    s.target,
                 };
               }
               return {
@@ -1779,7 +1781,9 @@ export class Emitter {
               );
             }
             const objectType = this.inferExpressionType(memberExpr.object);
-            const baseType = this.resolvePath(this.getBaseType(objectType) || "");
+            const baseType = this.resolvePath(
+              this.getBaseType(objectType) || "",
+            );
             if (baseType && this.structDefinitions.has(baseType)) {
               const offset = this.getStructFieldOffset(
                 baseType,
@@ -3043,7 +3047,9 @@ export class Emitter {
               );
             }
             const objectType = this.inferExpressionType(memberExpr.object);
-            const baseType = this.resolvePath(this.getBaseType(objectType) || "");
+            const baseType = this.resolvePath(
+              this.getBaseType(objectType) || "",
+            );
             if (baseType && this.structDefinitions.has(baseType)) {
               const offset = this.getStructFieldOffset(
                 baseType,
