@@ -15,7 +15,7 @@ const LOG_FILE = path.join(
 async function ensureLogDir() {
   try {
     await fs.mkdir(LOG_DIR, { recursive: true });
-  } catch (e) {
+  } catch {
     // ignore
   }
 }
@@ -26,7 +26,6 @@ async function writeLog(scope: string, message: string) {
     await fs.appendFile(LOG_FILE, line + "\n");
   } catch (e) {
     // If logging fails, print to stderr but do not fail the test
-    // eslint-disable-next-line no-console
     console.error("Failed to write test log:", e);
   }
 }
@@ -34,7 +33,6 @@ async function writeLog(scope: string, message: string) {
 test("verify basic compiler flow in UI", async ({ page }) => {
   await ensureLogDir();
   // Announce log file path for CI visibility
-  // eslint-disable-next-line no-console
   console.log(`UI test log: ${LOG_FILE}`);
   await writeLog("general", "starting test server");
 
@@ -176,7 +174,6 @@ test("verify basic compiler flow in UI", async ({ page }) => {
         `case:${val}`,
         `sample failed; output:${(debugOut || "").replace(/\r?\n/g, " ")}`,
       );
-      // eslint-disable-next-line no-console
       console.error(`Sample '${val}' failed. Result output:`, debugOut);
       throw err;
     }

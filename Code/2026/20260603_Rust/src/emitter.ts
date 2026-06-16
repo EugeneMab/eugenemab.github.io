@@ -607,6 +607,7 @@ export class Emitter {
               params,
               returnType: fn.returnType === "Self" ? s.target : fn.returnType,
             });
+            this.itemIsPublic.set(mangledName, fn.isPublic);
           });
         }
       });
@@ -1012,87 +1013,98 @@ export class Emitter {
   }
 
   private resolvePath(name: string, context?: string): string {
-    if (name.startsWith("crate::")) {
-      return name.substring(7);
-    }
-
-    // Check local use mappings
-    for (let i = this.scopeStack.length - 1; i >= 0; i--) {
-      const mapping = this.scopeStack[i].useMappings;
-      if (mapping) {
-        const parts = name.split("::");
-        const first = parts[0];
-        if (mapping.has(first)) {
-          return (
-            mapping.get(first) +
-            (parts.length > 1 ? "::" + parts.slice(1).join("::") : "")
-          );
-        }
-      }
-    }
-
     const current = context ?? this.currentFunctionName;
+    let resolved = name;
 
-    // Check module-level use mappings
-    if (current) {
-      const contextParts = current.split("::").slice(0, -1);
-      while (contextParts.length >= 0) {
-        const contextPrefix =
-          contextParts.length > 0 ? contextParts.join("::") + "::" : "";
-        const mappings = this.moduleUseMappings.get(contextPrefix);
-        if (mappings) {
+    if (name.startsWith("crate::")) {
+      resolved = name.substring(7);
+    } else {
+      let foundMapping = false;
+      // Check local use mappings
+      for (let i = this.scopeStack.length - 1; i >= 0; i--) {
+        const mapping = this.scopeStack[i].useMappings;
+        if (mapping) {
           const parts = name.split("::");
           const first = parts[0];
-          if (mappings.has(first)) {
-            return (
-              mappings.get(first) +
-              (parts.length > 1 ? "::" + parts.slice(1).join("::") : "")
-            );
+          if (mapping.has(first)) {
+            resolved =
+              mapping.get(first) +
+              (parts.length > 1 ? "::" + parts.slice(1).join("::") : "");
+            foundMapping = true;
+            break;
           }
         }
-        if (contextParts.length === 0) break;
-        contextParts.pop();
       }
-    }
 
-    if (name.startsWith("super::")) {
-      if (!current || !current.includes("::")) {
-        return name.substring(7); // Already at root
-      }
-      const parts = current.split("::");
-      if (parts.length <= 2) {
-        return name.substring(7); // super is root
-      }
-      return parts.slice(0, -2).join("::") + "::" + name.substring(7);
-    }
-    if (name.startsWith("self::")) {
-      if (!current || !current.includes("::")) {
-        return name.substring(6);
-      }
-      const parts = current.split("::");
-      return parts.slice(0, -1).join("::") + "::" + name.substring(6);
-    }
-
-    // If it's a relative name, check if it exists in current module or parent modules
-    if (!name.startsWith("::") && current && current.includes("::")) {
-      const parts = current.split("::").slice(0, -1);
-      while (parts.length > 0) {
-        const prefix = parts.join("::") + "::";
-        const fullName = prefix + name;
-        if (
-          this.functionIndices.has(fullName) ||
-          this.structDefinitions.has(fullName) ||
-          this.enumDefinitions.has(fullName)
-        ) {
-          this.checkVisibility(fullName, current);
-          return fullName;
+      // Check module-level use mappings
+      if (!foundMapping && current) {
+        const contextParts = current.split("::").slice(0, -1);
+        while (contextParts.length >= 0) {
+          const contextPrefix =
+            contextParts.length > 0 ? contextParts.join("::") + "::" : "";
+          const mappings = this.moduleUseMappings.get(contextPrefix);
+          if (mappings) {
+            const parts = name.split("::");
+            const first = parts[0];
+            if (mappings.has(first)) {
+              resolved =
+                mappings.get(first) +
+                (parts.length > 1 ? "::" + parts.slice(1).join("::") : "");
+              foundMapping = true;
+              break;
+            }
+          }
+          if (contextParts.length === 0) break;
+          contextParts.pop();
         }
-        parts.pop();
+      }
+
+      if (!foundMapping) {
+        if (name.startsWith("super::")) {
+          if (!current || !current.includes("::")) {
+            resolved = name.substring(7); // Already at root
+          } else {
+            const parts = current.split("::");
+            if (parts.length <= 2) {
+              resolved = name.substring(7); // super is root
+            } else {
+              resolved =
+                parts.slice(0, -2).join("::") + "::" + name.substring(7);
+            }
+          }
+        } else if (name.startsWith("self::")) {
+          if (!current || !current.includes("::")) {
+            resolved = name.substring(6);
+          } else {
+            const parts = current.split("::");
+            resolved = parts.slice(0, -1).join("::") + "::" + name.substring(6);
+          }
+        } else if (
+          !name.startsWith("::") &&
+          current &&
+          current.includes("::")
+        ) {
+          // If it's a relative name, check if it exists in current module or parent modules
+          const parts = current.split("::").slice(0, -1);
+          while (parts.length > 0) {
+            const prefix = parts.join("::") + "::";
+            const fullName = prefix + name;
+            if (
+              this.functionIndices.has(fullName) ||
+              this.structDefinitions.has(fullName) ||
+              this.enumDefinitions.has(fullName)
+            ) {
+              resolved = fullName;
+              break;
+            }
+            parts.pop();
+          }
+        }
       }
     }
 
-    this.checkVisibility(name, current);
-    return name;
+    this.checkVisibility(resolved, current);
+    return resolved;
   }
 
   private checkVisibility(path: string, context?: string) {
@@ -1108,12 +1120,35 @@ export class Emitter {
         currentPath += (i > 0 ? "::" : "") + parts[i];
         const isPublic = this.itemIsPublic.get(currentPath);
         if (isPublic === false) {
-          const parent = currentPath.includes("::")
+          let parent = currentPath.includes("::")
             ? currentPath.split("::").slice(0, -1).join("::")
             : "";
+          if (
+            this.structDefinitions.has(parent) ||
+            this.enumDefinitions.has(parent)
+          ) {
+            parent = parent.includes("::")
+              ? parent.split("::").slice(0, -1).join("::")
+              : "";
+          }
+
           const ctx = context || "";
-          // Context can see it if context is same as parent or is inside parent
-          if (ctx !== parent && !ctx.startsWith(parent + "::")) {
+          let ctxModule = ctx.includes("::")
+            ? ctx.split("::").slice(0, -1).join("::")
+            : "";
+          if (
+            this.structDefinitions.has(ctxModule) ||
+            this.enumDefinitions.has(ctxModule)
+          ) {
+            ctxModule = ctxModule.includes("::")
+              ? ctxModule.split("::").slice(0, -1).join("::")
+              : "";
+          }
+
+          const isInsideParent =
+            parent === "" || ctxModule.startsWith(parent + "::");
+          // Context can see it if context's module is same as parent or is inside parent
+          if (ctxModule !== parent && !isInsideParent) {
             throw new Error(`Item \`${currentPath}\` is private`);
           }
         }
