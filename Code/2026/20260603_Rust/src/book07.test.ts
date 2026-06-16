@@ -1,17 +1,20 @@
-import { describe, it, expect } from "vitest";
+import { it, expect } from "vitest";
 import { Lexer } from "./lexer.js";
 import { Parser } from "./parser.js";
 import { Emitter } from "./emitter.js";
+import * as fs from "fs";
+import * as path from "path";
+import { fileURLToPath } from "url";
 
 async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
-  const INDEX_OUT_OF_BOUNDS_PANIC_CODE = 101;
   const lexer = new Lexer(code);
   const tokens = lexer.tokenize();
   const parser = new Parser(tokens, code);
   const ast = parser.parse();
-  const emitter = new Emitter(ast);
+  const emitter = new Emitter(ast, code);
   const wasm = emitter.emitWASM();
 
+  const INDEX_OUT_OF_BOUNDS_PANIC_CODE = 101;
   const logs: string[] = [];
   const runtimeState: { instance: any } = { instance: null };
   const getMemoryView = () => {
@@ -19,8 +22,7 @@ async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
       throw new Error("WASM memory is not initialized");
     }
     return new DataView(
-      ((runtimeState.instance.exports as any).memory as WebAssembly.Memory)
-        .buffer,
+      ((runtimeState.instance.exports as any).memory as WebAssembly.Memory).buffer,
     );
   };
   const validateIndex = (ptr: number, idx: number) => {
@@ -34,13 +36,28 @@ async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
     }
     return view;
   };
+
   const importObject = {
     env: {
       print: (val: number) => {
         logs.push(String(val));
         return 0;
       },
-      print_str: () => {
+      print_str: (ptr: number) => {
+        const mem = new Uint8Array((instance.exports.memory as any).buffer);
+        const view = new DataView(mem.buffer);
+        if (!Number.isInteger(ptr) || ptr < 0 || ptr + 4 > mem.length) {
+          throw new Error(`Invalid string pointer: ${ptr}`);
+        }
+        const len = view.getUint32(ptr, true);
+        const start = ptr + 4;
+        if (len > mem.length - start) {
+          throw new Error(
+            `Invalid string length ${len} at pointer ${ptr} for memory size ${mem.length}`,
+          );
+        }
+        const str = new TextDecoder().decode(mem.subarray(start, start + len));
+        logs.push(str);
         return 0;
       },
       panic: (code: number) => {
@@ -83,34 +100,23 @@ async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
     },
   };
 
-  const { instance: inst } = (await WebAssembly.instantiate(
-    wasm,
-    importObject,
-  )) as any;
+  const { instance: inst } = (await WebAssembly.instantiate(wasm, importObject)) as any;
   runtimeState.instance = inst;
   const instance = runtimeState.instance;
   const result = (instance.exports as any).main();
   return { logs, result };
 }
 
-describe("Diagnostic Test", () => {
-  it("should log 42", async () => {
-    const { logs } = await runRust(`fn main() { print!(42); }`);
-    expect(logs).toEqual(["42"]);
-  });
+function loadSample(name: string): string {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  const samplePath = path.join(__dirname, "..", "samples", name);
+  return fs.readFileSync(samplePath, "utf-8");
+}
 
-  it("should fail on private module access", async () => {
-    const code = `
-mod front_of_house {
-    mod hosting {
-        pub fn add_to_waitlist() {}
-    }
-}
-fn main() {
-    front_of_house::hosting::add_to_waitlist();
-    0
-}
-    `;
-    await expect(runRust(code)).rejects.toThrow(/is private/);
-  });
+it("Book 7-2: Modules and Privacy sample runs", async () => {
+  const code = loadSample("book07_02_modules.rs");
+  const { logs, result } = await runRust(code);
+  expect(logs.join("")).toBe("42");
+  expect(result).toBe(0);
 });

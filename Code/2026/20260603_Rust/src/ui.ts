@@ -257,6 +257,8 @@ export function initUI() {
     book06_01_methods_on_enums: "book06_01_methods_on_enums.rs",
     book06_01_option_examples: "book06_01_option_examples.rs",
     book06_01_option_negative: "book06_01_option_negative.rs",
+    // Chapter 7-2 sample (modules)
+    book07_02_modules: "book07_02_modules.rs",
   };
 
   sampleSelect?.addEventListener("change", async () => {
