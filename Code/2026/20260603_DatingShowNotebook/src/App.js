@@ -12,6 +12,19 @@ const DEFAULT_DATA = {
   descriptionScale: 1
 };
 
+function getInitialView(data) {
+  for (let i = data.episodes.length - 1; i >= 0; i--) {
+    const episode = data.episodes[i];
+    if (episode.events.length > 0) {
+      return {
+        lastEpisodeId: episode.id,
+        lastEventId: episode.events[episode.events.length - 1].id,
+      };
+    }
+  }
+  return { lastEpisodeId: null, lastEventId: null };
+}
+
 export const App = () => {
   const [data, setData] = useState(() => {
     const saved = localStorage.getItem('dsn_data');
@@ -24,9 +37,10 @@ export const App = () => {
     }
   });
 
+  const initialView = getInitialView(data);
   const [activeMode, setActiveMode] = useState('message');
-  const [selectedEpisodeId, setSelectedEpisodeId] = useState(null);
-  const [selectedEventId, setSelectedEventId] = useState(null);
+  const [selectedEpisodeId, setSelectedEpisodeId] = useState(initialView.lastEpisodeId);
+  const [selectedEventId, setSelectedEventId] = useState(initialView.lastEventId);
   const [undoStack, setUndoStack] = useState([]);
   const [isDataModalOpen, setIsDataModalOpen] = useState(false);
 
