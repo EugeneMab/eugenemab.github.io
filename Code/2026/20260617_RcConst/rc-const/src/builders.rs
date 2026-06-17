@@ -1,4 +1,5 @@
 ﻿use std::rc::Rc;
+use crate::ConstVec;
 
 pub struct ListBuilder<T> {
     item: Option<T>,
@@ -23,7 +24,7 @@ impl<T: Clone> ListBuilder<T> {
         })
     }
 
-    pub fn build(&self) -> Vec<T> {
+    pub fn build(&self) -> ConstVec<T> {
         let mut items = Vec::with_capacity(self.size);
         let mut curr = Some(self);
         while let Some(node) = curr {
@@ -33,6 +34,6 @@ impl<T: Clone> ListBuilder<T> {
             curr = node.prev.as_ref().map(|p| p.as_ref());
         }
         items.reverse();
-        items
+        ConstVec::from_vec(items)
     }
 }

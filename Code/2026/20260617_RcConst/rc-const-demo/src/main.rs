@@ -1,19 +1,19 @@
 ﻿use std::rc::Rc;
-use rc_const::ListBuilder;
+use rc_const::{ListBuilder, ConstStr, ConstVec, ConstMap};
 
 #[derive(Debug, Clone)]
 struct Person {
-    name: String,
+    name: ConstStr,
     age: i32,
-    friends: Rc<Vec<Rc<Person>>>,
+    friends: ConstVec<Rc<Person>>,
 }
 
 impl Person {
     fn new(name: &str, age: i32) -> Rc<Self> {
         Rc::new(Person {
-            name: name.to_string(),
+            name: ConstStr::new(name),
             age,
-            friends: Rc::new(Vec::new()),
+            friends: ConstVec::new(),
         })
     }
 
@@ -26,12 +26,10 @@ impl Person {
     }
 
     fn add_friend(self: &Rc<Self>, friend: Rc<Person>) -> Rc<Self> {
-        let mut new_friends = (*self.friends).clone();
-        new_friends.push(friend);
         Rc::new(Person {
             name: self.name.clone(),
             age: self.age,
-            friends: Rc::new(new_friends),
+            friends: self.friends.push(friend),
         })
     }
 }
@@ -45,10 +43,18 @@ fn main() {
 
     println!("Alice: {:?}", alice);
 
+    // Using ListBuilder to create ConstVec
     let mut builder = ListBuilder::<i32>::new();
     for i in 0..10 {
         builder = builder.append(i);
     }
     let list = builder.build();
-    println!("List from builder: {:?}", list);
+    println!("List from builder (ConstVec): {:?}", list);
+
+    // Using ConstMap
+    let mut map = ConstMap::<ConstStr, Rc<Person>>::new();
+    map = map.insert(alice.name.clone(), alice.clone());
+    map = map.insert(bob.name.clone(), bob.clone());
+
+    println!("Map contains Alice: {:?}", map.get(&alice.name));
 }
