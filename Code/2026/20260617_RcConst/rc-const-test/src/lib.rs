@@ -1,7 +1,6 @@
-﻿#[cfg(test)]
+#[cfg(test)]
 mod tests {
-    use rc_const::{ListBuilder, ConstStr, ConstVec, ConstMap};
-    use std::rc::Rc;
+    use rc_const::{ListBuilder, ConstStr, ConstMap};
 
     #[test]
     fn test_const_str() {

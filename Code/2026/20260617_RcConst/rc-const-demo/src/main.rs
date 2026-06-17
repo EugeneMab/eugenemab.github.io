@@ -1,4 +1,4 @@
-﻿use std::rc::Rc;
+use std::rc::Rc;
 use rc_const::{ListBuilder, ConstStr, ConstVec, ConstMap};
 
 #[derive(Debug, Clone)]

@@ -4,6 +4,7 @@ members = [
     "rc-const-demo",
     "rc-const-test",
 ]
+resolver = "2"
 
 [workspace.package]
 version = "0.1.0"
