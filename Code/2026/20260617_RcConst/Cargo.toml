@@ -1,0 +1,10 @@
+﻿[workspace]
+members = [
+    "rc-const",
+    "rc-const-demo",
+    "rc-const-test",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
