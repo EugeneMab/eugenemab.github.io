@@ -1,17 +1,17 @@
 use std::rc::Rc;
-use rc_const::{ListBuilder, ConstStr, ConstVec, ConstMap};
+use rc_const::{ListBuilder, ConstString, ConstVec, ConstMap};
 
 #[derive(Debug, Clone)]
 struct Person {
-    name: ConstStr,
+    name: Rc<ConstString>,
     age: i32,
-    friends: ConstVec<Rc<Person>>,
+    friends: Rc<ConstVec<Rc<Person>>>,
 }
 
 impl Person {
-    fn new(name: &str, age: i32) -> Rc<Self> {
+    fn new(name: Rc<ConstString>, age: i32) -> Rc<Self> {
         Rc::new(Person {
-            name: ConstStr::new(name),
+            name,
             age,
             friends: ConstVec::new(),
         })
@@ -19,42 +19,47 @@ impl Person {
 
     fn set_age(self: &Rc<Self>, age: i32) -> Rc<Self> {
         Rc::new(Person {
-            name: self.name.clone(),
             age,
-            friends: self.friends.clone(),
+            ..(**self).clone()
         })
     }
 
     fn add_friend(self: &Rc<Self>, friend: Rc<Person>) -> Rc<Self> {
         Rc::new(Person {
-            name: self.name.clone(),
-            age: self.age,
             friends: self.friends.push(friend),
+            ..(**self).clone()
         })
     }
 }
 
 fn main() {
-    let mut alice = Person::new("Alice", 30);
-    let bob = Person::new("Bob", 25);
+    let name_alice = ConstString::new("Alice");
+    let name_bob = ConstString::new("Bob");
+
+    let mut alice = Person::new(name_alice, 30);
+    let mut bob = Person::new(name_bob, 25);
 
     alice = alice.set_age(31);
-    alice = alice.add_friend(bob.clone());
+    alice = alice.add_friend(bob.clone()); 
 
-    println!("Alice: {:?}", alice);
+    // Use {:#?} for pretty-printing with indentation and EOL
+    println!("Alice after adding Bob:\n{:#?}", alice);
 
-    // Using ListBuilder to create ConstVec
-    let mut builder = ListBuilder::<i32>::new();
-    for i in 0..10 {
-        builder = builder.append(i);
-    }
-    let list = builder.build();
-    println!("List from builder (ConstVec): {:?}", list);
+    bob = bob.add_friend(alice.clone());
 
-    // Using ConstMap
-    let mut map = ConstMap::<ConstStr, Rc<Person>>::new();
+    println!("\nBob after adding Alice:\n{:#?}", bob);
+    
+    // Using ConstMap with Rc handles
+    let mut map = ConstMap::<Rc<ConstString>, Rc<Person>>::new();
     map = map.insert(alice.name.clone(), alice.clone());
     map = map.insert(bob.name.clone(), bob.clone());
 
-    println!("Map contains Alice: {:?}", map.get(&alice.name));
+    println!("\nMap contains Alice:\n{:#?}", map.get(&alice.name));
+    
+    // ListBuilder demonstration
+    let mut lb = ListBuilder::<i32>::new();
+    for i in 1..=3 {
+        lb = lb.append(i);
+    }
+    println!("\nFinal list: {:#?}", lb.build());
 }

@@ -1,4 +1,4 @@
-﻿# RC-Const: Reference-Counting Constant Objects in Rust
+# RC-Const: Reference-Counting Constant Objects in Rust
 
 ## Introduction
 RC-Const is a specialized coding style and supporting classes for Rust that prioritizes immutability and simplified memory management, similar to Garbage-Collected (GC) languages like C#, JavaScript, or Go, while maintaining Rust's performance and safety.
@@ -24,6 +24,7 @@ RC-Const is a specialized coding style and supporting classes for Rust that prio
 ## Project Structure
 The project is organized as a Cargo workspace:
 
+```text
 C:\D\Code\Code\2026\20260617_RcConst\
 ├── .gitignore
 ├── Cargo.toml (Workspace)
@@ -34,11 +35,12 @@ C:\D\Code\Code\2026\20260617_RcConst\
 ├── rc-const/ (Support Library)
 │   ├── src/
 │   │   ├── lib.rs (Core traits and macros)
-│   │   └── builders.rs (ListBuilder, MapBuilder)
+│   │   └── builders.rs (ListBuilder, MapBuilder, SetBuilder)
 ├── rc-const-demo/ (Demo Project)
 │   └── src/main.rs
 └── rc-const-test/ (Unit and Integration Tests)
     └── src/lib.rs
+```
 
 ### Environment Setup
 - **Rust/Cargo**: Installed in C:\Users\jianh\.cargo\bin.
@@ -52,6 +54,8 @@ C:\D\Code\Code\2026\20260617_RcConst\
 The library provides the backbone for this coding style:
 - **Builders Pattern**: To mitigate the cost of appending to collections.
     - **ListBuilder<T>**: Uses a linked-list of nodes internally for O(1) append, then converts to a contiguous array on build().
+    - **MapBuilder<K, V>**: Fluent builder for `ConstMap`.
+    - **SetBuilder<T>**: Fluent builder for `ConstSet`.
 - **Macros**: To simplify the creation of 'wither' methods (e.g., set_x).
 
 ---

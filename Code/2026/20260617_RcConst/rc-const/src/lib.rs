@@ -1,38 +1,48 @@
 use std::rc::Rc;
 use std::collections::{HashMap, HashSet};
 use std::hash::Hash;
+use std::fmt;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ConstStr(Rc<str>);
+/// A Constant String (meant to be used as Rc<ConstString>)
+#[derive(Clone, PartialEq, Eq, Hash)]
+pub struct ConstString(String);
 
-impl ConstStr {
-    pub fn new(s: &str) -> Self {
-        ConstStr(Rc::from(s))
+impl ConstString {
+    pub fn new(s: &str) -> Rc<Self> {
+        Rc::new(ConstString(s.to_string()))
     }
 }
 
-impl std::fmt::Display for ConstStr {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for ConstString {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ConstVec<T>(Rc<Vec<T>>);
+impl fmt::Debug for ConstString {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Just show the string value, e.g., "Alice" instead of ConstString("Alice")
+        write!(f, "{:?}", self.0)
+    }
+}
+
+/// A Constant Vector (meant to be used as Rc<ConstVec<T>>)
+#[derive(Clone)]
+pub struct ConstVec<T>(Vec<T>);
 
 impl<T: Clone> ConstVec<T> {
-    pub fn new() -> Self {
-        ConstVec(Rc::new(Vec::new()))
+    pub fn new() -> Rc<Self> {
+        Rc::new(ConstVec(Vec::new()))
     }
 
-    pub fn from_vec(v: Vec<T>) -> Self {
-        ConstVec(Rc::new(v))
+    pub fn from_vec(v: Vec<T>) -> Rc<Self> {
+        Rc::new(ConstVec(v))
     }
 
-    pub fn push(&self, item: T) -> Self {
-        let mut new_vec = (*self.0).clone();
+    pub fn push(self: &Rc<Self>, item: T) -> Rc<Self> {
+        let mut new_vec = self.0.clone();
         new_vec.push(item);
-        ConstVec(Rc::new(new_vec))
+        Rc::new(ConstVec(new_vec))
     }
 
     pub fn get(&self, index: usize) -> Option<&T> {
@@ -44,18 +54,30 @@ impl<T: Clone> ConstVec<T> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ConstMap<K, V>(Rc<HashMap<K, V>>);
+impl<T: fmt::Debug> fmt::Debug for ConstVec<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        // Delegate to Vec's debug implementation for standard look [...]
+        self.0.fmt(f)
+    }
+}
+
+/// A Constant Map (meant to be used as Rc<ConstMap<K, V>>)
+#[derive(Clone)]
+pub struct ConstMap<K, V>(HashMap<K, V>);
 
 impl<K: Clone + Eq + Hash, V: Clone> ConstMap<K, V> {
-    pub fn new() -> Self {
-        ConstMap(Rc::new(HashMap::new()))
+    pub fn new() -> Rc<Self> {
+        Rc::new(ConstMap(HashMap::new()))
     }
 
-    pub fn insert(&self, key: K, value: V) -> Self {
-        let mut new_map = (*self.0).clone();
+    pub fn from_map(m: HashMap<K, V>) -> Rc<Self> {
+        Rc::new(ConstMap(m))
+    }
+
+    pub fn insert(self: &Rc<Self>, key: K, value: V) -> Rc<Self> {
+        let mut new_map = self.0.clone();
         new_map.insert(key, value);
-        ConstMap(Rc::new(new_map))
+        Rc::new(ConstMap(new_map))
     }
 
     pub fn get(&self, key: &K) -> Option<&V> {
@@ -63,18 +85,29 @@ impl<K: Clone + Eq + Hash, V: Clone> ConstMap<K, V> {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct ConstSet<T>(Rc<HashSet<T>>);
+impl<K: fmt::Debug, V: fmt::Debug> fmt::Debug for ConstMap<K, V> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
+/// A Constant Set (meant to be used as Rc<ConstSet<T>>)
+#[derive(Clone)]
+pub struct ConstSet<T>(HashSet<T>);
 
 impl<T: Clone + Eq + Hash> ConstSet<T> {
-    pub fn new() -> Self {
-        ConstSet(Rc::new(HashSet::new()))
+    pub fn new() -> Rc<Self> {
+        Rc::new(ConstSet(HashSet::new()))
     }
 
-    pub fn insert(&self, item: T) -> Self {
-        let mut new_set = (*self.0).clone();
+    pub fn from_set(s: HashSet<T>) -> Rc<Self> {
+        Rc::new(ConstSet(s))
+    }
+
+    pub fn insert(self: &Rc<Self>, item: T) -> Rc<Self> {
+        let mut new_set = self.0.clone();
         new_set.insert(item);
-        ConstSet(Rc::new(new_set))
+        Rc::new(ConstSet(new_set))
     }
 
     pub fn contains(&self, item: &T) -> bool {
@@ -82,5 +115,11 @@ impl<T: Clone + Eq + Hash> ConstSet<T> {
     }
 }
 
+impl<T: fmt::Debug> fmt::Debug for ConstSet<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        self.0.fmt(f)
+    }
+}
+
 pub mod builders;
-pub use builders::ListBuilder;
+pub use builders::{ListBuilder, MapBuilder, SetBuilder};
