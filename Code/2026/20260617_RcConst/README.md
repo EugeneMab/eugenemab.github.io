@@ -43,10 +43,10 @@ C:\D\Code\Code\2026\20260617_RcConst\
 ```
 
 ### Environment Setup
-- **Rust/Cargo**: Installed in C:\Users\jianh\.cargo\bin.
-- **MinGW**: C:\D\mingw\bin\gcc.exe (Used for linking if needed).
+- **Rust/Cargo**: Installed in `C:\Users\my-user-name\.cargo\bin`.
+- **MinGW (Optional)**: If using the GNU toolchain, `C:\D\mingw\bin\gcc.exe` may be required.
 - **Environment Variables**:
-    - **PATH**: Should include C:\Users\jianh\.cargo\bin and C:\D\mingw\bin.
+    - **PATH**: Should include `C:\Users\my-user-name\.cargo\bin`.
 
 ---
 
