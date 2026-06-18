@@ -4,4 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rc-const = { path = "../rc-const" }
+rc-const = { path = "../rc-const", features = ["test-logs"] }
