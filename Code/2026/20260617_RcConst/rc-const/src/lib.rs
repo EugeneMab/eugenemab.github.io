@@ -64,6 +64,10 @@ impl<T: Clone> ConstVec<T> {
         self.0.get(index)
     }
 
+    pub fn get_item(&self, index: usize) -> T {
+        self.0.get(index).unwrap().clone()
+    }
+
     pub fn len(&self) -> usize {
         self.0.len()
     }
@@ -171,3 +175,13 @@ impl<T: fmt::Debug> fmt::Debug for ConstSet<T> {
 
 pub mod builders;
 pub use builders::{ListBuilder, MapBuilder, SetBuilder};
+
+/// Helper to create a new Rc<ConstString>
+pub fn string(s: &str) -> Rc<ConstString> {
+    ConstString::new(s)
+}
+
+/// Helper to create a new ListBuilder<T>
+pub fn list_builder<T: Clone>() -> Rc<ListBuilder<T>> {
+    ListBuilder::new()
+}
