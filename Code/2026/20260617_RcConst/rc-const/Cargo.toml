@@ -1,0 +1,6 @@
+[package]
+name = "rc-const"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
