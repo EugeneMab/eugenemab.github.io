@@ -17,6 +17,16 @@ impl Person {
         })
     }
 
+    /// Getter for name
+    fn get_name(&self) -> Rc<ConstString> {
+        self.name.clone()
+    }
+
+    /// Getter for age
+    fn get_age(&self) -> i32 {
+        self.age
+    }
+
     fn set_age(self: &Rc<Self>, age: i32) -> Rc<Self> {
         Rc::new(Person {
             age,
@@ -42,12 +52,14 @@ fn main() {
     alice = alice.set_age(31);
     alice = alice.add_friend(bob.clone()); 
 
-    // Use {:#?} for pretty-printing with indentation and EOL
+    // Explicitly use the fields to avoid dead_code warnings
+    println!("Alice's new age: {}", alice.get_age());
     println!("Alice after adding Bob:\n{:#?}", alice);
 
     bob = bob.add_friend(alice.clone());
 
-    println!("\nBob after adding Alice:\n{:#?}", bob);
+    println!("\nBob's friend is: {}", bob.friends.get(0).unwrap().get_name());
+    println!("Bob after adding Alice:\n{:#?}", bob);
     
     // Using ConstMap with Rc handles
     let mut map = ConstMap::<Rc<ConstString>, Rc<Person>>::new();
