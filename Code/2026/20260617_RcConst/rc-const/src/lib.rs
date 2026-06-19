@@ -115,6 +115,10 @@ impl<K: Clone + Eq + Hash, V: Clone> ConstMap<K, V> {
     pub fn get(&self, key: &K) -> Option<&V> {
         self.0.get(key)
     }
+
+    pub fn get_value(&self, key: K) -> Option<V> {
+        self.0.get(&key).cloned()
+    }
 }
 
 #[cfg(feature = "test-logs")]
@@ -184,4 +188,42 @@ pub fn string(s: &str) -> Rc<ConstString> {
 /// Helper to create a new ListBuilder<T>
 pub fn list_builder<T: Clone>() -> Rc<ListBuilder<T>> {
     ListBuilder::new()
+}
+
+pub fn list_i32_builder() -> Rc<ListBuilder<i32>> {
+    ListBuilder::<i32>::new()
+}
+
+pub fn log(s: Rc<ConstString>) {
+    println!("{}", s);
+}
+
+pub struct StringBuilder {
+    s: String,
+}
+
+impl StringBuilder {
+    pub fn new() -> Self {
+        StringBuilder { s: String::new() }
+    }
+
+    pub fn add<T: std::fmt::Display>(mut self, item: T) -> Self {
+        use std::fmt::Write;
+        write!(&mut self.s, "{}", item).unwrap();
+        self
+    }
+
+    pub fn add_debug<T: std::fmt::Debug>(mut self, item: T) -> Self {
+        use std::fmt::Write;
+        write!(&mut self.s, "{:#?}", item).unwrap();
+        self
+    }
+
+    pub fn build(self) -> Rc<ConstString> {
+        string(&self.s)
+    }
+}
+
+pub fn builder() -> StringBuilder {
+    StringBuilder::new()
 }
