@@ -10,6 +10,8 @@ pub struct ListBuilder<T> {
 
 impl<T: Clone> ListBuilder<T> {
     pub fn new() -> Rc<Self> {
+        #[cfg(feature = "test-logs")]
+        println!("+ [DEBUG] ListBuilder::new()");
         Rc::new(ListBuilder {
             item: None,
             prev: None,
@@ -18,6 +20,8 @@ impl<T: Clone> ListBuilder<T> {
     }
 
     pub fn append(self: &Rc<Self>, item: T) -> Rc<Self> {
+        #[cfg(feature = "test-logs")]
+        println!("+ [DEBUG] ListBuilder::append (new size={})", self.size + 1);
         Rc::new(ListBuilder {
             item: Some(item),
             prev: Some(self.clone()),
@@ -39,6 +43,13 @@ impl<T: Clone> ListBuilder<T> {
     }
 }
 
+#[cfg(feature = "test-logs")]
+impl<T> Drop for ListBuilder<T> {
+    fn drop(&mut self) {
+        println!("- [DEBUG] ListBuilder::drop(size={})", self.size);
+    }
+}
+
 pub struct MapBuilder<K, V> {
     entry: Option<(K, V)>,
     prev: Option<Rc<MapBuilder<K, V>>>,
@@ -47,6 +58,8 @@ pub struct MapBuilder<K, V> {
 
 impl<K: Clone + Eq + std::hash::Hash, V: Clone> MapBuilder<K, V> {
     pub fn new() -> Rc<Self> {
+        #[cfg(feature = "test-logs")]
+        println!("+ [DEBUG] MapBuilder::new()");
         Rc::new(MapBuilder {
             entry: None,
             prev: None,
@@ -55,6 +68,8 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MapBuilder<K, V> {
     }
 
     pub fn insert(self: &Rc<Self>, key: K, value: V) -> Rc<Self> {
+        #[cfg(feature = "test-logs")]
+        println!("+ [DEBUG] MapBuilder::insert (new size={})", self.size + 1);
         Rc::new(MapBuilder {
             entry: Some((key, value)),
             prev: Some(self.clone()),
@@ -75,6 +90,13 @@ impl<K: Clone + Eq + std::hash::Hash, V: Clone> MapBuilder<K, V> {
     }
 }
 
+#[cfg(feature = "test-logs")]
+impl<K, V> Drop for MapBuilder<K, V> {
+    fn drop(&mut self) {
+        println!("- [DEBUG] MapBuilder::drop(size={})", self.size);
+    }
+}
+
 pub struct SetBuilder<T> {
     item: Option<T>,
     prev: Option<Rc<SetBuilder<T>>>,
@@ -83,6 +105,8 @@ pub struct SetBuilder<T> {
 
 impl<T: Clone + Eq + std::hash::Hash> SetBuilder<T> {
     pub fn new() -> Rc<Self> {
+        #[cfg(feature = "test-logs")]
+        println!("+ [DEBUG] SetBuilder::new()");
         Rc::new(SetBuilder {
             item: None,
             prev: None,
@@ -91,6 +115,8 @@ impl<T: Clone + Eq + std::hash::Hash> SetBuilder<T> {
     }
 
     pub fn insert(self: &Rc<Self>, item: T) -> Rc<Self> {
+        #[cfg(feature = "test-logs")]
+        println!("+ [DEBUG] SetBuilder::insert (new size={})", self.size + 1);
         Rc::new(SetBuilder {
             item: Some(item),
             prev: Some(self.clone()),
@@ -108,5 +134,12 @@ impl<T: Clone + Eq + std::hash::Hash> SetBuilder<T> {
             curr = node.prev.as_ref().map(|p| p.as_ref());
         }
         ConstSet::from_set(set)
+    }
+}
+
+#[cfg(feature = "test-logs")]
+impl<T> Drop for SetBuilder<T> {
+    fn drop(&mut self) {
+        println!("- [DEBUG] SetBuilder::drop(size={})", self.size);
     }
 }
