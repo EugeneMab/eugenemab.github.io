@@ -7,7 +7,7 @@
 - [x] Chapter 4: Understanding Ownership
 - [x] Chapter 5: Using Structs to Structure Related Data
 - [x] Chapter 6: Enums and Pattern Matching
-- [ ] Chapter 7: Packages, Crates, and Modules (started)
+- [x] Chapter 7: Packages, Crates, and Modules (Completed)
 - [ ] Chapter 8: Common Collections
 - [ ] Chapter 9: Error Handling
 - [ ] Chapter 10: Generic Types, Traits, and Lifetimes
@@ -40,17 +40,21 @@
 - [x] Book 5-1: Defining and Instantiating Structs (Completed)
 - [x] Book 5-2: An Example Program Using Structs (Completed)
 - [x] Book 5-3: Method Syntax (Completed)
-- [x] Chapter 6: Enums and Pattern Matching (samples added)
+- [x] Book 7-1: Packages and Crates (No samples)
+- [x] Book 7-2: Defining Modules (Completed)
+- [x] Book 7-3: Paths for Referring to an Item in the Module Tree (Completed)
+- [x] Book 7-4: Bringing Paths into Scope with the use Keyword (Completed)
+- [x] Book 7-5: Separating Modules into Different Files (No samples)
 
 ## Next Up
-- Chapter 7: Packages, Crates, and Modules — kickoff
+- Chapter 8: Common Collections — kickoff
 
 ### Chapter 7 initial checklist (start here)
-- [ ] Book 7-1: Packages and Crates (add samples demonstrating cargo package creation)
-- [ ] Book 7-2: Defining Modules (module syntax, mod/use examples)
-- [ ] Book 7-3: Paths for Referring to an Item in the Module Tree
-- [ ] Book 7-4: Bringing Paths into Scope with the use Keyword
-- [ ] Book 7-5: Separating Modules into Different Files
+- [x] Book 7-1: Packages and Crates (add samples demonstrating cargo package creation)
+- [x] Book 7-2: Defining Modules (module syntax, mod/use examples)
+- [x] Book 7-3: Paths for Referring to an Item in the Module Tree
+- [x] Book 7-4: Bringing Paths into Scope with the use Keyword
+- [x] Book 7-5: Separating Modules into Different Files
 
 Notes:
 - Chapter 6 samples were generated and included under `samples/` and `pub/samples/`.

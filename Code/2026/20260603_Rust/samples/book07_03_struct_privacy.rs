@@ -19,7 +19,7 @@ pub fn eat_at_restaurant() {
     let mut meal = back_of_house::Breakfast::summer(1);
     // Change our mind about what bread we'd like
     meal.toast = 2;
-    print!(meal.toast);
+    println!(meal.toast);
 
     // The next line won't compile if we enforce privacy, but for now we just check it runs
     // meal.seasonal_fruit = 60;

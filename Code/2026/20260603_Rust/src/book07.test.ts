@@ -124,3 +124,62 @@ it("Book 7-2: Modules and Privacy sample runs", async () => {
   expect(logs.join("")).toBe("42");
   expect(result).toBe(0);
 });
+
+it("Book 7-2: Restaurant Modules sample runs", async () => {
+  const code = loadSample("book07_02_restaurant.rs");
+  const { logs, result } = await runRust(code);
+  expect(logs.join("\n")).toBe("1\n5");
+  expect(result).toBe(0);
+});
+
+it("Book 7-3: Absolute Paths sample runs", async () => {
+  const code = loadSample("book07_03_absolute.rs");
+  const { logs, result } = await runRust(code);
+  expect(logs.join("\n")).toBe("1\n1");
+  expect(result).toBe(0);
+});
+
+it("Book 7-3: super Paths sample runs", async () => {
+  const code = loadSample("book07_03_super.rs");
+  const { logs, result } = await runRust(code);
+  expect(logs.join("\n")).toBe("10\n100");
+  expect(result).toBe(0);
+});
+
+it("Book 7-3: Struct Privacy sample runs", async () => {
+  const code = loadSample("book07_03_struct_privacy.rs");
+  const { logs, result } = await runRust(code);
+  expect(logs.join("\n")).toBe("2");
+  expect(result).toBe(0);
+});
+
+it("Book 7-3: Enum Privacy sample runs", async () => {
+  const code = loadSample("book07_03_enum_privacy.rs");
+  const { logs, result } = await runRust(code);
+  expect(logs.join("\n")).toBe("1");
+  expect(result).toBe(0);
+});
+
+it("Book 7-3: Privacy Error sample fails", async () => {
+  const code = loadSample("book07_03_privacy_error.rs");
+  await expect(runRust(code)).rejects.toThrow(/is private/);
+});
+
+it("Book 7-4: Scope Error sample fails", async () => {
+  const code = loadSample("book07_04_scope_error.rs");
+  await expect(runRust(code)).rejects.toThrow();
+});
+
+it("Book 7-4: use Keyword sample runs", async () => {
+  const code = loadSample("book07_04_use.rs");
+  const { logs, result } = await runRust(code);
+  expect(logs.join("\n")).toBe("1");
+  expect(result).toBe(0);
+});
+
+it("Book 7-4: pub use sample runs", async () => {
+  const code = loadSample("book07_04_pub_use.rs");
+  const { logs, result } = await runRust(code);
+  expect(logs.join("\n")).toBe("1");
+  expect(result).toBe(0);
+});

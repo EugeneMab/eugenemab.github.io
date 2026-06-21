@@ -1039,23 +1039,18 @@ export class Emitter {
       // Check module-level use mappings
       if (!foundMapping && current) {
         const contextParts = current.split("::").slice(0, -1);
-        while (contextParts.length >= 0) {
-          const contextPrefix =
-            contextParts.length > 0 ? contextParts.join("::") + "::" : "";
-          const mappings = this.moduleUseMappings.get(contextPrefix);
-          if (mappings) {
-            const parts = name.split("::");
-            const first = parts[0];
-            if (mappings.has(first)) {
-              resolved =
-                mappings.get(first) +
-                (parts.length > 1 ? "::" + parts.slice(1).join("::") : "");
-              foundMapping = true;
-              break;
-            }
+        const contextPrefix =
+          contextParts.length > 0 ? contextParts.join("::") + "::" : "";
+        const mappings = this.moduleUseMappings.get(contextPrefix);
+        if (mappings) {
+          const parts = name.split("::");
+          const first = parts[0];
+          if (mappings.has(first)) {
+            resolved =
+              mappings.get(first) +
+              (parts.length > 1 ? "::" + parts.slice(1).join("::") : "");
+            foundMapping = true;
           }
-          if (contextParts.length === 0) break;
-          contextParts.pop();
         }
       }
 

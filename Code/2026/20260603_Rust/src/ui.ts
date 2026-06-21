@@ -259,6 +259,17 @@ export function initUI() {
     book06_01_option_negative: "book06_01_option_negative.rs",
     // Chapter 7-2 sample (modules)
     book07_02_modules: "book07_02_modules.rs",
+    book07_02_restaurant: "book07_02_restaurant.rs",
+    // Chapter 7-3 samples (paths & privacy)
+    book07_03_absolute: "book07_03_absolute.rs",
+    book07_03_super: "book07_03_super.rs",
+    book07_03_struct_privacy: "book07_03_struct_privacy.rs",
+    book07_03_enum_privacy: "book07_03_enum_privacy.rs",
+    book07_03_privacy_error: "book07_03_privacy_error.rs",
+    // Chapter 7-4 samples (use keyword)
+    book07_04_use: "book07_04_use.rs",
+    book07_04_pub_use: "book07_04_pub_use.rs",
+    book07_04_scope_error: "book07_04_scope_error.rs",
   };
 
   sampleSelect?.addEventListener("change", async () => {
