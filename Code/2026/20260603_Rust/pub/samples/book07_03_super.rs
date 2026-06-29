@@ -1,5 +1,5 @@
 fn deliver_order() {
-    print!(100);
+    println!(100);
 }
 
 mod back_of_house {
@@ -9,7 +9,7 @@ mod back_of_house {
     }
 
     fn cook_order() {
-        print!(10);
+        println!(10);
     }
 }
 
