@@ -95,7 +95,7 @@ async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
 
 describe("Diagnostic Test", () => {
   it("should log 42", async () => {
-    const { logs } = await runRust(`fn main() { print!(42); }`);
+    const { logs } = await runRust(`fn main() { println!(42); }`);
     expect(logs).toEqual(["42"]);
   });
 

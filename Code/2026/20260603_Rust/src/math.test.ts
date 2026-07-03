@@ -95,7 +95,7 @@ async function runRust(code: string): Promise<{ logs: string[]; result: any }> {
 
 describe("Simple Math Test", () => {
   it("should evaluate % correctly", async () => {
-    const { logs } = await runRust(`fn main() { print!(100 % 3); }`);
+    const { logs } = await runRust(`fn main() { println!(100 % 3); }`);
     expect(logs).toEqual(["1"]);
   });
 });

@@ -11,8 +11,8 @@ pub fn eat_at_restaurant() {
     
     // We can't print enums yet easily without match, but let's check they work
     match order1 {
-        back_of_house::Appetizer::Soup => { print!(1); }
-        back_of_house::Appetizer::Salad => { print!(2); }
+        back_of_house::Appetizer::Soup => { println!(1); }
+        back_of_house::Appetizer::Salad => { println!(2); }
     }
 }
 

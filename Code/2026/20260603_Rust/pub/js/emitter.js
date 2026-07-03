@@ -172,6 +172,14 @@ export class Emitter {
                     return info.valueType;
                 if (this.structDefinitions.has(expr.name))
                     return expr.name;
+                if (expr.name.includes("::")) {
+                    const lastColon = expr.name.lastIndexOf("::");
+                    const enumName = expr.name.substring(0, lastColon);
+                    const resolvedEnumName = this.resolvePath(enumName);
+                    if (this.enumDefinitions.has(resolvedEnumName)) {
+                        return resolvedEnumName;
+                    }
+                }
                 return undefined;
             }
             case "BorrowExpression":
@@ -917,23 +925,17 @@ export class Emitter {
             // Check module-level use mappings
             if (!foundMapping && current) {
                 const contextParts = current.split("::").slice(0, -1);
-                while (contextParts.length >= 0) {
-                    const contextPrefix = contextParts.length > 0 ? contextParts.join("::") + "::" : "";
-                    const mappings = this.moduleUseMappings.get(contextPrefix);
-                    if (mappings) {
-                        const parts = name.split("::");
-                        const first = parts[0];
-                        if (mappings.has(first)) {
-                            resolved =
-                                mappings.get(first) +
-                                    (parts.length > 1 ? "::" + parts.slice(1).join("::") : "");
-                            foundMapping = true;
-                            break;
-                        }
+                const contextPrefix = contextParts.length > 0 ? contextParts.join("::") + "::" : "";
+                const mappings = this.moduleUseMappings.get(contextPrefix);
+                if (mappings) {
+                    const parts = name.split("::");
+                    const first = parts[0];
+                    if (mappings.has(first)) {
+                        resolved =
+                            mappings.get(first) +
+                                (parts.length > 1 ? "::" + parts.slice(1).join("::") : "");
+                        foundMapping = true;
                     }
-                    if (contextParts.length === 0)
-                        break;
-                    contextParts.pop();
                 }
             }
             if (!foundMapping) {
@@ -1529,8 +1531,36 @@ export class Emitter {
                         this.emitWATLine("i32.const 0");
                     }
                     else if (expr.name.includes("::")) {
-                        // Enum variant or namespaced constant: treat as unit-like zero for now
-                        this.emitWATLine("i32.const 0");
+                        const lastColon = expr.name.lastIndexOf("::");
+                        const enumNamePart = expr.name.substring(0, lastColon);
+                        const variantName = expr.name.substring(lastColon + 2);
+                        const resolvedEnumName = this.resolvePath(enumNamePart);
+                        const enumDef = this.enumDefinitions.get(resolvedEnumName);
+                        if (enumDef) {
+                            const variantIndex = enumDef.variants.findIndex((v) => v.name === variantName);
+                            if (variantIndex !== -1) {
+                                // Allocate memory: tag (4 bytes)
+                                const ptrLocal = `enum_ptr_${++this.localCounter}`;
+                                this.allLocals.add(ptrLocal);
+                                this.emitWATLine("global.get $heap_ptr");
+                                this.emitWATLine(`local.set $${ptrLocal}`);
+                                this.emitWATLine(`local.get $${ptrLocal}`);
+                                this.emitWATLine("i32.const 4");
+                                this.emitWATLine("i32.add");
+                                this.emitWATLine("global.set $heap_ptr");
+                                // store tag
+                                this.emitWATLine(`local.get $${ptrLocal}`);
+                                this.emitWATLine(`i32.const ${variantIndex}`);
+                                this.emitWATLine("i32.store");
+                                this.emitWATLine(`local.get $${ptrLocal}`);
+                            }
+                            else {
+                                this.emitWATLine("i32.const 0");
+                            }
+                        }
+                        else {
+                            this.emitWATLine("i32.const 0");
+                        }
                     }
                     else {
                         this.throwError(`Undefined variable: ${expr.name}`, expr);
@@ -2630,8 +2660,38 @@ export class Emitter {
                         body.push(OP_I32_CONST, 0);
                     }
                     else if (expr.name.includes("::")) {
-                        // Enum variant or namespaced constant: treat as unit-like zero for now
-                        body.push(OP_I32_CONST, 0);
+                        const lastColon = expr.name.lastIndexOf("::");
+                        const enumNamePart = expr.name.substring(0, lastColon);
+                        const variantName = expr.name.substring(lastColon + 2);
+                        const resolvedEnumName = this.resolvePath(enumNamePart);
+                        const enumDef = this.enumDefinitions.get(resolvedEnumName);
+                        if (enumDef) {
+                            const variantIndex = enumDef.variants.findIndex((v) => v.name === variantName);
+                            if (variantIndex !== -1) {
+                                // Allocate memory: tag (4 bytes)
+                                const ptrLocal = `enum_ptr_${++this.localCounter}`;
+                                this.allLocals.add(ptrLocal);
+                                // Allocate memory
+                                body.push(...OP_GLOBAL_GET);
+                                body.push(OP_LOCAL_SET, 0xfe, ptrLocal);
+                                // Update heap_ptr
+                                body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                                body.push(OP_I32_CONST, ...this.encodeSignedLEB128(4));
+                                body.push(OP_I32_ADD);
+                                body.push(...OP_GLOBAL_SET);
+                                // store tag
+                                body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                                body.push(OP_I32_CONST, ...this.encodeSignedLEB128(variantIndex));
+                                body.push(...OP_I32_STORE);
+                                body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                            }
+                            else {
+                                body.push(OP_I32_CONST, 0);
+                            }
+                        }
+                        else {
+                            body.push(OP_I32_CONST, 0);
+                        }
                     }
                     else if (expr.name === "None") {
                         // Heuristic: support None as an Option-like unit variant

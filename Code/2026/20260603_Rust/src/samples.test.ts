@@ -148,7 +148,7 @@ describe("UI Samples Regression Tests", () => {
   it("Step 7: Comments", async () => {
     const code = loadSample("step07_comments.rs");
     const { logs, result } = await runRust(code);
-    expect(logs.join("")).toBe("1");
+    expect(logs.join("")).toBe("1\n");
     expect(result).toBe(1);
   });
 
@@ -194,12 +194,12 @@ describe("UI Samples Regression Tests", () => {
     );
 
     // Use while borrowed (Illegal)
-    const codeIllegal2 = `fn main() {\n    let mut x = 5;\n    let y = &mut x;\n    print!(x);\n    0\n}`;
+    const codeIllegal2 = `fn main() {\n    let mut x = 5;\n    let y = &mut x;\n    println!(x);\n    0\n}`;
     await expect(runRust(codeIllegal2)).rejects.toThrow(
       "Cannot use 'x' while it is mutably borrowed",
     );
     await expect(runRust(codeIllegal2)).rejects.toThrow(
-      "Error at line 4, column 12",
+      "Error at line 4, column 14",
     );
   });
 
@@ -529,49 +529,49 @@ describe("UI Samples Regression Tests", () => {
     it("Book 7-2: Restaurant Modules", async () => {
       const code = loadSample("book07_02_restaurant.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("\n")).toBe("1\n5");
+      expect(logs.join("")).toBe("1\n5\n");
       expect(result).toBe(0);
     });
 
     it("Book 7-3: Absolute Paths", async () => {
       const code = loadSample("book07_03_absolute.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("\n")).toBe("1\n1");
+      expect(logs.join("")).toBe("1\n1\n");
       expect(result).toBe(0);
     });
 
     it("Book 7-3: super Paths", async () => {
       const code = loadSample("book07_03_super.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("\n")).toBe("10\n100");
+      expect(logs.join("")).toBe("10\n100\n");
       expect(result).toBe(0);
     });
 
     it("Book 7-3: Struct Privacy", async () => {
       const code = loadSample("book07_03_struct_privacy.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("\n")).toBe("2");
+      expect(logs.join("")).toBe("2\n");
       expect(result).toBe(0);
     });
 
     it("Book 7-3: Enum Privacy", async () => {
       const code = loadSample("book07_03_enum_privacy.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("\n")).toBe("1");
+      expect(logs.join("")).toBe("1\n");
       expect(result).toBe(0);
     });
 
     it("Book 7-4: use Keyword", async () => {
       const code = loadSample("book07_04_use.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("\n")).toBe("1");
+      expect(logs.join("")).toBe("1\n");
       expect(result).toBe(0);
     });
 
     it("Book 7-4: pub use", async () => {
       const code = loadSample("book07_04_pub_use.rs");
       const { logs, result } = await runRust(code);
-      expect(logs.join("\n")).toBe("1");
+      expect(logs.join("")).toBe("1\n");
       expect(result).toBe(0);
     });
 
