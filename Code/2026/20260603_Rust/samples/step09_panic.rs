@@ -1,7 +1,7 @@
 // Step 9: Panic (Negative at Execute)
 fn main() {
-    print!(123);
+    println!(123);
     panic!(456);
-    print!(789);
+    println!(789);
     0
 }

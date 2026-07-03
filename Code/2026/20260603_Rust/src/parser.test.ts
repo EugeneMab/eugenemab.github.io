@@ -38,15 +38,15 @@ describe("Parser", () => {
     expect(letStmt.initializer.right.operator).toBe("*");
   });
 
-  it("should parse a print! macro invocation", () => {
-    const input = 'print!("Hello", 42);';
+  it("should parse a println! macro invocation", () => {
+    const input = 'println!("Hello", 42);';
     const tokens = new Lexer(input).tokenize();
     const program = new Parser(tokens, input).parse();
 
     expect(program.body[0].type).toBe("ExpressionStatement");
     const exprStmt = program.body[0] as any;
     expect(exprStmt.expression.type).toBe("MacroInvocation");
-    expect(exprStmt.expression.name).toBe("print");
+    expect(exprStmt.expression.name).toBe("println");
     expect(exprStmt.expression.args.length).toBe(2);
   });
 

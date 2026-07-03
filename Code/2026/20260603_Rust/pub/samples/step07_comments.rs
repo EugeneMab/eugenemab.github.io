@@ -3,6 +3,6 @@
 fn main() {
     // Single line comment
     let x = 1; // Inline comment
-    print!(x);
+    println!(x);
     x
 }

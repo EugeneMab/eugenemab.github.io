@@ -148,7 +148,7 @@ describe("UI Samples Regression Tests", () => {
   it("Step 7: Comments", async () => {
     const code = loadSample("step07_comments.rs");
     const { logs, result } = await runRust(code);
-    expect(logs.join("")).toBe("1");
+    expect(logs.join("")).toBe("1\n");
     expect(result).toBe(1);
   });
 
@@ -194,12 +194,12 @@ describe("UI Samples Regression Tests", () => {
     );
 
     // Use while borrowed (Illegal)
-    const codeIllegal2 = `fn main() {\n    let mut x = 5;\n    let y = &mut x;\n    print!(x);\n    0\n}`;
+    const codeIllegal2 = `fn main() {\n    let mut x = 5;\n    let y = &mut x;\n    println!(x);\n    0\n}`;
     await expect(runRust(codeIllegal2)).rejects.toThrow(
       "Cannot use 'x' while it is mutably borrowed",
     );
     await expect(runRust(codeIllegal2)).rejects.toThrow(
-      "Error at line 4, column 12",
+      "Error at line 4, column 14",
     );
   });
 

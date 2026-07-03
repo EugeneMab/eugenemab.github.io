@@ -50,11 +50,11 @@ describe("Boolean Printing Comprehensive Tests", () => {
   it("should print true and false for boolean literals", async () => {
     const { logs } = await runRust(`
       fn main() {
-        print!(true);
-        print!(false);
+        println!(true);
+        println!(false);
       }
     `);
-    expect(logs).toEqual(["true", "false"]);
+    expect(logs).toEqual(["true", "\n", "false", "\n"]);
   });
 
   it("should print true and false for boolean variables", async () => {
@@ -62,28 +62,39 @@ describe("Boolean Printing Comprehensive Tests", () => {
       fn main() {
         let t = true;
         let f = false;
-        print!(t);
-        print!(f);
+        println!(t);
+        println!(f);
       }
     `);
-    expect(logs).toEqual(["true", "false"]);
+    expect(logs).toEqual(["true", "\n", "false", "\n"]);
   });
 
   it("should print true and false for boolean expressions", async () => {
     const { logs } = await runRust(`
       fn main() {
-        print!(1 == 1);
-        print!(1 != 1);
-        print!(true && true);
-        print!(true || false);
-        print!(!true);
+        println!(1 == 1);
+        println!(1 != 1);
+        println!(true && true);
+        println!(true || false);
+        println!(!true);
       }
     `);
-    expect(logs).toEqual(["true", "false", "true", "true", "false"]);
+    expect(logs).toEqual([
+      "true",
+      "\n",
+      "false",
+      "\n",
+      "true",
+      "\n",
+      "true",
+      "\n",
+      "false",
+      "\n",
+    ]);
   });
 
   it("should generate correct WAT for boolean literals", () => {
-    const code = `fn main() { print!(true); }`;
+    const code = `fn main() { println!(true); }`;
     const lexer = new Lexer(code);
     const tokens = lexer.tokenize();
     const parser = new Parser(tokens, code);
@@ -121,10 +132,10 @@ describe("Boolean Printing Comprehensive Tests", () => {
       fn main() {
         let t = true;
         let rt = &t;
-        print!(rt);
+        println!(rt);
       }
     `);
-    expect(logs).toEqual(["true"]);
+    expect(logs).toEqual(["true", "\n"]);
   });
 
   it("should print true and false in tuples with debug format", async () => {
