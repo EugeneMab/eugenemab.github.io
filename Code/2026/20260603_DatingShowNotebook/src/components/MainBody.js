@@ -4,7 +4,7 @@ import {
   X_MALE_TEXT, X_MALE_IMG, X_MID, X_FEMALE_IMG, X_FEMALE_TEXT, TOTAL_WIDTH,
   getFilteredPeople, calculatePersonPositions, getMessageStyle, calculateMessageCoords, calculatTeamMemberCoords, TEAM_COLORS,
   SELECTION_PADDING, SELECTION_STROKE_WIDTH, SELECTION_CORNER_RADIUS, MESSAGE_STROKE_WIDTH, TEAM_HUB_RADIUS, TEAM_LINE_STROKE_WIDTH,
-  TITLE_FONT_SIZE, NAME_FONT_SIZE, DESC_FONT_SIZE, SMALL_FONT_SIZE
+  TITLE_FONT_SIZE, NAME_FONT_SIZE, DESC_FONT_SIZE, SMALL_FONT_SIZE, LINE_OFFSET_X, LINE_OFFSET_Y
 } from '../utils/layout.js';
 
 const { useMemo, useState } = React;
@@ -53,7 +53,7 @@ export const MainBody = ({ data, setData, activeMode, selectedEpisodeId, selecte
       if (firstPersonId === null) {
         setFirstPersonId(personId);
       } else {
-        if (firstPersonId !== personId) {
+        if (firstPersonId !== personId || activeMode === 'weak-message') {
           setData(prev => {
             const p1 = prev.people.find(p => p.id === firstPersonId);
             const p2 = prev.people.find(p => p.id === personId);
@@ -232,6 +232,30 @@ export const MainBody = ({ data, setData, activeMode, selectedEpisodeId, selecte
               const toPos = personPositions[m.to];
               if (!fromPos || !toPos) return null;
               const { color, marker } = getMessageStyle(m.type, fromPos.gender);
+              
+              if (m.from === m.to) {
+                const isMale = fromPos.gender === 'male';
+                const hOffset = (isMale ? LINE_OFFSET_X : -LINE_OFFSET_X) * scale;
+                const vOffset = (isMale ? LINE_OFFSET_Y : -LINE_OFFSET_Y) * scale;
+                const x0 = fromPos.x + hOffset;
+                const y = fromPos.y;
+                const y1 = y + vOffset;
+                const y2 = y - vOffset;
+
+                const pathData = `M ${x0} ${y1} L ${x0 + 2.5 * hOffset} ${y + 2.5 * vOffset} L ${x0 + 5 * hOffset} ${y} L ${x0 + 2.5 * hOffset} ${y - 2.5 * vOffset} L ${x0} ${y2}`;
+
+                return html`
+                  <path
+                    key=${`msg-${i}`}
+                    d=${pathData}
+                    fill="none"
+                    stroke=${color}
+                    strokeWidth=${MESSAGE_STROKE_WIDTH * scale}
+                    markerEnd=${marker ? `url(#${marker})` : ''}
+                  />
+                `;
+              }
+
               const { x1, y1, x2, y2 } = calculateMessageCoords(fromPos, toPos, scale, m.type);
               
               if (fromPos.gender === toPos.gender) {
