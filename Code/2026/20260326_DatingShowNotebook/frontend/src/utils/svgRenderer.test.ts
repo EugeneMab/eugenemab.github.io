@@ -118,4 +118,18 @@ describe('svgRenderer', () => {
     const svg = renderEventToSvgString(invalidTeamEvent, mockData, 1);
     expect(svg).not.toContain('circle');
   });
+
+  /* Tests the specialized rendering for self-pointing weak messages using a diamond path. */
+  it('renders self-pointing weak messages as a path', () => {
+    const selfPointingEvent: Event = {
+      id: 15,
+      title: 'Self Pointing',
+      messages: [{ from: 1, to: 1, type: 'weak' }],
+      teams: {},
+    };
+    const svg = renderEventToSvgString(selfPointingEvent, mockData, 1);
+    expect(svg).toContain('<path d="M');
+    expect(svg).toContain('fill="none"');
+    expect(svg).toContain('stroke="#93c5fd"'); // male weak color
+  });
 });

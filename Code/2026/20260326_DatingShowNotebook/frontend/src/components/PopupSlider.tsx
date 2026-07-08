@@ -76,7 +76,7 @@ const PopupSlider: React.FC<PopupSliderProps> = ({ Icon, value, onChange, min, m
                   writingMode: 'bt-lr',
                   width: '12px',
                   height: '100%',
-                } as React.CSSProperties
+                } as unknown as React.CSSProperties
               }
               className="cursor-pointer"
             />

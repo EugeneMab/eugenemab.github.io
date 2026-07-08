@@ -22,6 +22,8 @@ import {
   calculatePersonPositions,
   getMessageStyle,
   calculateMessageCoords,
+  LINE_OFFSET_X,
+  LINE_OFFSET_Y,
   calculatTeamMemberCoords,
   TEAM_COLORS,
   SELECTION_PADDING,
@@ -128,7 +130,7 @@ const MainBody: React.FC = () => {
       if (firstPersonId === null) {
         setFirstPersonId(personId); // First person selected
       } else {
-        if (firstPersonId !== personId) {
+        if (firstPersonId !== personId || activeMode === 'weak-message') {
           saveData((prev) => {
             const person1 = prev.people.find((p) => {
               return p.id === firstPersonId;
@@ -684,6 +686,30 @@ const MainBody: React.FC = () => {
               }
 
               const { color, marker } = getMessageStyle(m.type, fromPos.gender);
+
+              if (m.from === m.to) {
+                const isMale = fromPos.gender === 'male';
+                const hOffset = (isMale ? LINE_OFFSET_X : -LINE_OFFSET_X) * scale;
+                const vOffset = (isMale ? LINE_OFFSET_Y : -LINE_OFFSET_Y) * scale;
+                const x0 = fromPos.x + hOffset;
+                const y = fromPos.y;
+                const y1 = y + vOffset;
+                const y2 = y - vOffset;
+
+                const pathData = `M ${x0} ${y1} L ${x0 + 2.5 * hOffset} ${y + 2.5 * vOffset} L ${x0 + 5 * hOffset} ${y} L ${x0 + 2.5 * hOffset} ${y - 2.5 * vOffset} L ${x0} ${y2}`;
+
+                return (
+                  <path
+                    key={`msg-${i}`}
+                    d={pathData}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth={MESSAGE_STROKE_WIDTH * scale}
+                    markerEnd={marker ? `url(#${marker})` : undefined}
+                  />
+                );
+              }
+
               const { x1, y1, x2, y2 } = calculateMessageCoords(fromPos, toPos, scale, m.type);
 
               /**
