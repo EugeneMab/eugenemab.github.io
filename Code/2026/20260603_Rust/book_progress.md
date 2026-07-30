@@ -45,6 +45,7 @@
 - [x] Book 7-3: Paths for Referring to an Item in the Module Tree (Completed)
 - [x] Book 7-4: Bringing Paths into Scope with the use Keyword (Completed)
 - [x] Book 7-5: Separating Modules into Different Files (No samples)
+- [x] Book 8-1: Vectors (Completed)
 
 ## Next Up
 - Chapter 8: Common Collections — kickoff

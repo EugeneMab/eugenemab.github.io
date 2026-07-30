@@ -579,5 +579,12 @@ describe("UI Samples Regression Tests", () => {
       const code = loadSample("book07_03_privacy_error.rs");
       await expect(runRust(code)).rejects.toThrow(/is private/);
     });
+
+    it("Book 8-1: Vectors", async () => {
+      const code = loadSample("book08_01_vectors.rs");
+      const { logs, result } = await runRust(code);
+      expect(logs.join("")).toBe("0\n");
+      expect(result).toBe(0);
+    });
   });
 });

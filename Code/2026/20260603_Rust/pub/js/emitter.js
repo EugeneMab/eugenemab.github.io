@@ -1409,6 +1409,21 @@ export class Emitter {
                     this.emitExpressionWAT(expr.args[0]);
                     break;
                 }
+                if (expr.callee === "Vec::new" || expr.callee === "new") {
+                    const ptrLocal = `vec_ptr_${++this.localCounter}`;
+                    this.allLocals.add(ptrLocal);
+                    this.emitWATLine("global.get $heap_ptr");
+                    this.emitWATLine(`local.set $${ptrLocal}`);
+                    this.emitWATLine(`local.get $${ptrLocal}`);
+                    this.emitWATLine("i32.const 4");
+                    this.emitWATLine("i32.add");
+                    this.emitWATLine("global.set $heap_ptr");
+                    this.emitWATLine(`local.get $${ptrLocal}`);
+                    this.emitWATLine("i32.const 0");
+                    this.emitWATLine("i32.store");
+                    this.emitWATLine(`local.get $${ptrLocal}`);
+                    break;
+                }
                 if (expr.callee === "len") {
                     this.emitExpressionWAT(expr.args[0]);
                     this.emitWATLine("i32.load");
@@ -3031,6 +3046,21 @@ export class Emitter {
                 }
                 if (expr.callee === "String::from") {
                     this.emitExpressionBinary(expr.args[0], body);
+                    break;
+                }
+                if (expr.callee === "Vec::new" || expr.callee === "new") {
+                    const ptrLocal = `vec_ptr_${++this.localCounter}`;
+                    this.allLocals.add(ptrLocal);
+                    body.push(...OP_GLOBAL_GET);
+                    body.push(OP_LOCAL_SET, 0xfe, ptrLocal);
+                    body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(4));
+                    body.push(OP_I32_ADD);
+                    body.push(...OP_GLOBAL_SET);
+                    body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
+                    body.push(OP_I32_CONST, ...this.encodeSignedLEB128(0));
+                    body.push(...OP_I32_STORE);
+                    body.push(OP_LOCAL_GET, 0xfe, ptrLocal);
                     break;
                 }
                 if (expr.callee === "len") {
