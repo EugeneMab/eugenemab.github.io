@@ -270,6 +270,8 @@ export function initUI() {
     book07_04_use: "book07_04_use.rs",
     book07_04_pub_use: "book07_04_pub_use.rs",
     book07_04_scope_error: "book07_04_scope_error.rs",
+    // Chapter 8-1 sample (vectors)
+    book08_01_vectors: "book08_01_vectors.rs",
   };
 
   sampleSelect?.addEventListener("change", async () => {
