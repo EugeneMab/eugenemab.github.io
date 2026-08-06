@@ -60,9 +60,27 @@ function formatLine(line, maxWidth) {
 }
 
 function renderScreen(lines, focusIndex, width, height) {
-  const half = Math.floor(height / 2);
-  const startLine = Math.max(0, focusIndex - half);
-  const endLine = Math.min(lines.length - 1, focusIndex + half);
+  console.log('_'.repeat(2 + width + 3));
+
+  const totalLines = lines.length;
+  let startLine, endLine;
+
+  if (totalLines <= height) {
+    startLine = 0;
+    endLine = totalLines - 1;
+  } else {
+    const half = Math.floor(height / 2);
+    startLine = focusIndex - half;
+    endLine = startLine + height - 1;
+
+    if (startLine < 0) {
+      startLine = 0;
+      endLine = height - 1;
+    } else if (endLine >= totalLines) {
+      endLine = totalLines - 1;
+      startLine = totalLines - height;
+    }
+  }
 
   for (let i = startLine; i <= endLine; i++) {
     const prefix = (i === focusIndex) ? '> ' : '  ';
@@ -72,7 +90,58 @@ function renderScreen(lines, focusIndex, width, height) {
     console.log(formatted);
   }
 
-  console.log(formatLine('Controls: [^/Up Arrow]: move up | [v/Down Arrow]: move down | [q]: quit', width));
+  console.log('Controls: [q]: quit | [Up Arrow]: move up | [Down Arrow]: move down | [Ctrl+Up]: line up | [Ctrl+Down]: line down | [u]: undo | [r]: redo | [l]: reload');
+}
+
+function findRegions(lines) {
+  let doneIndex = -1;
+  let doingIndex = -1;
+  let todoIndex = -1;
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === 'DONE') {
+      doneIndex = i;
+      break;
+    }
+  }
+
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].trim() === 'TODO') {
+      todoIndex = i;
+      break;
+    }
+  }
+
+  if (doneIndex !== -1) {
+    for (let i = doneIndex + 1; i < lines.length; i++) {
+      if (lines[i].trim() === '') {
+        doingIndex = i;
+        break;
+      }
+    }
+  }
+
+  if (doneIndex !== -1 && doingIndex !== -1 && doneIndex > doingIndex) {
+    throw new Error(`Invalid section order: DONE section at line ${doneIndex + 1} comes after DOING section at line ${doingIndex + 1}`);
+  }
+  if (doingIndex !== -1 && todoIndex !== -1 && doingIndex > todoIndex) {
+    throw new Error(`Invalid section order: DOING section at line ${doingIndex + 1} comes after TODO section at line ${todoIndex + 1}`);
+  }
+  if (doneIndex !== -1 && todoIndex !== -1 && doneIndex > todoIndex) {
+    throw new Error(`Invalid section order: DONE section at line ${doneIndex + 1} comes after TODO section at line ${todoIndex + 1}`);
+  }
+
+  return { doneIndex, doingIndex, todoIndex };
+}
+
+function saveState(lines, undoStack, redoStack) {
+  undoStack.push([...lines]);
+  redoStack.length = 0;
+}
+
+async function loadFile(filePath) {
+  const fileContent = await fs.readFile(filePath, 'utf8');
+  return fileContent.split(/\r?\n/);
 }
 
 async function main() {
@@ -93,10 +162,12 @@ async function main() {
     process.exit(1);
   }
 
-  const fileContent = await fs.readFile(filePath, 'utf8');
-  let lines = fileContent.split(/\r?\n/);
+  let lines = await loadFile(filePath);
 
-  let todoIndex = lines.findIndex(line => line.trim() === 'TODO');
+  const undoStack = [];
+  const redoStack = [];
+
+  let { todoIndex } = findRegions(lines);
   let focusIndex = 0;
   if (todoIndex !== -1 && todoIndex + 1 < lines.length) {
     focusIndex = todoIndex + 1;
@@ -107,22 +178,64 @@ async function main() {
   let running = true;
 
   while (running) {
+    const regions = findRegions(lines);
+
     renderScreen(lines, focusIndex, width, height);
 
     const { str, key } = await getNextKey();
     let changed = false;
 
-    if (key.name === 'up' || str === '^' || key.name === 'k') {
+    if (key.ctrl && key.name === 'up') {
       if (focusIndex > 0) {
+        saveState(lines, undoStack, redoStack);
+        const temp = lines[focusIndex];
+        lines[focusIndex] = lines[focusIndex - 1];
+        lines[focusIndex - 1] = temp;
         focusIndex--;
         changed = true;
       }
-    } else if (key.name === 'down' || str === 'v' || str === 'V' || key.name === 'j') {
+    } else if (key.ctrl && key.name === 'down') {
       if (focusIndex < lines.length - 1) {
+        saveState(lines, undoStack, redoStack);
+        const temp = lines[focusIndex];
+        lines[focusIndex] = lines[focusIndex + 1];
+        lines[focusIndex + 1] = temp;
         focusIndex++;
         changed = true;
       }
-    } else if (str === 'q' || str === 'Q' || (key.ctrl && key.name === 'c')) {
+    } else if (key.name === 'up') {
+      if (focusIndex > 0) {
+        focusIndex--;
+      }
+    } else if (key.name === 'down') {
+      if (focusIndex < lines.length - 1) {
+        focusIndex++;
+      }
+    } else if (str === 'u') {
+      if (undoStack.length > 0) {
+        redoStack.push([...lines]);
+        lines = undoStack.pop();
+        if (focusIndex >= lines.length) {
+          focusIndex = lines.length - 1;
+        }
+        changed = true;
+      }
+    } else if (str === 'r') {
+      if (redoStack.length > 0) {
+        undoStack.push([...lines]);
+        lines = redoStack.pop();
+        if (focusIndex >= lines.length) {
+          focusIndex = lines.length - 1;
+        }
+        changed = true;
+      }
+    } else if (str === 'l') {
+      saveState(lines, undoStack, redoStack);
+      lines = await loadFile(filePath);
+      if (focusIndex >= lines.length) {
+        focusIndex = lines.length - 1;
+      }
+    } else if (str === 'q' || (key.ctrl && key.name === 'c')) {
       running = false;
       break;
     }
