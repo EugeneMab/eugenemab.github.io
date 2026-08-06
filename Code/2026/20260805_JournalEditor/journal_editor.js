@@ -90,7 +90,7 @@ function renderScreen(lines, focusIndex, width, height) {
     console.log(formatted);
   }
 
-  console.log('Controls: [q]: quit | [Up Arrow]: move up | [Down Arrow]: move down | [Ctrl+Up]: line up | [Ctrl+Down]: line down | [d/i/t]: move region | [e]: end item | [o]: organize | [u]: undo | [r]: redo | [l]: reload');
+  console.log('Controls: [q]: quit | [Up Arrow]: move up | [Down Arrow]: move down | [Ctrl+Up]: line up | [Ctrl+Down]: line down | [d/i/t]: move to done/in-progress/to-do region | [e]: end item | [o]: organize | [u]: undo | [r]: redo | [l]: reload');
 }
 
 function findRegions(lines) {
