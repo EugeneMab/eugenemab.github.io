@@ -90,13 +90,14 @@ function renderScreen(lines, focusIndex, width, height) {
     console.log(formatted);
   }
 
-  console.log('Controls: [q]: quit | [Up Arrow]: move up | [Down Arrow]: move down | [Ctrl+Up]: line up | [Ctrl+Down]: line down | [u]: undo | [r]: redo | [l]: reload');
+  console.log('Controls: [q]: quit | [Up Arrow]: move up | [Down Arrow]: move down | [Ctrl+Up]: line up | [Ctrl+Down]: line down | [d/i/t]: move region | [e]: end item | [o]: organize | [u]: undo | [r]: redo | [l]: reload');
 }
 
 function findRegions(lines) {
   let doneIndex = -1;
   let doingIndex = -1;
   let todoIndex = -1;
+  let todoEndIndex = -1;
 
   for (let i = 0; i < lines.length; i++) {
     if (lines[i].trim() === 'DONE') {
@@ -121,17 +122,43 @@ function findRegions(lines) {
     }
   }
 
-  if (doneIndex !== -1 && doingIndex !== -1 && doneIndex > doingIndex) {
-    throw new Error(`Invalid section order: DONE section at line ${doneIndex + 1} comes after DOING section at line ${doingIndex + 1}`);
-  }
-  if (doingIndex !== -1 && todoIndex !== -1 && doingIndex > todoIndex) {
-    throw new Error(`Invalid section order: DOING section at line ${doingIndex + 1} comes after TODO section at line ${todoIndex + 1}`);
-  }
-  if (doneIndex !== -1 && todoIndex !== -1 && doneIndex > todoIndex) {
-    throw new Error(`Invalid section order: DONE section at line ${doneIndex + 1} comes after TODO section at line ${todoIndex + 1}`);
+  if (todoIndex !== -1) {
+    for (let i = todoIndex + 1; i < lines.length; i++) {
+      if (lines[i].trim() === '') {
+        todoEndIndex = i;
+        break;
+      }
+    }
   }
 
-  return { doneIndex, doingIndex, todoIndex };
+  // Validate presence and ordering of essential sections
+  if (doneIndex === -1) {
+    throw new Error('Invalid journal format: DONE section header missing.');
+  }
+  if (doingIndex === -1) {
+    throw new Error('Invalid journal format: DOING section (first empty line after DONE) missing.');
+  }
+  if (todoIndex === -1) {
+    throw new Error('Invalid journal format: TODO section header missing.');
+  }
+  if (todoEndIndex === -1) {
+    throw new Error('Invalid journal format: TODO end line (first empty line after TODO) missing.');
+  }
+
+  if (doneIndex > doingIndex) {
+    throw new Error(`Invalid section order: DONE section at line ${doneIndex + 1} comes after DOING section at line ${doingIndex + 1}`);
+  }
+  if (doingIndex > todoIndex) {
+    throw new Error(`Invalid section order: DOING section at line ${doingIndex + 1} comes after TODO section at line ${todoIndex + 1}`);
+  }
+  if (doneIndex > todoIndex) {
+    throw new Error(`Invalid section order: DONE section at line ${doneIndex + 1} comes after TODO section at line ${todoIndex + 1}`);
+  }
+  if (todoIndex > todoEndIndex) {
+    throw new Error(`Invalid section order: TODO section at line ${todoIndex + 1} comes after TODO end line at line ${todoEndIndex + 1}`);
+  }
+
+  return { doneIndex, doingIndex, todoIndex, todoEndIndex };
 }
 
 function saveState(lines, undoStack, redoStack) {
@@ -168,12 +195,7 @@ async function main() {
   const redoStack = [];
 
   let { todoIndex } = findRegions(lines);
-  let focusIndex = 0;
-  if (todoIndex !== -1 && todoIndex + 1 < lines.length) {
-    focusIndex = todoIndex + 1;
-  } else if (todoIndex !== -1) {
-    focusIndex = todoIndex;
-  }
+  let focusIndex = todoIndex + 1;
 
   let running = true;
 
@@ -210,6 +232,31 @@ async function main() {
     } else if (key.name === 'down') {
       if (focusIndex < lines.length - 1) {
         focusIndex++;
+      }
+    } else if (str === 'd') {
+      focusIndex = regions.doingIndex - 1;
+    } else if (str === 'i') {
+      focusIndex = regions.doingIndex + 1;
+    } else if (str === 't') {
+      focusIndex = regions.todoIndex + 1;
+    } else if (str === 'e') {
+      if (focusIndex > regions.doingIndex && focusIndex < regions.todoIndex) {
+        saveState(lines, undoStack, redoStack);
+        const [movedLine] = lines.splice(focusIndex, 1);
+        const targetDoneEndIndex = regions.doingIndex;
+        lines.splice(targetDoneEndIndex, 0, movedLine);
+        focusIndex++;
+        changed = true;
+      }
+    } else if (str === 'o') {
+      const start = regions.todoIndex + 1;
+      const count = regions.todoEndIndex - start;
+      if (count > 1) {
+        saveState(lines, undoStack, redoStack);
+        const todoLines = lines.slice(start, regions.todoEndIndex);
+        todoLines.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+        lines.splice(start, count, ...todoLines);
+        changed = true;
       }
     } else if (str === 'u') {
       if (undoStack.length > 0) {
