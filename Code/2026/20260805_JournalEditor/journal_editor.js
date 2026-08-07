@@ -90,7 +90,7 @@ function renderScreen(lines, focusIndex, width, height) {
     console.log(formatted);
   }
 
-  console.log('Controls: [q]: quit | [Up Arrow]: move up | [Down Arrow]: move down | [Ctrl+Up]: line up | [Ctrl+Down]: line down | [d/i/t]: move to done/in-progress/to-do region | [e]: end item | [o]: organize | [u]: undo | [r]: redo | [l]: reload');
+  console.log('Controls: [q]: quit | [Up Arrow]: move up | [Down Arrow]: move down | [Ctrl+Up]: line up | [Ctrl+Down]: line down | [d/i/t]: move region | [s]: start item | [e]: end item | [o]: organize | [u]: undo | [r]: redo | [l]: reload');
 }
 
 function findRegions(lines) {
@@ -159,6 +159,59 @@ function findRegions(lines) {
   }
 
   return { doneIndex, doingIndex, todoIndex, todoEndIndex };
+}
+
+function calculateNextDate(dateStr, intervalStr) {
+  const [yearStr, monthStr, dayStr] = dateStr.split('-');
+  let year = parseInt(yearStr, 10);
+  let month = parseInt(monthStr, 10); // 1-indexed
+  let day = parseInt(dayStr, 10);
+  const interval = parseInt(intervalStr, 10);
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (interval === 30) {
+    if (day > 28) {
+      throw new Error(`Cannot add 1 month (30 days interval) to date with day > 28: ${dateStr}`);
+    }
+    date.setUTCMonth(date.getUTCMonth() + 1);
+  } else if (interval === 365 || interval === 3650) {
+    if (month === 2 && day === 29) {
+      throw new Error(`Cannot add year interval (${interval} days) to leap day Feb 29: ${dateStr}`);
+    }
+    date.setUTCFullYear(date.getUTCFullYear() + (interval === 365 ? 1 : 10));
+  } else if (interval > 0) {
+    date.setUTCDate(date.getUTCDate() + interval);
+  }
+
+  const nextYear = String(date.getUTCFullYear()).padStart(4, '0');
+  const nextMonth = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const nextDay = String(date.getUTCDate()).padStart(2, '0');
+
+  return `${nextYear}-${nextMonth}-${nextDay}`;
+}
+
+function generateNextOccurrenceLine(line) {
+  const regex = /^\s*@(\d{4}-\d{2}-\d{2})(?:\s+(\d+))?/;
+  const match = line.match(regex);
+
+  if (!match) {
+    throw new Error(`Invalid item format: Line does not start with '@YYYY-MM-DD': "${line}"`);
+  }
+
+  const dateStr = match[1];
+  const intervalStr = match[2];
+
+  const atPos = line.indexOf('@');
+  const dateStartPos = atPos + 1;
+
+  if (!intervalStr) {
+    const dateEndPos = dateStartPos + dateStr.length;
+    return line.slice(0, dateEndPos) + ' ???? ' + line.slice(dateEndPos);
+  }
+
+  const nextDateStr = calculateNextDate(dateStr, intervalStr);
+  return line.slice(0, dateStartPos) + nextDateStr + line.slice(dateStartPos + dateStr.length);
 }
 
 function saveState(lines, undoStack, redoStack) {
@@ -239,6 +292,35 @@ async function main() {
       focusIndex = regions.doingIndex + 1;
     } else if (str === 't') {
       focusIndex = regions.todoIndex + 1;
+    } else if (str === 's') {
+      if (focusIndex > regions.todoIndex && focusIndex < regions.todoEndIndex) {
+        saveState(lines, undoStack, redoStack);
+        const originalLine = lines[focusIndex];
+
+        const nextOccurrenceLine = generateNextOccurrenceLine(originalLine);
+
+        lines.splice(focusIndex, 1);
+
+        const currentRegions = findRegions(lines);
+        const insertInProgressIndex = currentRegions.doingIndex + 1;
+        lines.splice(insertInProgressIndex, 0, originalLine);
+
+        const freshRegions = findRegions(lines);
+        const todoStart = freshRegions.todoIndex + 1;
+        const todoEnd = freshRegions.todoEndIndex;
+
+        let insertTodoPos = todoEnd;
+        for (let i = todoStart; i < todoEnd; i++) {
+          if (nextOccurrenceLine < lines[i]) {
+            insertTodoPos = i;
+            break;
+          }
+        }
+        lines.splice(insertTodoPos, 0, nextOccurrenceLine);
+
+        focusIndex++;
+        changed = true;
+      }
     } else if (str === 'e') {
       if (focusIndex > regions.doingIndex && focusIndex < regions.todoIndex) {
         saveState(lines, undoStack, redoStack);
