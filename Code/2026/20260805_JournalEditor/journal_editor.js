@@ -306,17 +306,14 @@ async function main() {
         lines.splice(insertInProgressIndex, 0, originalLine);
 
         const freshRegions = findRegions(lines);
-        const todoStart = freshRegions.todoIndex + 1;
-        const todoEnd = freshRegions.todoEndIndex;
+        lines.splice(freshRegions.todoEndIndex, 0, nextOccurrenceLine);
 
-        let insertTodoPos = todoEnd;
-        for (let i = todoStart; i < todoEnd; i++) {
-          if (nextOccurrenceLine < lines[i]) {
-            insertTodoPos = i;
-            break;
-          }
-        }
-        lines.splice(insertTodoPos, 0, nextOccurrenceLine);
+        const finalRegions = findRegions(lines);
+        const start = finalRegions.todoIndex + 1;
+        const count = finalRegions.todoEndIndex - start;
+        const todoLines = lines.slice(start, finalRegions.todoEndIndex);
+        todoLines.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+        lines.splice(start, count, ...todoLines);
 
         focusIndex++;
         changed = true;
@@ -325,9 +322,13 @@ async function main() {
       if (focusIndex > regions.doingIndex && focusIndex < regions.todoIndex) {
         saveState(lines, undoStack, redoStack);
         const [movedLine] = lines.splice(focusIndex, 1);
-        const targetDoneEndIndex = regions.doingIndex;
-        lines.splice(targetDoneEndIndex, 0, movedLine);
-        focusIndex++;
+        const isNonRecordable = movedLine.trim().endsWith('-');
+
+        if (!isNonRecordable) {
+          const targetDoneEndIndex = regions.doingIndex;
+          lines.splice(targetDoneEndIndex, 0, movedLine);
+          focusIndex++;
+        }
         changed = true;
       }
     } else if (str === 'o') {
