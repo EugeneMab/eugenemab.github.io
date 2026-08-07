@@ -175,11 +175,12 @@ function calculateNextDate(dateStr, intervalStr) {
       throw new Error(`Cannot add 1 month (30 days interval) to date with day > 28: ${dateStr}`);
     }
     date.setUTCMonth(date.getUTCMonth() + 1);
-  } else if (interval === 365 || interval === 3650) {
+  } else if (interval > 0 && interval % 365 === 0) {
+    const yearsToAdd = interval / 365;
     if (month === 2 && day === 29) {
-      throw new Error(`Cannot add year interval (${interval} days) to leap day Feb 29: ${dateStr}`);
+      throw new Error(`Cannot add year interval (${interval} days = ${yearsToAdd} years) to leap day Feb 29: ${dateStr}`);
     }
-    date.setUTCFullYear(date.getUTCFullYear() + (interval === 365 ? 1 : 10));
+    date.setUTCFullYear(date.getUTCFullYear() + yearsToAdd);
   } else if (interval > 0) {
     date.setUTCDate(date.getUTCDate() + interval);
   }
@@ -320,6 +321,7 @@ async function main() {
       }
     } else if (str === 'e') {
       if (focusIndex > regions.doingIndex && focusIndex < regions.todoIndex) {
+        // In-progress region: current action
         saveState(lines, undoStack, redoStack);
         const [movedLine] = lines.splice(focusIndex, 1);
         const isNonRecordable = movedLine.trim().endsWith('-');
@@ -329,6 +331,41 @@ async function main() {
           lines.splice(targetDoneEndIndex, 0, movedLine);
           focusIndex++;
         }
+        changed = true;
+      } else if (focusIndex > regions.todoIndex && focusIndex < regions.todoEndIndex) {
+        // To-do region: combo of 's' and 'e' operations
+        saveState(lines, undoStack, redoStack);
+
+        const originalLine = lines[focusIndex];
+        const nextOccurrenceLine = generateNextOccurrenceLine(originalLine);
+        const isNonRecordable = originalLine.trim().endsWith('-');
+
+        const targetRelIndex = focusIndex - regions.todoIndex;
+
+        // 1) Remove focused item from TODO region
+        lines.splice(focusIndex, 1);
+
+        // 2) If recordable, append originalLine to DONE section (at regions.doingIndex)
+        if (!isNonRecordable) {
+          const r1 = findRegions(lines);
+          lines.splice(r1.doingIndex, 0, originalLine);
+        }
+
+        // 3) Append next occurrence line to TODO section and sort TODO region
+        const r2 = findRegions(lines);
+        lines.splice(r2.todoEndIndex, 0, nextOccurrenceLine);
+
+        const r3 = findRegions(lines);
+        const start = r3.todoIndex + 1;
+        const count = r3.todoEndIndex - start;
+        const todoLines = lines.slice(start, r3.todoEndIndex);
+        todoLines.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+        lines.splice(start, count, ...todoLines);
+
+        // 4) Set focusIndex directly using calculated relative index from updated todoIndex
+        const rFinal = findRegions(lines);
+        focusIndex = rFinal.todoIndex + targetRelIndex;
+
         changed = true;
       }
     } else if (str === 'o') {
