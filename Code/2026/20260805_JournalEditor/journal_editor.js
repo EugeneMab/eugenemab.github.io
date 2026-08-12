@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 const fs = require('fs').promises;
 const fsSync = require('fs');
 const path = require('path');
@@ -59,7 +57,7 @@ function formatLine(line, maxWidth) {
   return line.slice(0, maxWidth - 3) + '...';
 }
 
-function renderScreen(lines, focusIndex, width, height) {
+function renderScreen(lines, focusIndex, width, height, modeInfo = null) {
   console.log('_'.repeat(2 + width + 3));
 
   const totalLines = lines.length;
@@ -90,7 +88,37 @@ function renderScreen(lines, focusIndex, width, height) {
     console.log(formatted);
   }
 
-  console.log('Controls: [q]: quit | [Up Arrow]: move up | [Down Arrow]: move down | [Ctrl+Up]: line up | [Ctrl+Down]: line down | [d/i/t]: move region | [s]: start item | [e]: end item | [o]: organize | [u]: undo | [r]: redo | [l]: reload');
+  if (modeInfo) {
+    console.log(modeInfo.title);
+    console.log(modeInfo.status);
+    process.stdout.write(modeInfo.currentStr);
+  } else {
+    console.log('Controls: [q]: quit | [Up Arrow]: move up | [Down Arrow]: move down | [Ctrl+Up]: line up | [Ctrl+Down]: line down | [d/i/t]: move region | [s]: start item | [e]: end item | [o]: organize | [u]: undo | [r]: redo | [l]: reload');
+  }
+}
+
+function parseFormattedAmount(inputStr) {
+  const clean = inputStr.trim().replace(/,/g, '');
+  if (!clean) return null;
+  if (!/^\d+(\.\d+)?$/.test(clean)) return null;
+  const num = Number(clean);
+  if (isNaN(num) || num < 0) return null;
+  const parts = num.toFixed(2).split('.');
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+}
+
+function findNextMatchedLine(lines, currentLineIndex, searchStr) {
+  if (!searchStr) return -1;
+  const total = lines.length;
+  const lowerSearch = searchStr.toLowerCase();
+  for (let step = 1; step <= total; step++) {
+    const idx = (currentLineIndex + step) % total;
+    if (lines[idx].toLowerCase().includes(lowerSearch)) {
+      return idx;
+    }
+  }
+  return -1;
 }
 
 function findRegions(lines) {
@@ -225,6 +253,122 @@ async function loadFile(filePath) {
   return fileContent.split(/\r?\n/);
 }
 
+async function handleAmountEditMode(lines, focusIndex, width, height, undoStack, redoStack, filePath) {
+  let currentStr = '';
+  while (true) {
+    const formatted = parseFormattedAmount(currentStr);
+    const statusStr = formatted !== null ? formatted : 'INVALID NUMBER';
+    const modeInfo = {
+      title: 'A editing mode acceptable command',
+      status: statusStr,
+      currentStr: currentStr
+    };
+    renderScreen(lines, focusIndex, width, height, modeInfo);
+
+    const { str, key } = await getNextKey();
+
+    if (key.name === 'escape') {
+      return { changed: false };
+    } else if (key.name === 'return' || key.name === 'enter') {
+      if (formatted !== null) {
+        const amtRegex = /\$(\d{1,3}(?:,\d{3})*\.\d{2})\s/;
+        const line = lines[focusIndex];
+        const match = line.match(amtRegex);
+        if (match) {
+          const origAmt = match[1];
+          const rightAligned = formatted.padStart(origAmt.length, ' ');
+          const newLine = line.slice(0, match.index) + '$' + rightAligned + ' ' + line.slice(match.index + match[0].length);
+          saveState(lines, undoStack, redoStack);
+          lines[focusIndex] = newLine;
+          return { changed: true };
+        }
+      }
+      return { changed: false };
+    } else if (key.name === 'backspace') {
+      if (currentStr.length > 0) {
+        currentStr = currentStr.slice(0, -1);
+      }
+    } else if (str && str.length === 1 && str >= ' ' && str <= '~') {
+      currentStr += str;
+    }
+  }
+}
+
+async function handleFindEditMode(lines, focusIndex, width, height) {
+  const originalFocusIndex = focusIndex;
+  let currentFocusIndex = focusIndex;
+  let currentStr = '';
+  let currentlyFoundIndex = -1;
+
+  while (true) {
+    const statusStr = currentlyFoundIndex !== -1 ? 'FOUND' : 'NOT FOUND';
+    const modeInfo = {
+      title: 'F editing mode acceptable command',
+      status: statusStr,
+      currentStr: currentStr
+    };
+    renderScreen(lines, currentFocusIndex, width, height, modeInfo);
+
+    const { str, key } = await getNextKey();
+
+    if (key.name === 'escape') {
+      return { focusIndex: originalFocusIndex };
+    } else if (key.name === 'return' || key.name === 'enter') {
+      return { focusIndex: currentFocusIndex };
+    } else if (key.name === 'tab') {
+      if (currentStr.length > 0) {
+        const matched = findNextMatchedLine(lines, currentFocusIndex, currentStr);
+        if (matched !== -1) {
+          currentlyFoundIndex = matched;
+          currentFocusIndex = matched;
+        }
+      }
+    } else if (key.name === 'backspace') {
+      if (currentStr.length > 0) {
+        currentStr = currentStr.slice(0, -1);
+        if (currentStr.length > 0) {
+          const lowerStr = currentStr.toLowerCase();
+          if (lines[originalFocusIndex].toLowerCase().includes(lowerStr)) {
+            currentlyFoundIndex = originalFocusIndex;
+            currentFocusIndex = originalFocusIndex;
+          } else {
+            const matched = findNextMatchedLine(lines, originalFocusIndex, currentStr);
+            if (matched !== -1) {
+              currentlyFoundIndex = matched;
+              currentFocusIndex = matched;
+            } else {
+              currentlyFoundIndex = -1;
+              currentFocusIndex = originalFocusIndex;
+            }
+          }
+        } else {
+          currentlyFoundIndex = -1;
+          currentFocusIndex = originalFocusIndex;
+        }
+      }
+    } else if (str && str.length === 1 && str >= ' ' && str <= '~') {
+      currentStr += str;
+      const lowerStr = currentStr.toLowerCase();
+      if (lines[currentFocusIndex].toLowerCase().includes(lowerStr)) {
+        currentlyFoundIndex = currentFocusIndex;
+      } else {
+        const matched = findNextMatchedLine(lines, currentFocusIndex, currentStr);
+        if (matched !== -1) {
+          currentlyFoundIndex = matched;
+          currentFocusIndex = matched;
+        } else {
+          currentlyFoundIndex = -1;
+        }
+      }
+    }
+  }
+}
+
+async function loadFile(filePath) {
+  const fileContent = await fs.readFile(filePath, 'utf8');
+  return fileContent.split(/\r?\n/);
+}
+
 async function main() {
   const { width, height } = parseArgs();
 
@@ -293,6 +437,14 @@ async function main() {
       focusIndex = regions.doingIndex + 1;
     } else if (str === 't') {
       focusIndex = regions.todoIndex + 1;
+    } else if (str === 'a') {
+      const res = await handleAmountEditMode(lines, focusIndex, width, height, undoStack, redoStack, filePath);
+      if (res.changed) {
+        changed = true;
+      }
+    } else if (str === 'f') {
+      const res = await handleFindEditMode(lines, focusIndex, width, height);
+      focusIndex = res.focusIndex;
     } else if (str === 's') {
       if (focusIndex > regions.todoIndex && focusIndex < regions.todoEndIndex) {
         saveState(lines, undoStack, redoStack);
