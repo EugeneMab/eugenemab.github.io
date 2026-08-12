@@ -58,6 +58,7 @@ function formatLine(line, maxWidth) {
 }
 
 function renderScreen(lines, focusIndex, width, height, modeInfo = null) {
+  console.log();
   console.log('_'.repeat(2 + width + 3));
 
   const totalLines = lines.length;
@@ -93,7 +94,23 @@ function renderScreen(lines, focusIndex, width, height, modeInfo = null) {
     console.log(modeInfo.status);
     process.stdout.write(modeInfo.currentStr);
   } else {
-    console.log('Controls: [q]: quit | [Up Arrow]: move up | [Down Arrow]: move down | [Ctrl+Up]: line up | [Ctrl+Down]: line down | [d/i/t]: move region | [s]: start item | [e]: end item | [o]: organize | [u]: undo | [r]: redo | [l]: reload');
+    const controls = [
+      'Controls: [q]: quit',
+      '[Up Arrow]: move up',
+      '[Down Arrow]: move down',
+      '[Ctrl+Up]: line up',
+      '[Ctrl+Down]: line down',
+      '[d/i/t]: move region',
+      '[a]: edit amount',
+      '[f]: find',
+      '[s]: start item',
+      '[e]: end item',
+      '[o]: organize',
+      '[u]: undo',
+      '[r]: redo',
+      '[l]: reload'
+    ];
+    console.log(controls.join(' | '));
   }
 }
 
@@ -259,7 +276,7 @@ async function handleAmountEditMode(lines, focusIndex, width, height, undoStack,
     const formatted = parseFormattedAmount(currentStr);
     const statusStr = formatted !== null ? formatted : 'INVALID NUMBER';
     const modeInfo = {
-      title: 'A editing mode acceptable command',
+      title: 'A editing mode controls: [Space - ~]: append char | [Enter]: accept | [ESC]: cancel | [Backspace]: delete char',
       status: statusStr,
       currentStr: currentStr
     };
@@ -271,13 +288,15 @@ async function handleAmountEditMode(lines, focusIndex, width, height, undoStack,
       return { changed: false };
     } else if (key.name === 'return' || key.name === 'enter') {
       if (formatted !== null) {
-        const amtRegex = /\$(\d{1,3}(?:,\d{3})*\.\d{2})\s/;
+        const amtRegex = /\$(\s*)(\d{1,3}(?:,\d{3})*\.\d{2}|[ \t]+)?\s/;
         const line = lines[focusIndex];
         const match = line.match(amtRegex);
         if (match) {
-          const origAmt = match[1];
-          const rightAligned = formatted.padStart(origAmt.length, ' ');
-          const newLine = line.slice(0, match.index) + '$' + rightAligned + ' ' + line.slice(match.index + match[0].length);
+          const origAmt = match[2] || match[1] || '';
+          const origWidth = match[0].length - 2;
+          const rightAligned = formatted.padStart(origWidth, ' ');
+          const rest = line.slice(match.index + match[0].length);
+          const newLine = line.slice(0, match.index) + '$' + rightAligned + ' ' + rest;
           saveState(lines, undoStack, redoStack);
           lines[focusIndex] = newLine;
           return { changed: true };
@@ -303,7 +322,7 @@ async function handleFindEditMode(lines, focusIndex, width, height) {
   while (true) {
     const statusStr = currentlyFoundIndex !== -1 ? 'FOUND' : 'NOT FOUND';
     const modeInfo = {
-      title: 'F editing mode acceptable command',
+      title: 'F editing mode controls: [Space - ~]: append char | [TAB]: find next | [Enter]: accept | [ESC]: cancel | [Backspace]: delete char',
       status: statusStr,
       currentStr: currentStr
     };
