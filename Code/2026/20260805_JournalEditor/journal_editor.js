@@ -116,13 +116,19 @@ function renderScreen(lines, focusIndex, width, height, modeInfo = null) {
 
 function parseFormattedAmount(inputStr) {
   const clean = inputStr.trim().replace(/,/g, '');
-  if (!clean) return null;
-  if (!/^\d+(\.\d+)?$/.test(clean)) return null;
+  if (!clean) return '0.00';
+
+  // allow optional leading minus sign
+  if (!/^-?\d+(\.\d+)?$/.test(clean)) return null;
+
   const num = Number(clean);
-  if (isNaN(num) || num < 0) return null;
-  const parts = num.toFixed(2).split('.');
+  if (isNaN(num)) return null;
+
+  const parts = Math.abs(num).toFixed(2).split('.');
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return parts.join('.');
+
+  const formatted = parts.join('.');
+  return num < 0 ? '-' + formatted : formatted;
 }
 
 function findNextMatchedLine(lines, currentLineIndex, searchStr) {
