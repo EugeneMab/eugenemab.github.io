@@ -96,14 +96,15 @@ function renderScreen(lines, focusIndex, width, height, modeInfo = null) {
   } else {
     const controls = [
       'Controls: [q]: quit',
-      '[Up Arrow]: move up',
-      '[Down Arrow]: move down',
+      '[Up Arrow]: focus up',
+      '[Down Arrow]: focus down',
       '[Ctrl+Up]: line up',
       '[Ctrl+Down]: line down',
       '[d/i/t]: move region',
       '[a]: edit amount',
       '[f]: find',
       '[s]: start item',
+      '[b]: batch start',
       '[e]: end item',
       '[o]: organize',
       '[u]: undo',
@@ -494,6 +495,42 @@ async function main() {
         lines.splice(start, count, ...todoLines);
 
         focusIndex++;
+        changed = true;
+      }
+    } else if (str === 'b') {
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const indicesToStart = [];
+      const itemsToStart = [];
+      for (let i = regions.todoIndex + 1; i < regions.todoEndIndex; i++) {
+        const itemLine = lines[i];
+        const match = itemLine.match(/^\s*@(\d{4}-\d{2}-\d{2})/);
+        if (match && match[1] <= todayStr) {
+          indicesToStart.push(i);
+          itemsToStart.push(itemLine);
+        }
+      }
+
+      if (indicesToStart.length > 0) {
+        saveState(lines, undoStack, redoStack);
+
+        const indexSet = new Set(indicesToStart);
+        lines = lines.filter((_, idx) => !indexSet.has(idx));
+
+        const nextOccurrenceLines = itemsToStart.map(generateNextOccurrenceLine);
+
+        let r1 = findRegions(lines);
+        lines.splice(r1.doingIndex + 1, 0, ...itemsToStart);
+
+        let r2 = findRegions(lines);
+        lines.splice(r2.todoEndIndex, 0, ...nextOccurrenceLines);
+
+        let r3 = findRegions(lines);
+        const start = r3.todoIndex + 1;
+        const count = r3.todoEndIndex - start;
+        const todoLines = lines.slice(start, r3.todoEndIndex);
+        todoLines.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+        lines.splice(start, count, ...todoLines);
+
         changed = true;
       }
     } else if (str === 'e') {
