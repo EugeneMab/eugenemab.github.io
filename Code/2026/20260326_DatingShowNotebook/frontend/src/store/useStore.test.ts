@@ -67,6 +67,22 @@ describe('useStore', () => {
     expect(store.getState().activeMode).toBe('eraser');
   });
 
+  /* Tests horizontal and vertical menu orientation switching and persistence in AppData. */
+  it('setMenuOrientation and toggleMenuOrientation update menuOrientation in state and data', () => {
+    vi.useFakeTimers();
+    store.setState({ currentFolderPath: 'test' });
+    expect(store.getState().menuOrientation).toBe('horizontal');
+    expect(store.getState().data.menuOrientation).toBe('horizontal');
+
+    store.getState().toggleMenuOrientation();
+    expect(store.getState().menuOrientation).toBe('vertical');
+    expect(store.getState().data.menuOrientation).toBe('vertical');
+
+    store.getState().setMenuOrientation('horizontal');
+    expect(store.getState().menuOrientation).toBe('horizontal');
+    expect(store.getState().data.menuOrientation).toBe('horizontal');
+  });
+
   /* Verifies the complete workflow of opening a folder, including data cleaning and ID compaction. */
   it('openFolder fetches data and updates state', async () => {
     const mockData = {
