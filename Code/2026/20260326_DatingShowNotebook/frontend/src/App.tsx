@@ -35,19 +35,26 @@ const FolderHandler: React.FC = () => {
 };
 
 const AppContent: React.FC = () => {
-  const { selectedEpisodeId, currentFolderPath } = useStore((s) => {
-    return { selectedEpisodeId: s.selectedEpisodeId, currentFolderPath: s.currentFolderPath };
+  const { selectedEpisodeId, currentFolderPath, menuOrientation } = useStore((s) => {
+    return {
+      selectedEpisodeId: s.selectedEpisodeId,
+      currentFolderPath: s.currentFolderPath,
+      menuOrientation: s.menuOrientation,
+    };
   });
 
   useEffect(() => {
     document.title = getPageTitle(currentFolderPath);
   }, [currentFolderPath]);
 
+  const isVertical = menuOrientation === 'vertical';
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gray-100 text-gray-900">
       {currentFolderPath && <NavigationPane />}
+      {isVertical && <TopButtonPane />}
       <div className="flex flex-col flex-1 min-w-0 h-full">
-        <TopButtonPane />
+        {!isVertical && <TopButtonPane />}
         <div className="flex-1 overflow-auto bg-white relative">
           {!currentFolderPath ? (
             <div className="flex-1 flex flex-col items-center justify-center h-full bg-gray-50">

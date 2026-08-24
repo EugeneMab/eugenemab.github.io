@@ -85,6 +85,7 @@ const defaultData = {
   nextUniqueId: 3,
   bodyScale: 1,
   descriptionScale: 1,
+  menuOrientation: 'horizontal',
 };
 
 function getFullPath(relPath: string) {

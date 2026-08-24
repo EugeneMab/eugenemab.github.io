@@ -9,6 +9,7 @@ interface PopupSliderProps {
   min: number;
   max: number;
   title: string;
+  position?: 'down' | 'right-up';
 }
 
 const RATIO = 1.05;
@@ -16,7 +17,15 @@ const RATIO = 1.05;
 const valueToLog = (val: number) => Math.log(val) / Math.log(RATIO);
 const logToValue = (log: number) => Math.pow(RATIO, log);
 
-const PopupSlider: React.FC<PopupSliderProps> = ({ Icon, value, onChange, min, max, title }) => {
+const PopupSlider: React.FC<PopupSliderProps> = ({
+  Icon,
+  value,
+  onChange,
+  min,
+  max,
+  title,
+  position = 'down',
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -58,7 +67,12 @@ const PopupSlider: React.FC<PopupSliderProps> = ({ Icon, value, onChange, min, m
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 bg-white border border-gray-200 rounded-lg shadow-xl p-3 z-50 flex flex-col items-center gap-2">
+        <div
+          className={clsx(
+            'bg-white border border-gray-200 rounded-lg shadow-xl p-3 z-50 flex flex-col items-center gap-2 absolute',
+            position === 'right-up' ? 'left-full bottom-0 ml-2' : 'right-0 top-full mt-2'
+          )}
+        >
           <div className="h-48 flex items-center px-2">
             <input
               type="range"

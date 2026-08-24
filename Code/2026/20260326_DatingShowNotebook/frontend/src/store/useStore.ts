@@ -41,6 +41,7 @@ export interface AppData {
   nextUniqueId: number;
   bodyScale: number;
   descriptionScale: number;
+  menuOrientation?: MenuOrientation;
 }
 
 export type ActiveMode =
@@ -60,12 +61,15 @@ export type ActiveMode =
   | 'team-9'
   | 'eraser';
 
+export type MenuOrientation = 'horizontal' | 'vertical';
+
 export interface AppState {
   data: AppData;
   activeMode: ActiveMode;
   selectedEpisodeId: number | null;
   selectedEventId: number | null;
   undoStack: AppData[];
+  menuOrientation: MenuOrientation;
 
   isRefreshing: boolean;
   isOpening: boolean;
@@ -84,6 +88,8 @@ export interface AppState {
   setBodyScale: (scale: number) => void;
   setDescriptionScale: (scale: number) => void;
   undo: () => void;
+  setMenuOrientation: (orientation: MenuOrientation) => void;
+  toggleMenuOrientation: () => void;
   setRefreshState: (isRefreshing: boolean, current?: number, total?: number) => void;
   setCancelRefresh: (cancelRefresh: boolean) => void;
   fullRefresh: () => Promise<void>;
@@ -159,6 +165,7 @@ const defaultAppData: AppData = {
   nextUniqueId: 1,
   bodyScale: 1,
   descriptionScale: 1,
+  menuOrientation: 'horizontal',
 };
 
 function getInitialView(data: AppData) {
@@ -197,7 +204,9 @@ export const createAppStore = (
   const ssrClientId = initialClientId || dsnWindow.__INITIAL_DATA__?.clientId || null;
 
   const savedRecent =
-    typeof window !== 'undefined' ? localStorage.getItem('dsn_recent_folders') : null;
+    typeof window !== 'undefined' && typeof localStorage !== 'undefined'
+      ? localStorage.getItem('dsn_recent_folders')
+      : null;
   const initialRecent = savedRecent ? JSON.parse(savedRecent) : [];
 
   const initialView = ssrData
@@ -213,6 +222,7 @@ export const createAppStore = (
       selectedEpisodeId: initialView.lastEpisodeId,
       selectedEventId: initialView.lastEventId,
       undoStack: [],
+      menuOrientation: ssrData?.menuOrientation || 'horizontal',
       isRefreshing: false,
       isOpening: false,
       refreshProgress: { current: 0, total: 0 },
@@ -323,7 +333,7 @@ export const createAppStore = (
               return p !== folderPath;
             }),
           ].slice(0, RECENT_FOLDERS_LIMIT);
-          if (typeof window !== 'undefined') {
+          if (typeof window !== 'undefined' && typeof localStorage !== 'undefined') {
             localStorage.setItem('dsn_recent_folders', JSON.stringify(newRecent));
           }
 
@@ -335,6 +345,7 @@ export const createAppStore = (
             activeMode: 'message',
             recentFolders: newRecent,
             undoStack: [],
+            menuOrientation: data.menuOrientation || 'horizontal',
             isOpening: false,
             isInterrupted: false,
           });
@@ -382,6 +393,7 @@ export const createAppStore = (
               UNDO_STACK_LIMIT
             ),
             data: newData,
+            menuOrientation: newData.menuOrientation || 'horizontal',
           };
         });
       },
@@ -424,9 +436,27 @@ export const createAppStore = (
         set({
           data: prevData,
           undoStack: remainingStack,
+          menuOrientation: prevData.menuOrientation || 'horizontal',
         });
 
         netClient.post(buildUrl('/api/data', folderPath, get().clientId), prevData);
+      },
+
+      setMenuOrientation: (orientation) => {
+        get().saveData((prev) => ({
+          ...prev,
+          menuOrientation: orientation,
+        }));
+      },
+
+      toggleMenuOrientation: () => {
+        get().saveData((prev) => {
+          const current = prev.menuOrientation || 'horizontal';
+          return {
+            ...prev,
+            menuOrientation: current === 'horizontal' ? 'vertical' : 'horizontal',
+          };
+        });
       },
 
       setRefreshState: (isRefreshing, current, total) => {
