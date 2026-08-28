@@ -8,6 +8,7 @@ const util = require('util');
 // ==========================================
 const TXT_PATH = `C:\\S\\network_monitor\\network_monitor.txt`;
 const LOG_PATH = `C:\\S\\network_monitor\\network_monitor.log`;
+const TSV_PATH = `C:\\S\\network_monitor\\network_monitor.tsv`;
 const EXEC_COMMAND = 'ipconfig /all';
 const FILE_ENCODING = 'utf8';
 const SEPARATOR_CHAR = '_';
@@ -36,20 +37,28 @@ function getFormattedTime(date = new Date()) {
     const dayUTC = String(date.getUTCDate()).padStart(2, '0');
     const hoursUTC = String(date.getUTCHours()).padStart(2, '0');
     const minutesUTC = String(date.getUTCMinutes()).padStart(2, '0');
+    const secondsUTC = String(date.getUTCSeconds()).padStart(2, '0');
 
     const yearLocal = date.getFullYear();
     const monthLocal = String(date.getMonth() + 1).padStart(2, '0');
     const dayLocal = String(date.getDate()).padStart(2, '0');
     const hoursLocal = String(date.getHours()).padStart(2, '0');
     const minutesLocal = String(date.getMinutes()).padStart(2, '0');
+    const secondsLocal = String(date.getSeconds()).padStart(2, '0');
 
-    const timeStr = `${yearUTC}-${monthUTC}-${dayUTC} ${hoursUTC}:${minutesUTC} UTC = ${yearLocal}-${monthLocal}-${dayLocal} ${hoursLocal}:${minutesLocal} Local`;
+    const timeStr = `${yearUTC}-${monthUTC}-${dayUTC} ${hoursUTC}:${minutesUTC}:${secondsUTC} UTC = ${yearLocal}-${monthLocal}-${dayLocal} ${hoursLocal}:${minutesLocal}:${secondsLocal} Local`;
     return timeStr;
 }
 
 function normalizeLineEndings(str) {
     // Standardize all line endings (\r\n or standalone \n) to \r\n
     return str.replace(/\r?\n/g, '\r\n');
+}
+
+function findLeaseObtainedLine(output) {
+    const lines = output.split('\r\n');
+    const leaseLine = lines.find(line => line.includes('Lease Obtained'));
+    return leaseLine ? leaseLine.trim() : '(none)';
 }
 
 // ==========================================
@@ -64,6 +73,7 @@ async function runIpconfig() {
 
         await ensureDirectoryExistence(TXT_PATH);
         await ensureDirectoryExistence(LOG_PATH);
+        await ensureDirectoryExistence(TSV_PATH);
 
         // File 1: Single line per instance <time> <json-stringified-output>
         const txtLine = `${timeStr} ${JSON.stringify(output)}${EOL}`;
@@ -73,6 +83,11 @@ async function runIpconfig() {
         const separator = SEPARATOR_CHAR.repeat(SEPARATOR_LENGTH);
         const logBlock = `${separator}${EOL}${timeStr}${EOL}${output}${EOL}`;
         await fs.appendFile(LOG_PATH, logBlock, FILE_ENCODING);
+
+        // File 3: TSV file with <time><tab><found-lease-obtained-line>
+        const leaseLine = findLeaseObtainedLine(output);
+        const tsvLine = `${timeStr}\t${leaseLine}${EOL}`;
+        await fs.appendFile(TSV_PATH, tsvLine, FILE_ENCODING);
 
         console.log(`[${new Date().toISOString()}] Executed ipconfig /all and logged output.`);
     } catch (error) {
