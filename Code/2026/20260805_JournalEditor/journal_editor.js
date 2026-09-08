@@ -531,6 +531,7 @@ async function main() {
         todoLines.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
         lines.splice(start, count, ...todoLines);
 
+        focusIndex = r3.doingIndex + 1;
         changed = true;
       }
     } else if (str === 'e') {
