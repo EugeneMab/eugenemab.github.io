@@ -220,28 +220,42 @@ function calculateNextDate(dateStr, intervalStr) {
   let day = parseInt(dayStr, 10);
   const interval = parseInt(intervalStr, 10);
 
-  const date = new Date(Date.UTC(year, month - 1, day));
+  if (interval > 0 && interval % 30 === 0 && interval % 365 !== 0) {
+    const monthsToAdd = interval / 30;
+    let targetYear = year;
+    let targetMonth = month + monthsToAdd;
+    targetYear += Math.floor((targetMonth - 1) / 12);
+    targetMonth = ((targetMonth - 1) % 12) + 1;
 
-  if (interval === 30) {
-    if (day > 28) {
-      throw new Error(`Cannot add 1 month (30 days interval) to date with day > 28: ${dateStr}`);
-    }
-    date.setUTCMonth(date.getUTCMonth() + 1);
+    // Get max days in target month
+    const maxDaysInTargetMonth = new Date(Date.UTC(targetYear, targetMonth, 0)).getUTCDate();
+    const targetDay = Math.min(day, maxDaysInTargetMonth);
+
+    const nextYear = String(targetYear).padStart(4, '0');
+    const nextMonth = String(targetMonth).padStart(2, '0');
+    const nextDay = String(targetDay).padStart(2, '0');
+    return `${nextYear}-${nextMonth}-${nextDay}`;
   } else if (interval > 0 && interval % 365 === 0) {
     const yearsToAdd = interval / 365;
-    if (month === 2 && day === 29) {
-      throw new Error(`Cannot add year interval (${interval} days = ${yearsToAdd} years) to leap day Feb 29: ${dateStr}`);
-    }
-    date.setUTCFullYear(date.getUTCFullYear() + yearsToAdd);
+    const targetYear = year + yearsToAdd;
+    const targetMonth = month;
+    const maxDaysInTargetMonth = new Date(Date.UTC(targetYear, targetMonth, 0)).getUTCDate();
+    const targetDay = Math.min(day, maxDaysInTargetMonth);
+
+    const nextYear = String(targetYear).padStart(4, '0');
+    const nextMonth = String(targetMonth).padStart(2, '0');
+    const nextDay = String(targetDay).padStart(2, '0');
+    return `${nextYear}-${nextMonth}-${nextDay}`;
   } else if (interval > 0) {
+    const date = new Date(Date.UTC(year, month - 1, day));
     date.setUTCDate(date.getUTCDate() + interval);
+    const nextYear = String(date.getUTCFullYear()).padStart(4, '0');
+    const nextMonth = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const nextDay = String(date.getUTCDate()).padStart(2, '0');
+    return `${nextYear}-${nextMonth}-${nextDay}`;
   }
 
-  const nextYear = String(date.getUTCFullYear()).padStart(4, '0');
-  const nextMonth = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const nextDay = String(date.getUTCDate()).padStart(2, '0');
-
-  return `${nextYear}-${nextMonth}-${nextDay}`;
+  return dateStr;
 }
 
 function generateNextOccurrenceLine(line) {
