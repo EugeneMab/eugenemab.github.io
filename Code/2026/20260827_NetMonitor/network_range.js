@@ -11,6 +11,9 @@ const EXEC_COMMAND = 'ipconfig /all';
 const FILE_ENCODING = 'utf8';
 const ONE_MINUTE_MS = 60 * 1000;
 const TWO_MINUTES_MS = 2 * 60 * 1000;
+const MS_PER_DAY = 86400000;
+const MS_PER_HALF_HOUR = 1800000;
+const HALF_HOURS_PER_DAY = 48;
 const EOL = '\r\n';
 
 // ==========================================
@@ -84,6 +87,56 @@ function findLeaseObtainedLine(output) {
     return leaseLine ? leaseLine.trim() : '(none)';
 }
 
+function generateBar(startMs, endMs) {
+    // Always visualize exactly two UTC days, starting from the day of startMs
+    const startDay = Math.floor(startMs / MS_PER_DAY);
+    const daysStr = [];
+
+    for (let dayIndex = 0; dayIndex < 2; dayIndex++) {
+        // Calculate the absolute UTC timestamp for the beginning of the current day
+        const dayStartMs = (startDay + dayIndex) * MS_PER_DAY;
+        let dayChars = '';
+        
+        for (let blockIndex = 0; blockIndex < HALF_HOURS_PER_DAY; blockIndex++) {
+            // Each block represents a 30-minute window
+            const blockStartMs = dayStartMs + blockIndex * MS_PER_HALF_HOUR;
+            const blockEndMs = blockStartMs + MS_PER_HALF_HOUR;
+            
+            let overlap = false;
+            let fullyCovered = false;
+            
+            // Check if the span is just a single point in time
+            if (startMs === endMs) {
+                // Point overlaps if it falls exactly within the block's start (inclusive) and end (exclusive)
+                if (blockStartMs <= startMs && startMs < blockEndMs) {
+                    overlap = true;
+                    fullyCovered = false;
+                }
+            } else {
+                // For a duration [startMs, endMs), it overlaps [blockStartMs, blockEndMs) if
+                // its start is strictly before the block's end, and the block's start is strictly before the duration's end.
+                if (startMs < blockEndMs && blockStartMs < endMs) {
+                    overlap = true;
+                    // It fully covers the block if the span starts at or before the block, and ends at or after the block
+                    if (startMs <= blockStartMs && blockEndMs <= endMs) {
+                        fullyCovered = true;
+                    }
+                }
+            }
+            
+            if (!overlap) {
+                dayChars += '.';
+            } else if (fullyCovered) {
+                dayChars += '#';
+            } else {
+                dayChars += '=';
+            }
+        }
+        daysStr.push(dayChars);
+    }
+    return daysStr.join(' ');
+}
+
 function serializeRanges(ranges) {
     const lines = [];
     for (let i = 0; i < ranges.length; i++) {
@@ -92,6 +145,8 @@ function serializeRanges(ranges) {
         const endDate = parseTimeToDate(range.end);
         const durationMs = endDate.getTime() - startDate.getTime();
         const durationStr = formatDuration(durationMs);
+        const barStr = generateBar(startDate.getTime(), endDate.getTime());
+        const durationWithBar = `${durationStr} ${barStr}`;
 
         let gapStr = '';
         if (i < ranges.length - 1) {
@@ -101,9 +156,9 @@ function serializeRanges(ranges) {
         }
 
         if (gapStr) {
-            lines.push(`${range.start} | ${durationStr} | ${range.end} | ${range.leaseLine} | ${gapStr}`);
+            lines.push(`${range.start} | ${durationWithBar} | ${range.end} | ${range.leaseLine} | ${gapStr}`);
         } else {
-            lines.push(`${range.start} | ${durationStr} | ${range.end} | ${range.leaseLine}`);
+            lines.push(`${range.start} | ${durationWithBar} | ${range.end} | ${range.leaseLine}`);
         }
     }
     return lines;
@@ -119,7 +174,9 @@ function parseRanges(fileContent) {
         if (parts.length >= 4) {
             ranges.push({
                 start: parts[0],
-                duration: parts[1],
+                // We don't strictly need to isolate the raw duration string here 
+                // since it gets recalculated in serializeRanges anyway.
+                duration: parts[1], 
                 end: parts[2],
                 leaseLine: parts[3],
                 gap: parts[4] || ''
