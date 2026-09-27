@@ -34,17 +34,23 @@ function getNextKey() {
 
 function parseArgs() {
   const args = process.argv.slice(2);
+  if (args.length < 1) {
+    console.error('Usage: node journal_editor.js <backup_folder> [width] [height]');
+    process.exit(1);
+  }
+
+  const backupFolder = args[0];
   let width = 80;
   let height = 25;
 
-  if (args.length >= 1 && !isNaN(parseInt(args[0], 10))) {
-    width = parseInt(args[0], 10);
-  }
   if (args.length >= 2 && !isNaN(parseInt(args[1], 10))) {
-    height = parseInt(args[1], 10);
+    width = parseInt(args[1], 10);
+  }
+  if (args.length >= 3 && !isNaN(parseInt(args[2], 10))) {
+    height = parseInt(args[2], 10);
   }
 
-  return { width, height };
+  return { backupFolder, width, height };
 }
 
 function formatLine(line, maxWidth) {
@@ -410,7 +416,13 @@ async function loadFile(filePath) {
 }
 
 async function main() {
-  const { width, height } = parseArgs();
+  const { backupFolder, width, height } = parseArgs();
+
+  if (!fsSync.existsSync(backupFolder)) {
+    fsSync.mkdirSync(backupFolder, { recursive: true });
+  }
+
+  let backupSequenceId = 1;
 
   const now = new Date();
   const currentYear = now.getFullYear();
@@ -637,6 +649,24 @@ async function main() {
     }
 
     if (changed) {
+      const d = new Date();
+      const yyyy = d.getFullYear();
+      const MM = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const HH = String(d.getHours()).padStart(2, '0');
+      const mm = String(d.getMinutes()).padStart(2, '0');
+      const ss = String(d.getSeconds()).padStart(2, '0');
+      const fff = String(d.getMilliseconds()).padStart(3, '0');
+      
+      const backupFilename = `${yyyy}${MM}${dd}_${HH}${mm}${ss}_${fff}_${backupSequenceId++}.txt`;
+      const backupFilePath = path.join(backupFolder, backupFilename);
+      
+      try {
+        await fs.copyFile(filePath, backupFilePath);
+      } catch (err) {
+        // Ignore copy errors (e.g. if file doesn't exist initially, though we checked it on startup)
+      }
+
       await fs.writeFile(filePath, lines.join('\r\n'), 'utf8');
     }
   }

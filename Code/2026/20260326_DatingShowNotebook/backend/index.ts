@@ -471,7 +471,7 @@ async function startServer() {
     );
   }
 
-  app.use('*', handleSSR);
+  app.use(handleSSR);
 
   app.listen(PORT, () => {
     log(`Server listening at http://localhost:${PORT}`);
