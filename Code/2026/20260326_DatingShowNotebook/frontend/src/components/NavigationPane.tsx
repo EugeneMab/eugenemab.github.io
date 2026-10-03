@@ -64,7 +64,7 @@ const NavigationPane: React.FC = () => {
       const epId = nextUid++;
       const evId = nextUid++;
 
-      const title = `Episode ${prev.episodes.length + 1}`;
+      const title = `${prev.episodes.length + 1}`;
       const newEpisode: Episode = {
         id: epId,
         title: title,
@@ -290,10 +290,10 @@ const NavigationPane: React.FC = () => {
                   >
                     <input
                       className={clsx(
-                        'flex-1 p-3 pl-4 bg-transparent border-none focus:ring-0 font-bold min-w-0',
+                        'flex-1 py-0 pl-4 bg-transparent border-none focus:ring-0 font-bold min-w-0 text-sm',
                         isSelected ? 'text-pink-200' : 'text-white'
                       )}
-                      value={episode.title || `Episode ${episode.id}`}
+                      value={episode.title || `${episode.id}`}
                       onChange={(e) => {
                         return updateEpisodeTitle(episode.id, e.target.value);
                       }}
@@ -304,7 +304,7 @@ const NavigationPane: React.FC = () => {
                   </div>
                   <div className="relative shrink-0 pr-1">
                     <button
-                      className="p-3 hover:bg-pink-800/30 text-white/70 hover:text-white"
+                      className="py-0 px-2 hover:bg-pink-800/30 text-white/70 hover:text-white"
                       onClick={(e) => {
                         return handleToggleDropdown(e, 'episode', episode.id);
                       }}
