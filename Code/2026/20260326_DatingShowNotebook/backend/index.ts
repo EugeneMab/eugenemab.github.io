@@ -71,11 +71,11 @@ const defaultData = {
   episodes: [
     {
       id: 1,
-      title: 'Episode 1',
+      title: '1',
       events: [
         {
           id: 2,
-          title: 'Episode 1-1',
+          title: '1-1',
           messages: [],
           teams: {},
         },
