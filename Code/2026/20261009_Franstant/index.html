@@ -1,24 +1,93 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Franstant (an artificial language built upon French but without conjugation by Jian Huang)</title>
     <style>
-      body, td {
-        font-family: 'Bahnschrift Light', Calibri, SimHei, Arial, sans-serif;
-        font-size: 24px;
-        margin: 40px;
+      :root {
+        --primary: #2c3e50;
+        --secondary: #3498db;
+        --bg-color: #f4f7f6;
+        --card-bg: #ffffff;
+        --text-main: #333333;
+        --border-color: #e1e4e8;
+      }
+      body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-main);
+        line-height: 1.6;
+        margin: 0;
+        padding: 0;
+      }
+      .container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 20px;
+      }
+      .header {
+        text-align: center;
+        margin-bottom: 40px;
+      }
+      h1 {
+        color: var(--primary);
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+      .subtitle {
+        color: #7f8c8d;
+        font-size: 1.2em;
+        margin-bottom: 20px;
+      }
+      .lang-switcher {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
       }
       .lang-btn {
-        margin: 5px;
-        padding: 5px 10px;
+        background-color: var(--card-bg);
+        border: 2px solid var(--secondary);
+        color: var(--secondary);
+        padding: 8px 20px;
+        border-radius: 25px;
         font-size: 16px;
+        font-weight: bold;
         cursor: pointer;
+        transition: all 0.3s ease;
       }
-      table, td {
-        border: solid 1px #777;
-        border-collapse: collapse;
-        padding: 8px;
+      .lang-btn:hover {
+        background-color: var(--secondary);
+        color: white;
+      }
+      .card {
+        background-color: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      }
+      .card h2 {
+        margin-top: 0;
+        color: var(--primary);
+        border-bottom: 2px solid var(--bg-color);
+        padding-bottom: 10px;
+      }
+      .example-box {
+        background-color: #ebf5fb;
+        border-left: 5px solid var(--secondary);
+        padding: 15px;
+        margin: 15px 0;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 1.1em;
+        border-radius: 0 5px 5px 0;
+      }
+      h3 {
+        color: var(--secondary);
+        margin-top: 25px;
       }
     </style>
     <script>
@@ -48,68 +117,150 @@
     </script>
   </head>
   <body onload="onLoad()">
-    <center>
-      <h1>
-        <span class="t" c="Franstant（恒常法语）" f="Franstant (Francais Constant)" r="Franstant (Francais Constant)">Franstant (Francais Constant)</span>
-      </h1>
-      <p>
-        <button class="lang-btn" onclick="setLang('e')">English</button>
-        <button class="lang-btn" onclick="setLang('c')">中文</button>
-        <button class="lang-btn" onclick="setLang('f')">Français</button>
-        <button class="lang-btn" onclick="setLang('r')">Franstant</button>
-      </p>
-    </center>
+    <div class="container">
+      <div class="header">
+        <h1>
+          <span class="t" c="Franstant（恒常法语）" f="Franstant (Francais Constant)" r="Franstant (Francais Constant)">Franstant (Francais Constant)</span>
+        </h1>
+        <div class="subtitle">
+          <span class="t" 
+            c="由 Jian Huang 创造的无变位人造法语" 
+            f="Une langue artificielle basée sur le français sans conjugaison par Jian Huang" 
+            r="Un langue artificiel baser sur le français sans conjugaison par Jian Huang">
+            An artificial language built upon French but without conjugation by Jian Huang
+          </span>
+        </div>
+        <div class="lang-switcher">
+          <button class="lang-btn" onclick="setLang('e')">English</button>
+          <button class="lang-btn" onclick="setLang('c')">中文</button>
+          <button class="lang-btn" onclick="setLang('f')">Français</button>
+          <button class="lang-btn" onclick="setLang('r')">Franstant</button>
+        </div>
+      </div>
 
-    <h2>1. <span class="t" c="概述" f="Introduction" r="Introduction">Introduction</span></h2>
-    <p>
-      <span class="t"
-        c="欢迎来到 Franstant（恒常法语）。这是一门基于法语但去除了动词变位的人造语言。其设计目标是在保留法语核心词汇和结构的同时简化语法。动词不发生变化，名词保持阳性单数形式。"
-        f="Bienvenue au Franstant. C'est une langue artificielle construite sur le français, mais sans conjugaison. L'objectif de conception est de simplifier la grammaire tout en conservant le vocabulaire et la structure de base du français. Les verbes ne changent pas et les noms restent au masculin singulier."
-        r="Bienvenue à le Franstant. Ce être un langue artificiel construire sur le français, mais sans conjugaison. Le objectif de conception être simplifier le grammaire tout en conserver le vocabulaire et le structure de base de le français. Les verbe ne changer pas et les nom rester à le masculin singulier."
-        >Welcome to Franstant. It is an artificial language built upon French, but without conjugation. The design goal is to simplify grammar while retaining the core vocabulary and structure of French. Verbs do not change, and nouns remain in masculine singular forms.</span>
-    </p>
+      <div class="card">
+        <h2>1. <span class="t" c="概述" f="Introduction" r="Introduction">Introduction</span></h2>
+        <p>
+          <span class="t"
+            c="欢迎来到 Franstant。这是一门基于法语但去除了动词变位的人造语言。其设计目标是在保留法语核心词汇和结构的同时简化语法。动词不发生变化，名词保持单一的阳性单数形式，通过统一的规则消除语言中的不规则性。"
+            f="Bienvenue au Franstant. C'est une langue artificielle construite sur le français, mais sans conjugaison. L'objectif de conception est de simplifier la grammaire tout en conservant le vocabulaire et la structure de base du français. Les verbes ne changent pas et les noms restent dans une forme masculine singulière unique, éliminant les irrégularités par des règles uniformes."
+            r="Bienvenue à le Franstant. Ce être un langue artificiel construire sur le français, mais sans conjugaison. Le objectif de conception être simplifier le grammaire tout en conserver le vocabulaire et le structure de base de le français. Les verbe ne changer pas et les nom rester dans un forme masculin singulier unique, éliminer les irrégularité par des règle uniforme."
+            >Welcome to Franstant. It is an artificial language built upon French, but without conjugation. The design goal is to simplify grammar while retaining the core vocabulary and structure of French. Verbs do not change, and nouns remain in a single masculine singular form, eliminating irregularities through uniform rules.</span>
+        </p>
+      </div>
 
-    <h2>2. <span class="t" c="详细示例" f="Exemples Détaillés" r="Exemple Détailler">Detailed Examples</span></h2>
-    <p>
-      <span class="t"
-        c="与其说 'Je vais au restaurant avec mes amis'（我要和我的朋友们去餐馆），我们这样说：'moi aller à le restaurant avec mon les ami.' 我们使用 'mon les' 来表示复数所属。名词没有 '-s' 的复数形式。"
-        f="Au lieu de dire 'Je vais au restaurant avec mes amis', nous disons : 'moi aller à le restaurant avec mon les ami.' Nous utilisons 'mon les' pour indiquer la possession au pluriel. Les noms n'ont pas de formes plurielles avec '-s'."
-        r="À le lieu de dire 'Je vais au restaurant avec mes amis', nous dire : 'moi aller à le restaurant avec mon les ami.' Nous utiliser 'mon les' pour indiquer le possession à le pluriel. Les nom ne avoir pas de forme pluriel avec '-s'."
-        >Instead of saying "Je vais au restaurant avec mes amis" (I am going to the restaurant with my friends), we say: "moi aller à le restaurant avec mon les ami." We use "mon les" to indicate plural possession. Nouns do not have plural forms with "-s".</span>
-    </p>
-    <p>
-      <span class="t"
-        c="更多规则包括：不使用省略号（例如 d'eau 变成 de le eau），无动词变位（所有人称使用不定式），提问使用固定结构 'être ce que'。"
-        f="D'autres règles incluent : pas d'apostrophes (ex: d'eau devient de le eau), pas de conjugaisons (l'infinitif est utilisé pour toutes les personnes), et les questions utilisent la structure fixe 'être ce que'."
-        r="De autre règle inclure : pas de apostrophe (ex: d'eau devenir de le eau), pas de conjugaison (le infinitif être utiliser pour tout les personne), et les question utiliser le structure fixe 'être ce que'."
-        >Other rules include: no apostrophes (e.g., d'eau becomes de le eau), no conjugations (the infinitive is used for all persons), and questions use the fixed structure 'être ce que'.</span>
-    </p>
+      <div class="card">
+        <h2>2. <span class="t" c="名词、代词与所属" f="Noms, Pronoms et Possession" r="Nom, Pronom et Possession">Nouns, Pronouns, and Possession</span></h2>
+        <p>
+          <span class="t"
+            c="所有名词均严格使用基础的阳性单数形式。没有不规则的复数变化；相反，复数仅通过冠词指示。"
+            f="Tous les noms utilisent strictement la forme de base masculine singulière. Il n'y a pas de pluriels irréguliers ; le pluriel est indiqué uniquement par l'article."
+            r="Tout les nom utiliser strictement le forme de base masculin singulier. Il ne y avoir pas de pluriel irrégulier ; le pluriel être indiquer uniquement par le article."
+            >All nouns strictly use the base masculine singular form. There are no irregular plurals; instead, plurality is indicated solely by the article.</span>
+        </p>
+        <div class="example-box">
+          <span class="t"
+            c="un oeil -> les oeil (不是 yeux)<br>un cheval -> des cheval (不是 chevaux)"
+            f="un oeil -> les oeil (pas yeux)<br>un cheval -> des cheval (pas chevaux)"
+            r="un oeil -> les oeil (pas yeux)<br>un cheval -> des cheval (pas chevaux)"
+            >un oeil -> les oeil (not yeux)<br>un cheval -> des cheval (not chevaux)</span>
+        </div>
+        <p>
+          <span class="t"
+            c="代词始终遵循主谓宾 (SVO) 语序。宾语代词不会移到动词前面。所属关系使用阳性所有格加上复数指示词 'les'。"
+            f="Les pronoms suivent toujours l'ordre Sujet-Verbe-Objet (SVO). Les pronoms objets ne se déplacent pas avant le verbe. La possession utilise le possessif masculin plus l'indicateur pluriel 'les'."
+            r="Les pronom suivre toujours le ordre Sujet-Verbe-Objet (SVO). Les pronom objet ne se déplacer pas avant le verbe. Le possession utiliser le possessif masculin plus le indicateur pluriel 'les'."
+            >Pronouns always follow Subject-Verb-Object (SVO) order. Object pronouns do not move before the verb. Possession uses the masculine possessive plus the plural indicator 'les'.</span>
+        </p>
+        <div class="example-box">
+          <span class="t"
+            c="我看见他。 -> moi voir lui<br>我的朋友们。 -> mon les ami"
+            f="Je le vois. -> moi voir lui<br>Mes amis. -> mon les ami"
+            r="Je le vois. -> moi voir lui<br>Mes amis. -> mon les ami"
+            >I see him. -> moi voir lui<br>My friends. -> mon les ami</span>
+        </div>
+      </div>
 
-    <h2>3. <span class="t" c="示例文本" f="Passages Exemples" r="Passage Exemple">Sample Passages</span></h2>
-    <h3><span class="t" c="巴别塔" f="La Tour de Babel" r="Le Tour de Babel">The Tower of Babel</span></h3>
-    <p>
-      <span class="t"
-        c="那时，全地只有一种语言，都说一样的话。"
-        f="Toute la terre avait une seule langue et les mêmes mots."
-        r="Tout le terre avoir un seul langue et le même mot."
-        >Now the whole world had one language and a common speech.</span>
-    </p>
-    <h3><span class="t" c="主祷文" f="Le Notre Père" r="Le Notre Père">The Lord's Prayer</span></h3>
-    <p>
-      <span class="t"
-        c="我们在天上的父，愿人都尊你的名为圣。愿你的国降临。愿你的旨意行在地上，如同行在天上。"
-        f="Notre Père qui es aux cieux, que ton nom soit sanctifié, que ton règne vienne, que ta volonté soit faite sur la terre comme au ciel."
-        r="Notre Père qui être à les ciel, que ton nom être sanctifier, que ton règne venir, que ton volonté être faire sur le terre comme à le ciel."
-        >Our Father in heaven, hallowed be your name, your kingdom come, your will be done, on earth as it is in heaven.</span>
-    </p>
+      <div class="card">
+        <h2>3. <span class="t" c="动词与否定" f="Verbes et Négation" r="Verbe et Négation">Verbs and Negation</span></h2>
+        <p>
+          <span class="t"
+            c="动词不进行变位，始终保持不定式。否定词 'ne pas' 连在一起使用，直接放在动词之前，不拆分。"
+            f="Les verbes ne sont pas conjugués et restent toujours à l'infinitif. La négation 'ne pas' est utilisée ensemble et placée directement avant le verbe sans être séparée."
+            r="Les verbe ne être pas conjuguer et rester toujours à le infinitif. Le négation 'ne pas' être utiliser ensemble et placer directement avant le verbe sans être séparer."
+            >Verbs are not conjugated and always remain in the infinitive. The negation 'ne pas' is kept together and placed directly before the verb without splitting.</span>
+        </p>
+        <div class="example-box">
+          <span class="t"
+            c="我不吃。 -> moi ne pas manger<br>你去过餐馆吗？ -> être ce que toi passé aller à le restaurant ?"
+            f="Je ne mange pas. -> moi ne pas manger<br>Es-tu allé au restaurant ? -> être ce que toi passé aller à le restaurant ?"
+            r="Je ne mange pas. -> moi ne pas manger<br>Es-tu allé au restaurant ? -> être ce que toi passé aller à le restaurant ?"
+            >I do not eat. -> moi ne pas manger<br>Did you go to the restaurant? -> être ce que toi passé aller à le restaurant ?</span>
+        </div>
+      </div>
 
-    <h2>4. <span class="t" c="字母与发音" f="Schémas et Prononciation" r="Schéma et Prononciation">Schemas and Pronunciation</span></h2>
-    <p>
-      <span class="t"
-        c="字母和发音与标准法语完全相同。字母表有26个字母。"
-        f="Les lettres et la prononciation sont exactement les mêmes qu'en français standard. L'alphabet comporte 26 lettres."
-        r="Les lettre et le prononciation être exactement le même que en français standard. Le alphabet comporter 26 lettre."
-        >The letters and pronunciation are exactly the same as in standard French. The alphabet has 26 letters.</span>
-    </p>
+      <div class="card">
+        <h2>4. <span class="t" c="形容词与冠词" f="Adjectifs et Articles" r="Adjectif et Article">Adjectives and Articles</span></h2>
+        <p>
+          <span class="t"
+            c="形容词始终放置在名词之后。冠词和代词所有格保持在名词短语的开头。词语之间不发生省略（无撇号）。"
+            f="Les adjectifs sont toujours placés après le nom. Les articles et la possession pronominale restent au début du groupe nominal. Il n'y a pas d'élision (pas d'apostrophe) entre les mots."
+            r="Les adjectif être toujours placer après le nom. Les article et le possession pronominal rester à le début de le groupe nominal. Il ne y avoir pas de élision (pas de apostrophe) entre les mot."
+            >Adjectives are always placed after the noun. Articles and pronoun possession remain at the beginning of the noun phrase. There is no elision (no apostrophes) between words.</span>
+        </p>
+        <div class="example-box">
+          <span class="t"
+            c="那个聪明的男人。 -> le homme intelligent<br>我那些漂亮的孩子。 -> mon les enfant beau"
+            f="L'homme intelligent. -> le homme intelligent<br>Mes beaux enfants. -> mon les enfant beau"
+            r="L'homme intelligent. -> le homme intelligent<br>Mes beaux enfants. -> mon les enfant beau"
+            >The smart man. -> le homme intelligent<br>My beautiful children. -> mon les enfant beau</span>
+        </div>
+        <p>
+          <span class="t"
+            c="对于部分冠词“一些”，Franstant 使用 'du'。但是，表示“...的（of the）”时，严格使用 'de le'。"
+            f="Pour le partitif 'du/de la/des', Franstant utilise 'du'. Cependant, pour exprimer l'appartenance 'de le/la', on utilise strictement 'de le'."
+            r="Pour le partitif 'du/de la/des', Franstant utiliser 'du'. Cependant, pour exprimer le appartenance 'de le/la', on utiliser strictement 'de le'."
+            >For the partitive 'some', Franstant introduces 'du'. However, to express 'of the', 'de le' is strictly used without combining.</span>
+        </p>
+        <div class="example-box">
+          <span class="t"
+            c="我吃面包（一些面包）。 -> moi manger du pain<br>房子的屋顶。 -> le toit de le maison"
+            f="Je mange du pain. -> moi manger du pain<br>Le toit de la maison. -> le toit de le maison"
+            r="Je mange du pain. -> moi manger du pain<br>Le toit de la maison. -> le toit de le maison"
+            >I eat bread (some bread). -> moi manger du pain<br>The roof of the house. -> le toit de le maison</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>5. <span class="t" c="发音" f="Prononciation" r="Prononciation">Pronunciation</span></h2>
+        <p>
+          <span class="t"
+            c="Franstant 的发音会适应其新的拼写规则，并不刻意追求标准法语的发音。例如，'le annee' 被读作三个独立的音节。由于去除了省略号，发音会有意偏离传统法语的节奏，确保每个词语都能清晰辨认。"
+            f="La prononciation du Franstant s'adapte à sa nouvelle orthographe et ne cherche pas à reproduire le français standard. Par exemple, 'le annee' est prononcé comme trois syllabes distinctes. En raison de l'absence d'élision, la prononciation dévie intentionnellement du rythme traditionnel pour assurer la clarté de chaque mot."
+            r="Le prononciation de le Franstant se adapter à son nouveau orthographe et ne chercher pas à reproduire le français standard. Par exemple, 'le annee' être prononcer comme trois syllabe distinct. En raison de le absence de élision, le prononciation dévier intentionnellement de le rythme traditionnel pour assurer le clarté de chaque mot."
+            >The pronunciation of Franstant adapts to its new spelling and does not attempt to mimic standard French. For example, 'le annee' is pronounced as three distinct syllables. Because elision is removed, the pronunciation intentionally deviates from traditional French rhythm to ensure each word is clearly identifiable.</span>
+        </p>
+      </div>
+
+      <div class="card">
+        <h2>6. <span class="t" c="示例文本" f="Passages Exemples" r="Passage Exemple">Sample Passages</span></h2>
+        <h3><span class="t" c="巴别塔" f="La Tour de Babel" r="Le Tour de Babel">The Tower of Babel</span></h3>
+        <p>
+          <span class="t"
+            c="那时，全地只有一种语言，都说一样的话。"
+            f="Toute la terre avait une seule langue et les mêmes mots."
+            r="Tout le terre avoir un seul langue et le même mot."
+            >Now the whole world had one language and a common speech.</span>
+        </p>
+        <h3><span class="t" c="主祷文" f="Le Notre Père" r="Le Notre Père">The Lord's Prayer</span></h3>
+        <p>
+          <span class="t"
+            c="我们在天上的父，愿人都尊你的名为圣。愿你的国降临。愿你的旨意行在地上，如同行在天上。"
+            f="Notre Père qui es aux cieux, que ton nom soit sanctifié, que ton règne vienne, que ta volonté soit faite sur la terre comme au ciel."
+            r="Notre Père qui être à les ciel, que ton nom être sanctifier, que ton règne venir, que ton volonté être faire sur le terre comme à le ciel."
+            >Our Father in heaven, hallowed be your name, your kingdom come, your will be done, on earth as it is in heaven.</span>
+        </p>
+      </div>
+    </div>
   </body>
 </html>
