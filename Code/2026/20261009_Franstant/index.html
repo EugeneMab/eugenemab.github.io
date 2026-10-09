@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Franstant (an artificial language built upon French but without conjugation by Jian Huang)</title>
+    <style>
+      body, td {
+        font-family: 'Bahnschrift Light', Calibri, SimHei, Arial, sans-serif;
+        font-size: 24px;
+        margin: 40px;
+      }
+      .lang-btn {
+        margin: 5px;
+        padding: 5px 10px;
+        font-size: 16px;
+        cursor: pointer;
+      }
+      table, td {
+        border: solid 1px #777;
+        border-collapse: collapse;
+        padding: 8px;
+      }
+    </style>
+    <script>
+      function setLang(language) {
+        var elements = document.getElementsByClassName("t");
+        for (var position = 0; position < elements.length; position++) {
+          var element = elements[position];
+          if (!element.getAttribute("e")) {
+            element.setAttribute("e", element.innerHTML);
+          }
+          var targetText = element.getAttribute(language);
+          if (targetText !== null && targetText !== undefined) {
+             element.innerHTML = targetText;
+          } else {
+             element.innerHTML = element.getAttribute("e");
+          }
+        }
+      }
+      function onLoad() {
+        var currentUrl = window.location.href;
+        if (!currentUrl) return;
+        if (currentUrl.endsWith("#c")) setLang("c");
+        else if (currentUrl.endsWith("#f")) setLang("f");
+        else if (currentUrl.endsWith("#r")) setLang("r");
+        else setLang("e");
+      }
+    </script>
+  </head>
+  <body onload="onLoad()">
+    <center>
+      <h1>
+        <span class="t" c="Franstant（恒常法语）" f="Franstant (Francais Constant)" r="Franstant (Francais Constant)">Franstant (Francais Constant)</span>
+      </h1>
+      <p>
+        <button class="lang-btn" onclick="setLang('e')">English</button>
+        <button class="lang-btn" onclick="setLang('c')">中文</button>
+        <button class="lang-btn" onclick="setLang('f')">Français</button>
+        <button class="lang-btn" onclick="setLang('r')">Franstant</button>
+      </p>
+    </center>
+
+    <h2>1. <span class="t" c="概述" f="Introduction" r="Introduction">Introduction</span></h2>
+    <p>
+      <span class="t"
+        c="欢迎来到 Franstant（恒常法语）。这是一门基于法语但去除了动词变位的人造语言。其设计目标是在保留法语核心词汇和结构的同时简化语法。动词不发生变化，名词保持阳性单数形式。"
+        f="Bienvenue au Franstant. C'est une langue artificielle construite sur le français, mais sans conjugaison. L'objectif de conception est de simplifier la grammaire tout en conservant le vocabulaire et la structure de base du français. Les verbes ne changent pas et les noms restent au masculin singulier."
+        r="Bienvenue à le Franstant. Ce être un langue artificiel construire sur le français, mais sans conjugaison. Le objectif de conception être simplifier le grammaire tout en conserver le vocabulaire et le structure de base de le français. Les verbe ne changer pas et les nom rester à le masculin singulier."
+        >Welcome to Franstant. It is an artificial language built upon French, but without conjugation. The design goal is to simplify grammar while retaining the core vocabulary and structure of French. Verbs do not change, and nouns remain in masculine singular forms.</span>
+    </p>
+
+    <h2>2. <span class="t" c="详细示例" f="Exemples Détaillés" r="Exemple Détailler">Detailed Examples</span></h2>
+    <p>
+      <span class="t"
+        c="与其说 'Je vais au restaurant avec mes amis'（我要和我的朋友们去餐馆），我们这样说：'moi aller à le restaurant avec mon les ami.' 我们使用 'mon les' 来表示复数所属。名词没有 '-s' 的复数形式。"
+        f="Au lieu de dire 'Je vais au restaurant avec mes amis', nous disons : 'moi aller à le restaurant avec mon les ami.' Nous utilisons 'mon les' pour indiquer la possession au pluriel. Les noms n'ont pas de formes plurielles avec '-s'."
+        r="À le lieu de dire 'Je vais au restaurant avec mes amis', nous dire : 'moi aller à le restaurant avec mon les ami.' Nous utiliser 'mon les' pour indiquer le possession à le pluriel. Les nom ne avoir pas de forme pluriel avec '-s'."
+        >Instead of saying "Je vais au restaurant avec mes amis" (I am going to the restaurant with my friends), we say: "moi aller à le restaurant avec mon les ami." We use "mon les" to indicate plural possession. Nouns do not have plural forms with "-s".</span>
+    </p>
+    <p>
+      <span class="t"
+        c="更多规则包括：不使用省略号（例如 d'eau 变成 de le eau），无动词变位（所有人称使用不定式），提问使用固定结构 'être ce que'。"
+        f="D'autres règles incluent : pas d'apostrophes (ex: d'eau devient de le eau), pas de conjugaisons (l'infinitif est utilisé pour toutes les personnes), et les questions utilisent la structure fixe 'être ce que'."
+        r="De autre règle inclure : pas de apostrophe (ex: d'eau devenir de le eau), pas de conjugaison (le infinitif être utiliser pour tout les personne), et les question utiliser le structure fixe 'être ce que'."
+        >Other rules include: no apostrophes (e.g., d'eau becomes de le eau), no conjugations (the infinitive is used for all persons), and questions use the fixed structure 'être ce que'.</span>
+    </p>
+
+    <h2>3. <span class="t" c="示例文本" f="Passages Exemples" r="Passage Exemple">Sample Passages</span></h2>
+    <h3><span class="t" c="巴别塔" f="La Tour de Babel" r="Le Tour de Babel">The Tower of Babel</span></h3>
+    <p>
+      <span class="t"
+        c="那时，全地只有一种语言，都说一样的话。"
+        f="Toute la terre avait une seule langue et les mêmes mots."
+        r="Tout le terre avoir un seul langue et le même mot."
+        >Now the whole world had one language and a common speech.</span>
+    </p>
+    <h3><span class="t" c="主祷文" f="Le Notre Père" r="Le Notre Père">The Lord's Prayer</span></h3>
+    <p>
+      <span class="t"
+        c="我们在天上的父，愿人都尊你的名为圣。愿你的国降临。愿你的旨意行在地上，如同行在天上。"
+        f="Notre Père qui es aux cieux, que ton nom soit sanctifié, que ton règne vienne, que ta volonté soit faite sur la terre comme au ciel."
+        r="Notre Père qui être à les ciel, que ton nom être sanctifier, que ton règne venir, que ton volonté être faire sur le terre comme à le ciel."
+        >Our Father in heaven, hallowed be your name, your kingdom come, your will be done, on earth as it is in heaven.</span>
+    </p>
+
+    <h2>4. <span class="t" c="字母与发音" f="Schémas et Prononciation" r="Schéma et Prononciation">Schemas and Pronunciation</span></h2>
+    <p>
+      <span class="t"
+        c="字母和发音与标准法语完全相同。字母表有26个字母。"
+        f="Les lettres et la prononciation sont exactement les mêmes qu'en français standard. L'alphabet comporte 26 lettres."
+        r="Les lettre et le prononciation être exactement le même que en français standard. Le alphabet comporter 26 lettre."
+        >The letters and pronunciation are exactly the same as in standard French. The alphabet has 26 letters.</span>
+    </p>
+  </body>
+</html>
