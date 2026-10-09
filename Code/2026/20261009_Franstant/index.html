@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html>
+  <!--
+  <span class="t" c="" f="" r="">
+  </span>
+  -->
+  <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <meta charset="UTF-8">
+    <title>Franstant — An artificial language built upon French without conjugation — by Jian Huang</title>
+    <style>
+      body, td {
+        font-family: 'Bahnschrift Light', Calibri, SimHei, Arial, sans-serif;
+        font-size: 22px;
+        line-height: 1.6;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+        color: #2c3e50;
+      }
+      .banner {
+        background: linear-gradient(135deg, #1a5276 0%, #2980b9 50%, #5dade2 100%);
+        color: white;
+        padding: 40px 30px;
+        text-align: center;
+      }
+      .banner h1 {
+        font-size: 2.5em;
+        margin: 0 0 10px 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      }
+      .banner .subtitle {
+        font-size: 1.1em;
+        opacity: 0.9;
+      }
+      .lang-bar {
+        background: #1a5276;
+        text-align: center;
+        padding: 12px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      }
+      .lang-btn {
+        background: transparent;
+        border: 2px solid rgba(255,255,255,0.6);
+        color: white;
+        padding: 8px 24px;
+        margin: 0 8px;
+        border-radius: 25px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: inherit;
+      }
+      .lang-btn:hover {
+        background: rgba(255,255,255,0.2);
+        border-color: white;
+      }
+      .content {
+        padding: 20px 40px;
+      }
+      .section {
+        background: white;
+        border-radius: 12px;
+        padding: 30px 35px;
+        margin: 25px 0;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border-left: 5px solid #2980b9;
+      }
+      .section h2 {
+        color: #1a5276;
+        margin-top: 0;
+        font-size: 1.5em;
+        border-bottom: 2px solid #ebf5fb;
+        padding-bottom: 12px;
+      }
+      .section h3 {
+        color: #2980b9;
+        margin-top: 25px;
+      }
+      .example {
+        background: #ebf5fb;
+        border-left: 4px solid #3498db;
+        padding: 15px 20px;
+        margin: 12px 0;
+        border-radius: 0 8px 8px 0;
+        font-size: 0.95em;
+      }
+      .example .label {
+        font-weight: bold;
+        color: #1a5276;
+        font-size: 0.85em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+      }
+      .rule-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+      }
+      .rule-table td, .rule-table th {
+        border: 1px solid #bdc3c7;
+        padding: 10px 14px;
+      }
+      .rule-table th {
+        background: #2980b9;
+        color: white;
+        text-align: left;
+        font-weight: normal;
+      }
+      .rule-table tr:nth-child(even) {
+        background: #f8f9fa;
+      }
+      .rule-table tr:hover {
+        background: #ebf5fb;
+      }
+      .passage-block {
+        background: #fef9e7;
+        border-left: 4px solid #f39c12;
+        padding: 20px 25px;
+        margin: 15px 0;
+        border-radius: 0 8px 8px 0;
+      }
+      .passage-block .verse {
+        margin: 8px 0;
+      }
+      .passage-block .verse-num {
+        font-weight: bold;
+        color: #e67e22;
+        margin-right: 5px;
+      }
+      .phonetics-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+      }
+      .phonetics-table td {
+        border: 1px solid #bdc3c7;
+        padding: 8px 12px;
+        text-align: center;
+        font-size: 0.95em;
+      }
+      .highlight {
+        background: #d5f5e3;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: monospace;
+      }
+      .arrow {
+        color: #e74c3c;
+        font-weight: bold;
+      }
+    </style>
+    <script>
+      function setLang(language) {
+        var elements = document.getElementsByClassName("t");
+        for (var position = 0; position < elements.length; position++) {
+          var element = elements[position];
+          if (!element.getAttribute("e")) {
+            element.setAttribute("e", element.innerHTML);
+          }
+        }
+        for (var position = 0; position < elements.length; position++) {
+          var element = elements[position];
+          var targetText = element.getAttribute(language);
+          if (targetText !== null && targetText !== undefined) {
+            element.innerHTML = targetText;
+          } else {
+            element.innerHTML = element.getAttribute("e");
+          }
+        }
+      }
+      function onLoad() {
+        var currentUrl = window.location.href;
+        if (!currentUrl) return;
+        if (currentUrl.endsWith("#c")) setLang("c");
+        else if (currentUrl.endsWith("#f")) setLang("f");
+        else if (currentUrl.endsWith("#r")) setLang("r");
+      }
+    </script>
+  </head>
+  <body onload="onLoad()">
+
+    <div class="banner">
+      <h1>
+        <span class="t"
+          c="Franstant（恒常法语）"
+          f="Franstant (Français Constant)"
+          r="Franstant (Français Constant)"
+          >Franstant (Français Constant)</span>
+      </h1>
+      <div class="subtitle">
+        <span class="t"
+          c="由Jian Huang创造的无变位人造法语"
+          f="Une langue artificielle construite sur le français sans conjugaison — par Jian Huang"
+          r="Un langue artificiel construire sur le français sans conjugaison — par Jian Huang"
+          >An artificial language built upon French without conjugation — by Jian Huang</span>
+      </div>
+    </div>
+
+    <div class="lang-bar">
+      <button class="lang-btn" onclick="setLang('e')">English</button>
+      <button class="lang-btn" onclick="setLang('c')">中文</button>
+      <button class="lang-btn" onclick="setLang('f')">Français</button>
+      <button class="lang-btn" onclick="setLang('r')">Franstant</button>
+    </div>
+
+    <div class="content">
+
+      <!-- ===== CHAPTER 1: INTRODUCTION ===== -->
+      <div class="section">
+        <h2><span class="t" c="1. 概述" f="1. Introduction" r="1. Introduction">1. Introduction</span></h2>
+        <p>
+          <span class="t"
+            c="Franstant（恒常法语）是一门基于法语构建的人造语言。"恒常"（Constant）意味着语言中的每个词保持不变的形式——动词不变位，名词不变复数，形容词不变性数。其设计目标是在保留法语核心词汇、语音和文化底蕴的同时，彻底简化语法结构，使其更易于学习和使用。"
+            f="Franstant (Français Constant) est une langue artificielle construite sur le français. « Constant » signifie que chaque mot garde une forme invariable — les verbes ne se conjuguent pas, les noms ne prennent pas de pluriel, les adjectifs ne s'accordent pas. L'objectif est de simplifier radicalement la grammaire tout en conservant le vocabulaire, la phonétique et l'esprit culturel du français."
+            r="Franstant (Français Constant) être un langue artificiel construire sur le français. « Constant » signifier que chaque mot garder un forme invariable — les verbe ne se conjuguer pas, les nom ne prendre pas de pluriel, les adjectif ne se accorder pas. Le objectif être simplifier radicalement le grammaire tout en conserver le vocabulaire, le phonétique et le esprit culturel de le français."
+            >Franstant (Français Constant) is an artificial language built upon French. "Constant" means that every word keeps an invariable form — verbs do not conjugate, nouns do not take plural forms, adjectives do not agree in gender or number. The goal is to radically simplify grammar while retaining the vocabulary, phonetics, and cultural spirit of French.</span>
+        </p>
+        <p>
+          <span class="t"
+            c="核心设计原则如下："
+            f="Les principes fondamentaux de conception sont :"
+            r="Les principe fondamental de conception être :"
+            >The core design principles are:</span>
+        </p>
+        <p>
+          <span class="t"
+            c="&lt;b&gt;1. 动词恒常：&lt;/b&gt;动词始终使用不定式。时态通过助词表达（passé = 过去，futur = 未来，être = 进行）。&lt;br/&gt;&lt;b&gt;2. 名词恒常：&lt;/b&gt;名词固定为阳性单数基本形式。复数仅靠冠词区分。&lt;br/&gt;&lt;b&gt;3. 无缩合：&lt;/b&gt;取消一切省略号和缩合形式，所有词汇完整书写。&lt;br/&gt;&lt;b&gt;4. 语序固定：&lt;/b&gt;严格遵循主-谓-宾语序。形容词一律后置。&lt;br/&gt;&lt;b&gt;5. 否定不分裂：&lt;/b&gt;ne pas 作为整体出现在动词前。&lt;br/&gt;&lt;b&gt;6. 发音适应拼写：&lt;/b&gt;发音跟随新拼写规则，不做省音。"
+            f="&lt;b&gt;1. Verbes constants :&lt;/b&gt; Les verbes restent toujours à l'infinitif. Le temps est exprimé par des marqueurs (passé, futur, être).&lt;br/&gt;&lt;b&gt;2. Noms constants :&lt;/b&gt; Les noms restent au masculin singulier de base. Le pluriel est indiqué uniquement par l'article.&lt;br/&gt;&lt;b&gt;3. Pas de contractions :&lt;/b&gt; Toutes les élisions et contractions sont supprimées. Chaque mot est écrit en entier.&lt;br/&gt;&lt;b&gt;4. Ordre fixe :&lt;/b&gt; Ordre strict Sujet-Verbe-Objet. Les adjectifs sont toujours placés après le nom.&lt;br/&gt;&lt;b&gt;5. Négation non séparée :&lt;/b&gt; « ne pas » apparaît ensemble avant le verbe.&lt;br/&gt;&lt;b&gt;6. Prononciation adaptée :&lt;/b&gt; La prononciation suit la nouvelle orthographe sans élision."
+            r="&lt;b&gt;1. Verbe constant :&lt;/b&gt; Les verbe rester toujours à le infinitif. Le temps être exprimer par des marqueur (passé, futur, être).&lt;br/&gt;&lt;b&gt;2. Nom constant :&lt;/b&gt; Les nom rester à le masculin singulier de base. Le pluriel être indiquer uniquement par le article.&lt;br/&gt;&lt;b&gt;3. Pas de contraction :&lt;/b&gt; Tout les élision et contraction être supprimer. Chaque mot être écrire en entier.&lt;br/&gt;&lt;b&gt;4. Ordre fixe :&lt;/b&gt; Ordre strict Sujet-Verbe-Objet. Les adjectif être toujours placer après le nom.&lt;br/&gt;&lt;b&gt;5. Négation non séparer :&lt;/b&gt; « ne pas » apparaître ensemble avant le verbe.&lt;br/&gt;&lt;b&gt;6. Prononciation adapter :&lt;/b&gt; Le prononciation suivre le nouveau orthographe sans élision."
+            ><b>1. Constant verbs:</b> Verbs always remain in the infinitive. Tense is expressed through markers (passé = past, futur = future, être = continuous).<br/><b>2. Constant nouns:</b> Nouns stay in the base masculine singular form. Plurality is indicated only by the article.<br/><b>3. No contractions:</b> All elisions and contractions are removed. Every word is written in full.<br/><b>4. Fixed word order:</b> Strict Subject-Verb-Object order. Adjectives are always placed after the noun.<br/><b>5. Unsplit negation:</b> "ne pas" appears together before the verb.<br/><b>6. Pronunciation adapts to spelling:</b> Pronunciation follows the new spelling without elision.</span>
+        </p>
+      </div>
+
+      <!-- ===== CHAPTER 2: RULES IN DETAIL ===== -->
+      <div class="section">
+        <h2><span class="t" c="2. 详细规则与示例" f="2. Règles Détaillées et Exemples" r="2. Règle Détailler et Exemple">2. Detailed Rules and Examples</span></h2>
+
+        <!-- 2.1 Articles -->
+        <h3><span class="t" c="2.1 冠词" f="2.1 Articles" r="2.1 Article">2.1 Articles</span></h3>
+        <p>
+          <span class="t"
+            c="定冠词只保留 &lt;b&gt;le&lt;/b&gt;（单数）和 &lt;b&gt;les&lt;/b&gt;（复数）。取消 la 和 l'。不定冠词只保留 &lt;b&gt;un&lt;/b&gt;（单数）和 &lt;b&gt;des&lt;/b&gt;（复数）。取消 une。部分冠词统一使用 &lt;b&gt;du&lt;/b&gt;（表示 '一些'）。注意 &lt;b&gt;de le&lt;/b&gt; 仅用于表示 '……的'（所属关系），不缩合为 du。"
+            f="Les articles définis se réduisent à &lt;b&gt;le&lt;/b&gt; (singulier) et &lt;b&gt;les&lt;/b&gt; (pluriel). « la » et « l' » sont supprimés. Les articles indéfinis se réduisent à &lt;b&gt;un&lt;/b&gt; (singulier) et &lt;b&gt;des&lt;/b&gt; (pluriel). « une » est supprimé. L'article partitif est uniformément &lt;b&gt;du&lt;/b&gt; (pour « quelque »). Notez que &lt;b&gt;de le&lt;/b&gt; est réservé à « de le » (possession) et ne se contracte jamais en « du »."
+            r="Les article défini se réduire à &lt;b&gt;le&lt;/b&gt; (singulier) et &lt;b&gt;les&lt;/b&gt; (pluriel). « la » et « l' » être supprimer. Les article indéfini se réduire à &lt;b&gt;un&lt;/b&gt; (singulier) et &lt;b&gt;des&lt;/b&gt; (pluriel). « une » être supprimer. Le article partitif être uniformément &lt;b&gt;du&lt;/b&gt; (pour « quelque »). Noter que &lt;b&gt;de le&lt;/b&gt; être réserver à « de le » (possession) et ne se contracter jamais en « du »."
+            >Definite articles reduce to <b>le</b> (singular) and <b>les</b> (plural). "la" and "l'" are removed. Indefinite articles reduce to <b>un</b> (singular) and <b>des</b> (plural). "une" is removed. The partitive article is uniformly <b>du</b> (meaning "some"). Note that <b>de le</b> is reserved for "of the" (possession) and never contracts to "du".</span>
+        </p>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="标准法语" f="Français Standard" r="Français Standard">Standard French</span></th>
+            <th>Franstant</th>
+            <th><span class="t" c="规则" f="Règle" r="Règle">Rule</span></th>
+          </tr>
+          <tr><td>la maison</td><td>le maison</td><td><span class="t" c="la → le" f="la → le" r="la → le">la → le</span></td></tr>
+          <tr><td>l'homme</td><td>le homme</td><td><span class="t" c="l' → le（无省音）" f="l' → le (pas d'élision)" r="l' → le (pas de élision)">l' → le (no elision)</span></td></tr>
+          <tr><td>une femme</td><td>un femme</td><td><span class="t" c="une → un" f="une → un" r="une → un">une → un</span></td></tr>
+          <tr><td>Je mange du pain.</td><td>moi manger du pain.</td><td><span class="t" c="du = 部分冠词（一些）" f="du = partitif (quelque)" r="du = partitif (quelque)">du = partitive (some)</span></td></tr>
+          <tr><td>le toit de la maison</td><td>le toit de le maison</td><td><span class="t" c="de le = ……的（不缩合）" f="de le = appartenance (pas de contraction)" r="de le = appartenance (pas de contraction)">de le = of the (no contraction)</span></td></tr>
+        </table>
+
+        <!-- 2.2 Nouns -->
+        <h3><span class="t" c="2.2 名词" f="2.2 Noms" r="2.2 Nom">2.2 Nouns</span></h3>
+        <p>
+          <span class="t"
+            c="所有名词均严格使用基础的阳性单数形式。没有不规则的复数变化。复数仅通过冠词 les 或 des 指示，名词本身不变。"
+            f="Tous les noms utilisent strictement la forme de base masculine singulière. Il n'y a pas de pluriels irréguliers. Le pluriel est indiqué uniquement par les articles « les » ou « des », le nom lui-même ne change pas."
+            r="Tout les nom utiliser strictement le forme de base masculin singulier. Il ne y avoir pas de pluriel irrégulier. Le pluriel être indiquer uniquement par les article « les » ou « des », le nom lui-même ne changer pas."
+            >All nouns strictly use the base masculine singular form. There are no irregular plurals. Plurality is indicated only by the articles "les" or "des" — the noun itself never changes.</span>
+        </p>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="标准法语" f="Français Standard" r="Français Standard">Standard French</span></th>
+            <th>Franstant</th>
+          </tr>
+          <tr><td>les maisons</td><td>les maison</td></tr>
+          <tr><td>les yeux</td><td>les oeil</td></tr>
+          <tr><td>des chevaux</td><td>des cheval</td></tr>
+          <tr><td>les belles femmes</td><td>les femme beau</td></tr>
+        </table>
+
+        <!-- 2.3 Pronouns -->
+        <h3><span class="t" c="2.3 代词" f="2.3 Pronoms" r="2.3 Pronom">2.3 Pronouns</span></h3>
+        <p>
+          <span class="t"
+            c="主语代词使用重读形式。语序严格遵循 主语-动词-宾语，宾语代词放在动词后面，不移到动词前。"
+            f="Les pronoms sujets utilisent la forme tonique. L'ordre est strictement Sujet-Verbe-Objet ; les pronoms objets se placent après le verbe, sans se déplacer avant."
+            r="Les pronom sujet utiliser le forme tonique. Le ordre être strictement Sujet-Verbe-Objet ; les pronom objet se placer après le verbe, sans se déplacer avant."
+            >Subject pronouns use the disjunctive (tonic) form. Word order is strictly Subject-Verb-Object; object pronouns are placed after the verb, not moved before it.</span>
+        </p>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="人称" f="Personne" r="Personne">Person</span></th>
+            <th><span class="t" c="标准法语主语" f="Sujet Standard" r="Sujet Standard">Standard Subject</span></th>
+            <th><span class="t" c="Franstant 代词" f="Pronom Franstant" r="Pronom Franstant">Franstant Pronoun</span></th>
+            <th><span class="t" c="所有格" f="Possessif" r="Possessif">Possessive</span></th>
+          </tr>
+          <tr><td>1s</td><td>je</td><td>moi</td><td>mon</td></tr>
+          <tr><td>2s</td><td>tu</td><td>toi</td><td>ton</td></tr>
+          <tr><td>3s m</td><td>il</td><td>lui</td><td>son</td></tr>
+          <tr><td>3s f</td><td>elle</td><td>elle</td><td>son</td></tr>
+          <tr><td>—</td><td>on</td><td>on</td><td>son</td></tr>
+          <tr><td>1p</td><td>nous</td><td>nous</td><td>notre</td></tr>
+          <tr><td>2p</td><td>vous</td><td>vous</td><td>votre</td></tr>
+          <tr><td>3p</td><td>ils/elles</td><td>eux</td><td>leur</td></tr>
+        </table>
+        <div class="example">
+          <div class="label"><span class="t" c="示例" f="Exemples" r="Exemple">Examples</span></div>
+          <span class="t"
+            c="Je le vois. &lt;span class='arrow'&gt;→&lt;/span&gt; moi voir lui&lt;br/&gt;Elle me parle. &lt;span class='arrow'&gt;→&lt;/span&gt; elle parler moi&lt;br/&gt;Nous les aidons. &lt;span class='arrow'&gt;→&lt;/span&gt; nous aider eux"
+            f="Je le vois. &lt;span class='arrow'&gt;→&lt;/span&gt; moi voir lui&lt;br/&gt;Elle me parle. &lt;span class='arrow'&gt;→&lt;/span&gt; elle parler moi&lt;br/&gt;Nous les aidons. &lt;span class='arrow'&gt;→&lt;/span&gt; nous aider eux"
+            r="Je le vois. &lt;span class='arrow'&gt;→&lt;/span&gt; moi voir lui&lt;br/&gt;Elle me parle. &lt;span class='arrow'&gt;→&lt;/span&gt; elle parler moi&lt;br/&gt;Nous les aidons. &lt;span class='arrow'&gt;→&lt;/span&gt; nous aider eux"
+            >Je le vois. <span class="arrow">→</span> moi voir lui<br/>Elle me parle. <span class="arrow">→</span> elle parler moi<br/>Nous les aidons. <span class="arrow">→</span> nous aider eux</span>
+        </div>
+
+        <!-- 2.4 Possession -->
+        <h3><span class="t" c="2.4 所有格" f="2.4 Possessifs" r="2.4 Possessif">2.4 Possessives</span></h3>
+        <p>
+          <span class="t"
+            c="所有格形容词统一使用阳性形式。单数：&lt;b&gt;mon livre&lt;/b&gt;（我的书）。复数：&lt;b&gt;mon les livre&lt;/b&gt;（我的书们）。"
+            f="Les adjectifs possessifs utilisent uniformément la forme masculine. Singulier : &lt;b&gt;mon livre&lt;/b&gt;. Pluriel : &lt;b&gt;mon les livre&lt;/b&gt;."
+            r="Les adjectif possessif utiliser uniformément le forme masculin. Singulier : &lt;b&gt;mon livre&lt;/b&gt;. Pluriel : &lt;b&gt;mon les livre&lt;/b&gt;."
+            >Possessive adjectives uniformly use the masculine form. Singular: <b>mon livre</b> (my book). Plural: <b>mon les livre</b> (my books).</span>
+        </p>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="标准法语" f="Français Standard" r="Français Standard">Standard French</span></th>
+            <th>Franstant</th>
+          </tr>
+          <tr><td>mon livre</td><td>mon livre</td></tr>
+          <tr><td>ma maison</td><td>mon maison</td></tr>
+          <tr><td>mes livres</td><td>mon les livre</td></tr>
+          <tr><td>tes amis</td><td>ton les ami</td></tr>
+          <tr><td>ses maisons</td><td>son les maison</td></tr>
+          <tr><td>nos voitures</td><td>notre les voiture</td></tr>
+          <tr><td>vos chiens</td><td>votre les chien</td></tr>
+          <tr><td>leurs enfants</td><td>leur les enfant</td></tr>
+        </table>
+
+        <!-- 2.5 Verbs & Tense -->
+        <h3><span class="t" c="2.5 动词与时态" f="2.5 Verbes et Temps" r="2.5 Verbe et Temps">2.5 Verbs and Tense</span></h3>
+        <p>
+          <span class="t"
+            c="动词始终使用不定式，不进行任何变位。时态通过在动词前放置助词来表达。"
+            f="Les verbes restent toujours à l'infinitif sans aucune conjugaison. Le temps est exprimé par des marqueurs placés avant le verbe."
+            r="Les verbe rester toujours à le infinitif sans aucun conjugaison. Le temps être exprimer par des marqueur placer avant le verbe."
+            >Verbs always remain in the infinitive without any conjugation. Tense is expressed through markers placed before the verb.</span>
+        </p>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="时态" f="Temps" r="Temps">Tense</span></th>
+            <th><span class="t" c="助词" f="Marqueur" r="Marqueur">Marker</span></th>
+            <th><span class="t" c="标准法语" f="Français Standard" r="Français Standard">Standard French</span></th>
+            <th>Franstant</th>
+          </tr>
+          <tr>
+            <td><span class="t" c="现在" f="Présent" r="Présent">Present</span></td>
+            <td><span class="t" c="（无）" f="(aucun)" r="(aucun)">(none)</span></td>
+            <td>Je mange.</td><td>moi manger.</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="过去" f="Passé" r="Passé">Past</span></td>
+            <td>passé</td>
+            <td>J'ai mangé.</td><td>moi passé manger.</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="将来" f="Futur" r="Futur">Future</span></td>
+            <td>futur</td>
+            <td>Je mangerai.</td><td>moi futur manger.</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="近将来" f="Futur proche" r="Futur proche">Near Future</span></td>
+            <td>aller</td>
+            <td>Je vais manger.</td><td>moi aller manger.</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="进行" f="Continu" r="Continu">Continuous</span></td>
+            <td>être</td>
+            <td>Je suis en train de manger.</td><td>moi être manger.</td>
+          </tr>
+        </table>
+
+        <!-- 2.6 Negation -->
+        <h3><span class="t" c="2.6 否定" f="2.6 Négation" r="2.6 Négation">2.6 Negation</span></h3>
+        <p>
+          <span class="t"
+            c="否定词 &lt;b&gt;ne pas&lt;/b&gt; 作为整体放在动词（或时态助词）之前，不拆分。"
+            f="La négation &lt;b&gt;ne pas&lt;/b&gt; est placée comme un bloc avant le verbe (ou le marqueur temporel), sans être séparée."
+            r="Le négation &lt;b&gt;ne pas&lt;/b&gt; être placer comme un bloc avant le verbe (ou le marqueur temporel), sans être séparer."
+            >The negation <b>ne pas</b> is placed as a single block before the verb (or tense marker), without splitting.</span>
+        </p>
+        <div class="example">
+          <div class="label"><span class="t" c="示例" f="Exemples" r="Exemple">Examples</span></div>
+          <span class="t"
+            c="我不吃。Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;他过去没来。Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas passé venir.&lt;br/&gt;你不会走。Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas futur partir."
+            f="Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas passé venir.&lt;br/&gt;Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas futur partir."
+            r="Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas passé venir.&lt;br/&gt;Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas futur partir."
+            >Je ne mange pas. <span class="arrow">→</span> moi ne pas manger.<br/>Il n'est pas venu. <span class="arrow">→</span> lui ne pas passé venir.<br/>Tu ne partiras pas. <span class="arrow">→</span> toi ne pas futur partir.</span>
+        </div>
+
+        <!-- 2.7 Adjectives -->
+        <h3><span class="t" c="2.7 形容词" f="2.7 Adjectifs" r="2.7 Adjectif">2.7 Adjectives</span></h3>
+        <p>
+          <span class="t"
+            c="形容词固定使用阳性单数形式，始终放在名词之后。冠词和所有格保留在名词短语的开头。"
+            f="Les adjectifs sont fixés à la forme masculine singulière et toujours placés après le nom. Les articles et possessifs restent au début du groupe nominal."
+            r="Les adjectif être fixer à le forme masculin singulier et toujours placer après le nom. Les article et possessif rester à le début de le groupe nominal."
+            >Adjectives are fixed to the masculine singular form and always placed after the noun. Articles and possessives remain at the beginning of the noun phrase.</span>
+        </p>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="标准法语" f="Français Standard" r="Français Standard">Standard French</span></th>
+            <th>Franstant</th>
+          </tr>
+          <tr><td>le beau garçon</td><td>le garçon beau</td></tr>
+          <tr><td>une belle maison</td><td>un maison beau</td></tr>
+          <tr><td>les grandes villes</td><td>les ville grand</td></tr>
+          <tr><td>mes beaux enfants</td><td>mon les enfant beau</td></tr>
+          <tr><td>la plus belle femme</td><td>le femme le plus beau</td></tr>
+        </table>
+
+        <!-- 2.8 Prepositions -->
+        <h3><span class="t" c="2.8 介词" f="2.8 Prépositions" r="2.8 Préposition">2.8 Prepositions</span></h3>
+        <p>
+          <span class="t"
+            c="介词永远不与冠词缩合。所有缩合形式都要拆开书写。"
+            f="Les prépositions ne se contractent jamais avec les articles. Toutes les formes contractées sont écrites séparément."
+            r="Les préposition ne se contracter jamais avec les article. Tout les forme contracter être écrire séparément."
+            >Prepositions never contract with articles. All contracted forms are written separately.</span>
+        </p>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="标准法语" f="Français Standard" r="Français Standard">Standard French</span></th>
+            <th>Franstant</th>
+          </tr>
+          <tr><td>au restaurant</td><td>à le restaurant</td></tr>
+          <tr><td>aux États-Unis</td><td>à les État-Uni</td></tr>
+          <tr><td>du pain (of the bread)</td><td>de le pain</td></tr>
+          <tr><td>d'eau</td><td>de le eau</td></tr>
+        </table>
+
+        <!-- 2.9 Questions -->
+        <h3><span class="t" c="2.9 疑问句" f="2.9 Questions" r="2.9 Question">2.9 Questions</span></h3>
+        <p>
+          <span class="t"
+            c="疑问句统一使用 &lt;b&gt;être ce que&lt;/b&gt; 引导。不使用 est-ce que（因为 est 是变位形式），也不使用连字符和省音。"
+            f="Les questions utilisent uniformément &lt;b&gt;être ce que&lt;/b&gt;. On n'utilise pas « est-ce que » (car « est » est conjugué), ni trait d'union ni élision."
+            r="Les question utiliser uniformément &lt;b&gt;être ce que&lt;/b&gt;. On ne utiliser pas « est-ce que » (car « est » être conjuguer), ni trait de union ni élision."
+            >Questions uniformly use <b>être ce que</b>. "Est-ce que" is not used (because "est" is conjugated), nor are hyphens or elisions.</span>
+        </p>
+        <div class="example">
+          <div class="label"><span class="t" c="示例" f="Exemples" r="Exemple">Examples</span></div>
+          <span class="t"
+            c="你去餐馆吗？Est-ce que tu vas au restaurant ? &lt;span class='arrow'&gt;→&lt;/span&gt; être ce que toi aller à le restaurant ?&lt;br/&gt;他在这里吗？Est-ce qu'il est ici ? &lt;span class='arrow'&gt;→&lt;/span&gt; être ce que lui être ici ?"
+            f="Est-ce que tu vas au restaurant ? &lt;span class='arrow'&gt;→&lt;/span&gt; être ce que toi aller à le restaurant ?&lt;br/&gt;Est-ce qu'il est ici ? &lt;span class='arrow'&gt;→&lt;/span&gt; être ce que lui être ici ?"
+            r="Est-ce que tu vas au restaurant ? &lt;span class='arrow'&gt;→&lt;/span&gt; être ce que toi aller à le restaurant ?&lt;br/&gt;Est-ce qu'il est ici ? &lt;span class='arrow'&gt;→&lt;/span&gt; être ce que lui être ici ?"
+            >Est-ce que tu vas au restaurant ? <span class="arrow">→</span> être ce que toi aller à le restaurant ?<br/>Est-ce qu'il est ici ? <span class="arrow">→</span> être ce que lui être ici ?</span>
+        </div>
+
+        <!-- 2.10 Passive Voice -->
+        <h3><span class="t" c="2.10 被动语态" f="2.10 Voix Passive" r="2.10 Voix Passif">2.10 Passive Voice</span></h3>
+        <p>
+          <span class="t"
+            c="被动语态用助词 &lt;b&gt;passif&lt;/b&gt; 表示。过去被动使用 &lt;b&gt;passé passif&lt;/b&gt;。"
+            f="La voix passive est exprimée par le marqueur &lt;b&gt;passif&lt;/b&gt;. Le passé passif utilise &lt;b&gt;passé passif&lt;/b&gt;."
+            r="Le voix passif être exprimer par le marqueur &lt;b&gt;passif&lt;/b&gt;. Le passé passif utiliser &lt;b&gt;passé passif&lt;/b&gt;."
+            >The passive voice is expressed by the marker <b>passif</b>. Past passive uses <b>passé passif</b>.</span>
+        </p>
+        <div class="example">
+          <div class="label"><span class="t" c="示例" f="Exemples" r="Exemple">Examples</span></div>
+          <span class="t"
+            c="这本书被阅读了。Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre passif lire.&lt;br/&gt;房子被他父亲建造了。La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison passé passif construire par son père."
+            f="Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre passif lire.&lt;br/&gt;La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison passé passif construire par son père."
+            r="Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre passif lire.&lt;br/&gt;La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison passé passif construire par son père."
+            >Le livre est lu. <span class="arrow">→</span> le livre passif lire.<br/>La maison a été construite par son père. <span class="arrow">→</span> le maison passé passif construire par son père.</span>
+        </div>
+
+        <!-- 2.11 Reflexive -->
+        <h3><span class="t" c="2.11 反身动词" f="2.11 Verbes Réfléchis" r="2.11 Verbe Réfléchi">2.11 Reflexive Verbs</span></h3>
+        <p>
+          <span class="t"
+            c="所有反身代词统一为 &lt;b&gt;se&lt;/b&gt;，放在动词前。"
+            f="Tous les pronoms réfléchis sont unifiés en &lt;b&gt;se&lt;/b&gt;, placé avant le verbe."
+            r="Tout les pronom réfléchi être unifier en &lt;b&gt;se&lt;/b&gt;, placer avant le verbe."
+            >All reflexive pronouns are unified to <b>se</b>, placed before the verb.</span>
+        </p>
+        <div class="example">
+          <div class="label"><span class="t" c="示例" f="Exemples" r="Exemple">Examples</span></div>
+          <span class="t"
+            c="我洗澡。Je me lave. &lt;span class='arrow'&gt;→&lt;/span&gt; moi se laver.&lt;br/&gt;他们在那里定居。Ils se trouvent là-bas. &lt;span class='arrow'&gt;→&lt;/span&gt; eux se trouver là."
+            f="Je me lave. &lt;span class='arrow'&gt;→&lt;/span&gt; moi se laver.&lt;br/&gt;Ils se trouvent là-bas. &lt;span class='arrow'&gt;→&lt;/span&gt; eux se trouver là."
+            r="Je me lave. &lt;span class='arrow'&gt;→&lt;/span&gt; moi se laver.&lt;br/&gt;Ils se trouvent là-bas. &lt;span class='arrow'&gt;→&lt;/span&gt; eux se trouver là."
+            >Je me lave. <span class="arrow">→</span> moi se laver.<br/>Ils se trouvent là-bas. <span class="arrow">→</span> eux se trouver là.</span>
+        </div>
+
+        <!-- 2.12 Existence -->
+        <h3><span class="t" c="2.12 存在句" f="2.12 Existence" r="2.12 Existence">2.12 Existence</span></h3>
+        <p>
+          <span class="t"
+            c="&lt;b&gt;il y a&lt;/b&gt; 统一替换为 &lt;b&gt;voilà&lt;/b&gt;。"
+            f="&lt;b&gt;Il y a&lt;/b&gt; est uniformément remplacé par &lt;b&gt;voilà&lt;/b&gt;."
+            r="&lt;b&gt;Il y a&lt;/b&gt; être uniformément remplacer par &lt;b&gt;voilà&lt;/b&gt;."
+            ><b>Il y a</b> is uniformly replaced by <b>voilà</b>.</span>
+        </p>
+        <div class="example">
+          <span class="t"
+            c="这里有很多孩子。Il y a beaucoup d'enfants. &lt;span class='arrow'&gt;→&lt;/span&gt; voilà beaucoup de enfant."
+            f="Il y a beaucoup d'enfants. &lt;span class='arrow'&gt;→&lt;/span&gt; voilà beaucoup de enfant."
+            r="Il y a beaucoup d'enfants. &lt;span class='arrow'&gt;→&lt;/span&gt; voilà beaucoup de enfant."
+            >Il y a beaucoup d'enfants. <span class="arrow">→</span> voilà beaucoup de enfant.</span>
+        </div>
+      </div>
+
+      <!-- ===== CHAPTER 3: SAMPLE PASSAGES ===== -->
+      <div class="section">
+        <h2><span class="t" c="3. 示例文本" f="3. Passages Exemples" r="3. Passage Exemple">3. Sample Passages</span></h2>
+
+        <h3><span class="t" c="巴别塔（创世记 11:1-9）" f="La Tour de Babel (Genèse 11:1-9)" r="Le Tour de Babel (Genèse 11:1-9)">The Tower of Babel (Genesis 11:1-9)</span></h3>
+        <div class="passage-block">
+          <div class="verse"><span class="verse-num">1</span>
+            <span class="t"
+              c="那时，天下人的口音、言语都是一样。"
+              f="Toute la terre avait une seule langue et les mêmes mots."
+              r="Tout le terre passé avoir un seul langue et le même mot."
+              >Now the whole earth had one language and the same words.</span>
+          </div>
+          <div class="verse"><span class="verse-num">2</span>
+            <span class="t"
+              c="他们往东边迁移的时候，在示拿地遇见一片平原，就住在那里。"
+              f="Comme ils étaient partis de l'orient, ils trouvèrent une plaine au pays de Schinear, et ils y habitèrent."
+              r="Comme eux passé partir de le orient, eux passé trouver un plaine à le pays de Schinear, et eux passé habiter là."
+              >As people migrated from the east, they found a plain in the land of Shinar and settled there.</span>
+          </div>
+          <div class="verse"><span class="verse-num">3</span>
+            <span class="t"
+              c="他们彼此商量说：'来吧！我们要做砖，把砖烧透了。'他们就拿砖当石头，又拿石漆当灰泥。"
+              f="Ils se dirent l'un à l'autre : Allons ! faisons des briques, et cuisons-les au feu. Et la brique leur servit de pierre, et le bitume leur servit de ciment."
+              r="Eux passé dire le un à le autre : Aller ! nous faire des brique, et cuire eux à le feu. Et le brique passé servir à eux de pierre, et le bitume passé servir à eux de ciment."
+              >And they said to one another, "Come, let us make bricks, and burn them thoroughly." And they had brick for stone, and bitumen for mortar.</span>
+          </div>
+          <div class="verse"><span class="verse-num">4</span>
+            <span class="t"
+              c="他们说：'来吧！我们要建造一座城和一座塔，塔顶通天，为要传扬我们的名，免得我们分散在全地上。'
+              f="Ils dirent encore : Allons ! bâtissons-nous une ville et une tour dont le sommet touche au ciel, et faisons-nous un nom, afin que nous ne soyons pas dispersés sur la face de toute la terre."
+              r="Eux passé dire encore : Aller ! nous bâtir un ville et un tour dont le sommet toucher à le ciel, et nous faire un nom, afin que nous ne pas être disperser sur le face de tout le terre."
+              >Then they said, "Come, let us build ourselves a city and a tower with its top in the heavens, and let us make a name for ourselves, lest we be dispersed over the face of the whole earth."</span>
+          </div>
+          <div class="verse"><span class="verse-num">5</span>
+            <span class="t"
+              c="耶和华降临，要看看世人所建造的城和塔。"
+              f="L'Éternel descendit pour voir la ville et la tour que bâtissaient les fils des hommes."
+              r="Le Éternel passé descendre pour voir le ville et le tour que les fil de les homme passé bâtir."
+              >And the LORD came down to see the city and the tower, which the children of man had built.</span>
+          </div>
+          <div class="verse"><span class="verse-num">6</span>
+            <span class="t"
+              c="耶和华说：'看哪，他们成为一样的人民，都是一样的言语，如今既做起这事来，以后他们所要做的事就没有不成就的了。'
+              f="Et l'Éternel dit : Voici, ils forment un seul peuple et ont tous une même langue, et c'est là ce qu'ils ont entrepris ; maintenant rien ne les empêcherait de faire tout ce qu'ils ont projeté."
+              r="Et le Éternel passé dire : Voilà, eux former un seul peuple et avoir tout un même langue, et ce être là ce que eux passé entreprendre ; maintenant rien ne pas empêcher eux de faire tout ce que eux passé projeter."
+              >And the LORD said, "Behold, they are one people, and they have all one language, and this is only the beginning of what they will do. And nothing that they propose to do will now be impossible for them.</span>
+          </div>
+          <div class="verse"><span class="verse-num">7</span>
+            <span class="t"
+              c="我们下去，在那里变乱他们的口音，使他们的言语彼此不通。'
+              f="Allons ! descendons, et là confondons leur langage, afin qu'ils n'entendent plus la langue les uns des autres."
+              r="Aller ! nous descendre, et là confondre leur langage, afin que eux ne pas entendre plus le langue les un de les autre."
+              >Come, let us go down and there confuse their language, so that they may not understand one another's speech."</span>
+          </div>
+          <div class="verse"><span class="verse-num">8</span>
+            <span class="t"
+              c="于是耶和华使他们从那里分散在全地上；他们就停工，不造那城了。"
+              f="Ainsi, l'Éternel les dispersa loin de là sur la face de toute la terre ; et ils cessèrent de bâtir la ville."
+              r="Ainsi, le Éternel passé disperser eux loin de là sur le face de tout le terre ; et eux passé cesser de bâtir le ville."
+              >So the LORD dispersed them from there over the face of all the earth, and they left off building the city.</span>
+          </div>
+          <div class="verse"><span class="verse-num">9</span>
+            <span class="t"
+              c="因为耶和华在那里变乱天下人的言语，使众人分散在全地上，所以那城名叫巴别。"
+              f="C'est pourquoi on l'appela du nom de Babel, car c'est là que l'Éternel confondit le langage de toute la terre, et c'est de là que l'Éternel les dispersa sur la face de toute la terre."
+              r="Ce être pourquoi on passé appeler elle de le nom de Babel, car ce être là que le Éternel passé confondre le langage de tout le terre, et ce être de là que le Éternel passé disperser eux sur le face de tout le terre."
+              >Therefore its name was called Babel, because there the LORD confused the language of all the earth. And from there the LORD dispersed them over the face of all the earth.</span>
+          </div>
+        </div>
+
+        <h3><span class="t" c="主祷文（马太福音 6:9-13）" f="Le Notre Père (Matthieu 6:9-13)" r="Le Notre Père (Matthieu 6:9-13)">The Lord's Prayer (Matthew 6:9-13)</span></h3>
+        <div class="passage-block">
+          <div class="verse"><span class="verse-num">9</span>
+            <span class="t"
+              c="所以，你们祷告要这样说：我们在天上的父：愿人都尊你的名为圣。"
+              f="Voici donc comment vous devez prier : Notre Père qui es aux cieux ! Que ton nom soit sanctifié ;"
+              r="Voilà donc comment vous devoir prier : Notre Père qui être à les ciel ! Que ton nom être sanctifier ;"
+              >Pray then like this: "Our Father in heaven, hallowed be your name.</span>
+          </div>
+          <div class="verse"><span class="verse-num">10</span>
+            <span class="t"
+              c="愿你的国降临；愿你的旨意行在地上，如同行在天上。"
+              f="que ton règne vienne ; que ta volonté soit faite sur la terre comme au ciel."
+              r="que ton règne venir ; que ton volonté être faire sur le terre comme à le ciel."
+              >Your kingdom come, your will be done, on earth as it is in heaven.</span>
+          </div>
+          <div class="verse"><span class="verse-num">11</span>
+            <span class="t"
+              c="我们日用的饮食，今日赐给我们。"
+              f="Donne-nous aujourd'hui notre pain quotidien ;"
+              r="Donner à nous aujourd'hui notre pain quotidien ;"
+              >Give us this day our daily bread,</span>
+          </div>
+          <div class="verse"><span class="verse-num">12</span>
+            <span class="t"
+              c="免我们的债，如同我们免了人的债。"
+              f="pardonne-nous nos offenses, comme nous aussi nous pardonnons à ceux qui nous ont offensés ;"
+              r="pardonner à nous notre les offense, comme nous aussi nous pardonner à eux qui passé offenser nous ;"
+              >and forgive us our debts, as we also have forgiven our debtors.</span>
+          </div>
+          <div class="verse"><span class="verse-num">13</span>
+            <span class="t"
+              c="不叫我们遇见试探；救我们脱离凶恶。因为国度、权柄、荣耀，全是你的，直到永远。阿们！"
+              f="ne nous induis pas en tentation, mais délivre-nous du mal. Car c'est à toi qu'appartiennent le règne, la puissance et la gloire, pour les siècles des siècles. Amen !"
+              r="ne pas induire nous en tentation, mais délivrer nous de le mal. Car ce être à toi que appartenir le règne, le puissance et le gloire, pour les siècle de les siècle. Amen !"
+              >And lead us not into temptation, but deliver us from evil. For yours is the kingdom and the power and the glory, forever and ever. Amen!</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== CHAPTER 4: PRONUNCIATION ===== -->
+      <div class="section">
+        <h2><span class="t" c="4. 字母与发音" f="4. Lettres et Prononciation" r="4. Lettre et Prononciation">4. Letters and Pronunciation</span></h2>
+        <p>
+          <span class="t"
+            c="Franstant 使用标准法语字母表（26个拉丁字母），发音规则基本沿用法语。但由于取消了省音（élision），在词与词之间可能会出现元音相连的情况（如 le homme），此时每个音节独立发音。这与标准法语存在差异，是 Franstant 的特色之一。"
+            f="Le Franstant utilise l'alphabet français standard (26 lettres latines). Les règles de prononciation sont essentiellement celles du français. Cependant, en raison de la suppression de l'élision, il peut y avoir des hiatus entre les mots (comme « le homme »), où chaque syllabe est prononcée séparément. Cela constitue une déviation intentionnelle du français standard."
+            r="Le Franstant utiliser le alphabet français standard (26 lettre latin). Les règle de prononciation être essentiellement ce de le français. Cependant, en raison de le suppression de le élision, il pouvoir y avoir des hiatus entre les mot (comme « le homme »), où chaque syllabe être prononcer séparément. Ce constituer un déviation intentionnel de le français standard."
+            >Franstant uses the standard French alphabet (26 Latin letters). Pronunciation rules are essentially those of French. However, because elision is removed, there may be hiatus between words (such as "le homme"), where each syllable is pronounced separately. This is an intentional deviation from standard French.</span>
+        </p>
+
+        <h3><span class="t" c="辅音" f="Consonnes" r="Consonne">Consonants</span></h3>
+        <table class="phonetics-table">
+          <tr><td>B b [b]<br/>bon</td><td>C c [k]/[s]<br/>car, ce</td><td>D d [d]<br/>dur</td><td>F f [f]<br/>faire</td><td>G g [ɡ]/[ʒ]<br/>gare, gel</td></tr>
+          <tr><td>H h [–]<br/>(silent)</td><td>J j [ʒ]<br/>jour</td><td>K k [k]<br/>kilo</td><td>L l [l]<br/>lire</td><td>M m [m]<br/>manger</td></tr>
+          <tr><td>N n [n]<br/>nom</td><td>P p [p]<br/>pain</td><td>Q q [k]<br/>que</td><td>R r [ʁ]<br/>rouge</td><td>S s [s]/[z]<br/>sur, rose</td></tr>
+          <tr><td>T t [t]<br/>toit</td><td>V v [v]<br/>voir</td><td>W w [w]/[v]<br/>wagon</td><td>X x [ks]/[ɡz]<br/>taxi, exam</td><td>Z z [z]<br/>zéro</td></tr>
+        </table>
+
+        <h3><span class="t" c="元音" f="Voyelles" r="Voyelle">Vowels</span></h3>
+        <table class="phonetics-table">
+          <tr><td>A a [a]<br/>avoir</td><td>E e [ə]/[e]/[ɛ]<br/>le, été, être</td><td>I i [i]<br/>ici</td><td>O o [o]/[ɔ]<br/>mot, porte</td><td>U u [y]<br/>lune</td></tr>
+          <tr><td>Y y [i]/[j]<br/>type, yeux</td><td colspan="4"></td></tr>
+        </table>
+
+        <h3><span class="t" c="常见字母组合" f="Combinaisons Courantes" r="Combinaison Courant">Common Letter Combinations</span></h3>
+        <table class="phonetics-table">
+          <tr><td>ai [ɛ]<br/>faire</td><td>au, eau [o]<br/>auto, beau</td><td>ei [ɛ]<br/>neige</td><td>eu [ø]/[œ]<br/>peu, peur</td><td>ou [u]<br/>pour</td></tr>
+          <tr><td>oi [wa]<br/>voir</td><td>an, en [ɑ̃]<br/>dans, vent</td><td>in, ain [ɛ̃]<br/>vin, pain</td><td>on [ɔ̃]<br/>bon</td><td>un [œ̃]<br/>un</td></tr>
+          <tr><td>ch [ʃ]<br/>chat</td><td>ph [f]<br/>photo</td><td>gn [ɲ]<br/>signe</td><td>qu [k]<br/>que</td><td>th [t]<br/>thé</td></tr>
+          <tr><td>gu [ɡ]<br/>guerre</td><td>ill [j]<br/>fille</td><td>tion [sjɔ̃]<br/>nation</td><td>er, ez [e]<br/>manger, nez</td><td></td></tr>
+        </table>
+
+        <h3><span class="t" c="重音" f="Accent Tonique" r="Accent Tonique">Stress</span></h3>
+        <p>
+          <span class="t"
+            c="与法语相同，重音始终落在词组的最后一个音节上。"
+            f="Comme en français, l'accent tonique tombe toujours sur la dernière syllabe du groupe rythmique."
+            r="Comme en français, le accent tonique tomber toujours sur le dernier syllabe de le groupe rythmique."
+            >As in French, the stress always falls on the last syllable of the rhythmic group.</span>
+        </p>
+
+        <h3><span class="t" c="与标准法语的差异" f="Différences avec le Français Standard" r="Différence avec le Français Standard">Differences from Standard French</span></h3>
+        <p>
+          <span class="t"
+            c="在标准法语中，当一个以元音结尾的词遇到以元音开头的词时，会发生省音（如 l'homme, d'eau）和联诵（如 les amis 读作 [le.za.mi]）。在 Franstant 中，这些现象不存在。每个词都独立发音：le homme 读作 [lə.ɔm]，de le eau 读作 [də.lə.o]。虽然这会产生元音相连的情况，但这是 Franstant 的有意设计，保证了词语边界的清晰。"
+            f="En français standard, quand un mot finissant par une voyelle rencontre un mot commençant par une voyelle, il y a élision (comme l'homme, d'eau) et liaison (comme les amis prononcé [le.za.mi]). En Franstant, ces phénomènes n'existent pas. Chaque mot est prononcé indépendamment : « le homme » se prononce [lə.ɔm], « de le eau » se prononce [də.lə.o]. Bien que cela crée des hiatus, c'est un choix délibéré du Franstant pour garantir la clarté des frontières entre les mots."
+            r="En français standard, quand un mot finir par un voyelle rencontrer un mot commencer par un voyelle, il y avoir élision (comme l'homme, d'eau) et liaison (comme les amis prononcer [le.za.mi]). En Franstant, ces phénomène ne exister pas. Chaque mot être prononcer indépendamment : « le homme » se prononcer [lə.ɔm], « de le eau » se prononcer [də.lə.o]. Bien que ce créer des hiatus, ce être un choix délibéré de le Franstant pour garantir le clarté de les frontière entre les mot."
+            >In standard French, when a word ending in a vowel meets a word beginning with a vowel, elision occurs (like l'homme, d'eau) and liaison happens (like les amis pronounced [le.za.mi]). In Franstant, these phenomena do not exist. Each word is pronounced independently: "le homme" is pronounced [lə.ɔm], "de le eau" is pronounced [də.lə.o]. While this creates hiatus, it is a deliberate design choice of Franstant to ensure clear word boundaries.</span>
+        </p>
+      </div>
+
+      <!-- ===== CHAPTER 5: SUMMARY TABLE ===== -->
+      <div class="section">
+        <h2><span class="t" c="5. 规则总结" f="5. Résumé des Règles" r="5. Résumé de les Règle">5. Rules Summary</span></h2>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="类别" f="Catégorie" r="Catégorie">Category</span></th>
+            <th><span class="t" c="标准法语" f="Français Standard" r="Français Standard">Standard French</span></th>
+            <th>Franstant</th>
+          </tr>
+          <tr>
+            <td><span class="t" c="动词" f="Verbes" r="Verbe">Verbs</span></td>
+            <td><i>mange, mangera, mangeait</i></td>
+            <td>manger, passé manger, futur manger</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="名词/形容词" f="Noms/Adjectifs" r="Nom/Adjectif">Nouns/Adjectives</span></td>
+            <td><i>belles maisons, beaux garçons</i></td>
+            <td>maison beau, garçon beau</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="定冠词" f="Articles définis" r="Article défini">Definite Articles</span></td>
+            <td><i>le, la, l', les</i></td>
+            <td>le, les</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="不定冠词" f="Articles indéfinis" r="Article indéfini">Indefinite Articles</span></td>
+            <td><i>un, une, des</i></td>
+            <td>un, des</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="部分冠词" f="Partitif" r="Partitif">Partitive</span></td>
+            <td><i>du, de la, de l'</i></td>
+            <td>du</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="介词" f="Prépositions" r="Préposition">Prepositions</span></td>
+            <td><i>au, aux, du (=de+le), d'</i></td>
+            <td>à le, à les, de le, de</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="疑问句" f="Questions" r="Question">Questions</span></td>
+            <td><i>Est-ce que... / Est-ce qu'...</i></td>
+            <td>être ce que ...</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="被动" f="Passif" r="Passif">Passive</span></td>
+            <td><i>est écrit / a été écrit</i></td>
+            <td>passif écrire / passé passif écrire</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="所有格" f="Possessifs" r="Possessif">Possessives</span></td>
+            <td><i>mon/ma/mes, ton/ta/tes</i></td>
+            <td>mon, mon les ; ton, ton les</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="反身" f="Réfléchis" r="Réfléchi">Reflexive</span></td>
+            <td><i>je me, tu te, il se</i></td>
+            <td>moi se, toi se, lui se</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="否定" f="Négation" r="Négation">Negation</span></td>
+            <td><i>ne ... pas (split)</i></td>
+            <td>ne pas ... (<span class="t" c="不分裂" f="non séparé" r="non séparer">unsplit</span>)</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="存在" f="Existence" r="Existence">Existence</span></td>
+            <td><i>il y a</i></td>
+            <td>voilà</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="省音" f="Élision" r="Élision">Elision</span></td>
+            <td><i>l'année, d'eau</i></td>
+            <td>le annee, de le eau (<span class="t" c="无省音" f="pas d'élision" r="pas de élision">no elision</span>)</td>
+          </tr>
+        </table>
+      </div>
+
+    </div>
+  </body>
+</html>
+
+
