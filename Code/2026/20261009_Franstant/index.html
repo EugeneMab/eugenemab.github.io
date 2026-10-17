@@ -200,7 +200,6 @@
     <script>
       var currentLang = 'e';
       var currentChapter = 1;
-      var isUpdatingHash = false;
 
       function renderLang(language) {
         var elements = document.getElementsByClassName("t");
@@ -238,11 +237,10 @@
       }
 
       function updateHash() {
-        isUpdatingHash = true;
-        window.location.hash = '#' + currentLang + ',' + currentChapter;
-        setTimeout(function() {
-          isUpdatingHash = false;
-        }, 50);
+        var hash = '#' + currentLang + ',' + currentChapter;
+        if (window.location.hash !== hash) {
+          window.history.pushState(null, '', hash);
+        }
       }
 
       function setLang(language, updateUrl) {
@@ -251,6 +249,7 @@
         renderLang(currentLang);
         updateActiveButtons();
         if (updateUrl) {
+          goToChapter(currentChapter, false);
           updateHash();
         }
       }
@@ -261,6 +260,7 @@
         updateActiveButtons();
         var elem = document.getElementById('ch' + chapterNum);
         if (elem) {
+          elem.style.scrollMarginTop = (document.querySelector('.lang-bar').offsetHeight + 16) + 'px';
           elem.scrollIntoView({ behavior: 'smooth' });
         }
         if (updateUrl) {
@@ -296,10 +296,7 @@
         }
         setLang(currentLang, false);
         if (shouldScroll && currentChapter) {
-          var elem = document.getElementById('ch' + currentChapter);
-          if (elem) {
-            elem.scrollIntoView({ behavior: 'smooth' });
-          }
+          goToChapter(currentChapter, false);
         }
       }
 
@@ -320,7 +317,6 @@
       }
 
       window.addEventListener('hashchange', function() {
-        if (isUpdatingHash) return;
         applyFromHash(true);
       });
     </script>
@@ -699,49 +695,49 @@
             <span class="t"
               c="他们彼此商量说：'来吧！我们要做砖，把砖烧透了。'他们就拿砖当石头，又拿石漆当灰泥。"
               f="Ils se dirent l'un à l'autre : Allons ! faisons des briques, et cuisons-les au feu. Et la brique leur servit de pierre, et le bitume leur servit de ciment."
-              r="Eux fit dire le un à le autre : Aller ! nous faire des brique, et cuire eux à le feu. Et le brique fit servir à eux de pierre, et le bitume fit servir à eux de ciment."
+              r="Eux fit dire le un à le autre : faites aller ! nous faites faire des brique, et faites cuire eux à le feu. Et le brique fit servir à eux de pierre, et le bitume fit servir à eux de ciment."
               >And they said to one another, "Come, let us make bricks, and burn them thoroughly." And they had brick for stone, and bitumen for mortar.</span>
           </div>
           <div class="verse"><span class="verse-num">4</span>
             <span class="t"
               c="他们说：'来吧！我们要建造一座城和一座塔，塔顶通天，为要传扬我们的名，免得我们分散在全地上。'"
               f="Ils dirent encore : Allons ! bâtissons-nous une ville et une tour dont le sommet touche au ciel, et faisons-nous un nom, afin que nous ne soyons pas dispersés sur la face de toute la terre."
-              r="Eux fit dire encore : Aller ! nous bâtir un ville et un tour dont le sommet toucher à le ciel, et nous faire un nom, afin que nous ne pas être disperser sur le face de tout le terre."
+              r="Eux fit dire encore : faites aller ! nous faites bâtir un ville et un tour dont le sommet toucher à le ciel, et nous faites faire un nom, afin que nous ne pas fasse est fait disperser sur le face de tout le terre."
               >Then they said, "Come, let us build ourselves a city and a tower with its top in the heavens, and let us make a name for ourselves, lest we be dispersed over the face of the whole earth."</span>
           </div>
           <div class="verse"><span class="verse-num">5</span>
             <span class="t"
               c="耶和华降临，要看看世人所建造的城和塔。"
               f="L'Éternel descendit pour voir la ville et la tour que bâtissaient les fils des hommes."
-              r="Le Éternel passé descendre pour voir le ville et le tour que les fil de les homme passé bâtir."
+              r="Le Éternel fit descendre pour voir le ville et le tour que les fil de les homme faisait bâtir."
               >And the LORD came down to see the city and the tower, which the children of man had built.</span>
           </div>
           <div class="verse"><span class="verse-num">6</span>
             <span class="t"
               c="耶和华说：'看哪，他们成为一样的人民，都是一样的言语，如今既做起这事来，以后他们所要做的事就没有不成就的了。'"
               f="Et l'Éternel dit : Voici, ils forment un seul peuple et ont tous une même langue, et c'est là ce qu'ils ont entrepris ; maintenant rien ne les empêcherait de faire tout ce qu'ils ont projeté."
-              r="Et le Éternel passé dire : Voilà, eux former un seul peuple et avoir tout un même langue, et ce être là ce que eux passé entreprendre ; maintenant rien ne pas empêcher eux de faire tout ce que eux passé projeter."
+              r="Et le Éternel fit dire : Voilà, eux former un seul peuple et avoir tout un même langue, et ce être là ce que eux a fait entreprendre ; maintenant rien ne pas ferait empêcher eux de faire tout ce que eux a fait projeter."
               >And the LORD said, "Behold, they are one people, and they have all one language, and this is only the beginning of what they will do. And nothing that they propose to do will now be impossible for them.</span>
           </div>
           <div class="verse"><span class="verse-num">7</span>
             <span class="t"
               c="我们下去，在那里变乱他们的口音，使他们的言语彼此不通。'"
               f="Allons ! descendons, et là confondons leur langage, afin qu'ils n'entendent plus la langue les uns des autres."
-              r="Aller ! nous descendre, et là confondre leur langage, afin que eux ne pas entendre plus le langue les un de les autre."
+              r="faites aller ! nous faites descendre, et là faites confondre leur langage, afin que eux ne pas fasse entendre plus le langue les un de les autre."
               >Come, let us go down and there confuse their language, so that they may not understand one another's speech."</span>
           </div>
           <div class="verse"><span class="verse-num">8</span>
             <span class="t"
               c="于是耶和华使他们从那里分散在全地上；他们就停工，不造那城了。"
               f="Ainsi, l'Éternel les dispersa loin de là sur la face de toute la terre ; et ils cessèrent de bâtir la ville."
-              r="Ainsi, le Éternel passé disperser eux loin de là sur le face de tout le terre ; et eux passé cesser de bâtir le ville."
+              r="Ainsi, le Éternel fit disperser eux loin de là sur le face de tout le terre ; et eux fit cesser de bâtir le ville."
               >So the LORD dispersed them from there over the face of all the earth, and they left off building the city.</span>
           </div>
           <div class="verse"><span class="verse-num">9</span>
             <span class="t"
               c="因为耶和华在那里变乱天下人的言语，使众人分散在全地上，所以那城名叫巴别。"
               f="C'est pourquoi on l'appela du nom de Babel, car c'est là que l'Éternel confondit le langage de toute la terre, et c'est de là que l'Éternel les dispersa sur la face de toute la terre."
-              r="Ce être pourquoi on passé appeler elle de le nom de Babel, car ce être là que le Éternel passé confondre le langage de tout le terre, et ce être de là que le Éternel passé disperser eux sur le face de tout le terre."
+              r="Ce être pourquoi on fit appeler elle de le nom de Babel, car ce être là que le Éternel fit confondre le langage de tout le terre, et ce être de là que le Éternel fit disperser eux sur le face de tout le terre."
               >Therefore its name was called Babel, because there the LORD confused the language of all the earth. And from there the LORD dispersed them over the face of all the earth.</span>
           </div>
         </div>
@@ -752,42 +748,42 @@
             <span class="t"
               c="所以，你们祷告要这样说：我们在天上的父：愿人都尊你的名为圣。"
               f="Voici donc comment vous devez prier : Notre Père qui es aux cieux ! Que ton nom soit sanctifié ;"
-              r="Voilà donc comment vous devoir prier : Notre Père qui être à les ciel ! Que ton nom être sanctifier ;"
+              r="Voilà donc comment vous devoir prier : Notre Père qui être à les ciel ! Que ton nom fasse est fait sanctifier ;"
               >Pray then like this: "Our Father in heaven, hallowed be your name.</span>
           </div>
           <div class="verse"><span class="verse-num">10</span>
             <span class="t"
               c="愿你的国降临；愿你的旨意行在地上，如同行在天上。"
               f="que ton règne vienne ; que ta volonté soit faite sur la terre comme au ciel."
-              r="que ton règne venir ; que ton volonté être faire sur le terre comme à le ciel."
+              r="que ton règne fasse venir ; que ton volonté fasse est fait faire sur le terre comme à le ciel."
               >Your kingdom come, your will be done, on earth as it is in heaven.</span>
           </div>
           <div class="verse"><span class="verse-num">11</span>
             <span class="t"
               c="我们日用的饮食，今日赐给我们。"
               f="Donne-nous aujourd'hui notre pain quotidien ;"
-              r="Donner à nous aujourd'hui notre pain quotidien ;"
+              r="faites donner à nous aujourd'hui notre pain quotidien ;"
               >Give us this day our daily bread,</span>
           </div>
           <div class="verse"><span class="verse-num">12</span>
             <span class="t"
               c="免我们的债，如同我们免了人的债。"
               f="pardonne-nous nos offenses, comme nous aussi nous pardonnons à ceux qui nous ont offensés ;"
-              r="pardonner à nous notre les offense, comme nous aussi nous pardonner à eux qui passé offenser nous ;"
+              r="faites pardonner à nous notre les offense, comme nous aussi nous pardonner à eux qui a fait offenser nous ;"
               >and forgive us our debts, as we also have forgiven our debtors.</span>
           </div>
           <div class="verse"><span class="verse-num">13</span>
             <span class="t"
               c="不叫我们遇见试探；救我们脱离凶恶。因为国度、权柄、荣耀，全是你的，直到永远。阿们！"
               f="ne nous induis pas en tentation, mais délivre-nous du mal. Car c'est à toi qu'appartiennent le règne, la puissance et la gloire, pour les siècles des siècles. Amen !"
-              r="ne pas induire nous en tentation, mais délivrer nous de le mal. Car ce être à toi que appartenir le règne, le puissance et le gloire, pour les siècle de les siècle. Amen !"
+              r="ne pas faites induire nous en tentation, mais faites délivrer nous de le mal. Car ce être à toi que appartenir le règne, le puissance et le gloire, pour les siècle de les siècle. Amen !"
               >And lead us not into temptation, but deliver us from evil. For yours is the kingdom and the power and the glory, forever and ever. Amen!</span>
           </div>
         </div>
       </div>
 
       <!-- ===== CHAPTER 4: NUMBERS ===== -->
-      <div class="section">
+      <div class="section" id="ch4">
         <h2><span class="t" c="4. 数词" f="4. Nombres" r="4. Nombre">4. Numbers</span></h2>
         <p>
           <span class="t"
@@ -913,7 +909,7 @@
       </div>
 
       <!-- ===== CHAPTER 5: VERB TENSE AND VOICE ===== -->
-      <div class="section">
+      <div class="section" id="ch5">
         <h2><span class="t" c="5. 动词时态与语态（faire 情态助词系统）" f="5. Temps et Voix des Verbes (Système Modal de « faire »)" r="5. Temps et Voix de les Verbe (Système Modal de « faire »)">5. Verb Tense and Voice (Modal System of "faire")</span></h2>
         <p>
           <span class="t"
@@ -1125,7 +1121,7 @@
 
         <div class="example">
           <div class="label"><span class="t" c="未完成过去时（faisait）" f="Imparfait (faisait)" r="Imparfait (faisait)">Imparfait (faisait)</span></div>
-          <span class="highlight">moi faisait lire un livre quand lui entrer.</span> — <span class="t" c="他进来时我正在看书（法语：Je lisais un livre quand il est entré）。" f="Je lisais un livre quand il est entré." r="moi faisait lire un livre quand lui entrer.">I was reading a book when he came in (Standard French: Je lisais un livre quand il est entré).</span>
+          <span class="highlight">moi faisait lire un livre quand lui a fait entrer.</span> — <span class="t" c="他进来时我正在看书（法语：Je lisais un livre quand il est entré）。" f="Je lisais un livre quand il est entré." r="moi faisait lire un livre quand lui a fait entrer.">I was reading a book when he came in (Standard French: Je lisais un livre quand il est entré).</span>
         </div>
 
         <div class="example">
@@ -1156,7 +1152,7 @@
 
       <!-- ===== CHAPTER 6: LETTERS AND PRONUNCIATION (SCHEMA) ===== -->
       <a name="schema" id="schema"></a>
-      <div class="section">
+      <div class="section" id="ch6">
         <h2><span class="t" c="6. 字母与发音（方案）" f="6. Lettres et Prononciation (Schémas)" r="6. Lettre et Prononciation (Schéma)">6. Letters and Pronunciation (Schemas)</span></h2>
         <p>
           <span class="t"
@@ -1208,7 +1204,7 @@
       </div>
 
       <!-- ===== CHAPTER 7: SUMMARY TABLE ===== -->
-      <div class="section">
+      <div class="section" id="ch7">
         <h2><span class="t" c="7. 规则总结" f="7. Résumé des Règles" r="7. Résumé de les Règle">7. Rules Summary</span></h2>
         <table class="rule-table">
           <tr>
@@ -1259,7 +1255,7 @@
           <tr>
             <td><span class="t" c="被动" f="Passif" r="Passif">Passive</span></td>
             <td><i>est écrit / a été écrit</i></td>
-            <td>passif écrire / passé passif écrire</td>
+            <td>est fait écrire / a fait est fait écrire</td>
           </tr>
           <tr>
             <td><span class="t" c="所有格" f="Possessifs" r="Possessif">Possessives</span></td>
@@ -1284,7 +1280,7 @@
           <tr>
             <td><span class="t" c="省音" f="Élision" r="Élision">Elision</span></td>
             <td><i>l'année, d'eau</i></td>
-            <td>le annee, de le eau (<span class="t" c="无省音" f="pas d'élision" r="pas de élision">no elision</span>)</td>
+            <td>le année, de le eau (<span class="t" c="无省音" f="pas d'élision" r="pas de élision">no elision</span>)</td>
           </tr>
         </table>
       </div>
@@ -1292,5 +1288,3 @@
     </div>
   </body>
 </html>
-
-
