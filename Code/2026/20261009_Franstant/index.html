@@ -43,13 +43,18 @@
         top: 0;
         z-index: 100;
         box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
       }
       .lang-btn {
         background: transparent;
         border: 2px solid rgba(255,255,255,0.6);
         color: white;
         padding: 8px 24px;
-        margin: 0 8px;
+        margin: 0 4px;
         border-radius: 25px;
         font-size: 18px;
         cursor: pointer;
@@ -59,6 +64,41 @@
       .lang-btn:hover {
         background: rgba(255,255,255,0.2);
         border-color: white;
+      }
+      .lang-btn.active {
+        background: white;
+        color: #1a5276;
+        border-color: white;
+        font-weight: bold;
+      }
+      .nav-divider {
+        display: inline-block;
+        width: 1px;
+        height: 26px;
+        background: rgba(255,255,255,0.35);
+        margin: 0 8px;
+      }
+      .ch-btn {
+        background: rgba(255,255,255,0.1);
+        border: 2px solid rgba(255,255,255,0.5);
+        color: white;
+        padding: 6px 14px;
+        margin: 0 3px;
+        border-radius: 20px;
+        font-size: 17px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: inherit;
+      }
+      .ch-btn:hover {
+        background: rgba(255,255,255,0.25);
+        border-color: white;
+      }
+      .ch-btn.active {
+        background: #f39c12;
+        border-color: #f39c12;
+        color: white;
       }
       .content {
         padding: 20px 40px;
@@ -70,6 +110,7 @@
         margin: 25px 0;
         box-shadow: 0 2px 12px rgba(0,0,0,0.08);
         border-left: 5px solid #2980b9;
+        scroll-margin-top: 80px;
       }
       .section h2 {
         color: #1a5276;
@@ -157,7 +198,11 @@
       }
     </style>
     <script>
-      function setLang(language) {
+      var currentLang = 'e';
+      var currentChapter = 1;
+      var isUpdatingHash = false;
+
+      function renderLang(language) {
         var elements = document.getElementsByClassName("t");
         for (var position = 0; position < elements.length; position++) {
           var element = elements[position];
@@ -175,13 +220,109 @@
           }
         }
       }
-      function onLoad() {
-        var currentUrl = window.location.href;
-        if (!currentUrl) return;
-        if (currentUrl.endsWith("#c")) setLang("c");
-        else if (currentUrl.endsWith("#f")) setLang("f");
-        else if (currentUrl.endsWith("#r")) setLang("r");
+
+      function updateActiveButtons() {
+        var langBtns = document.getElementsByClassName("lang-btn");
+        for (var i = 0; i < langBtns.length; i++) {
+          langBtns[i].classList.remove("active");
+        }
+        var activeLangBtn = document.getElementById("btn-lang-" + currentLang);
+        if (activeLangBtn) activeLangBtn.classList.add("active");
+
+        var chBtns = document.getElementsByClassName("ch-btn");
+        for (var i = 0; i < chBtns.length; i++) {
+          chBtns[i].classList.remove("active");
+        }
+        var activeChBtn = document.getElementById("btn-ch-" + currentChapter);
+        if (activeChBtn) activeChBtn.classList.add("active");
       }
+
+      function updateHash() {
+        isUpdatingHash = true;
+        window.location.hash = '#' + currentLang + ',' + currentChapter;
+        setTimeout(function() {
+          isUpdatingHash = false;
+        }, 50);
+      }
+
+      function setLang(language, updateUrl) {
+        if (updateUrl === undefined) updateUrl = true;
+        currentLang = language;
+        renderLang(currentLang);
+        updateActiveButtons();
+        if (updateUrl) {
+          updateHash();
+        }
+      }
+
+      function goToChapter(chapterNum, updateUrl) {
+        if (updateUrl === undefined) updateUrl = true;
+        currentChapter = chapterNum;
+        updateActiveButtons();
+        var elem = document.getElementById('ch' + chapterNum);
+        if (elem) {
+          elem.scrollIntoView({ behavior: 'smooth' });
+        }
+        if (updateUrl) {
+          updateHash();
+        }
+      }
+
+      function parseHash(hash) {
+        if (!hash) return null;
+        var clean = hash.replace(/^#/, '').trim();
+        if (!clean) return null;
+
+        var result = { lang: null, chapter: null };
+        var parts = clean.split(',');
+        for (var i = 0; i < parts.length; i++) {
+          var p = parts[i].trim().toLowerCase();
+          if (['e', 'c', 'f', 'r'].indexOf(p) !== -1) {
+            result.lang = p;
+          } else if (/^[1-7]$/.test(p)) {
+            result.chapter = parseInt(p, 10);
+          } else if (p === 'schema') {
+            result.chapter = 6;
+          }
+        }
+        return result;
+      }
+
+      function applyFromHash(shouldScroll) {
+        var parsed = parseHash(window.location.hash);
+        if (parsed) {
+          if (parsed.lang) currentLang = parsed.lang;
+          if (parsed.chapter) currentChapter = parsed.chapter;
+        }
+        setLang(currentLang, false);
+        if (shouldScroll && currentChapter) {
+          var elem = document.getElementById('ch' + currentChapter);
+          if (elem) {
+            elem.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+      }
+
+      function onLoad() {
+        var elements = document.getElementsByClassName("t");
+        for (var position = 0; position < elements.length; position++) {
+          var element = elements[position];
+          if (!element.getAttribute("e")) {
+            element.setAttribute("e", element.innerHTML);
+          }
+        }
+
+        if (window.location.hash) {
+          applyFromHash(true);
+        } else {
+          setLang('e', false);
+        }
+      }
+
+      window.addEventListener('hashchange', function() {
+        if (isUpdatingHash) return;
+        applyFromHash(true);
+      });
     </script>
   </head>
   <body onload="onLoad()">
@@ -204,20 +345,28 @@
     </div>
 
     <div class="lang-bar">
-      <button class="lang-btn" onclick="setLang('e')">English</button>
-      <button class="lang-btn" onclick="setLang('c')">中文</button>
-      <button class="lang-btn" onclick="setLang('f')">Français</button>
-      <button class="lang-btn" onclick="setLang('r')">Franstant</button>
+      <button class="lang-btn" id="btn-lang-e" onclick="setLang('e')">English</button>
+      <button class="lang-btn" id="btn-lang-c" onclick="setLang('c')">中文</button>
+      <button class="lang-btn" id="btn-lang-f" onclick="setLang('f')">Français</button>
+      <button class="lang-btn" id="btn-lang-r" onclick="setLang('r')">Franstant</button>
+      <span class="nav-divider"></span>
+      <button class="ch-btn" id="btn-ch-1" onclick="goToChapter(1)" title="Chapter 1: Introduction">1</button>
+      <button class="ch-btn" id="btn-ch-2" onclick="goToChapter(2)" title="Chapter 2: Detailed Rules and Examples">2</button>
+      <button class="ch-btn" id="btn-ch-3" onclick="goToChapter(3)" title="Chapter 3: Sample Passages">3</button>
+      <button class="ch-btn" id="btn-ch-4" onclick="goToChapter(4)" title="Chapter 4: Numbers">4</button>
+      <button class="ch-btn" id="btn-ch-5" onclick="goToChapter(5)" title="Chapter 5: Verb Tense and Voice">5</button>
+      <button class="ch-btn" id="btn-ch-6" onclick="goToChapter(6)" title="Chapter 6: Letters and Pronunciation (Schema)">6</button>
+      <button class="ch-btn" id="btn-ch-7" onclick="goToChapter(7)" title="Chapter 7: Rules Summary">7</button>
     </div>
 
     <div class="content">
 
       <!-- ===== CHAPTER 1: INTRODUCTION ===== -->
-      <div class="section">
+      <div class="section" id="ch1">
         <h2><span class="t" c="1. 概述" f="1. Introduction" r="1. Introduction">1. Introduction</span></h2>
         <p>
           <span class="t"
-            c="Franstant（恒常法语）是一门基于法语构建的人造语言。"恒常"（Constant）意味着语言中的每个词保持不变的形式——动词不变位，名词不变复数，形容词不变性数。其设计目标是在保留法语核心词汇、语音和文化底蕴的同时，彻底简化语法结构，使其更易于学习和使用。"
+            c="Franstant（恒常法语）是一门基于法语构建的人造语言。“恒常”（Constant）意味着语言中的每个词保持不变的形式——动词不变位，名词不变复数，形容词不变性数。其设计目标是在保留法语核心词汇、语音和文化底蕴的同时，彻底简化语法结构，使其更易于学习和使用。"
             f="Franstant (Français Constant) est une langue artificielle construite sur le français. « Constant » signifie que chaque mot garde une forme invariable — les verbes ne se conjuguent pas, les noms ne prennent pas de pluriel, les adjectifs ne s'accordent pas. L'objectif est de simplifier radicalement la grammaire tout en conservant le vocabulaire, la phonétique et l'esprit culturel du français."
             r="Franstant (Français Constant) être un langue artificiel construire sur le français. « Constant » signifier que chaque mot garder un forme invariable — les verbe ne se conjuguer pas, les nom ne prendre pas de pluriel, les adjectif ne se accorder pas. Le objectif être simplifier radicalement le grammaire tout en conserver le vocabulaire, le phonétique et le esprit culturel de le français."
             >Franstant (Français Constant) is an artificial language built upon French. "Constant" means that every word keeps an invariable form — verbs do not conjugate, nouns do not take plural forms, adjectives do not agree in gender or number. The goal is to radically simplify grammar while retaining the vocabulary, phonetics, and cultural spirit of French.</span>
@@ -231,15 +380,15 @@
         </p>
         <p>
           <span class="t"
-            c="&lt;b&gt;1. 动词恒常：&lt;/b&gt;动词始终使用不定式。时态通过助词表达（passé = 过去，futur = 未来，être = 进行）。&lt;br/&gt;&lt;b&gt;2. 名词恒常：&lt;/b&gt;名词固定为阳性单数基本形式。复数仅靠冠词区分。&lt;br/&gt;&lt;b&gt;3. 无缩合：&lt;/b&gt;取消一切省略号和缩合形式，所有词汇完整书写。&lt;br/&gt;&lt;b&gt;4. 语序固定：&lt;/b&gt;严格遵循主-谓-宾语序。形容词一律后置。&lt;br/&gt;&lt;b&gt;5. 否定不分裂：&lt;/b&gt;ne pas 作为整体出现在动词前。&lt;br/&gt;&lt;b&gt;6. 发音适应拼写：&lt;/b&gt;发音跟随新拼写规则，不做省音。"
-            f="&lt;b&gt;1. Verbes constants :&lt;/b&gt; Les verbes restent toujours à l'infinitif. Le temps est exprimé par des marqueurs (passé, futur, être).&lt;br/&gt;&lt;b&gt;2. Noms constants :&lt;/b&gt; Les noms restent au masculin singulier de base. Le pluriel est indiqué uniquement par l'article.&lt;br/&gt;&lt;b&gt;3. Pas de contractions :&lt;/b&gt; Toutes les élisions et contractions sont supprimées. Chaque mot est écrit en entier.&lt;br/&gt;&lt;b&gt;4. Ordre fixe :&lt;/b&gt; Ordre strict Sujet-Verbe-Objet. Les adjectifs sont toujours placés après le nom.&lt;br/&gt;&lt;b&gt;5. Négation non séparée :&lt;/b&gt; « ne pas » apparaît ensemble avant le verbe.&lt;br/&gt;&lt;b&gt;6. Prononciation adaptée :&lt;/b&gt; La prononciation suit la nouvelle orthographe sans élision."
-            r="&lt;b&gt;1. Verbe constant :&lt;/b&gt; Les verbe rester toujours à le infinitif. Le temps être exprimer par des marqueur (passé, futur, être).&lt;br/&gt;&lt;b&gt;2. Nom constant :&lt;/b&gt; Les nom rester à le masculin singulier de base. Le pluriel être indiquer uniquement par le article.&lt;br/&gt;&lt;b&gt;3. Pas de contraction :&lt;/b&gt; Tout les élision et contraction être supprimer. Chaque mot être écrire en entier.&lt;br/&gt;&lt;b&gt;4. Ordre fixe :&lt;/b&gt; Ordre strict Sujet-Verbe-Objet. Les adjectif être toujours placer après le nom.&lt;br/&gt;&lt;b&gt;5. Négation non séparer :&lt;/b&gt; « ne pas » apparaître ensemble avant le verbe.&lt;br/&gt;&lt;b&gt;6. Prononciation adapter :&lt;/b&gt; Le prononciation suivre le nouveau orthographe sans élision."
-            ><b>1. Constant verbs:</b> Verbs always remain in the infinitive. Tense is expressed through markers (passé = past, futur = future, être = continuous).<br/><b>2. Constant nouns:</b> Nouns stay in the base masculine singular form. Plurality is indicated only by the article.<br/><b>3. No contractions:</b> All elisions and contractions are removed. Every word is written in full.<br/><b>4. Fixed word order:</b> Strict Subject-Verb-Object order. Adjectives are always placed after the noun.<br/><b>5. Unsplit negation:</b> "ne pas" appears together before the verb.<br/><b>6. Pronunciation adapts to spelling:</b> Pronunciation follows the new spelling without elision.</span>
+            c="&lt;b&gt;1. 动词恒常：&lt;/b&gt;动词始终使用不定式。时态通过情态词表达（fit / a fait = 过去，fera = 未来，être = 进行，详见第5章）。&lt;br/&gt;&lt;b&gt;2. 名词恒常：&lt;/b&gt;名词固定为阳性单数基本形式。复数仅靠冠词区分。&lt;br/&gt;&lt;b&gt;3. 无缩合：&lt;/b&gt;取消一切省略号和缩合形式，所有词汇完整书写。&lt;br/&gt;&lt;b&gt;4. 语序固定：&lt;/b&gt;严格遵循主-谓-宾语序。形容词一律后置。&lt;br/&gt;&lt;b&gt;5. 否定不分裂：&lt;/b&gt;ne pas 作为整体出现在动词前。&lt;br/&gt;&lt;b&gt;6. 发音适应拼写：&lt;/b&gt;发音跟随新拼写规则，不做省音。"
+            f="&lt;b&gt;1. Verbes constants :&lt;/b&gt; Les verbes restent toujours à l'infinitif. Le temps est exprimé par des mots modaux (fit / a fait = passé, fera = futur, être = continu ; voir chap. 5).&lt;br/&gt;&lt;b&gt;2. Noms constants :&lt;/b&gt; Les noms restent au masculin singulier de base. Le pluriel est indiqué uniquement par l'article.&lt;br/&gt;&lt;b&gt;3. Pas de contractions :&lt;/b&gt; Toutes les élisions et contractions sont supprimées. Chaque mot est écrit en entier.&lt;br/&gt;&lt;b&gt;4. Ordre fixe :&lt;/b&gt; Ordre strict Sujet-Verbe-Objet. Les adjectifs sont toujours placés après le nom.&lt;br/&gt;&lt;b&gt;5. Négation non séparée :&lt;/b&gt; « ne pas » apparaît ensemble avant le verbe.&lt;br/&gt;&lt;b&gt;6. Prononciation adaptée :&lt;/b&gt; La prononciation suit la nouvelle orthographe sans élision."
+            r="&lt;b&gt;1. Verbe constant :&lt;/b&gt; Les verbe rester toujours à le infinitif. Le temps être exprimer par des mot modal (fit / a fait = passé, fera = futur, être = continu ; voir chap. 5).&lt;br/&gt;&lt;b&gt;2. Nom constant :&lt;/b&gt; Les nom rester à le masculin singulier de base. Le pluriel être indiquer uniquement par le article.&lt;br/&gt;&lt;b&gt;3. Pas de contraction :&lt;/b&gt; Tout les élision et contraction être supprimer. Chaque mot être écrire en entier.&lt;br/&gt;&lt;b&gt;4. Ordre fixe :&lt;/b&gt; Ordre strict Sujet-Verbe-Objet. Les adjectif être toujours placer après le nom.&lt;br/&gt;&lt;b&gt;5. Négation non séparer :&lt;/b&gt; « ne pas » apparaître ensemble avant le verbe.&lt;br/&gt;&lt;b&gt;6. Prononciation adapter :&lt;/b&gt; Le prononciation suivre le nouveau orthographe sans élision."
+            ><b>1. Constant verbs:</b> Verbs always remain in the infinitive. Tense is expressed through modal words (fit / a fait = past, fera = future, être = continuous; see Ch. 5).<br/><b>2. Constant nouns:</b> Nouns stay in the base masculine singular form. Plurality is indicated only by the article.<br/><b>3. No contractions:</b> All elisions and contractions are removed. Every word is written in full.<br/><b>4. Fixed word order:</b> Strict Subject-Verb-Object order. Adjectives are always placed after the noun.<br/><b>5. Unsplit negation:</b> "ne pas" appears together before the verb.<br/><b>6. Pronunciation adapts to spelling:</b> Pronunciation follows the new spelling without elision.</span>
         </p>
       </div>
 
       <!-- ===== CHAPTER 2: RULES IN DETAIL ===== -->
-      <div class="section">
+      <div class="section" id="ch2">
         <h2><span class="t" c="2. 详细规则与示例" f="2. Règles Détaillées et Exemples" r="2. Règle Détailler et Exemple">2. Detailed Rules and Examples</span></h2>
 
         <!-- 2.1 Articles -->
@@ -346,32 +495,42 @@
         <h3><span class="t" c="2.5 动词与时态" f="2.5 Verbes et Temps" r="2.5 Verbe et Temps">2.5 Verbs and Tense</span></h3>
         <p>
           <span class="t"
-            c="动词始终使用不定式，不进行任何变位。时态通过在动词前放置助词来表达。"
-            f="Les verbes restent toujours à l'infinitif sans aucune conjugaison. Le temps est exprimé par des marqueurs placés avant le verbe."
-            r="Les verbe rester toujours à le infinitif sans aucun conjugaison. Le temps être exprimer par des marqueur placer avant le verbe."
-            >Verbs always remain in the infinitive without any conjugation. Tense is expressed through markers placed before the verb.</span>
+            c="动词始终使用不定式，不进行任何变位。时态通过 faire 情态助词表达（详见第5章全表）。"
+            f="Les verbes restent toujours à l'infinitif sans aucune conjugaison. Le temps est exprimé par des mots modaux de « faire » (voir chapitre 5 pour le tableau complet)."
+            r="Les verbe rester toujours à le infinitif sans aucun conjugaison. Le temps être exprimer par des mot modal de « faire » (voir chapitre 5 pour le tableau complet)."
+            >Verbs always remain in the infinitive without any conjugation. Tense is expressed through modal words of "faire" (see Chapter 5 for the full table).</span>
         </p>
         <table class="rule-table">
           <tr>
             <th><span class="t" c="时态" f="Temps" r="Temps">Tense</span></th>
-            <th><span class="t" c="助词" f="Marqueur" r="Marqueur">Marker</span></th>
+            <th><span class="t" c="情态词" f="Mot Modal" r="Mot Modal">Modal Word</span></th>
             <th><span class="t" c="标准法语" f="Français Standard" r="Français Standard">Standard French</span></th>
             <th>Franstant</th>
           </tr>
           <tr>
             <td><span class="t" c="现在" f="Présent" r="Présent">Present</span></td>
-            <td><span class="t" c="（无）" f="(aucun)" r="(aucun)">(none)</span></td>
+            <td><span class="t" c="（缺省）" f="(défaut)" r="(défaut)">(default)</span></td>
             <td>Je mange.</td><td>moi manger.</td>
           </tr>
           <tr>
-            <td><span class="t" c="过去" f="Passé" r="Passé">Past</span></td>
-            <td>passé</td>
-            <td>J'ai mangé.</td><td>moi passé manger.</td>
+            <td><span class="t" c="过去（简单过去）" f="Passé (passé simple)" r="Passé (passé simple)">Past (passé simple)</span></td>
+            <td>fit</td>
+            <td>Je mangeai.</td><td>moi fit manger.</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="过去（复合过去）" f="Passé (composé)" r="Passé (composé)">Past (composé)</span></td>
+            <td>a fait</td>
+            <td>J'ai mangé.</td><td>moi a fait manger.</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="未完成过去" f="Imparfait" r="Imparfait">Imperfect</span></td>
+            <td>faisait</td>
+            <td>Je mangeais.</td><td>moi faisait manger.</td>
           </tr>
           <tr>
             <td><span class="t" c="将来" f="Futur" r="Futur">Future</span></td>
-            <td>futur</td>
-            <td>Je mangerai.</td><td>moi futur manger.</td>
+            <td>fera</td>
+            <td>Je mangerai.</td><td>moi fera manger.</td>
           </tr>
           <tr>
             <td><span class="t" c="近将来" f="Futur proche" r="Futur proche">Near Future</span></td>
@@ -389,18 +548,18 @@
         <h3><span class="t" c="2.6 否定" f="2.6 Négation" r="2.6 Négation">2.6 Negation</span></h3>
         <p>
           <span class="t"
-            c="否定词 &lt;b&gt;ne pas&lt;/b&gt; 作为整体放在动词（或时态助词）之前，不拆分。"
-            f="La négation &lt;b&gt;ne pas&lt;/b&gt; est placée comme un bloc avant le verbe (ou le marqueur temporel), sans être séparée."
-            r="Le négation &lt;b&gt;ne pas&lt;/b&gt; être placer comme un bloc avant le verbe (ou le marqueur temporel), sans être séparer."
-            >The negation <b>ne pas</b> is placed as a single block before the verb (or tense marker), without splitting.</span>
+            c="否定词 &lt;b&gt;ne pas&lt;/b&gt; 作为整体放在动词（或情态助词）之前，不拆分。"
+            f="La négation &lt;b&gt;ne pas&lt;/b&gt; est placée comme un bloc avant le verbe (ou le mot modal), sans être séparée."
+            r="Le négation &lt;b&gt;ne pas&lt;/b&gt; être placer comme un bloc avant le verbe (ou le mot modal), sans être séparer."
+            >The negation <b>ne pas</b> is placed as a single block before the verb (or modal word), without splitting.</span>
         </p>
         <div class="example">
           <div class="label"><span class="t" c="示例" f="Exemples" r="Exemple">Examples</span></div>
           <span class="t"
-            c="我不吃。Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;他过去没来。Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas passé venir.&lt;br/&gt;你不会走。Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas futur partir."
-            f="Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas passé venir.&lt;br/&gt;Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas futur partir."
-            r="Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas passé venir.&lt;br/&gt;Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas futur partir."
-            >Je ne mange pas. <span class="arrow">→</span> moi ne pas manger.<br/>Il n'est pas venu. <span class="arrow">→</span> lui ne pas passé venir.<br/>Tu ne partiras pas. <span class="arrow">→</span> toi ne pas futur partir.</span>
+            c="我不吃。Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;他过去没来。Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas fit venir.&lt;br/&gt;你不会走。Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas fera partir."
+            f="Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas fit venir.&lt;br/&gt;Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas fera partir."
+            r="Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas fit venir.&lt;br/&gt;Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas fera partir."
+            >Je ne mange pas. <span class="arrow">→</span> moi ne pas manger.<br/>Il n'est pas venu. <span class="arrow">→</span> lui ne pas fit venir.<br/>Tu ne partiras pas. <span class="arrow">→</span> toi ne pas fera partir.</span>
         </div>
 
         <!-- 2.7 Adjectives -->
@@ -466,18 +625,18 @@
         <h3><span class="t" c="2.10 被动语态" f="2.10 Voix Passive" r="2.10 Voix Passif">2.10 Passive Voice</span></h3>
         <p>
           <span class="t"
-            c="被动语态用助词 &lt;b&gt;passif&lt;/b&gt; 表示。过去被动使用 &lt;b&gt;passé passif&lt;/b&gt;。"
-            f="La voix passive est exprimée par le marqueur &lt;b&gt;passif&lt;/b&gt;. Le passé passif utilise &lt;b&gt;passé passif&lt;/b&gt;."
-            r="Le voix passif être exprimer par le marqueur &lt;b&gt;passif&lt;/b&gt;. Le passé passif utiliser &lt;b&gt;passé passif&lt;/b&gt;."
-            >The passive voice is expressed by the marker <b>passif</b>. Past passive uses <b>passé passif</b>.</span>
+            c="被动语态用情态词 &lt;b&gt;est fait&lt;/b&gt; 表示（详见第5章）。过去被动使用 &lt;b&gt;fit est fait&lt;/b&gt; 或 &lt;b&gt;a fait est fait&lt;/b&gt;。"
+            f="La voix passive est exprimée par le mot modal &lt;b&gt;est fait&lt;/b&gt; (voir chapitre 5). Le passé passif utilise &lt;b&gt;fit est fait&lt;/b&gt; ou &lt;b&gt;a fait est fait&lt;/b&gt;."
+            r="Le voix passif être exprimer par le mot modal &lt;b&gt;est fait&lt;/b&gt; (voir chapitre 5). Le passé passif utiliser &lt;b&gt;fit est fait&lt;/b&gt; ou &lt;b&gt;a fait est fait&lt;/b&gt;."
+            >The passive voice is expressed by the modal word <b>est fait</b> (see Chapter 5). Past passive uses <b>fit est fait</b> or <b>a fait est fait</b>.</span>
         </p>
         <div class="example">
           <div class="label"><span class="t" c="示例" f="Exemples" r="Exemple">Examples</span></div>
           <span class="t"
-            c="这本书被阅读了。Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre passif lire.&lt;br/&gt;房子被他父亲建造了。La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison passé passif construire par son père."
-            f="Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre passif lire.&lt;br/&gt;La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison passé passif construire par son père."
-            r="Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre passif lire.&lt;br/&gt;La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison passé passif construire par son père."
-            >Le livre est lu. <span class="arrow">→</span> le livre passif lire.<br/>La maison a été construite par son père. <span class="arrow">→</span> le maison passé passif construire par son père.</span>
+            c="这本书被阅读了。Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre est fait lire.&lt;br/&gt;房子被他父亲建造了。La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison a fait est fait construire par son père."
+            f="Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre est fait lire.&lt;br/&gt;La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison a fait est fait construire par son père."
+            r="Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre est fait lire.&lt;br/&gt;La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison a fait est fait construire par son père."
+            >Le livre est lu. <span class="arrow">→</span> le livre est fait lire.<br/>La maison a été construite par son père. <span class="arrow">→</span> le maison a fait est fait construire par son père.</span>
         </div>
 
         <!-- 2.11 Reflexive -->
@@ -517,7 +676,7 @@
       </div>
 
       <!-- ===== CHAPTER 3: SAMPLE PASSAGES ===== -->
-      <div class="section">
+      <div class="section" id="ch3">
         <h2><span class="t" c="3. 示例文本" f="3. Passages Exemples" r="3. Passage Exemple">3. Sample Passages</span></h2>
 
         <h3><span class="t" c="巴别塔（创世记 11:1-9）" f="La Tour de Babel (Genèse 11:1-9)" r="Le Tour de Babel (Genèse 11:1-9)">The Tower of Babel (Genesis 11:1-9)</span></h3>
@@ -526,28 +685,28 @@
             <span class="t"
               c="那时，天下人的口音、言语都是一样。"
               f="Toute la terre avait une seule langue et les mêmes mots."
-              r="Tout le terre passé avoir un seul langue et le même mot."
+              r="Tout le terre faisait avoir un seul langue et le même mot."
               >Now the whole earth had one language and the same words.</span>
           </div>
           <div class="verse"><span class="verse-num">2</span>
             <span class="t"
               c="他们往东边迁移的时候，在示拿地遇见一片平原，就住在那里。"
               f="Comme ils étaient partis de l'orient, ils trouvèrent une plaine au pays de Schinear, et ils y habitèrent."
-              r="Comme eux passé partir de le orient, eux passé trouver un plaine à le pays de Schinear, et eux passé habiter là."
+              r="Comme eux avait fait partir de le orient, eux fit trouver un plaine à le pays de Schinear, et eux fit habiter là."
               >As people migrated from the east, they found a plain in the land of Shinar and settled there.</span>
           </div>
           <div class="verse"><span class="verse-num">3</span>
             <span class="t"
               c="他们彼此商量说：'来吧！我们要做砖，把砖烧透了。'他们就拿砖当石头，又拿石漆当灰泥。"
               f="Ils se dirent l'un à l'autre : Allons ! faisons des briques, et cuisons-les au feu. Et la brique leur servit de pierre, et le bitume leur servit de ciment."
-              r="Eux passé dire le un à le autre : Aller ! nous faire des brique, et cuire eux à le feu. Et le brique passé servir à eux de pierre, et le bitume passé servir à eux de ciment."
+              r="Eux fit dire le un à le autre : Aller ! nous faire des brique, et cuire eux à le feu. Et le brique fit servir à eux de pierre, et le bitume fit servir à eux de ciment."
               >And they said to one another, "Come, let us make bricks, and burn them thoroughly." And they had brick for stone, and bitumen for mortar.</span>
           </div>
           <div class="verse"><span class="verse-num">4</span>
             <span class="t"
-              c="他们说：'来吧！我们要建造一座城和一座塔，塔顶通天，为要传扬我们的名，免得我们分散在全地上。'
+              c="他们说：'来吧！我们要建造一座城和一座塔，塔顶通天，为要传扬我们的名，免得我们分散在全地上。'"
               f="Ils dirent encore : Allons ! bâtissons-nous une ville et une tour dont le sommet touche au ciel, et faisons-nous un nom, afin que nous ne soyons pas dispersés sur la face de toute la terre."
-              r="Eux passé dire encore : Aller ! nous bâtir un ville et un tour dont le sommet toucher à le ciel, et nous faire un nom, afin que nous ne pas être disperser sur le face de tout le terre."
+              r="Eux fit dire encore : Aller ! nous bâtir un ville et un tour dont le sommet toucher à le ciel, et nous faire un nom, afin que nous ne pas être disperser sur le face de tout le terre."
               >Then they said, "Come, let us build ourselves a city and a tower with its top in the heavens, and let us make a name for ourselves, lest we be dispersed over the face of the whole earth."</span>
           </div>
           <div class="verse"><span class="verse-num">5</span>
@@ -559,14 +718,14 @@
           </div>
           <div class="verse"><span class="verse-num">6</span>
             <span class="t"
-              c="耶和华说：'看哪，他们成为一样的人民，都是一样的言语，如今既做起这事来，以后他们所要做的事就没有不成就的了。'
+              c="耶和华说：'看哪，他们成为一样的人民，都是一样的言语，如今既做起这事来，以后他们所要做的事就没有不成就的了。'"
               f="Et l'Éternel dit : Voici, ils forment un seul peuple et ont tous une même langue, et c'est là ce qu'ils ont entrepris ; maintenant rien ne les empêcherait de faire tout ce qu'ils ont projeté."
               r="Et le Éternel passé dire : Voilà, eux former un seul peuple et avoir tout un même langue, et ce être là ce que eux passé entreprendre ; maintenant rien ne pas empêcher eux de faire tout ce que eux passé projeter."
               >And the LORD said, "Behold, they are one people, and they have all one language, and this is only the beginning of what they will do. And nothing that they propose to do will now be impossible for them.</span>
           </div>
           <div class="verse"><span class="verse-num">7</span>
             <span class="t"
-              c="我们下去，在那里变乱他们的口音，使他们的言语彼此不通。'
+              c="我们下去，在那里变乱他们的口音，使他们的言语彼此不通。'"
               f="Allons ! descendons, et là confondons leur langage, afin qu'ils n'entendent plus la langue les uns des autres."
               r="Aller ! nous descendre, et là confondre leur langage, afin que eux ne pas entendre plus le langue les un de les autre."
               >Come, let us go down and there confuse their language, so that they may not understand one another's speech."</span>
@@ -627,9 +786,378 @@
         </div>
       </div>
 
-      <!-- ===== CHAPTER 4: PRONUNCIATION ===== -->
+      <!-- ===== CHAPTER 4: NUMBERS ===== -->
       <div class="section">
-        <h2><span class="t" c="4. 字母与发音" f="4. Lettres et Prononciation" r="4. Lettre et Prononciation">4. Letters and Pronunciation</span></h2>
+        <h2><span class="t" c="4. 数词" f="4. Nombres" r="4. Nombre">4. Numbers</span></h2>
+        <p>
+          <span class="t"
+            c="Franstant 将法语的数词系统完全简化为规整的十进制系统。取消了11至16的不规则拉丁来源词，统一使用 &lt;b&gt;dix un&lt;/b&gt; 至 &lt;b&gt;dix six&lt;/b&gt;；取消了传统法语中 70、80、90 的二十进制运算（60+10、4×20、4×20+10），统一使用规整的十进制词汇 &lt;b&gt;septante&lt;/b&gt;、&lt;b&gt;huitante&lt;/b&gt;、&lt;b&gt;nonante&lt;/b&gt;。所有复合数词之间直接用空格分隔，不使用连字符或 'et'。所有数词形式保持恒常不变，不加复数 -s。"
+            f="Le Franstant simplifie entièrement le système numérique français en un système décimal régulier. Les formes irrégulières d'origine latine pour 11 à 16 sont supprimées au profit de &lt;b&gt;dix un&lt;/b&gt; à &lt;b&gt;dix six&lt;/b&gt;. Les calculs vicésimaux traditionnels pour 70, 80 et 90 (60+10, 4×20, 4×20+10) sont remplacés par des formes décimales régulières : &lt;b&gt;septante&lt;/b&gt;, &lt;b&gt;huitante&lt;/b&gt; et &lt;b&gt;nonante&lt;/b&gt;. Tous les nombres composés sont séparés par un simple espace, sans trait d'union ni « et ». Les nombres restent invariables sans -s de pluriel."
+            r="Le Franstant simplifier entièrement le système numérique français en un système décimal régulier. Les forme irrégulier de origine latin pour 11 à 16 être supprimer à le profit de &lt;b&gt;dix un&lt;/b&gt; à &lt;b&gt;dix six&lt;/b&gt;. Les calcul vicésimal traditionnel pour 70, 80 et 90 (60+10, 4×20, 4×20+10) être remplacer par des forme décimal régulier : &lt;b&gt;septante&lt;/b&gt;, &lt;b&gt;huitante&lt;/b&gt; et &lt;b&gt;nonante&lt;/b&gt;. Tout les nombre composer être séparer par un simple espace, sans trait de union ni « et ». Les nombre rester invariable sans -s de pluriel."
+            >Franstant thoroughly regularizes the French numerical system into a clean base-10 decimal system. The irregular Latin-derived forms for 11 to 16 are replaced by regular compounds <b>dix un</b> to <b>dix six</b>. The vigesimal (base-20) relics for 70, 80, and 90 (60+10, 4×20, 4×20+10) are replaced by pure decimal terms <b>septante</b>, <b>huitante</b>, and <b>nonante</b>. All compound numbers are separated by simple spaces without hyphens or "et". Numbers remain invariable without plural -s.</span>
+        </p>
+
+        <!-- 4.1 Base Digits and Teens -->
+        <h3><span class="t" c="4.1 基本数词与十几（11–16规则化）" f="4.1 Chiffres de Base et Nombres de 11 à 19" r="4.1 Chiffre de Base et Nombre de 11 à 19">4.1 Base Digits and Teens (11–19)</span></h3>
+        <p>
+          <span class="t"
+            c="在标准法语中，11至16使用不规则词（onze, douze, treize, quatorze, quinze, seize），直到17才开始使用复合形式（dix-sept）。Franstant 从11起一律规则化为 &lt;b&gt;dix + 个位数&lt;/b&gt;，词间用空格连接，无连字符："
+            f="En français standard, 11 à 16 utilisent des formes irrégulières (onze, douze, treize, quatorze, quinze, seize), et ce n'est qu'à 17 que commence la forme composée (dix-sept). Franstant régularise dès 11 selon le modèle &lt;b&gt;dix + unité&lt;/b&gt;, séparé par un espace sans trait d'union :"
+            r="En français standard, 11 à 16 utiliser des forme irrégulier (onze, douze, treize, quatorze, quinze, seize), et ce être seulement à 17 que commencer le forme composer (dix-sept). Franstant régulariser dès 11 selon le modèle &lt;b&gt;dix + unité&lt;/b&gt;, séparer par un espace sans trait de union :"
+            >In standard French, 11 to 16 use irregular Latin roots (onze, douze, treize, quatorze, quinze, seize), switching to compounds only at 17 (dix-sept). Franstant regularizes the entire series starting at 11 using <b>dix + unit</b> with spaces and no hyphens:</span>
+        </p>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="数字" f="Nombre" r="Nombre">Number</span></th>
+            <th>Franstant</th>
+            <th><span class="t" c="标准法语" f="Français Standard" r="Français Standard">Standard French</span></th>
+            <th><span class="t" c="说明" f="Note" r="Note">Note</span></th>
+          </tr>
+          <tr><td>0</td><td>zéro</td><td>zéro</td><td>—</td></tr>
+          <tr><td>1</td><td>un</td><td>un</td><td>—</td></tr>
+          <tr><td>2</td><td>deux</td><td>deux</td><td>—</td></tr>
+          <tr><td>3</td><td>trois</td><td>trois</td><td>—</td></tr>
+          <tr><td>4</td><td>quatre</td><td>quatre</td><td>—</td></tr>
+          <tr><td>5</td><td>cinq</td><td>cinq</td><td>—</td></tr>
+          <tr><td>6</td><td>six</td><td>six</td><td>—</td></tr>
+          <tr><td>7</td><td>sept</td><td>sept</td><td>—</td></tr>
+          <tr><td>8</td><td>huit</td><td>huit</td><td>—</td></tr>
+          <tr><td>9</td><td>neuf</td><td>neuf</td><td>—</td></tr>
+          <tr><td>10</td><td>dix</td><td>dix</td><td>—</td></tr>
+          <tr><td>11</td><td><b>dix un</b></td><td><i>onze</i></td><td><span class="t" c="规则复合（dix + un）" f="composé régulier (dix + un)" r="composer régulier (dix + un)">regular compound (dix + un)</span></td></tr>
+          <tr><td>12</td><td><b>dix deux</b></td><td><i>douze</i></td><td><span class="t" c="规则复合（dix + deux）" f="composé régulier (dix + deux)" r="composer régulier (dix + deux)">regular compound (dix + deux)</span></td></tr>
+          <tr><td>13</td><td><b>dix trois</b></td><td><i>treize</i></td><td><span class="t" c="规则复合（dix + trois）" f="composé régulier (dix + trois)" r="composer régulier (dix + trois)">regular compound (dix + trois)</span></td></tr>
+          <tr><td>14</td><td><b>dix quatre</b></td><td><i>quatorze</i></td><td><span class="t" c="规则复合（dix + quatre）" f="composé régulier (dix + quatre)" r="composer régulier (dix + quatre)">regular compound (dix + quatre)</span></td></tr>
+          <tr><td>15</td><td><b>dix cinq</b></td><td><i>quinze</i></td><td><span class="t" c="规则复合（dix + cinq）" f="composé régulier (dix + cinq)" r="composer régulier (dix + cinq)">regular compound (dix + cinq)</span></td></tr>
+          <tr><td>16</td><td><b>dix six</b></td><td><i>seize</i></td><td><span class="t" c="规则复合（dix + six）" f="composé régulier (dix + six)" r="composer régulier (dix + six)">regular compound (dix + six)</span></td></tr>
+          <tr><td>17</td><td><b>dix sept</b></td><td><i>dix-sept</i></td><td><span class="t" c="无连字符" f="sans trait d'union" r="sans trait de union">no hyphen</span></td></tr>
+          <tr><td>18</td><td><b>dix huit</b></td><td><i>dix-huit</i></td><td><span class="t" c="无连字符" f="sans trait d'union" r="sans trait de union">no hyphen</span></td></tr>
+          <tr><td>19</td><td><b>dix neuf</b></td><td><i>dix-neuf</i></td><td><span class="t" c="无连字符" f="sans trait d'union" r="sans trait de union">no hyphen</span></td></tr>
+        </table>
+
+        <!-- 4.2 Tens: 70, 80, 90 -->
+        <h3><span class="t" c="4.2 十位整数（70、80、90十进制化）" f="4.2 Les Dizaines (70, 80, 90 Décimalisés)" r="4.2 Les Dizaine (70, 80, 90 Décimaliser)">4.2 Tens (70, 80, 90 Decimalized)</span></h3>
+        <p>
+          <span class="t"
+            c="标准法语对70、80、90使用混乱的二十进制计算：soixante-dix（60+10）、quatre-vingts（4×20）、quatre-vingt-dix（4×20+10）。Franstant 统一采用规整的十进制数词：&lt;b&gt;septante&lt;/b&gt;（70）、&lt;b&gt;huitante&lt;/b&gt;（80）、&lt;b&gt;nonante&lt;/b&gt;（90）。"
+            f="Le français standard utilise un système vicésimal complexe : « soixante-dix » (60+10), « quatre-vingts » (4×20) et « quatre-vingt-dix » (4×20+10). Franstant adopte uniformément les formes décimales régulières : &lt;b&gt;septante&lt;/b&gt; (70), &lt;b&gt;huitante&lt;/b&gt; (80) et &lt;b&gt;nonante&lt;/b&gt; (90)."
+            r="Le français standard utiliser un système vicésimal complexe : « soixante-dix » (60+10), « quatre-vingts » (4×20) et « quatre-vingt-dix » (4×20+10). Franstant adopter uniformément les forme décimal régulier : &lt;b&gt;septante&lt;/b&gt; (70), &lt;b&gt;huitante&lt;/b&gt; (80) et &lt;b&gt;nonante&lt;/b&gt; (90)."
+            >Standard French uses a cumbersome vigesimal system: "soixante-dix" (60+10), "quatre-vingts" (4×20), and "quatre-vingt-dix" (4×20+10). Franstant adopts uniform regular decimal forms: <b>septante</b> (70), <b>huitante</b> (80), and <b>nonante</b> (90).</span>
+        </p>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="数字" f="Nombre" r="Nombre">Number</span></th>
+            <th>Franstant</th>
+            <th><span class="t" c="标准法语" f="Français Standard" r="Français Standard">Standard French</span></th>
+            <th><span class="t" c="说明" f="Note" r="Note">Note</span></th>
+          </tr>
+          <tr><td>10</td><td>dix</td><td>dix</td><td>—</td></tr>
+          <tr><td>20</td><td>vingt</td><td>vingt</td><td>—</td></tr>
+          <tr><td>30</td><td>trente</td><td>trente</td><td>—</td></tr>
+          <tr><td>40</td><td>quarante</td><td>quarante</td><td>—</td></tr>
+          <tr><td>50</td><td>cinquante</td><td>cinquante</td><td>—</td></tr>
+          <tr><td>60</td><td>soixante</td><td>soixante</td><td>—</td></tr>
+          <tr><td>70</td><td><b>septante</b></td><td><i>soixante-dix</i> (60+10)</td><td><span class="t" c="规整十进制（取消 60+10）" f="forme décimale régulière (au lieu de 60+10)" r="forme décimal régulier (à le place de 60+10)">regular decimal form (replaces 60+10)</span></td></tr>
+          <tr><td>80</td><td><b>huitante</b></td><td><i>quatre-vingts</i> (4×20)</td><td><span class="t" c="规整十进制（取消 4×20）" f="forme décimale régulière (au lieu de 4×20)" r="forme décimal régulier (à le place de 4×20)">regular decimal form (replaces 4×20)</span></td></tr>
+          <tr><td>90</td><td><b>nonante</b></td><td><i>quatre-vingt-dix</i> (4×20+10)</td><td><span class="t" c="规整十进制（取消 4×20+10）" f="forme décimale régulière (au lieu de 4×20+10)" r="forme décimal régulier (à le place de 4×20+10)">regular decimal form (replaces 4×20+10)</span></td></tr>
+        </table>
+
+        <!-- 4.3 Compounds and Large Numbers -->
+        <h3><span class="t" c="4.3 复合数词与大数" f="4.3 Nombres Composés et Grands Nombres" r="4.3 Nombre Composer et Grand Nombre">4.3 Compound Numbers and Large Numbers</span></h3>
+        <p>
+          <span class="t"
+            c="所有复合数词一律直接用空格相连，取消标准法语中繁复的连字符以及 'et un'（如 vingt et un 变成 &lt;b&gt;vingt un&lt;/b&gt;）。大数单位（cent, mille, million, milliard）保持恒常，永不添加复数 -s："
+            f="Tous les nombres composés sont reliés par un simple espace, sans les traits d'union ni le « et un » du français standard (ex. : « vingt et un » devient &lt;b&gt;vingt un&lt;/b&gt;). Les unités de grands nombres (cent, mille, million, milliard) restent invariables et ne prennent jamais de -s :"
+            r="Tout les nombre composer être relier par un simple espace, sans les trait de union ni le « et un » de le français standard (ex. : « vingt et un » devenir &lt;b&gt;vingt un&lt;/b&gt;). Les unité de grand nombre (cent, mille, million, milliard) rester invariable et ne prendre jamais de -s :"
+            >All compound numbers are written with a simple space between words, removing the cumbersome hyphens and "et un" of standard French (e.g., "vingt et un" becomes <b>vingt un</b>). Large numerical units (cent, mille, million, milliard) remain invariable and never take a plural -s:</span>
+        </p>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="数字" f="Nombre" r="Nombre">Number</span></th>
+            <th>Franstant</th>
+            <th><span class="t" c="标准法语" f="Français Standard" r="Français Standard">Standard French</span></th>
+            <th><span class="t" c="说明" f="Note" r="Note">Note</span></th>
+          </tr>
+          <tr><td>21</td><td><b>vingt un</b></td><td><i>vingt et un</i></td><td><span class="t" c="取消 « et »，直接空格连接" f="sans « et », espace simple" r="sans « et », espace simple">no "et", simple space</span></td></tr>
+          <tr><td>71</td><td><b>septante un</b></td><td><i>soixante et onze</i></td><td><span class="t" c="十进制：70 + 1（取消 60+11）" f="décimal : 70 + 1 (au lieu de 60+11)" r="décimal : 70 + 1 (à le place de 60+11)">decimal: 70 + 1 (replaces 60+11)</span></td></tr>
+          <tr><td>75</td><td><b>septante cinq</b></td><td><i>soixante-quinze</i></td><td><span class="t" c="十进制：70 + 5（取消 60+15）" f="décimal : 70 + 5 (au lieu de 60+15)" r="décimal : 70 + 5 (à le place de 60+15)">decimal: 70 + 5 (replaces 60+15)</span></td></tr>
+          <tr><td>81</td><td><b>huitante un</b></td><td><i>quatre-vingt-un</i></td><td><span class="t" c="十进制：80 + 1" f="décimal : 80 + 1" r="décimal : 80 + 1">decimal: 80 + 1</span></td></tr>
+          <tr><td>88</td><td><b>huitante huit</b></td><td><i>quatre-vingt-huit</i></td><td><span class="t" c="十进制：80 + 8" f="décimal : 80 + 8" r="décimal : 80 + 8">decimal: 80 + 8</span></td></tr>
+          <tr><td>91</td><td><b>nonante un</b></td><td><i>quatre-vingt-onze</i></td><td><span class="t" c="十进制：90 + 1（取消 4×20+11）" f="décimal : 90 + 1 (au lieu de 4×20+11)" r="décimal : 90 + 1 (à le place de 4×20+11)">decimal: 90 + 1 (replaces 4×20+11)</span></td></tr>
+          <tr><td>99</td><td><b>nonante neuf</b></td><td><i>quatre-vingt-dix-neuf</i></td><td><span class="t" c="十进制：90 + 9（取消 4×20+19）" f="décimal : 90 + 9 (au lieu de 4×20+19)" r="décimal : 90 + 9 (à le place de 4×20+19)">decimal: 90 + 9 (replaces 4×20+19)</span></td></tr>
+          <tr><td>100</td><td>cent</td><td>cent</td><td>—</td></tr>
+          <tr><td>200</td><td><b>deux cent</b></td><td><i>deux cents</i></td><td><span class="t" c="无复数 -s" f="sans -s pluriel" r="sans -s pluriel">no plural -s</span></td></tr>
+          <tr><td>1 000</td><td>mille</td><td>mille</td><td>—</td></tr>
+          <tr><td>1 000 000</td><td>un million</td><td>un million</td><td>—</td></tr>
+          <tr><td>2 000 000</td><td><b>deux million</b></td><td><i>deux millions</i></td><td><span class="t" c="无复数 -s" f="sans -s pluriel" r="sans -s pluriel">no plural -s</span></td></tr>
+        </table>
+
+        <!-- 4.4 Example Sentences -->
+        <h3><span class="t" c="4.4 例句" f="4.4 Exemples" r="4.4 Exemple">4.4 Examples</span></h3>
+        <div class="example">
+          <div class="label"><span class="t" c="例句 1" f="Exemple 1" r="Exemple 1">Example 1</span></div>
+          <span class="highlight">moi avoir dix deux livre.</span> — <span class="t" c="我有12本书（标准法语：J'ai douze livres）。" f="J'ai douze livres." r="moi avoir dix deux livre.">I have 12 books (Standard French: J'ai douze livres).</span>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例句 2" f="Exemple 2" r="Exemple 2">Example 2</span></div>
+          <span class="highlight">voilà septante cinq personne dans le salle.</span> — <span class="t" c="大厅里有75个人（标准法语：Il y a soixante-quinze personnes dans la salle）。" f="Il y a soixante-quinze personnes dans la salle." r="voilà septante cinq personne dans le salle.">There are 75 people in the room (Standard French: Il y a soixante-quinze personnes dans la salle).</span>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例句 3" f="Exemple 3" r="Exemple 3">Example 3</span></div>
+          <span class="highlight">lui avoir huitante quatre an.</span> — <span class="t" c="他/她84岁（标准法语：Il/Elle a quatre-vingt-quatre ans）。" f="Il/Elle a quatre-vingt-quatre ans." r="lui avoir huitante quatre an.">He/She is 84 years old (Standard French: Il/Elle a quatre-vingt-quatre ans).</span>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例句 4" f="Exemple 4" r="Exemple 4">Example 4</span></div>
+          <span class="highlight">le livre coûter nonante neuf euro.</span> — <span class="t" c="这本书售价99欧元（标准法语：Le livre coûte quatre-vingt-dix-neuf euros）。" f="Le livre coûte quatre-vingt-dix-neuf euros." r="le livre coûter nonante neuf euro.">The book costs 99 euros (Standard French: Le livre coûte quatre-vingt-dix-neuf euros).</span>
+        </div>
+      </div>
+
+      <!-- ===== CHAPTER 5: VERB TENSE AND VOICE ===== -->
+      <div class="section">
+        <h2><span class="t" c="5. 动词时态与语态（faire 情态助词系统）" f="5. Temps et Voix des Verbes (Système Modal de « faire »)" r="5. Temps et Voix de les Verbe (Système Modal de « faire »)">5. Verb Tense and Voice (Modal System of "faire")</span></h2>
+        <p>
+          <span class="t"
+            c="为了精确表达丰富的动词时态（temps）与语态（voix），Franstant 引入动词 &lt;b&gt;faire&lt;/b&gt; 的变位形式作为统一的前置情态助词（modal word），后接始终保持不定式的核心实义动词。&lt;br/&gt;&lt;br/&gt;&lt;b&gt;核心设计原则：&lt;/b&gt;&lt;br/&gt;1. &lt;b&gt;优先采用第三人称单数（三单）：&lt;/b&gt;默认使用 il/elle 形式，精简统一。&lt;br/&gt;2. &lt;b&gt;避同音换人称（四处特例 *）：&lt;/b&gt;当三单形式在 faire 体系内发生同音冲突时，战略性切换至其他人称，确保全表 24 格发音绝对无一重复。&lt;br/&gt;3. &lt;b&gt;现在时默认缺省：&lt;/b&gt;日常表达中现在时无需助词，动词不定式本身即代表现在时；情态词 font 仅用于全表对齐或强调。"
+            f="Pour exprimer avec précision les temps et les voix, Franstant utilise les formes du verbe &lt;b&gt;faire&lt;/b&gt; comme mot modal placé devant le verbe principal (qui reste toujours à l'infinitif).&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Principes de conception :&lt;/b&gt;&lt;br/&gt;1. &lt;b&gt;Préférence pour la 3e personne du singulier :&lt;/b&gt; Utilisation par défaut des formes « il/elle ».&lt;br/&gt;2. &lt;b&gt;Évitement des homophonies (4 exceptions *) :&lt;/b&gt; Quand la 3e personne crée un doublon sonore, une autre personne est choisie pour garantir 24 formes phonétiquement distinctes.&lt;br/&gt;3. &lt;b&gt;Présent par défaut non marqué :&lt;/b&gt; Dans l'usage courant, le présent n'utilise aucun modal ; l'infinitif seul exprime le présent. Le modal « font » est réservé aux contextes formels ou contrastifs."
+            r="Pour exprimer avec précision les temps et les voix, Franstant utiliser les forme de le verbe &lt;b&gt;faire&lt;/b&gt; comme mot modal placer devant le verbe principal (qui rester toujours à le infinitif).&lt;br/&gt;&lt;br/&gt;&lt;b&gt;Principe de conception :&lt;/b&gt;&lt;br/&gt;1. &lt;b&gt;Préférence pour le 3e personne de le singulier :&lt;/b&gt; Utilisation par défaut de les forme « il/elle ».&lt;br/&gt;2. &lt;b&gt;Éviter les homophonie (4 exception *) :&lt;/b&gt; Quand le 3e personne créer un doublon sonore, un autre personne être choisir pour garantir 24 forme phonétiquement distinct.&lt;br/&gt;3. &lt;b&gt;Présent par défaut non marquer :&lt;/b&gt; Dans le usage courant, le présent ne utiliser aucun modal ; le infinitif seul exprimer le présent. Le modal « font » être réserver à les contexte formel ou contrastif."
+            >To precisely express verb tenses and voices, Franstant adopts the conjugated forms of the verb <b>faire</b> as a pre-verbal modal auxiliary, while the main verb always remains in its infinitive form.<br/><br/><b>Core Design Principles:</b><br/>1. <b>Preference for 3rd Person Singular:</b> By default, 3rd-person singular (il/elle) forms are selected for consistency.<br/>2. <b>Phonetic Disambiguation (4 Exceptions *):</b> Whenever a 3rd-person form produces homophony within the faire paradigm, another person is selected, ensuring 24 strictly unique pronunciations.<br/>3. <b>Default Unmarked Present Tense:</b> In standard usage, the present tense requires no modal auxiliary; the bare infinitive denotes the present tense. The modal "font" is reserved for complete paradigm alignment or explicit emphasis.</span>
+        </p>
+
+        <!-- 5.1 Full Paradigm Table -->
+        <h3><span class="t" c="5.1 全表 24 格情态助词系统" f="5.1 Tableau Complet des 24 Cases Modales" r="5.1 Tableau Complet de les 24 Case Modal">5.1 Full 24-Slot Modal System Table</span></h3>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="时态 / 语态" f="Temps / Voix" r="Temps / Voix">Tense / Voice</span></th>
+            <th><span class="t" c="情态词" f="Mot Modal" r="Mot Modal">Modal Word</span></th>
+            <th><span class="t" c="发音" f="Prononciation" r="Prononciation">Pronunciation</span></th>
+            <th><span class="t" c="选用人称" f="Personne" r="Personne">Person</span></th>
+            <th><span class="t" c="说明与去重逻辑" f="Explication" r="Explication">Disambiguation Note</span></th>
+          </tr>
+          <tr>
+            <td>présent</td>
+            <td><b>font*</b></td>
+            <td>[fɔ̃]</td>
+            <td><span class="t" c="三复" f="3e pl." r="3e pl.">3rd pl.</span></td>
+            <td><span class="t" c="fait [fɛ] 与 fais 同音，故选用 font；日常默认缺省" f="fait [fɛ] homophone de fais → font ; omis par défaut" r="fait [fɛ] homophone de fais → font ; omettre par défaut">fait [fɛ] homophonous with fais → font; default is unmarked</span></td>
+          </tr>
+          <tr>
+            <td>imparfait</td>
+            <td><b>faisait</b></td>
+            <td>[fəzɛ]</td>
+            <td><span class="t" c="三单" f="3e sg." r="3e sg.">3rd sg.</span></td>
+            <td><span class="t" c="标准三单，无冲突" f="3e sg. standard, sans conflit" r="3e sg. standard, sans conflit">Standard 3rd sg., no conflict</span></td>
+          </tr>
+          <tr>
+            <td>passé simple</td>
+            <td><b>fit</b></td>
+            <td>[fi]</td>
+            <td><span class="t" c="三单" f="3e sg." r="3e sg.">3rd sg.</span></td>
+            <td><span class="t" c="标准三单，无冲突" f="3e sg. standard, sans conflit" r="3e sg. standard, sans conflit">Standard 3rd sg., no conflict</span></td>
+          </tr>
+          <tr>
+            <td>passé composé</td>
+            <td><b>a fait</b></td>
+            <td>[afɛ]</td>
+            <td><span class="t" c="三单" f="3e sg." r="3e sg.">3rd sg.</span></td>
+            <td><span class="t" c="标准三单，无冲突" f="3e sg. standard, sans conflit" r="3e sg. standard, sans conflit">Standard 3rd sg., no conflict</span></td>
+          </tr>
+          <tr>
+            <td>plus-que-parfait</td>
+            <td><b>avait fait</b></td>
+            <td>[avɛfɛ]</td>
+            <td><span class="t" c="三单" f="3e sg." r="3e sg.">3rd sg.</span></td>
+            <td><span class="t" c="标准三单，无冲突" f="3e sg. standard, sans conflit" r="3e sg. standard, sans conflit">Standard 3rd sg., no conflict</span></td>
+          </tr>
+          <tr>
+            <td>passé antérieur</td>
+            <td><b>eut fait</b></td>
+            <td>[yfɛ]</td>
+            <td><span class="t" c="三单" f="3e sg." r="3e sg.">3rd sg.</span></td>
+            <td><span class="t" c="标准三单，无冲突" f="3e sg. standard, sans conflit" r="3e sg. standard, sans conflit">Standard 3rd sg., no conflict</span></td>
+          </tr>
+          <tr>
+            <td>futur simple</td>
+            <td><b>fera</b></td>
+            <td>[fəʁa]</td>
+            <td><span class="t" c="三单" f="3e sg." r="3e sg.">3rd sg.</span></td>
+            <td><span class="t" c="标准三单，无冲突" f="3e sg. standard, sans conflit" r="3e sg. standard, sans conflit">Standard 3rd sg., no conflict</span></td>
+          </tr>
+          <tr>
+            <td>futur antérieur</td>
+            <td><b>aura fait</b></td>
+            <td>[oʁafɛ]</td>
+            <td><span class="t" c="三单" f="3e sg." r="3e sg.">3rd sg.</span></td>
+            <td><span class="t" c="标准三单，无冲突" f="3e sg. standard, sans conflit" r="3e sg. standard, sans conflit">Standard 3rd sg., no conflict</span></td>
+          </tr>
+          <tr>
+            <td>cond. présent</td>
+            <td><b>ferait</b></td>
+            <td>[fəʁɛ]</td>
+            <td><span class="t" c="三单" f="3e sg." r="3e sg.">3rd sg.</span></td>
+            <td><span class="t" c="标准三单，无冲突" f="3e sg. standard, sans conflit" r="3e sg. standard, sans conflit">Standard 3rd sg., no conflict</span></td>
+          </tr>
+          <tr>
+            <td>cond. passé</td>
+            <td><b>aurait fait</b></td>
+            <td>[oʁɛfɛ]</td>
+            <td><span class="t" c="三单" f="3e sg." r="3e sg.">3rd sg.</span></td>
+            <td><span class="t" c="标准三单，无冲突" f="3e sg. standard, sans conflit" r="3e sg. standard, sans conflit">Standard 3rd sg., no conflict</span></td>
+          </tr>
+          <tr>
+            <td>subj. présent</td>
+            <td><b>fasse</b></td>
+            <td>[fas]</td>
+            <td><span class="t" c="三单" f="3e sg." r="3e sg.">3rd sg.</span></td>
+            <td><span class="t" c="标准三单，无冲突" f="3e sg. standard, sans conflit" r="3e sg. standard, sans conflit">Standard 3rd sg., no conflict</span></td>
+          </tr>
+          <tr>
+            <td>subj. passé</td>
+            <td><b>ayons fait*</b></td>
+            <td>[ajɔ̃fɛ]</td>
+            <td><span class="t" c="一复" f="1re pl." r="1re pl.">1st pl.</span></td>
+            <td><span class="t" c="ait/aient fait [ɛfɛ] 与被动 est fait 同音，改用一复 ayons fait" f="ait/aient fait [ɛfɛ] homophone de « est fait » → ayons fait" r="ait/aient fait [ɛfɛ] homophone de « est fait » → ayons fait">ait/aient fait [ɛfɛ] homophonous with passive "est fait" → ayons fait</span></td>
+          </tr>
+          <tr>
+            <td>subj. imparfait</td>
+            <td><b>fisse*</b></td>
+            <td>[fis]</td>
+            <td><span class="t" c="一单" f="1re sg." r="1re sg.">1st sg.</span></td>
+            <td><span class="t" c="fît [fi] 与 passé simple fit 同音，改用一单 fisse" f="fît [fi] homophone de « fit » → fisse" r="fît [fi] homophone de « fit » → fisse">fît [fi] homophonous with passé simple "fit" → fisse</span></td>
+          </tr>
+          <tr>
+            <td>subj. plus-que-parfait</td>
+            <td><b>eussent fait*</b></td>
+            <td>[ysfɛ]</td>
+            <td><span class="t" c="三复" f="3e pl." r="3e pl.">3rd pl.</span></td>
+            <td><span class="t" c="eût fait [yfɛ] 与 passé antérieur eut fait 同音，改用三复 eussent fait" f="eût fait [yfɛ] homophone de « eut fait » → eussent fait" r="eût fait [yfɛ] homophone de « eut fait » → eussent fait">eût fait [yfɛ] homophonous with passé antérieur "eut fait" → eussent fait</span></td>
+          </tr>
+          <tr>
+            <td>imp. présent</td>
+            <td><b>faites</b></td>
+            <td>[fɛt]</td>
+            <td><span class="t" c="二复" f="2e pl." r="2e pl.">2nd pl.</span></td>
+            <td><span class="t" c="命令式现在时" f="Impératif présent" r="Impératif présent">Imperative present</span></td>
+          </tr>
+          <tr>
+            <td>imp. passé</td>
+            <td><b>ayez fait</b></td>
+            <td>[ɛjefɛ]</td>
+            <td><span class="t" c="二复" f="2e pl." r="2e pl.">2nd pl.</span></td>
+            <td><span class="t" c="命令式过去时" f="Impératif passé" r="Impératif passé">Imperative past</span></td>
+          </tr>
+          <tr>
+            <td>inf. présent</td>
+            <td><b>faire</b></td>
+            <td>[fɛʁ]</td>
+            <td>—</td>
+            <td><span class="t" c="不定式现在时" f="Infinitif présent" r="Infinitif présent">Infinitive present</span></td>
+          </tr>
+          <tr>
+            <td>inf. passé</td>
+            <td><b>avoir fait</b></td>
+            <td>[avwaʁfɛ]</td>
+            <td>—</td>
+            <td><span class="t" c="不定式过去时" f="Infinitif passé" r="Infinitif passé">Infinitive past</span></td>
+          </tr>
+          <tr>
+            <td>part. présent</td>
+            <td><b>faisant</b></td>
+            <td>[fəzɑ̃]</td>
+            <td>—</td>
+            <td><span class="t" c="现在分词" f="Participe présent" r="Participe présent">Present participle</span></td>
+          </tr>
+          <tr>
+            <td>part. passé</td>
+            <td><b>fait</b></td>
+            <td>[fɛ]</td>
+            <td>—</td>
+            <td><span class="t" c="过去分词（阳性单数）" f="Participe passé (masculin singulier)" r="Participe passé (masculin singulier)">Past participle (masculine singular)</span></td>
+          </tr>
+          <tr>
+            <td>gér. présent</td>
+            <td><b>en faisant</b></td>
+            <td>[ɑ̃fəzɑ̃]</td>
+            <td>—</td>
+            <td><span class="t" c="副动词现在时" f="Gérondif présent" r="Gérondif présent">Gerund present</span></td>
+          </tr>
+          <tr>
+            <td>gér. passé</td>
+            <td><b>en ayant fait</b></td>
+            <td>[ɑ̃najɑ̃fɛ]</td>
+            <td>—</td>
+            <td><span class="t" c="副动词过去时" f="Gérondif passé" r="Gérondif passé">Gerund past</span></td>
+          </tr>
+          <tr>
+            <td>voix passive</td>
+            <td><b>est fait</b></td>
+            <td>[ɛfɛ]</td>
+            <td><span class="t" c="三单" f="3e sg." r="3e sg.">3rd sg.</span></td>
+            <td><span class="t" c="被动语态" f="Voix passive" r="Voix passif">Passive voice</span></td>
+          </tr>
+          <tr>
+            <td>voix pronominale</td>
+            <td><b>se fait</b></td>
+            <td>[səfɛ]</td>
+            <td><span class="t" c="三单" f="3e sg." r="3e sg.">3rd sg.</span></td>
+            <td><span class="t" c="自反/代词语态" f="Voix pronominale" r="Voix pronominal">Reflexive / pronominal voice</span></td>
+          </tr>
+        </table>
+
+        <!-- 5.2 Syntax and Examples -->
+        <h3><span class="t" c="5.2 句法结构与例句" f="5.2 Structure Syntaxique et Exemples" r="5.2 Structure Syntaxique et Exemple">5.2 Syntax and Examples</span></h3>
+        <p>
+          <span class="t"
+            c="语序严格固定：&lt;b&gt;[主语] + (ne pas) + [faire 情态助词] + [主要动词不定式] + [宾语/状语]&lt;/b&gt;。日常表达中现在时缺省，无情态助词。"
+            f="L'ordre des mots est strict : &lt;b&gt;[Sujet] + (ne pas) + [mot modal de faire] + [verbe principal à l'infinitif] + [complément]&lt;/b&gt;. Au présent courant, aucun modal n'est nécessaire."
+            r="Le ordre de les mot être strict : &lt;b&gt;[Sujet] + (ne pas) + [mot modal de faire] + [verbe principal à le infinitif] + [complément]&lt;/b&gt;. À le présent courant, aucun modal ne être nécessaire."
+            >The word order is strictly fixed: <b>[Subject] + (ne pas) + [faire modal word] + [main infinitive verb] + [object/adjunct]</b>. In daily present tense, no modal auxiliary is used.</span>
+        </p>
+
+        <div class="example">
+          <div class="label"><span class="t" c="现在时（默认缺省）" f="Présent (par défaut, sans modal)" r="Présent (par défaut, sans modal)">Present (Default, Unmarked)</span></div>
+          <span class="highlight">moi manger du pain.</span> — <span class="t" c="我吃面包（日常现在时无需助词）。" f="Je mange du pain (le présent par défaut ne nécessite aucun modal)." r="moi manger du pain (le présent par défaut ne nécessiter aucun modal).">I eat bread (standard present requires no modal auxiliary).</span>
+        </div>
+
+        <div class="example">
+          <div class="label"><span class="t" c="复合过去时（a fait）" f="Passé composé (a fait)" r="Passé composé (a fait)">Passé Composé (a fait)</span></div>
+          <span class="highlight">moi a fait manger du pain.</span> — <span class="t" c="我吃了面包（法语：J'ai mangé du pain）。" f="J'ai mangé du pain." r="moi a fait manger du pain.">I ate bread (Standard French: J'ai mangé du pain).</span>
+        </div>
+
+        <div class="example">
+          <div class="label"><span class="t" c="未完成过去时（faisait）" f="Imparfait (faisait)" r="Imparfait (faisait)">Imparfait (faisait)</span></div>
+          <span class="highlight">moi faisait lire un livre quand lui entrer.</span> — <span class="t" c="他进来时我正在看书（法语：Je lisais un livre quand il est entré）。" f="Je lisais un livre quand il est entré." r="moi faisait lire un livre quand lui entrer.">I was reading a book when he came in (Standard French: Je lisais un livre quand il est entré).</span>
+        </div>
+
+        <div class="example">
+          <div class="label"><span class="t" c="简单将来时（fera）" f="Futur simple (fera)" r="Futur simple (fera)">Futur Simple (fera)</span></div>
+          <span class="highlight">nous fera voyager à Paris demain.</span> — <span class="t" c="我们明天将去巴黎旅行（法语：Nous voyagerons à Paris demain）。" f="Nous voyagerons à Paris demain." r="nous fera voyager à Paris demain.">We will travel to Paris tomorrow (Standard French: Nous voyagerons à Paris demain).</span>
+        </div>
+
+        <div class="example">
+          <div class="label"><span class="t" c="条件式现在时（ferait）" f="Conditionnel présent (ferait)" r="Conditionnel présent (ferait)">Conditional Present (ferait)</span></div>
+          <span class="highlight">moi ferait aimer visiter ce musée.</span> — <span class="t" c="我很想参观这个博物馆（法语：J'aimerais visiter ce musée）。" f="J'aimerais visiter ce musée." r="moi ferait aimer visiter ce musée.">I would like to visit this museum (Standard French: J'aimerais visiter ce musée).</span>
+        </div>
+
+        <div class="example">
+          <div class="label"><span class="t" c="虚拟式现在时（fasse）" f="Subjonctif présent (fasse)" r="Subjonctif présent (fasse)">Subjunctive Present (fasse)</span></div>
+          <span class="highlight">il falloir que toi fasse comprendre.</span> — <span class="t" c="你必须理解（法语：Il faut que tu comprennes）。" f="Il faut que tu comprennes." r="il falloir que toi fasse comprendre.">You must understand (Standard French: Il faut que tu comprennes).</span>
+        </div>
+
+        <div class="example">
+          <div class="label"><span class="t" c="被动语态（est fait）" f="Voix passive (est fait)" r="Voix passif (est fait)">Passive Voice (est fait)</span></div>
+          <span class="highlight">le lettre est fait écrire par Pierre.</span> — <span class="t" c="信是皮埃尔写的（法语：La lettre est écrite par Pierre）。" f="La lettre est écrite par Pierre." r="le lettre est fait écrire par Pierre.">The letter is written by Pierre (Standard French: La lettre est écrite par Pierre).</span>
+        </div>
+
+        <div class="example">
+          <div class="label"><span class="t" c="代词/自法语态（se fait）" f="Voix pronominale (se fait)" r="Voix pronominal (se fait)">Pronominal Voice (se fait)</span></div>
+          <span class="highlight">lui se fait lever tôt chaque matin.</span> — <span class="t" c="他每天早上起得很早（法语：Il se lève tôt chaque matin）。" f="Il se lève tôt chaque matin." r="lui se fait lever tôt chaque matin.">He gets up early every morning (Standard French: Il se lève tôt chaque matin).</span>
+        </div>
+      </div>
+
+      <!-- ===== CHAPTER 6: LETTERS AND PRONUNCIATION (SCHEMA) ===== -->
+      <a name="schema" id="schema"></a>
+      <div class="section">
+        <h2><span class="t" c="6. 字母与发音（方案）" f="6. Lettres et Prononciation (Schémas)" r="6. Lettre et Prononciation (Schéma)">6. Letters and Pronunciation (Schemas)</span></h2>
         <p>
           <span class="t"
             c="Franstant 使用标准法语字母表（26个拉丁字母），发音规则基本沿用法语。但由于取消了省音（élision），在词与词之间可能会出现元音相连的情况（如 le homme），此时每个音节独立发音。这与标准法语存在差异，是 Franstant 的特色之一。"
@@ -679,9 +1207,9 @@
         </p>
       </div>
 
-      <!-- ===== CHAPTER 5: SUMMARY TABLE ===== -->
+      <!-- ===== CHAPTER 7: SUMMARY TABLE ===== -->
       <div class="section">
-        <h2><span class="t" c="5. 规则总结" f="5. Résumé des Règles" r="5. Résumé de les Règle">5. Rules Summary</span></h2>
+        <h2><span class="t" c="7. 规则总结" f="7. Résumé des Règles" r="7. Résumé de les Règle">7. Rules Summary</span></h2>
         <table class="rule-table">
           <tr>
             <th><span class="t" c="类别" f="Catégorie" r="Catégorie">Category</span></th>
@@ -689,9 +1217,9 @@
             <th>Franstant</th>
           </tr>
           <tr>
-            <td><span class="t" c="动词" f="Verbes" r="Verbe">Verbs</span></td>
-            <td><i>mange, mangera, mangeait</i></td>
-            <td>manger, passé manger, futur manger</td>
+            <td><span class="t" c="动词时态/语态" f="Temps/Voix des Verbes" r="Temps/Voix de les Verbe">Verb Tense/Voice</span></td>
+            <td><i>mange, mangera, mangeait, a mangé, est mangé...</i></td>
+            <td>[faire modal] + infinitif (ex. a fait manger, fera manger, est fait manger)</td>
           </tr>
           <tr>
             <td><span class="t" c="名词/形容词" f="Noms/Adjectifs" r="Nom/Adjectif">Nouns/Adjectives</span></td>
@@ -712,6 +1240,11 @@
             <td><span class="t" c="部分冠词" f="Partitif" r="Partitif">Partitive</span></td>
             <td><i>du, de la, de l'</i></td>
             <td>du</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="数词" f="Nombres" r="Nombre">Numbers</span></td>
+            <td><i>onze..seize, soixante-dix, quatre-vingts, quatre-vingt-dix</i></td>
+            <td>dix un .. dix six, septante, huitante, nonante</td>
           </tr>
           <tr>
             <td><span class="t" c="介词" f="Prépositions" r="Préposition">Prepositions</span></td>
