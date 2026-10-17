@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <!--
   <span class="t" c="" f="" r="">
   </span>
   -->
   <head>
-    <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Franstant — An artificial language built upon French without conjugation — by Jian Huang</title>
     <style>
       body, td {
@@ -196,6 +196,18 @@
         color: #e74c3c;
         font-weight: bold;
       }
+      @media (max-width: 600px) {
+        .content {
+          padding: 12px;
+        }
+        .section {
+          padding: 20px 16px;
+        }
+        .rule-table, .phonetics-table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
     </style>
     <script>
       var currentLang = 'e';
@@ -205,7 +217,7 @@
         var elements = document.getElementsByClassName("t");
         for (var position = 0; position < elements.length; position++) {
           var element = elements[position];
-          if (!element.getAttribute("e")) {
+          if (!element.hasAttribute("e")) {
             element.setAttribute("e", element.innerHTML);
           }
         }
@@ -224,16 +236,24 @@
         var langBtns = document.getElementsByClassName("lang-btn");
         for (var i = 0; i < langBtns.length; i++) {
           langBtns[i].classList.remove("active");
+          langBtns[i].setAttribute("aria-pressed", "false");
         }
         var activeLangBtn = document.getElementById("btn-lang-" + currentLang);
-        if (activeLangBtn) activeLangBtn.classList.add("active");
+        if (activeLangBtn) {
+          activeLangBtn.classList.add("active");
+          activeLangBtn.setAttribute("aria-pressed", "true");
+        }
 
         var chBtns = document.getElementsByClassName("ch-btn");
         for (var i = 0; i < chBtns.length; i++) {
           chBtns[i].classList.remove("active");
+          chBtns[i].removeAttribute("aria-current");
         }
         var activeChBtn = document.getElementById("btn-ch-" + currentChapter);
-        if (activeChBtn) activeChBtn.classList.add("active");
+        if (activeChBtn) {
+          activeChBtn.classList.add("active");
+          activeChBtn.setAttribute("aria-current", "location");
+        }
       }
 
       function updateHash() {
@@ -247,6 +267,7 @@
         if (updateUrl === undefined) updateUrl = true;
         currentLang = language;
         renderLang(currentLang);
+        document.documentElement.lang = { e: 'en', c: 'zh-Hans', f: 'fr', r: 'art' }[currentLang];
         updateActiveButtons();
         if (updateUrl) {
           goToChapter(currentChapter, false);
@@ -261,7 +282,9 @@
         var elem = document.getElementById('ch' + chapterNum);
         if (elem) {
           elem.style.scrollMarginTop = (document.querySelector('.lang-bar').offsetHeight + 16) + 'px';
-          elem.scrollIntoView({ behavior: 'smooth' });
+          elem.scrollIntoView({
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'
+          });
         }
         if (updateUrl) {
           updateHash();
@@ -279,20 +302,25 @@
           var p = parts[i].trim().toLowerCase();
           if (['e', 'c', 'f', 'r'].indexOf(p) !== -1) {
             result.lang = p;
-          } else if (/^[1-7]$/.test(p)) {
-            result.chapter = parseInt(p, 10);
+          } else if (/^(ch)?[1-7]$/.test(p)) {
+            result.chapter = parseInt(p.replace(/^ch/, ''), 10);
           } else if (p === 'schema') {
             result.chapter = 6;
           }
         }
-        return result;
+        return result.lang || result.chapter ? result : null;
       }
 
       function applyFromHash(shouldScroll) {
         var parsed = parseHash(window.location.hash);
-        if (parsed) {
+        if (!window.location.hash) {
+          currentLang = 'e';
+          currentChapter = 1;
+        } else if (parsed) {
           if (parsed.lang) currentLang = parsed.lang;
           if (parsed.chapter) currentChapter = parsed.chapter;
+        } else {
+          return;
         }
         setLang(currentLang, false);
         if (shouldScroll && currentChapter) {
@@ -301,18 +329,9 @@
       }
 
       function onLoad() {
-        var elements = document.getElementsByClassName("t");
-        for (var position = 0; position < elements.length; position++) {
-          var element = elements[position];
-          if (!element.getAttribute("e")) {
-            element.setAttribute("e", element.innerHTML);
-          }
-        }
-
+        setLang('e', false);
         if (window.location.hash) {
           applyFromHash(true);
-        } else {
-          setLang('e', false);
         }
       }
 
@@ -552,10 +571,10 @@
         <div class="example">
           <div class="label"><span class="t" c="示例" f="Exemples" r="Exemple">Examples</span></div>
           <span class="t"
-            c="我不吃。Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;他过去没来。Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas fit venir.&lt;br/&gt;你不会走。Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas fera partir."
-            f="Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas fit venir.&lt;br/&gt;Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas fera partir."
-            r="Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas fit venir.&lt;br/&gt;Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas fera partir."
-            >Je ne mange pas. <span class="arrow">→</span> moi ne pas manger.<br/>Il n'est pas venu. <span class="arrow">→</span> lui ne pas fit venir.<br/>Tu ne partiras pas. <span class="arrow">→</span> toi ne pas fera partir.</span>
+            c="我不吃。Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;他没来。Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas a fait venir.&lt;br/&gt;你不会走。Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas fera partir."
+            f="Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas a fait venir.&lt;br/&gt;Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas fera partir."
+            r="Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas a fait venir.&lt;br/&gt;Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas fera partir."
+            >Je ne mange pas. <span class="arrow">→</span> moi ne pas manger.<br/>Il n'est pas venu. <span class="arrow">→</span> lui ne pas a fait venir.<br/>Tu ne partiras pas. <span class="arrow">→</span> toi ne pas fera partir.</span>
         </div>
 
         <!-- 2.7 Adjectives -->
@@ -596,7 +615,7 @@
           <tr><td>au restaurant</td><td>à le restaurant</td></tr>
           <tr><td>aux États-Unis</td><td>à les État-Uni</td></tr>
           <tr><td>du pain (of the bread)</td><td>de le pain</td></tr>
-          <tr><td>d'eau</td><td>de le eau</td></tr>
+          <tr><td>d'eau</td><td>de eau</td></tr>
         </table>
 
         <!-- 2.9 Questions -->
@@ -629,7 +648,7 @@
         <div class="example">
           <div class="label"><span class="t" c="示例" f="Exemples" r="Exemple">Examples</span></div>
           <span class="t"
-            c="这本书被阅读了。Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre est fait lire.&lt;br/&gt;房子被他父亲建造了。La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison a fait est fait construire par son père."
+            c="这本书被阅读。Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre est fait lire.&lt;br/&gt;房子被他父亲建造了。La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison a fait est fait construire par son père."
             f="Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre est fait lire.&lt;br/&gt;La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison a fait est fait construire par son père."
             r="Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre est fait lire.&lt;br/&gt;La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison a fait est fait construire par son père."
             >Le livre est lu. <span class="arrow">→</span> le livre est fait lire.<br/>La maison a été construite par son père. <span class="arrow">→</span> le maison a fait est fait construire par son père.</span>
@@ -647,7 +666,7 @@
         <div class="example">
           <div class="label"><span class="t" c="示例" f="Exemples" r="Exemple">Examples</span></div>
           <span class="t"
-            c="我洗澡。Je me lave. &lt;span class='arrow'&gt;→&lt;/span&gt; moi se laver.&lt;br/&gt;他们在那里定居。Ils se trouvent là-bas. &lt;span class='arrow'&gt;→&lt;/span&gt; eux se trouver là."
+            c="我洗澡。Je me lave. &lt;span class='arrow'&gt;→&lt;/span&gt; moi se laver.&lt;br/&gt;他们在那里。Ils se trouvent là-bas. &lt;span class='arrow'&gt;→&lt;/span&gt; eux se trouver là."
             f="Je me lave. &lt;span class='arrow'&gt;→&lt;/span&gt; moi se laver.&lt;br/&gt;Ils se trouvent là-bas. &lt;span class='arrow'&gt;→&lt;/span&gt; eux se trouver là."
             r="Je me lave. &lt;span class='arrow'&gt;→&lt;/span&gt; moi se laver.&lt;br/&gt;Ils se trouvent là-bas. &lt;span class='arrow'&gt;→&lt;/span&gt; eux se trouver là."
             >Je me lave. <span class="arrow">→</span> moi se laver.<br/>Ils se trouvent là-bas. <span class="arrow">→</span> eux se trouver là.</span>
@@ -709,7 +728,7 @@
             <span class="t"
               c="耶和华降临，要看看世人所建造的城和塔。"
               f="L'Éternel descendit pour voir la ville et la tour que bâtissaient les fils des hommes."
-              r="Le Éternel fit descendre pour voir le ville et le tour que les fil de les homme faisait bâtir."
+              r="Le Éternel fit descendre pour voir le ville et le tour que les fils de les homme faisait bâtir."
               >And the LORD came down to see the city and the tower, which the children of man had built.</span>
           </div>
           <div class="verse"><span class="verse-num">6</span>
@@ -862,10 +881,10 @@
         <h3><span class="t" c="4.3 复合数词与大数" f="4.3 Nombres Composés et Grands Nombres" r="4.3 Nombre Composer et Grand Nombre">4.3 Compound Numbers and Large Numbers</span></h3>
         <p>
           <span class="t"
-            c="所有复合数词一律直接用空格相连，取消标准法语中繁复的连字符以及 'et un'（如 vingt et un 变成 &lt;b&gt;vingt un&lt;/b&gt;）。大数单位（cent, mille, million, milliard）保持恒常，永不添加复数 -s："
-            f="Tous les nombres composés sont reliés par un simple espace, sans les traits d'union ni le « et un » du français standard (ex. : « vingt et un » devient &lt;b&gt;vingt un&lt;/b&gt;). Les unités de grands nombres (cent, mille, million, milliard) restent invariables et ne prennent jamais de -s :"
-            r="Tout les nombre composer être relier par un simple espace, sans les trait de union ni le « et un » de le français standard (ex. : « vingt et un » devenir &lt;b&gt;vingt un&lt;/b&gt;). Les unité de grand nombre (cent, mille, million, milliard) rester invariable et ne prendre jamais de -s :"
-            >All compound numbers are written with a simple space between words, removing the cumbersome hyphens and "et un" of standard French (e.g., "vingt et un" becomes <b>vingt un</b>). Large numerical units (cent, mille, million, milliard) remain invariable and never take a plural -s:</span>
+            c="所有复合数词一律直接用空格相连，取消标准法语中繁复的连字符以及 'et'（如 vingt et un 变成 &lt;b&gt;vingt un&lt;/b&gt;）。大数单位（cent, mille, million, milliard）保持恒常，永不添加复数 -s："
+            f="Tous les nombres composés sont reliés par un simple espace, sans les traits d'union ni le « et » du français standard (ex. : « vingt et un » devient &lt;b&gt;vingt un&lt;/b&gt;). Les unités de grands nombres (cent, mille, million, milliard) restent invariables et ne prennent jamais de -s :"
+            r="Tout les nombre composer être relier par un simple espace, sans les trait de union ni le « et » de le français standard (ex. : « vingt et un » devenir &lt;b&gt;vingt un&lt;/b&gt;). Les unité de grand nombre (cent, mille, million, milliard) rester invariable et ne prendre jamais de -s :"
+            >All compound numbers are written with a simple space between words, removing the cumbersome hyphens and "et" of standard French (e.g., "vingt et un" becomes <b>vingt un</b>). Large numerical units (cent, mille, million, milliard) remain invariable and never take a plural -s:</span>
         </p>
         <table class="rule-table">
           <tr>
@@ -900,7 +919,7 @@
         </div>
         <div class="example">
           <div class="label"><span class="t" c="例句 3" f="Exemple 3" r="Exemple 3">Example 3</span></div>
-          <span class="highlight">lui avoir huitante quatre an.</span> — <span class="t" c="他/她84岁（标准法语：Il/Elle a quatre-vingt-quatre ans）。" f="Il/Elle a quatre-vingt-quatre ans." r="lui avoir huitante quatre an.">He/She is 84 years old (Standard French: Il/Elle a quatre-vingt-quatre ans).</span>
+          <span class="highlight">lui avoir huitante quatre an.</span> — <span class="t" c="他84岁（标准法语：Il a quatre-vingt-quatre ans）。" f="Il a quatre-vingt-quatre ans." r="lui avoir huitante quatre an.">He is 84 years old (Standard French: Il a quatre-vingt-quatre ans).</span>
         </div>
         <div class="example">
           <div class="label"><span class="t" c="例句 4" f="Exemple 4" r="Exemple 4">Example 4</span></div>
@@ -1079,7 +1098,7 @@
           <tr>
             <td>gér. passé</td>
             <td><b>en ayant fait</b></td>
-            <td>[ɑ̃najɑ̃fɛ]</td>
+            <td>[ɑ̃.ajɑ̃.fɛ]</td>
             <td>—</td>
             <td><span class="t" c="副动词过去时" f="Gérondif passé" r="Gérondif passé">Gerund past</span></td>
           </tr>
@@ -1145,7 +1164,7 @@
         </div>
 
         <div class="example">
-          <div class="label"><span class="t" c="代词/自法语态（se fait）" f="Voix pronominale (se fait)" r="Voix pronominal (se fait)">Pronominal Voice (se fait)</span></div>
+          <div class="label"><span class="t" c="代词/自反语态（se fait）" f="Voix pronominale (se fait)" r="Voix pronominal (se fait)">Pronominal Voice (se fait)</span></div>
           <span class="highlight">lui se fait lever tôt chaque matin.</span> — <span class="t" c="他每天早上起得很早（法语：Il se lève tôt chaque matin）。" f="Il se lève tôt chaque matin." r="lui se fait lever tôt chaque matin.">He gets up early every morning (Standard French: Il se lève tôt chaque matin).</span>
         </div>
       </div>
@@ -1196,10 +1215,10 @@
         <h3><span class="t" c="与标准法语的差异" f="Différences avec le Français Standard" r="Différence avec le Français Standard">Differences from Standard French</span></h3>
         <p>
           <span class="t"
-            c="在标准法语中，当一个以元音结尾的词遇到以元音开头的词时，会发生省音（如 l'homme, d'eau）和联诵（如 les amis 读作 [le.za.mi]）。在 Franstant 中，这些现象不存在。每个词都独立发音：le homme 读作 [lə.ɔm]，de le eau 读作 [də.lə.o]。虽然这会产生元音相连的情况，但这是 Franstant 的有意设计，保证了词语边界的清晰。"
-            f="En français standard, quand un mot finissant par une voyelle rencontre un mot commençant par une voyelle, il y a élision (comme l'homme, d'eau) et liaison (comme les amis prononcé [le.za.mi]). En Franstant, ces phénomènes n'existent pas. Chaque mot est prononcé indépendamment : « le homme » se prononce [lə.ɔm], « de le eau » se prononce [də.lə.o]. Bien que cela crée des hiatus, c'est un choix délibéré du Franstant pour garantir la clarté des frontières entre les mots."
-            r="En français standard, quand un mot finir par un voyelle rencontrer un mot commencer par un voyelle, il y avoir élision (comme l'homme, d'eau) et liaison (comme les amis prononcer [le.za.mi]). En Franstant, ces phénomène ne exister pas. Chaque mot être prononcer indépendamment : « le homme » se prononcer [lə.ɔm], « de le eau » se prononcer [də.lə.o]. Bien que ce créer des hiatus, ce être un choix délibéré de le Franstant pour garantir le clarté de les frontière entre les mot."
-            >In standard French, when a word ending in a vowel meets a word beginning with a vowel, elision occurs (like l'homme, d'eau) and liaison happens (like les amis pronounced [le.za.mi]). In Franstant, these phenomena do not exist. Each word is pronounced independently: "le homme" is pronounced [lə.ɔm], "de le eau" is pronounced [də.lə.o]. While this creates hiatus, it is a deliberate design choice of Franstant to ensure clear word boundaries.</span>
+            c="在标准法语中，省音指某些词的词尾元音在后接元音开头的词时省略（如 l'homme, d'eau）；联诵指通常不发音的词尾辅音在后接元音时发音（如 les amis 读作 [le.za.mi]）。在 Franstant 中，这些现象不存在。每个词都独立发音：le homme 读作 [lə.ɔm]，de eau 读作 [də.o]。虽然这会产生元音相连的情况，但这是 Franstant 的有意设计，保证了词语边界的清晰。"
+            f="En français standard, l'élision supprime la voyelle finale de certains mots devant une voyelle (comme l'homme, d'eau) ; la liaison fait prononcer une consonne finale normalement muette devant une voyelle (comme les amis prononcé [le.za.mi]). En Franstant, ces phénomènes n'existent pas. Chaque mot est prononcé indépendamment : « le homme » se prononce [lə.ɔm], « de eau » se prononce [də.o]. Bien que cela crée des hiatus, c'est un choix délibéré du Franstant pour garantir la clarté des frontières entre les mots."
+            r="En français standard, le élision supprimer le voyelle final de certain mot devant un voyelle (comme l'homme, d'eau) ; le liaison faire prononcer un consonne final normalement muet devant un voyelle (comme les amis prononcer [le.za.mi]). En Franstant, ces phénomène ne pas exister. Chaque mot être prononcer indépendamment : « le homme » se prononcer [lə.ɔm], « de eau » se prononcer [də.o]. Bien que ce créer des hiatus, ce être un choix délibéré de le Franstant pour garantir le clarté de les frontière entre les mot."
+            >In standard French, elision drops the final vowel of certain words before a vowel (as in l'homme, d'eau); liaison pronounces a normally silent final consonant before a vowel (as in les amis, pronounced [le.za.mi]). In Franstant, these phenomena do not exist. Each word is pronounced independently: "le homme" is pronounced [lə.ɔm], "de eau" is pronounced [də.o]. While this creates hiatus, it is a deliberate design choice of Franstant to ensure clear word boundaries.</span>
         </p>
       </div>
 
@@ -1280,7 +1299,7 @@
           <tr>
             <td><span class="t" c="省音" f="Élision" r="Élision">Elision</span></td>
             <td><i>l'année, d'eau</i></td>
-            <td>le année, de le eau (<span class="t" c="无省音" f="pas d'élision" r="pas de élision">no elision</span>)</td>
+            <td>le année, de eau (<span class="t" c="无省音" f="pas d'élision" r="pas de élision">no elision</span>)</td>
           </tr>
         </table>
       </div>
