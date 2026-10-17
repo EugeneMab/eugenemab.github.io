@@ -43,13 +43,18 @@
         top: 0;
         z-index: 100;
         box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
       }
       .lang-btn {
         background: transparent;
         border: 2px solid rgba(255,255,255,0.6);
         color: white;
         padding: 8px 24px;
-        margin: 0 8px;
+        margin: 0 4px;
         border-radius: 25px;
         font-size: 18px;
         cursor: pointer;
@@ -59,6 +64,41 @@
       .lang-btn:hover {
         background: rgba(255,255,255,0.2);
         border-color: white;
+      }
+      .lang-btn.active {
+        background: white;
+        color: #1a5276;
+        border-color: white;
+        font-weight: bold;
+      }
+      .nav-divider {
+        display: inline-block;
+        width: 1px;
+        height: 26px;
+        background: rgba(255,255,255,0.35);
+        margin: 0 8px;
+      }
+      .ch-btn {
+        background: rgba(255,255,255,0.1);
+        border: 2px solid rgba(255,255,255,0.5);
+        color: white;
+        padding: 6px 14px;
+        margin: 0 3px;
+        border-radius: 20px;
+        font-size: 17px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: inherit;
+      }
+      .ch-btn:hover {
+        background: rgba(255,255,255,0.25);
+        border-color: white;
+      }
+      .ch-btn.active {
+        background: #f39c12;
+        border-color: #f39c12;
+        color: white;
       }
       .content {
         padding: 20px 40px;
@@ -70,6 +110,7 @@
         margin: 25px 0;
         box-shadow: 0 2px 12px rgba(0,0,0,0.08);
         border-left: 5px solid #2980b9;
+        scroll-margin-top: 80px;
       }
       .section h2 {
         color: #1a5276;
@@ -157,7 +198,11 @@
       }
     </style>
     <script>
-      function setLang(language) {
+      var currentLang = 'e';
+      var currentChapter = 1;
+      var isUpdatingHash = false;
+
+      function renderLang(language) {
         var elements = document.getElementsByClassName("t");
         for (var position = 0; position < elements.length; position++) {
           var element = elements[position];
@@ -175,13 +220,109 @@
           }
         }
       }
-      function onLoad() {
-        var currentUrl = window.location.href;
-        if (!currentUrl) return;
-        if (currentUrl.endsWith("#c")) setLang("c");
-        else if (currentUrl.endsWith("#f")) setLang("f");
-        else if (currentUrl.endsWith("#r")) setLang("r");
+
+      function updateActiveButtons() {
+        var langBtns = document.getElementsByClassName("lang-btn");
+        for (var i = 0; i < langBtns.length; i++) {
+          langBtns[i].classList.remove("active");
+        }
+        var activeLangBtn = document.getElementById("btn-lang-" + currentLang);
+        if (activeLangBtn) activeLangBtn.classList.add("active");
+
+        var chBtns = document.getElementsByClassName("ch-btn");
+        for (var i = 0; i < chBtns.length; i++) {
+          chBtns[i].classList.remove("active");
+        }
+        var activeChBtn = document.getElementById("btn-ch-" + currentChapter);
+        if (activeChBtn) activeChBtn.classList.add("active");
       }
+
+      function updateHash() {
+        isUpdatingHash = true;
+        window.location.hash = '#' + currentLang + ',' + currentChapter;
+        setTimeout(function() {
+          isUpdatingHash = false;
+        }, 50);
+      }
+
+      function setLang(language, updateUrl) {
+        if (updateUrl === undefined) updateUrl = true;
+        currentLang = language;
+        renderLang(currentLang);
+        updateActiveButtons();
+        if (updateUrl) {
+          updateHash();
+        }
+      }
+
+      function goToChapter(chapterNum, updateUrl) {
+        if (updateUrl === undefined) updateUrl = true;
+        currentChapter = chapterNum;
+        updateActiveButtons();
+        var elem = document.getElementById('ch' + chapterNum);
+        if (elem) {
+          elem.scrollIntoView({ behavior: 'smooth' });
+        }
+        if (updateUrl) {
+          updateHash();
+        }
+      }
+
+      function parseHash(hash) {
+        if (!hash) return null;
+        var clean = hash.replace(/^#/, '').trim();
+        if (!clean) return null;
+
+        var result = { lang: null, chapter: null };
+        var parts = clean.split(',');
+        for (var i = 0; i < parts.length; i++) {
+          var p = parts[i].trim().toLowerCase();
+          if (['e', 'c', 'f', 'r'].indexOf(p) !== -1) {
+            result.lang = p;
+          } else if (/^[1-7]$/.test(p)) {
+            result.chapter = parseInt(p, 10);
+          } else if (p === 'schema') {
+            result.chapter = 6;
+          }
+        }
+        return result;
+      }
+
+      function applyFromHash(shouldScroll) {
+        var parsed = parseHash(window.location.hash);
+        if (parsed) {
+          if (parsed.lang) currentLang = parsed.lang;
+          if (parsed.chapter) currentChapter = parsed.chapter;
+        }
+        setLang(currentLang, false);
+        if (shouldScroll && currentChapter) {
+          var elem = document.getElementById('ch' + currentChapter);
+          if (elem) {
+            elem.scrollIntoView({ behavior: 'smooth' });
+          }
+        }
+      }
+
+      function onLoad() {
+        var elements = document.getElementsByClassName("t");
+        for (var position = 0; position < elements.length; position++) {
+          var element = elements[position];
+          if (!element.getAttribute("e")) {
+            element.setAttribute("e", element.innerHTML);
+          }
+        }
+
+        if (window.location.hash) {
+          applyFromHash(true);
+        } else {
+          setLang('e', false);
+        }
+      }
+
+      window.addEventListener('hashchange', function() {
+        if (isUpdatingHash) return;
+        applyFromHash(true);
+      });
     </script>
   </head>
   <body onload="onLoad()">
@@ -204,16 +345,24 @@
     </div>
 
     <div class="lang-bar">
-      <button class="lang-btn" onclick="setLang('e')">English</button>
-      <button class="lang-btn" onclick="setLang('c')">中文</button>
-      <button class="lang-btn" onclick="setLang('f')">Français</button>
-      <button class="lang-btn" onclick="setLang('r')">Franstant</button>
+      <button class="lang-btn" id="btn-lang-e" onclick="setLang('e')">English</button>
+      <button class="lang-btn" id="btn-lang-c" onclick="setLang('c')">中文</button>
+      <button class="lang-btn" id="btn-lang-f" onclick="setLang('f')">Français</button>
+      <button class="lang-btn" id="btn-lang-r" onclick="setLang('r')">Franstant</button>
+      <span class="nav-divider"></span>
+      <button class="ch-btn" id="btn-ch-1" onclick="goToChapter(1)" title="Chapter 1: Introduction">1</button>
+      <button class="ch-btn" id="btn-ch-2" onclick="goToChapter(2)" title="Chapter 2: Detailed Rules and Examples">2</button>
+      <button class="ch-btn" id="btn-ch-3" onclick="goToChapter(3)" title="Chapter 3: Sample Passages">3</button>
+      <button class="ch-btn" id="btn-ch-4" onclick="goToChapter(4)" title="Chapter 4: Numbers">4</button>
+      <button class="ch-btn" id="btn-ch-5" onclick="goToChapter(5)" title="Chapter 5: Verb Tense and Voice">5</button>
+      <button class="ch-btn" id="btn-ch-6" onclick="goToChapter(6)" title="Chapter 6: Letters and Pronunciation (Schema)">6</button>
+      <button class="ch-btn" id="btn-ch-7" onclick="goToChapter(7)" title="Chapter 7: Rules Summary">7</button>
     </div>
 
     <div class="content">
 
       <!-- ===== CHAPTER 1: INTRODUCTION ===== -->
-      <div class="section">
+      <div class="section" id="ch1">
         <h2><span class="t" c="1. 概述" f="1. Introduction" r="1. Introduction">1. Introduction</span></h2>
         <p>
           <span class="t"
@@ -231,15 +380,15 @@
         </p>
         <p>
           <span class="t"
-            c="&lt;b&gt;1. 动词恒常：&lt;/b&gt;动词始终使用不定式。时态通过助词表达（passé = 过去，futur = 未来，être = 进行）。&lt;br/&gt;&lt;b&gt;2. 名词恒常：&lt;/b&gt;名词固定为阳性单数基本形式。复数仅靠冠词区分。&lt;br/&gt;&lt;b&gt;3. 无缩合：&lt;/b&gt;取消一切省略号和缩合形式，所有词汇完整书写。&lt;br/&gt;&lt;b&gt;4. 语序固定：&lt;/b&gt;严格遵循主-谓-宾语序。形容词一律后置。&lt;br/&gt;&lt;b&gt;5. 否定不分裂：&lt;/b&gt;ne pas 作为整体出现在动词前。&lt;br/&gt;&lt;b&gt;6. 发音适应拼写：&lt;/b&gt;发音跟随新拼写规则，不做省音。"
-            f="&lt;b&gt;1. Verbes constants :&lt;/b&gt; Les verbes restent toujours à l'infinitif. Le temps est exprimé par des marqueurs (passé, futur, être).&lt;br/&gt;&lt;b&gt;2. Noms constants :&lt;/b&gt; Les noms restent au masculin singulier de base. Le pluriel est indiqué uniquement par l'article.&lt;br/&gt;&lt;b&gt;3. Pas de contractions :&lt;/b&gt; Toutes les élisions et contractions sont supprimées. Chaque mot est écrit en entier.&lt;br/&gt;&lt;b&gt;4. Ordre fixe :&lt;/b&gt; Ordre strict Sujet-Verbe-Objet. Les adjectifs sont toujours placés après le nom.&lt;br/&gt;&lt;b&gt;5. Négation non séparée :&lt;/b&gt; « ne pas » apparaît ensemble avant le verbe.&lt;br/&gt;&lt;b&gt;6. Prononciation adaptée :&lt;/b&gt; La prononciation suit la nouvelle orthographe sans élision."
-            r="&lt;b&gt;1. Verbe constant :&lt;/b&gt; Les verbe rester toujours à le infinitif. Le temps être exprimer par des marqueur (passé, futur, être).&lt;br/&gt;&lt;b&gt;2. Nom constant :&lt;/b&gt; Les nom rester à le masculin singulier de base. Le pluriel être indiquer uniquement par le article.&lt;br/&gt;&lt;b&gt;3. Pas de contraction :&lt;/b&gt; Tout les élision et contraction être supprimer. Chaque mot être écrire en entier.&lt;br/&gt;&lt;b&gt;4. Ordre fixe :&lt;/b&gt; Ordre strict Sujet-Verbe-Objet. Les adjectif être toujours placer après le nom.&lt;br/&gt;&lt;b&gt;5. Négation non séparer :&lt;/b&gt; « ne pas » apparaître ensemble avant le verbe.&lt;br/&gt;&lt;b&gt;6. Prononciation adapter :&lt;/b&gt; Le prononciation suivre le nouveau orthographe sans élision."
-            ><b>1. Constant verbs:</b> Verbs always remain in the infinitive. Tense is expressed through markers (passé = past, futur = future, être = continuous).<br/><b>2. Constant nouns:</b> Nouns stay in the base masculine singular form. Plurality is indicated only by the article.<br/><b>3. No contractions:</b> All elisions and contractions are removed. Every word is written in full.<br/><b>4. Fixed word order:</b> Strict Subject-Verb-Object order. Adjectives are always placed after the noun.<br/><b>5. Unsplit negation:</b> "ne pas" appears together before the verb.<br/><b>6. Pronunciation adapts to spelling:</b> Pronunciation follows the new spelling without elision.</span>
+            c="&lt;b&gt;1. 动词恒常：&lt;/b&gt;动词始终使用不定式。时态通过情态词表达（fit / a fait = 过去，fera = 未来，être = 进行，详见第5章）。&lt;br/&gt;&lt;b&gt;2. 名词恒常：&lt;/b&gt;名词固定为阳性单数基本形式。复数仅靠冠词区分。&lt;br/&gt;&lt;b&gt;3. 无缩合：&lt;/b&gt;取消一切省略号和缩合形式，所有词汇完整书写。&lt;br/&gt;&lt;b&gt;4. 语序固定：&lt;/b&gt;严格遵循主-谓-宾语序。形容词一律后置。&lt;br/&gt;&lt;b&gt;5. 否定不分裂：&lt;/b&gt;ne pas 作为整体出现在动词前。&lt;br/&gt;&lt;b&gt;6. 发音适应拼写：&lt;/b&gt;发音跟随新拼写规则，不做省音。"
+            f="&lt;b&gt;1. Verbes constants :&lt;/b&gt; Les verbes restent toujours à l'infinitif. Le temps est exprimé par des mots modaux (fit / a fait = passé, fera = futur, être = continu ; voir chap. 5).&lt;br/&gt;&lt;b&gt;2. Noms constants :&lt;/b&gt; Les noms restent au masculin singulier de base. Le pluriel est indiqué uniquement par l'article.&lt;br/&gt;&lt;b&gt;3. Pas de contractions :&lt;/b&gt; Toutes les élisions et contractions sont supprimées. Chaque mot est écrit en entier.&lt;br/&gt;&lt;b&gt;4. Ordre fixe :&lt;/b&gt; Ordre strict Sujet-Verbe-Objet. Les adjectifs sont toujours placés après le nom.&lt;br/&gt;&lt;b&gt;5. Négation non séparée :&lt;/b&gt; « ne pas » apparaît ensemble avant le verbe.&lt;br/&gt;&lt;b&gt;6. Prononciation adaptée :&lt;/b&gt; La prononciation suit la nouvelle orthographe sans élision."
+            r="&lt;b&gt;1. Verbe constant :&lt;/b&gt; Les verbe rester toujours à le infinitif. Le temps être exprimer par des mot modal (fit / a fait = passé, fera = futur, être = continu ; voir chap. 5).&lt;br/&gt;&lt;b&gt;2. Nom constant :&lt;/b&gt; Les nom rester à le masculin singulier de base. Le pluriel être indiquer uniquement par le article.&lt;br/&gt;&lt;b&gt;3. Pas de contraction :&lt;/b&gt; Tout les élision et contraction être supprimer. Chaque mot être écrire en entier.&lt;br/&gt;&lt;b&gt;4. Ordre fixe :&lt;/b&gt; Ordre strict Sujet-Verbe-Objet. Les adjectif être toujours placer après le nom.&lt;br/&gt;&lt;b&gt;5. Négation non séparer :&lt;/b&gt; « ne pas » apparaître ensemble avant le verbe.&lt;br/&gt;&lt;b&gt;6. Prononciation adapter :&lt;/b&gt; Le prononciation suivre le nouveau orthographe sans élision."
+            ><b>1. Constant verbs:</b> Verbs always remain in the infinitive. Tense is expressed through modal words (fit / a fait = past, fera = future, être = continuous; see Ch. 5).<br/><b>2. Constant nouns:</b> Nouns stay in the base masculine singular form. Plurality is indicated only by the article.<br/><b>3. No contractions:</b> All elisions and contractions are removed. Every word is written in full.<br/><b>4. Fixed word order:</b> Strict Subject-Verb-Object order. Adjectives are always placed after the noun.<br/><b>5. Unsplit negation:</b> "ne pas" appears together before the verb.<br/><b>6. Pronunciation adapts to spelling:</b> Pronunciation follows the new spelling without elision.</span>
         </p>
       </div>
 
       <!-- ===== CHAPTER 2: RULES IN DETAIL ===== -->
-      <div class="section">
+      <div class="section" id="ch2">
         <h2><span class="t" c="2. 详细规则与示例" f="2. Règles Détaillées et Exemples" r="2. Règle Détailler et Exemple">2. Detailed Rules and Examples</span></h2>
 
         <!-- 2.1 Articles -->
@@ -346,32 +495,42 @@
         <h3><span class="t" c="2.5 动词与时态" f="2.5 Verbes et Temps" r="2.5 Verbe et Temps">2.5 Verbs and Tense</span></h3>
         <p>
           <span class="t"
-            c="动词始终使用不定式，不进行任何变位。时态通过在动词前放置助词来表达。"
-            f="Les verbes restent toujours à l'infinitif sans aucune conjugaison. Le temps est exprimé par des marqueurs placés avant le verbe."
-            r="Les verbe rester toujours à le infinitif sans aucun conjugaison. Le temps être exprimer par des marqueur placer avant le verbe."
-            >Verbs always remain in the infinitive without any conjugation. Tense is expressed through markers placed before the verb.</span>
+            c="动词始终使用不定式，不进行任何变位。时态通过 faire 情态助词表达（详见第5章全表）。"
+            f="Les verbes restent toujours à l'infinitif sans aucune conjugaison. Le temps est exprimé par des mots modaux de « faire » (voir chapitre 5 pour le tableau complet)."
+            r="Les verbe rester toujours à le infinitif sans aucun conjugaison. Le temps être exprimer par des mot modal de « faire » (voir chapitre 5 pour le tableau complet)."
+            >Verbs always remain in the infinitive without any conjugation. Tense is expressed through modal words of "faire" (see Chapter 5 for the full table).</span>
         </p>
         <table class="rule-table">
           <tr>
             <th><span class="t" c="时态" f="Temps" r="Temps">Tense</span></th>
-            <th><span class="t" c="助词" f="Marqueur" r="Marqueur">Marker</span></th>
+            <th><span class="t" c="情态词" f="Mot Modal" r="Mot Modal">Modal Word</span></th>
             <th><span class="t" c="标准法语" f="Français Standard" r="Français Standard">Standard French</span></th>
             <th>Franstant</th>
           </tr>
           <tr>
             <td><span class="t" c="现在" f="Présent" r="Présent">Present</span></td>
-            <td><span class="t" c="（无）" f="(aucun)" r="(aucun)">(none)</span></td>
+            <td><span class="t" c="（缺省）" f="(défaut)" r="(défaut)">(default)</span></td>
             <td>Je mange.</td><td>moi manger.</td>
           </tr>
           <tr>
-            <td><span class="t" c="过去" f="Passé" r="Passé">Past</span></td>
-            <td>passé</td>
-            <td>J'ai mangé.</td><td>moi passé manger.</td>
+            <td><span class="t" c="过去（简单过去）" f="Passé (passé simple)" r="Passé (passé simple)">Past (passé simple)</span></td>
+            <td>fit</td>
+            <td>Je mangeai.</td><td>moi fit manger.</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="过去（复合过去）" f="Passé (composé)" r="Passé (composé)">Past (composé)</span></td>
+            <td>a fait</td>
+            <td>J'ai mangé.</td><td>moi a fait manger.</td>
+          </tr>
+          <tr>
+            <td><span class="t" c="未完成过去" f="Imparfait" r="Imparfait">Imperfect</span></td>
+            <td>faisait</td>
+            <td>Je mangeais.</td><td>moi faisait manger.</td>
           </tr>
           <tr>
             <td><span class="t" c="将来" f="Futur" r="Futur">Future</span></td>
-            <td>futur</td>
-            <td>Je mangerai.</td><td>moi futur manger.</td>
+            <td>fera</td>
+            <td>Je mangerai.</td><td>moi fera manger.</td>
           </tr>
           <tr>
             <td><span class="t" c="近将来" f="Futur proche" r="Futur proche">Near Future</span></td>
@@ -389,18 +548,18 @@
         <h3><span class="t" c="2.6 否定" f="2.6 Négation" r="2.6 Négation">2.6 Negation</span></h3>
         <p>
           <span class="t"
-            c="否定词 &lt;b&gt;ne pas&lt;/b&gt; 作为整体放在动词（或时态助词）之前，不拆分。"
-            f="La négation &lt;b&gt;ne pas&lt;/b&gt; est placée comme un bloc avant le verbe (ou le marqueur temporel), sans être séparée."
-            r="Le négation &lt;b&gt;ne pas&lt;/b&gt; être placer comme un bloc avant le verbe (ou le marqueur temporel), sans être séparer."
-            >The negation <b>ne pas</b> is placed as a single block before the verb (or tense marker), without splitting.</span>
+            c="否定词 &lt;b&gt;ne pas&lt;/b&gt; 作为整体放在动词（或情态助词）之前，不拆分。"
+            f="La négation &lt;b&gt;ne pas&lt;/b&gt; est placée comme un bloc avant le verbe (ou le mot modal), sans être séparée."
+            r="Le négation &lt;b&gt;ne pas&lt;/b&gt; être placer comme un bloc avant le verbe (ou le mot modal), sans être séparer."
+            >The negation <b>ne pas</b> is placed as a single block before the verb (or modal word), without splitting.</span>
         </p>
         <div class="example">
           <div class="label"><span class="t" c="示例" f="Exemples" r="Exemple">Examples</span></div>
           <span class="t"
-            c="我不吃。Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;他过去没来。Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas passé venir.&lt;br/&gt;你不会走。Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas futur partir."
-            f="Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas passé venir.&lt;br/&gt;Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas futur partir."
-            r="Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas passé venir.&lt;br/&gt;Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas futur partir."
-            >Je ne mange pas. <span class="arrow">→</span> moi ne pas manger.<br/>Il n'est pas venu. <span class="arrow">→</span> lui ne pas passé venir.<br/>Tu ne partiras pas. <span class="arrow">→</span> toi ne pas futur partir.</span>
+            c="我不吃。Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;他过去没来。Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas fit venir.&lt;br/&gt;你不会走。Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas fera partir."
+            f="Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas fit venir.&lt;br/&gt;Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas fera partir."
+            r="Je ne mange pas. &lt;span class='arrow'&gt;→&lt;/span&gt; moi ne pas manger.&lt;br/&gt;Il n'est pas venu. &lt;span class='arrow'&gt;→&lt;/span&gt; lui ne pas fit venir.&lt;br/&gt;Tu ne partiras pas. &lt;span class='arrow'&gt;→&lt;/span&gt; toi ne pas fera partir."
+            >Je ne mange pas. <span class="arrow">→</span> moi ne pas manger.<br/>Il n'est pas venu. <span class="arrow">→</span> lui ne pas fit venir.<br/>Tu ne partiras pas. <span class="arrow">→</span> toi ne pas fera partir.</span>
         </div>
 
         <!-- 2.7 Adjectives -->
@@ -466,18 +625,18 @@
         <h3><span class="t" c="2.10 被动语态" f="2.10 Voix Passive" r="2.10 Voix Passif">2.10 Passive Voice</span></h3>
         <p>
           <span class="t"
-            c="被动语态用助词 &lt;b&gt;passif&lt;/b&gt; 表示。过去被动使用 &lt;b&gt;passé passif&lt;/b&gt;。"
-            f="La voix passive est exprimée par le marqueur &lt;b&gt;passif&lt;/b&gt;. Le passé passif utilise &lt;b&gt;passé passif&lt;/b&gt;."
-            r="Le voix passif être exprimer par le marqueur &lt;b&gt;passif&lt;/b&gt;. Le passé passif utiliser &lt;b&gt;passé passif&lt;/b&gt;."
-            >The passive voice is expressed by the marker <b>passif</b>. Past passive uses <b>passé passif</b>.</span>
+            c="被动语态用情态词 &lt;b&gt;est fait&lt;/b&gt; 表示（详见第5章）。过去被动使用 &lt;b&gt;fit est fait&lt;/b&gt; 或 &lt;b&gt;a fait est fait&lt;/b&gt;。"
+            f="La voix passive est exprimée par le mot modal &lt;b&gt;est fait&lt;/b&gt; (voir chapitre 5). Le passé passif utilise &lt;b&gt;fit est fait&lt;/b&gt; ou &lt;b&gt;a fait est fait&lt;/b&gt;."
+            r="Le voix passif être exprimer par le mot modal &lt;b&gt;est fait&lt;/b&gt; (voir chapitre 5). Le passé passif utiliser &lt;b&gt;fit est fait&lt;/b&gt; ou &lt;b&gt;a fait est fait&lt;/b&gt;."
+            >The passive voice is expressed by the modal word <b>est fait</b> (see Chapter 5). Past passive uses <b>fit est fait</b> or <b>a fait est fait</b>.</span>
         </p>
         <div class="example">
           <div class="label"><span class="t" c="示例" f="Exemples" r="Exemple">Examples</span></div>
           <span class="t"
-            c="这本书被阅读了。Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre passif lire.&lt;br/&gt;房子被他父亲建造了。La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison passé passif construire par son père."
-            f="Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre passif lire.&lt;br/&gt;La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison passé passif construire par son père."
-            r="Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre passif lire.&lt;br/&gt;La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison passé passif construire par son père."
-            >Le livre est lu. <span class="arrow">→</span> le livre passif lire.<br/>La maison a été construite par son père. <span class="arrow">→</span> le maison passé passif construire par son père.</span>
+            c="这本书被阅读了。Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre est fait lire.&lt;br/&gt;房子被他父亲建造了。La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison a fait est fait construire par son père."
+            f="Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre est fait lire.&lt;br/&gt;La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison a fait est fait construire par son père."
+            r="Le livre est lu. &lt;span class='arrow'&gt;→&lt;/span&gt; le livre est fait lire.&lt;br/&gt;La maison a été construite par son père. &lt;span class='arrow'&gt;→&lt;/span&gt; le maison a fait est fait construire par son père."
+            >Le livre est lu. <span class="arrow">→</span> le livre est fait lire.<br/>La maison a été construite par son père. <span class="arrow">→</span> le maison a fait est fait construire par son père.</span>
         </div>
 
         <!-- 2.11 Reflexive -->
@@ -517,7 +676,7 @@
       </div>
 
       <!-- ===== CHAPTER 3: SAMPLE PASSAGES ===== -->
-      <div class="section">
+      <div class="section" id="ch3">
         <h2><span class="t" c="3. 示例文本" f="3. Passages Exemples" r="3. Passage Exemple">3. Sample Passages</span></h2>
 
         <h3><span class="t" c="巴别塔（创世记 11:1-9）" f="La Tour de Babel (Genèse 11:1-9)" r="Le Tour de Babel (Genèse 11:1-9)">The Tower of Babel (Genesis 11:1-9)</span></h3>
@@ -526,28 +685,28 @@
             <span class="t"
               c="那时，天下人的口音、言语都是一样。"
               f="Toute la terre avait une seule langue et les mêmes mots."
-              r="Tout le terre passé avoir un seul langue et le même mot."
+              r="Tout le terre faisait avoir un seul langue et le même mot."
               >Now the whole earth had one language and the same words.</span>
           </div>
           <div class="verse"><span class="verse-num">2</span>
             <span class="t"
               c="他们往东边迁移的时候，在示拿地遇见一片平原，就住在那里。"
               f="Comme ils étaient partis de l'orient, ils trouvèrent une plaine au pays de Schinear, et ils y habitèrent."
-              r="Comme eux passé partir de le orient, eux passé trouver un plaine à le pays de Schinear, et eux passé habiter là."
+              r="Comme eux avait fait partir de le orient, eux fit trouver un plaine à le pays de Schinear, et eux fit habiter là."
               >As people migrated from the east, they found a plain in the land of Shinar and settled there.</span>
           </div>
           <div class="verse"><span class="verse-num">3</span>
             <span class="t"
               c="他们彼此商量说：'来吧！我们要做砖，把砖烧透了。'他们就拿砖当石头，又拿石漆当灰泥。"
               f="Ils se dirent l'un à l'autre : Allons ! faisons des briques, et cuisons-les au feu. Et la brique leur servit de pierre, et le bitume leur servit de ciment."
-              r="Eux passé dire le un à le autre : Aller ! nous faire des brique, et cuire eux à le feu. Et le brique passé servir à eux de pierre, et le bitume passé servir à eux de ciment."
+              r="Eux fit dire le un à le autre : Aller ! nous faire des brique, et cuire eux à le feu. Et le brique fit servir à eux de pierre, et le bitume fit servir à eux de ciment."
               >And they said to one another, "Come, let us make bricks, and burn them thoroughly." And they had brick for stone, and bitumen for mortar.</span>
           </div>
           <div class="verse"><span class="verse-num">4</span>
             <span class="t"
               c="他们说：'来吧！我们要建造一座城和一座塔，塔顶通天，为要传扬我们的名，免得我们分散在全地上。'"
               f="Ils dirent encore : Allons ! bâtissons-nous une ville et une tour dont le sommet touche au ciel, et faisons-nous un nom, afin que nous ne soyons pas dispersés sur la face de toute la terre."
-              r="Eux passé dire encore : Aller ! nous bâtir un ville et un tour dont le sommet toucher à le ciel, et nous faire un nom, afin que nous ne pas être disperser sur le face de tout le terre."
+              r="Eux fit dire encore : Aller ! nous bâtir un ville et un tour dont le sommet toucher à le ciel, et nous faire un nom, afin que nous ne pas être disperser sur le face de tout le terre."
               >Then they said, "Come, let us build ourselves a city and a tower with its top in the heavens, and let us make a name for ourselves, lest we be dispersed over the face of the whole earth."</span>
           </div>
           <div class="verse"><span class="verse-num">5</span>
