@@ -47,8 +47,12 @@ Tools Used: Gemini, GitHub Copilot
 ### Launching
 
 1. Open a terminal in the project directory.
-2. Run `start.cmd` (optionally provide a folder path: `start.cmd "C:\path\to\data"`).
-3. The UI will be available at [http://localhost:3762/](http://localhost:3762/).
+2. Run `npm install` (or `install.cmd` on Windows) to install or update dependencies.
+3. Run `start.cmd` (optionally provide a folder path: `start.cmd "C:\path\to\data"`).
+4. The UI will be available at [http://localhost:3762/](http://localhost:3762/).
+
+Tailwind CSS 4 is processed through `@tailwindcss/postcss`. The frontend stylesheet
+imports Tailwind and explicitly loads `tailwind.config.cjs` for its content paths.
 
 ### Stopping
 
