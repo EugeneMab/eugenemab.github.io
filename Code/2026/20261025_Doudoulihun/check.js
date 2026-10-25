@@ -254,7 +254,7 @@ function convertSyllable(syllable, justOrganize) {
             return vowel === 'i' ? "ju" : "ji";
         }
         if ("s".indexOf(consonant) !== -1 || consonant === "ts" || consonant === "dz") {
-            return "ji";
+            return vowel === 'i' ? "ju" : "ji";
         }
         if ("gk".indexOf(consonant) !== -1) {
             return vowel === 'i' ? "hu" : "hi";

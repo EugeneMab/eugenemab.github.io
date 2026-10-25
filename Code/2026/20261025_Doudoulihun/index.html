@@ -320,7 +320,7 @@
             return vowel === 'i' ? "ju" : "ji";
           }
           if ("s".indexOf(consonant) !== -1 || consonant === "ts" || consonant === "dz") {
-            return "ji";
+            return vowel === 'i' ? "ju" : "ji";
           }
           if ("gk".indexOf(consonant) !== -1) {
             return vowel === 'i' ? "hu" : "hi";
@@ -710,7 +710,7 @@
         <tr><td>       </td><td>LV = i</td><td>LV = u</td><td>     </td></tr>
         <tr><td>b p f v</td><td>fu    </td><td>fi    </td><td>m    </td></tr>
         <tr><td>d t    </td><td>ju    </td><td>ji    </td><td>n    </td></tr>
-        <tr><td>s ts dz</td><td>ji    </td><td>ji    </td><td>-    </td></tr>
+        <tr><td>s ts dz</td><td>ju    </td><td>ji    </td><td>-    </td></tr>
         <tr><td>g k    </td><td>hu    </td><td>hi    </td><td>n    </td></tr>
         <tr><td>w      </td><td>wu    </td><td>wi    </td><td>-    </td></tr>
         <tr><td>l      </td><td>vu    </td><td>vi    </td><td>     </td></tr>
@@ -764,7 +764,7 @@
       .        LV=i LV=u
       b p f v  fu   fi      m
       d t      ju   ji      n
-      s ts dz  ji   ji      -
+      s ts dz  ju   ji      -
       g k      hu   hi      n
       w        wu   wi      -
       l        vu   vi
