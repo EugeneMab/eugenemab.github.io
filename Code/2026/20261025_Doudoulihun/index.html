@@ -245,29 +245,30 @@
           if (justOrganize) {
             return consonant;
           }
+          // Case 2 does not distinguish by FV: every row uses the a|e|o form.
           if ("bpfv".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "uf" : (vowel === 'i' ? "uf" : "iuf");
+            return "uf";
           }
           if ("dt".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "ih" : (vowel === 'i' ? "uih" : "ij");
+            return "ih";
           }
           if ("s".indexOf(consonant) !== -1 || consonant === "ts" || consonant === "dz") {
-            return "aeo".indexOf(vowel) !== -1 ? "ij" : (vowel === 'i' ? "uij" : "ij");
+            return "ij";
           }
           if ("gk".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "uh" : (vowel === 'i' ? "uh" : "iuh");
+            return "uh";
           }
           if (consonant === "w") {
-            return "aeo".indexOf(vowel) !== -1 ? "uw" : (vowel === 'i' ? "uw" : "iuw");
+            return "uw";
           }
           if (consonant === "l") {
-            return "aeo".indexOf(vowel) !== -1 ? "uv" : (vowel === 'i' ? "uv" : "iuv");
+            return "uv";
           }
           if (consonant === "m") {
-            return "aeo".indexOf(vowel) !== -1 ? "uf" : (vowel === 'i' ? "uf" : "iuf");
+            return "uf";
           }
           if (consonant === "n") {
-            return "aeo".indexOf(vowel) !== -1 ? "ih" : (vowel === 'i' ? "uih" : "ij");
+            return "ih";
           }
           return "";
         }
@@ -275,23 +276,24 @@
           if (justOrganize) {
             return consonant;
           }
+          // Case 2 does not distinguish by LV: every row uses the a|e|o form.
           if ("bpfv".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "fu" : (vowel === 'i' ? "fu" : "fui");
+            return "fu";
           }
           if ("dt".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "hi" : (vowel === 'i' ? "hiu" : "ji");
+            return "hi";
           }
           if ("s".indexOf(consonant) !== -1 || consonant === "ts" || consonant === "dz") {
-            return "aeo".indexOf(vowel) !== -1 ? "ji" : (vowel === 'i' ? "jiu" : "ji");
+            return "ji";
           }
           if ("gk".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "hu" : (vowel === 'i' ? "hu" : "hui");
+            return "hu";
           }
           if (consonant === "w") {
-            return "aeo".indexOf(vowel) !== -1 ? "wu" : (vowel === 'i' ? "wu" : "wui");
+            return "wu";
           }
           if (consonant === "l") {
-            return "aeo".indexOf(vowel) !== -1 ? "vu" : (vowel === 'i' ? "vu" : "vui");
+            return "vu";
           }
           return "";
         }
@@ -306,6 +308,70 @@
             return "n";
           }
           return "";
+        }
+        function getB(consonant, vowel) {
+          if (justOrganize) {
+            return consonant;
+          }
+          if ("bpfv".indexOf(consonant) !== -1) {
+            return vowel === 'i' ? "fu" : "fi";
+          }
+          if ("dt".indexOf(consonant) !== -1) {
+            return vowel === 'i' ? "ju" : "ji";
+          }
+          if ("s".indexOf(consonant) !== -1 || consonant === "ts" || consonant === "dz") {
+            return "ji";
+          }
+          if ("gk".indexOf(consonant) !== -1) {
+            return vowel === 'i' ? "hu" : "hi";
+          }
+          if (consonant === "w") {
+            return vowel === 'i' ? "wu" : "wi";
+          }
+          if (consonant === "l") {
+            return vowel === 'i' ? "vu" : "vi";
+          }
+          return "";
+        }
+        function getC(consonant) {
+          if (justOrganize) {
+            return consonant;
+          }
+          if ("bpfv".indexOf(consonant) !== -1) {
+            return "m";
+          }
+          if ("dtgk".indexOf(consonant) !== -1) {
+            return "n";
+          }
+          return "";
+        }
+
+        var allVowelIU = true;
+        for (var vi = 0; vi < vowelCombination.length; vi++) {
+          if (vowelCombination[vi] !== 'i' && vowelCombination[vi] !== 'u') {
+            allVowelIU = false;
+            break;
+          }
+        }
+
+        if (allVowelIU) {
+          // Case 1: every vowel is "i" or "u". No X; the first SC uses B, the second SC uses C.
+          if (postNasal !== "") {
+            if (supportConsonant.length === 0) {
+              convertedResult += vowelCombination + postNasal;
+            } else {
+              convertedResult += vowelCombination + getB(supportConsonant[0], lastVowel) + postNasal;
+            }
+          } else {
+            if (supportConsonant.length === 0) {
+              convertedResult += vowelCombination;
+            } else if (supportConsonant.length === 1) {
+              convertedResult += vowelCombination + getB(supportConsonant[0], lastVowel);
+            } else {
+              convertedResult += vowelCombination + getB(supportConsonant[0], lastVowel) + getC(supportConsonant[1]);
+            }
+          }
+          return convertedResult;
         }
 
         if (postNasal !== "") {
@@ -623,6 +689,37 @@
         >Organize using the rules. {#} means {number of}. {&} means {and}. {=>} means {if ... then ...}. {X() Y() Z()} are to follow the conversion table.</span>
     </p>
     <p>
+      Two outer cases, by the vowels of the syllable. V stands for the whole vowel group (FV MV LV). SC1, SC2 are the supporting consonants in order: BSCs first, then ASCs.
+    </p>
+    <p>
+      Case 1: every vowel of the vowel group is "i" or "u".
+      <ul>
+        <li>#PN = 1 & #SC = 0 => PC V PN</li>
+        <li>#PN = 1 & #SC >= 1 => PC V B(SC1) PN</li>
+        <li>#PN = 0 & #SC = 0 => PC V</li>
+        <li>#PN = 0 & #SC = 1 => PC V B(SC1)</li>
+        <li>#PN = 0 & #SC >= 2 => PC V B(SC1) C(SC2)</li>
+      </ul>
+    </p>
+    <p>
+      Case 1 conversion table:
+    </p>
+    <center>
+      <table>
+        <tr><td>SC     </td><td colspan="2">B(SC)     </td><td>C(SC)</td></tr>
+        <tr><td>       </td><td>LV = i</td><td>LV = u</td><td>     </td></tr>
+        <tr><td>b p f v</td><td>fu    </td><td>fi    </td><td>m    </td></tr>
+        <tr><td>d t    </td><td>ju    </td><td>ji    </td><td>n    </td></tr>
+        <tr><td>s ts dz</td><td>ji    </td><td>ji    </td><td>-    </td></tr>
+        <tr><td>g k    </td><td>hu    </td><td>hi    </td><td>n    </td></tr>
+        <tr><td>w      </td><td>wu    </td><td>wi    </td><td>-    </td></tr>
+        <tr><td>l      </td><td>vu    </td><td>vi    </td><td>     </td></tr>
+        <tr><td>m      </td><td>-     </td><td>-     </td><td>-    </td></tr>
+        <tr><td>n      </td><td>-     </td><td>-     </td><td>-    </td></tr>
+      </table>
+    </center>
+    <p>
+      Case 2: all other syllables. Same structure as before; X() Y() Z() follow the table below.
       <ul>
         <li>#PN = 1 & #SC = 0 => PC FV MV LV PN</li>
         <li>#PN = 1 & #SC = 1 & #BSC = 1 => PC X(BSC1) FV MV LV PN</li>
@@ -643,16 +740,15 @@
     </p>
     <center>
       <table>
-        <tr><td>SC     </td><td colspan="3">X(SC)                       </td><td colspan="3">Y(SC)                       </td><td>Z(SC)</td></tr>
-        <tr><td>       </td><td>FV = a|e|o</td><td>FV = i</td><td>FV = u</td><td>LV = a|e|o</td><td>LV = i</td><td>LV = u</td><td>     </td></tr>
-        <tr><td>b p f v</td><td>uf        </td><td>uf    </td><td>iuf   </td><td>fu        </td><td>fu    </td><td>fui   </td><td>m    </td></tr>
-        <tr><td>d t    </td><td>ih        </td><td>uih   </td><td>ij    </td><td>hi        </td><td>hiu    </td><td>ji    </td><td>n    </td></tr>
-        <tr><td>s ts dz</td><td>ij        </td><td>uij   </td><td>ij    </td><td>ji        </td><td>jiu   </td><td>ji    </td><td>-    </td></tr>
-        <tr><td>g k    </td><td>uh        </td><td>uh    </td><td>iuh   </td><td>hu        </td><td>hu    </td><td>hui   </td><td>n    </td></tr>
-        <tr><td>w      </td><td>uw        </td><td>uw    </td><td>iuw   </td><td>wu        </td><td>wu    </td><td>wui   </td><td>-    </td></tr>
-        <tr><td>l      </td><td>uv        </td><td>uv    </td><td>iuv   </td><td>vu        </td><td>vu    </td><td>vui   </td><td>     </td></tr>
-        <tr><td>m      </td><td>uf        </td><td>uf    </td><td>iuf   </td><td>-         </td><td>-     </td><td>-     </td><td>-    </td></tr>
-        <tr><td>n      </td><td>ih        </td><td>uih   </td><td>ij    </td><td>-         </td><td>-     </td><td>-     </td><td>-    </td></tr>
+        <tr><td>SC     </td><td>X(SC)</td><td>Y(SC)</td><td>Z(SC)</td></tr>
+        <tr><td>b p f v</td><td>uf</td><td>fu</td><td>m</td></tr>
+        <tr><td>d t    </td><td>ih</td><td>hi</td><td>n</td></tr>
+        <tr><td>s ts dz</td><td>ij</td><td>ji</td><td>-</td></tr>
+        <tr><td>g k    </td><td>uh</td><td>hu</td><td>n</td></tr>
+        <tr><td>w      </td><td>uw</td><td>wu</td><td>-</td></tr>
+        <tr><td>l      </td><td>uv</td><td>vu</td><td> </td></tr>
+        <tr><td>m      </td><td>uf</td><td>- </td><td>-</td></tr>
+        <tr><td>n      </td><td>ih</td><td>- </td><td>-</td></tr>
       </table>
     </center>
     <p>
@@ -663,17 +759,28 @@
     </p>
     <pre style="display:none">
       18*7*5*7*3=13,230
-      SC       X                             Y                           Z
-      .        FV= a|e|o FV=i FV=u           LV=a|e|o FV=i FV=u
-      b p f v  uf        uf   iuf            fu       fu   fui           m
-      d t      ih        uih  ij   *         hi       hiu  ji  *         n
-      s ts dz  ij        uij  ij   *         ji       jiu  ji  *         -
-      g k      uh        uh   iuh            hu       hu   hui           n
-      w(r)     uw        uw   iuw            wu       wu   wui           -
-      l        uv        uv   iuv            vu       vu   vui           -
-      m        uf        uf   iuf            -        -    -             -
-      n        ih        uih  ihu            -        -    -             -
-    </pre>
+      Case 1: every vowel is "i" or "u"
+      SC       B            C
+      .        LV=i LV=u
+      b p f v  fu   fi      m
+      d t      ju   ji      n
+      s ts dz  ji   ji      -
+      g k      hu   hi      n
+      w        wu   wi      -
+      l        vu   vi
+      m        -    -       -
+      n        -    -       -
+      Case 2: all other syllables (X and Y use the a|e|o form only)
+      SC       X    Y    Z
+      b p f v  uf   fu   m
+      d t      ih   hi   n
+      s ts dz  ij   ji   -
+      g k      uh   hu   n
+      w        uw   wu   -
+      l        uv   vu
+      m        uf   -    -
+      n        ih   -    -
+</pre>
     <h3>
       <span class="t"
         c="范例"

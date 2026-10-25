@@ -179,29 +179,30 @@ function convertSyllable(syllable, justOrganize) {
         if (justOrganize) {
             return consonant;
         }
+        // Case 2 does not distinguish by FV: every row uses the a|e|o form.
         if ("bpfv".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "uf" : (vowel === 'i' ? "uf" : "iuf");
+            return "uf";
         }
         if ("dt".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "ih" : (vowel === 'i' ? "uih" : "ij");
+            return "ih";
         }
         if ("s".indexOf(consonant) !== -1 || consonant === "ts" || consonant === "dz") {
-            return "aeo".indexOf(vowel) !== -1 ? "ij" : (vowel === 'i' ? "uij" : "ij");
+            return "ij";
         }
         if ("gk".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "uh" : (vowel === 'i' ? "uh" : "iuh");
+            return "uh";
         }
         if (consonant === "w") {
-            return "aeo".indexOf(vowel) !== -1 ? "uw" : (vowel === 'i' ? "uw" : "iuw");
+            return "uw";
         }
         if (consonant === "l") {
-            return "aeo".indexOf(vowel) !== -1 ? "uv" : (vowel === 'i' ? "uv" : "iuv");
+            return "uv";
         }
         if (consonant === "m") {
-            return "aeo".indexOf(vowel) !== -1 ? "uf" : (vowel === 'i' ? "uf" : "iuf");
+            return "uf";
         }
         if (consonant === "n") {
-            return "aeo".indexOf(vowel) !== -1 ? "ih" : (vowel === 'i' ? "uih" : "ij");
+            return "ih";
         }
         return "";
     }
@@ -209,23 +210,24 @@ function convertSyllable(syllable, justOrganize) {
         if (justOrganize) {
             return consonant;
         }
+        // Case 2 does not distinguish by LV: every row uses the a|e|o form.
         if ("bpfv".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "fu" : (vowel === 'i' ? "fu" : "fui");
+            return "fu";
         }
         if ("dt".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "hi" : (vowel === 'i' ? "hiu" : "ji");
+            return "hi";
         }
         if ("s".indexOf(consonant) !== -1 || consonant === "ts" || consonant === "dz") {
-            return "aeo".indexOf(vowel) !== -1 ? "ji" : (vowel === 'i' ? "jiu" : "ji");
+            return "ji";
         }
         if ("gk".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "hu" : (vowel === 'i' ? "hu" : "hui");
+            return "hu";
         }
         if (consonant === "w") {
-            return "aeo".indexOf(vowel) !== -1 ? "wu" : (vowel === 'i' ? "wu" : "wui");
+            return "wu";
         }
         if (consonant === "l") {
-            return "aeo".indexOf(vowel) !== -1 ? "vu" : (vowel === 'i' ? "vu" : "vui");
+            return "vu";
         }
         return "";
     }
@@ -240,6 +242,70 @@ function convertSyllable(syllable, justOrganize) {
             return "n";
         }
         return "";
+    }
+    function getB(consonant, vowel) {
+        if (justOrganize) {
+            return consonant;
+        }
+        if ("bpfv".indexOf(consonant) !== -1) {
+            return vowel === 'i' ? "fu" : "fi";
+        }
+        if ("dt".indexOf(consonant) !== -1) {
+            return vowel === 'i' ? "ju" : "ji";
+        }
+        if ("s".indexOf(consonant) !== -1 || consonant === "ts" || consonant === "dz") {
+            return "ji";
+        }
+        if ("gk".indexOf(consonant) !== -1) {
+            return vowel === 'i' ? "hu" : "hi";
+        }
+        if (consonant === "w") {
+            return vowel === 'i' ? "wu" : "wi";
+        }
+        if (consonant === "l") {
+            return vowel === 'i' ? "vu" : "vi";
+        }
+        return "";
+    }
+    function getC(consonant) {
+        if (justOrganize) {
+            return consonant;
+        }
+        if ("bpfv".indexOf(consonant) !== -1) {
+            return "m";
+        }
+        if ("dtgk".indexOf(consonant) !== -1) {
+            return "n";
+        }
+        return "";
+    }
+
+    var allVowelIU = true;
+    for (var vi = 0; vi < vc.length; vi++) {
+        if (vc[vi] !== 'i' && vc[vi] !== 'u') {
+            allVowelIU = false;
+            break;
+        }
+    }
+
+    if (allVowelIU) {
+        // Case 1: every vowel is "i" or "u". No X; the first SC uses B, the second SC uses C.
+        if (postNasal !== "") {
+            if (supportConsonant.length === 0) {
+                convertedResult += vc + postNasal;
+            } else {
+                convertedResult += vc + getB(supportConsonant[0], lastVowel) + postNasal;
+            }
+        } else {
+            if (supportConsonant.length === 0) {
+                convertedResult += vc;
+            } else if (supportConsonant.length === 1) {
+                convertedResult += vc + getB(supportConsonant[0], lastVowel);
+            } else {
+                convertedResult += vc + getB(supportConsonant[0], lastVowel) + getC(supportConsonant[1]);
+            }
+        }
+        return convertedResult;
     }
 
     if (postNasal !== "") {
