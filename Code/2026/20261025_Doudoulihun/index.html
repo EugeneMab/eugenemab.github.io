@@ -245,29 +245,30 @@
           if (justOrganize) {
             return consonant;
           }
+          // Case 2 does not distinguish by FV: every row uses the a|e|o form.
           if ("bpfv".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "uf" : (vowel === 'i' ? "uf" : "iuf");
+            return "uf";
           }
           if ("dt".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "ih" : (vowel === 'i' ? "uih" : "ij");
+            return "ih";
           }
           if ("s".indexOf(consonant) !== -1 || consonant === "ts" || consonant === "dz") {
-            return "aeo".indexOf(vowel) !== -1 ? "ij" : (vowel === 'i' ? "uij" : "ij");
+            return "ij";
           }
           if ("gk".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "uh" : (vowel === 'i' ? "uh" : "iuh");
+            return "uh";
           }
           if (consonant === "w") {
-            return "aeo".indexOf(vowel) !== -1 ? "uw" : (vowel === 'i' ? "uw" : "iuw");
+            return "uw";
           }
           if (consonant === "l") {
-            return "aeo".indexOf(vowel) !== -1 ? "uv" : (vowel === 'i' ? "uv" : "iuv");
+            return "uv";
           }
           if (consonant === "m") {
-            return "aeo".indexOf(vowel) !== -1 ? "uf" : (vowel === 'i' ? "uf" : "iuf");
+            return "uf";
           }
           if (consonant === "n") {
-            return "aeo".indexOf(vowel) !== -1 ? "ih" : (vowel === 'i' ? "uih" : "ij");
+            return "ih";
           }
           return "";
         }
@@ -275,23 +276,24 @@
           if (justOrganize) {
             return consonant;
           }
+          // Case 2 does not distinguish by LV: every row uses the a|e|o form.
           if ("bpfv".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "fu" : (vowel === 'i' ? "fu" : "fui");
+            return "fu";
           }
           if ("dt".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "hi" : (vowel === 'i' ? "hiu" : "ji");
+            return "hi";
           }
           if ("s".indexOf(consonant) !== -1 || consonant === "ts" || consonant === "dz") {
-            return "aeo".indexOf(vowel) !== -1 ? "ji" : (vowel === 'i' ? "jiu" : "ji");
+            return "ji";
           }
           if ("gk".indexOf(consonant) !== -1) {
-            return "aeo".indexOf(vowel) !== -1 ? "hu" : (vowel === 'i' ? "hu" : "hui");
+            return "hu";
           }
           if (consonant === "w") {
-            return "aeo".indexOf(vowel) !== -1 ? "wu" : (vowel === 'i' ? "wu" : "wui");
+            return "wu";
           }
           if (consonant === "l") {
-            return "aeo".indexOf(vowel) !== -1 ? "vu" : (vowel === 'i' ? "vu" : "vui");
+            return "vu";
           }
           return "";
         }
@@ -306,6 +308,70 @@
             return "n";
           }
           return "";
+        }
+        function getB(consonant, vowel) {
+          if (justOrganize) {
+            return consonant;
+          }
+          if ("bpfv".indexOf(consonant) !== -1) {
+            return vowel === 'i' ? "fu" : "fi";
+          }
+          if ("dt".indexOf(consonant) !== -1) {
+            return vowel === 'i' ? "ju" : "ji";
+          }
+          if ("s".indexOf(consonant) !== -1 || consonant === "ts" || consonant === "dz") {
+            return vowel === 'i' ? "ju" : "ji";
+          }
+          if ("gk".indexOf(consonant) !== -1) {
+            return vowel === 'i' ? "hu" : "hi";
+          }
+          if (consonant === "w") {
+            return vowel === 'i' ? "wu" : "wi";
+          }
+          if (consonant === "l") {
+            return vowel === 'i' ? "vu" : "vi";
+          }
+          return "";
+        }
+        function getC(consonant) {
+          if (justOrganize) {
+            return consonant;
+          }
+          if ("bpfv".indexOf(consonant) !== -1) {
+            return "m";
+          }
+          if ("dtgk".indexOf(consonant) !== -1) {
+            return "n";
+          }
+          return "";
+        }
+
+        var allVowelIU = true;
+        for (var vi = 0; vi < vowelCombination.length; vi++) {
+          if (vowelCombination[vi] !== 'i' && vowelCombination[vi] !== 'u') {
+            allVowelIU = false;
+            break;
+          }
+        }
+
+        if (allVowelIU) {
+          // Case 1: every vowel is "i" or "u". No X; the first SC uses B, the second SC uses C.
+          if (postNasal !== "") {
+            if (supportConsonant.length === 0) {
+              convertedResult += vowelCombination + postNasal;
+            } else {
+              convertedResult += vowelCombination + getB(supportConsonant[0], lastVowel) + postNasal;
+            }
+          } else {
+            if (supportConsonant.length === 0) {
+              convertedResult += vowelCombination;
+            } else if (supportConsonant.length === 1) {
+              convertedResult += vowelCombination + getB(supportConsonant[0], lastVowel);
+            } else {
+              convertedResult += vowelCombination + getB(supportConsonant[0], lastVowel) + getC(supportConsonant[1]);
+            }
+          }
+          return convertedResult;
         }
 
         if (postNasal !== "") {
@@ -623,6 +689,37 @@
         >Organize using the rules. {#} means {number of}. {&} means {and}. {=>} means {if ... then ...}. {X() Y() Z()} are to follow the conversion table.</span>
     </p>
     <p>
+      Two outer cases, by the vowels of the syllable. V stands for the whole vowel group (FV MV LV). SC1, SC2 are the supporting consonants in order: BSCs first, then ASCs.
+    </p>
+    <p>
+      Case 1: every vowel of the vowel group is "i" or "u".
+      <ul>
+        <li>#PN = 1 & #SC = 0 => PC V PN</li>
+        <li>#PN = 1 & #SC >= 1 => PC V B(SC1) PN</li>
+        <li>#PN = 0 & #SC = 0 => PC V</li>
+        <li>#PN = 0 & #SC = 1 => PC V B(SC1)</li>
+        <li>#PN = 0 & #SC >= 2 => PC V B(SC1) C(SC2)</li>
+      </ul>
+    </p>
+    <p>
+      Case 1 conversion table:
+    </p>
+    <center>
+      <table>
+        <tr><td>SC     </td><td colspan="2">B(SC)     </td><td>C(SC)</td></tr>
+        <tr><td>       </td><td>LV = i</td><td>LV = u</td><td>     </td></tr>
+        <tr><td>b p f v</td><td>fu    </td><td>fi    </td><td>m    </td></tr>
+        <tr><td>d t    </td><td>ju    </td><td>ji    </td><td>n    </td></tr>
+        <tr><td>s ts dz</td><td>ju    </td><td>ji    </td><td>-    </td></tr>
+        <tr><td>g k    </td><td>hu    </td><td>hi    </td><td>n    </td></tr>
+        <tr><td>w      </td><td>wu    </td><td>wi    </td><td>-    </td></tr>
+        <tr><td>l      </td><td>vu    </td><td>vi    </td><td>     </td></tr>
+        <tr><td>m      </td><td>-     </td><td>-     </td><td>-    </td></tr>
+        <tr><td>n      </td><td>-     </td><td>-     </td><td>-    </td></tr>
+      </table>
+    </center>
+    <p>
+      Case 2: all other syllables. Same structure as before; X() Y() Z() follow the table below.
       <ul>
         <li>#PN = 1 & #SC = 0 => PC FV MV LV PN</li>
         <li>#PN = 1 & #SC = 1 & #BSC = 1 => PC X(BSC1) FV MV LV PN</li>
@@ -643,37 +740,47 @@
     </p>
     <center>
       <table>
-        <tr><td>SC     </td><td colspan="3">X(SC)                       </td><td colspan="3">Y(SC)                       </td><td>Z(SC)</td></tr>
-        <tr><td>       </td><td>FV = a|e|o</td><td>FV = i</td><td>FV = u</td><td>LV = a|e|o</td><td>LV = i</td><td>LV = u</td><td>     </td></tr>
-        <tr><td>b p f v</td><td>uf        </td><td>uf    </td><td>iuf   </td><td>fu        </td><td>fu    </td><td>fui   </td><td>m    </td></tr>
-        <tr><td>d t    </td><td>ih        </td><td>uih   </td><td>ij    </td><td>hi        </td><td>hiu    </td><td>ji    </td><td>n    </td></tr>
-        <tr><td>s ts dz</td><td>ij        </td><td>uij   </td><td>ij    </td><td>ji        </td><td>jiu   </td><td>ji    </td><td>-    </td></tr>
-        <tr><td>g k    </td><td>uh        </td><td>uh    </td><td>iuh   </td><td>hu        </td><td>hu    </td><td>hui   </td><td>n    </td></tr>
-        <tr><td>w      </td><td>uw        </td><td>uw    </td><td>iuw   </td><td>wu        </td><td>wu    </td><td>wui   </td><td>-    </td></tr>
-        <tr><td>l      </td><td>uv        </td><td>uv    </td><td>iuv   </td><td>vu        </td><td>vu    </td><td>vui   </td><td>     </td></tr>
-        <tr><td>m      </td><td>uf        </td><td>uf    </td><td>iuf   </td><td>-         </td><td>-     </td><td>-     </td><td>-    </td></tr>
-        <tr><td>n      </td><td>ih        </td><td>uih   </td><td>ij    </td><td>-         </td><td>-     </td><td>-     </td><td>-    </td></tr>
+        <tr><td>SC     </td><td>X(SC)</td><td>Y(SC)</td><td>Z(SC)</td></tr>
+        <tr><td>b p f v</td><td>uf</td><td>fu</td><td>m</td></tr>
+        <tr><td>d t    </td><td>ih</td><td>hi</td><td>n</td></tr>
+        <tr><td>s ts dz</td><td>ij</td><td>ji</td><td>-</td></tr>
+        <tr><td>g k    </td><td>uh</td><td>hu</td><td>n</td></tr>
+        <tr><td>w      </td><td>uw</td><td>wu</td><td>-</td></tr>
+        <tr><td>l      </td><td>uv</td><td>vu</td><td> </td></tr>
+        <tr><td>m      </td><td>uf</td><td>- </td><td>-</td></tr>
+        <tr><td>n      </td><td>ih</td><td>- </td><td>-</td></tr>
       </table>
     </center>
     <p>
       <span class="t"
         c=" 如果单词以元音开头，主辅音(PC) 视为空。这允许单词以“软音”或纯元音直接开头."
-        d="Si u vuwefu owidzinahi kon u vovewu, la PC eji weguwahi ti ko nuvui. Pewumihiu ivu la vuwefu a owidzinahi kon u son sufohi o u vovewu."
+        d="Si u vuwefu owidzinahi kon u vovewu, la PC eji weguwahi ti ko nuvi. Pewumihiu ivu la vuwefu a owidzinahi kon u son sufohi o u vovewu."
         >If a word starts with a vowel, the PC is treated as empty. It allows the word to start with a "soft" sound or a raw vowel).</span>
     </p>
     <pre style="display:none">
       18*7*5*7*3=13,230
-      SC       X                             Y                           Z
-      .        FV= a|e|o FV=i FV=u           LV=a|e|o FV=i FV=u
-      b p f v  uf        uf   iuf            fu       fu   fui           m
-      d t      ih        uih  ij   *         hi       hiu  ji  *         n
-      s ts dz  ij        uij  ij   *         ji       jiu  ji  *         -
-      g k      uh        uh   iuh            hu       hu   hui           n
-      w(r)     uw        uw   iuw            wu       wu   wui           -
-      l        uv        uv   iuv            vu       vu   vui           -
-      m        uf        uf   iuf            -        -    -             -
-      n        ih        uih  ihu            -        -    -             -
-    </pre>
+      Case 1: every vowel is "i" or "u"
+      SC       B            C
+      .        LV=i LV=u
+      b p f v  fu   fi      m
+      d t      ju   ji      n
+      s ts dz  ju   ji      -
+      g k      hu   hi      n
+      w        wu   wi      -
+      l        vu   vi
+      m        -    -       -
+      n        -    -       -
+      Case 2: all other syllables (X and Y use the a|e|o form only)
+      SC       X    Y    Z
+      b p f v  uf   fu   m
+      d t      ih   hi   n
+      s ts dz  ij   ji   -
+      g k      uh   hu   n
+      w        uw   wu   -
+      l        uv   vu
+      m        uf   -    -
+      n        ih   -    -
+</pre>
     <h3>
       <span class="t"
         c="范例"
@@ -687,7 +794,7 @@
         >The first column is Latin or English word.</span>
       <span class="t"
         c="第二列是使用转化表之前的形式.大写字母是主辅音."
-        d="La kolum duji mo eji la fowum ante utilijiu la konvewusion tabuve. Le lehitewu kapitavu eji le puwimawi konsonahin."
+        d="La kolum duji mo eji la fowum ante utiliju la konvewusion tabuve. Le lehitewu kapitavu eji le puwimawi konsonahin."
         >The second column is the form before using the conversion table. Capital letters are Primary consonants.</span>
       <span class="t"
         c="第三列是兜兜语单词."
@@ -700,7 +807,7 @@
         <tr><td> state         </td><td> stat             </td><td> stat               </td><td> Stat             </td><td> sihahi             </td></tr>
         <tr><td> sper          </td><td> spew             </td><td> spew               </td><td> Spew             </td><td> sufewu             </td></tr>
         <tr><td> sport         </td><td> spowt            </td><td> spowt              </td><td> Spowt            </td><td> sufowun            </td></tr>
-        <tr><td> science       </td><td> stsients         </td><td> stsients           </td><td> Stsietsn         </td><td> suijiejin          </td></tr>
+        <tr><td> science       </td><td> stsients         </td><td> stsients           </td><td> Stsietsn         </td><td> sijiejin           </td></tr>
         <tr><td> photo         </td><td> foto             </td><td> fo-to              </td><td> FoTo             </td><td> foto               </td></tr>
         <tr><td> wagon         </td><td> vagon            </td><td> va-gon             </td><td> VaGon            </td><td> vagon              </td></tr>
         <tr><td> cent          </td><td> tsent            </td><td> tsent              </td><td> TSetn            </td><td> tsehin             </td></tr>
@@ -711,7 +818,7 @@
         <tr><td> tank          </td><td> tank             </td><td> tank               </td><td> Takn             </td><td> tahun              </td></tr>
         <tr><td> xerox         </td><td> tsewoks          </td><td> tse-woks           </td><td> TSeWkos          </td><td> tsewuhoji          </td></tr>
         <tr><td> chocolate     </td><td> tsokolat         </td><td> tso-ko-lat         </td><td> TSoKoLat         </td><td> tsokolahi          </td></tr>
-        <tr><td> just          </td><td> dzust            </td><td> dzust              </td><td> DZsut            </td><td> dzijuji            </td></tr>
+        <tr><td> just          </td><td> dzust            </td><td> dzust              </td><td> DZust            </td><td> dzujin             </td></tr>
         <tr><td> adoption      </td><td> adoptsion        </td><td> a-dop-tsion        </td><td> aDopTSion        </td><td> adofutsion         </td></tr>
         <tr><td> train         </td><td> twain            </td><td> twain              </td><td> Twain            </td><td> tuwain             </td></tr>
         <tr><td> tract         </td><td> twakt            </td><td> twakt              </td><td> Twakt            </td><td> tuwahun            </td></tr>
@@ -721,16 +828,16 @@
         <tr><td> daemon        </td><td> daemon           </td><td> da-e-mon           </td><td> DaeMon           </td><td> daemon             </td></tr>
         <tr><td> coffee        </td><td> koffee           </td><td> kof-fe-e           </td><td> KofFee           </td><td> kofufee            </td></tr>
         <tr><td> moustache     </td><td> moustats         </td><td> mou-stats          </td><td> MouStats         </td><td> mousihaji          </td></tr>
-        <tr><td> phoenix       </td><td> foeniks          </td><td> fo-e-niks          </td><td> FoeNkis          </td><td> foenuhijiu         </td></tr>
+        <tr><td> phoenix       </td><td> foeniks          </td><td> fo-e-niks          </td><td> FoeNiks          </td><td> foenihu            </td></tr>
         <tr><td> phoenician    </td><td> foenitsian       </td><td> fo-e-ni-tsian      </td><td> FoeNiTSian       </td><td> foenitsian         </td></tr>
         <tr><td> europe        </td><td> euwop            </td><td> eu-wop             </td><td> euWop            </td><td> euwofu             </td></tr>
-        <tr><td> return        </td><td> wetuwn           </td><td> we-tuwn            </td><td> WeTuwn           </td><td> wetuwuin           </td></tr>
+        <tr><td> return        </td><td> wetuwn           </td><td> we-tuwn            </td><td> WeTuwn           </td><td> wetuwin            </td></tr>
         <tr><td> depart        </td><td> depawt           </td><td> de-pawt            </td><td> DePwat           </td><td> depuwahi           </td></tr>
         <tr><td> alt           </td><td> alt              </td><td> alt                </td><td> lat              </td><td> uvahi              </td></tr>
         <tr><td> art           </td><td> awt              </td><td> awt                </td><td> wat              </td><td> uwahi              </td></tr>
         <tr><td> arts          </td><td> awts             </td><td> awts               </td><td> wats             </td><td> uwaji              </td></tr>
-        <tr><td> culture       </td><td> kultuw           </td><td> kul-tuw            </td><td> KulTuw           </td><td> kuvuituwui         </td></tr>
-        <tr><td> court         </td><td> kouwt            </td><td> kouwt              </td><td> Kwout            </td><td> kuwouji            </td></tr>
+        <tr><td> culture       </td><td> kultuw           </td><td> kul-tuw            </td><td> KulTuw           </td><td> kuvituwi           </td></tr>
+        <tr><td> court         </td><td> kouwt            </td><td> kouwt              </td><td> Kwout            </td><td> kuwouhi            </td></tr>
         <tr><td> cant          </td><td> kant             </td><td> kant               </td><td> Katn             </td><td> kahin              </td></tr>
         <tr><td> simple        </td><td> simple           </td><td> sim-ple            </td><td> SimPle           </td><td> simpuve            </td></tr>
         <tr><td> hom           </td><td> hom              </td><td> hom                </td><td> Hom              </td><td> hom                </td></tr>
@@ -741,9 +848,9 @@
         <tr><td> expresss      </td><td> ekspwess         </td><td> ek-spwess          </td><td> ekSpews          </td><td> ehusufewu          </td></tr>
         <tr><td> sign          </td><td> sign             </td><td> sign               </td><td> Sign             </td><td> sihun              </td></tr>
         <tr><td> sing          </td><td> sing             </td><td> sing               </td><td> Sign             </td><td> sihun              </td></tr>
-        <tr><td> skin          </td><td> skin             </td><td> skin               </td><td> Skin             </td><td> suhin              </td></tr>
+        <tr><td> skin          </td><td> skin             </td><td> skin               </td><td> Sikn             </td><td> sihun              </td></tr>
         <tr><td> dogmatic      </td><td> dogmatik         </td><td> dog-ma-tik         </td><td> DogMaTik         </td><td> dohumatihu         </td></tr>
-        <tr><td> construct     </td><td> konstwuk         </td><td> kon-stwuk          </td><td> KonStuwk         </td><td> konsijuwuin        </td></tr>
+        <tr><td> construct     </td><td> konstwuk         </td><td> kon-stwuk          </td><td> KonSutw          </td><td> konsuji            </td></tr>
         <tr><td> verb          </td><td> vewb             </td><td> vewb               </td><td> Vweb             </td><td> vuwefu             </td></tr>
         <tr><td> partner       </td><td> pawtnew          </td><td> pawt-new           </td><td> PwatNew          </td><td> puwahinewu         </td></tr>
         <tr><td> investment    </td><td> investment       </td><td> in-vest-ment       </td><td> inVsetMetn       </td><td> invijehimehin      </td></tr>
@@ -754,7 +861,7 @@
         <tr><td> slave         </td><td> slav             </td><td> slav               </td><td> Slav             </td><td> suvafu             </td></tr>
         <tr><td> salv          </td><td> salv             </td><td> salv               </td><td> Slav             </td><td> suvafu             </td></tr>
         <tr><td> next          </td><td> nekst            </td><td> nekst              </td><td> Nkest            </td><td> nuhejin            </td></tr>
-        <tr><td> stunt         </td><td> stunt            </td><td> stunt              </td><td> Stutn            </td><td> sijujin            </td></tr>
+        <tr><td> stunt         </td><td> stunt            </td><td> stunt              </td><td> Sutn             </td><td> sujin              </td></tr>
         <tr><td> complex       </td><td> kompleks         </td><td> kom-pleks          </td><td> KomPleks         </td><td> kompuvehu          </td></tr>
         <tr><td> start         </td><td> stawt            </td><td> stawt              </td><td> Stawt            </td><td> sihawun            </td></tr>
         <tr><td> strate        </td><td> stwat            </td><td> stwat              </td><td> Stawt            </td><td> sihawun            </td></tr>
@@ -799,7 +906,7 @@
         >and the third line is English meaning.</span>
     </p>
     <pre style="whitespace: no-wrap;">
-      Tihiule : Babevu Tuhejin, Dzenesijiu, Bibuve
+      Tijule  : Babevu Tuhejin, Dzenesiju , Bibuve
       title   : babel  text   , genesis   , bible
       Title   : Babel  Text   , Genesis   , Bible
 
@@ -813,70 +920,70 @@
       --------- --------- --------- --------- --------- --------- --------- ---------
       11:2
 
-      Du  vojaji he  lu  a  la   owientavu, ohukuwui he  ivu ke   disuhovewu ha  lu  un
+      Du  vojaji he  lu  a  la   owientavu, ohukuwi  he  ivu ke   disuhovewu ha  lu  un
       dur voyage hab lor ad illa oriental , occur    hab il  que  discover   hab lor un
       As  they journeyed east             , it happened,     that they have found    a
 
-      puvan in la   tewu de la   Tsinawu; e   vifu  he  lu  ihiu .
+      puvan in la   tewu de la   Tsinawu; e   vifu  he  lu  iju  .
       plan  in illa terr de illa Shinar ; et  viv   hab lor id   .
       plain in the  land of      Shinar ; and they lived    there.
 
       --------- --------- --------- --------- --------- --------- --------- ---------
       11:3
 
-      Dihu lu   un  a  un avutewu, "Ven , ni    luhaji a  fe   le  tivu  , e   li  kombijuji
+      Dihu lu   un  a  un avutewu, "Ven , ni    luhaji a  fe   le  tivu  , e   li  kombujin
       dict lor  un  ad un alter  , "ven , nostr lax    ad fect ill tile  , et  lor combust
       They said one to another   , "Come, let's        make        bricks, and burn them
 
-      entiwemehin." Hafu lu  la   tivu  po  la   petewu, e   utilijiu lu  la   tawu po  la   mowutawu.
+      entiwemehin." Hafu lu  la   tivu  po  la   petewu, e   utiliju  lu  la   tawu po  la   mowutawu.
       entire     ." hab  lor illa tile  pro illa petr  , et  utiliz   lor illa tar  pro illa mortar  .
       thoroughly ." They had      brick for      stone , and they used    the  tar  for the  mortar  .
 
       --------- --------- --------- --------- --------- --------- --------- ---------
       11:4
 
-      Dihu lu  , "Ven , ni    luhaji konsijuwuin po  ni    un iuwufui, e   un tuwuiwehi,
+      Dihu lu  , "Ven , ni    luhaji konsuji     po  ni    un uwim   , e   un tuwiwehi ,
       dict lor , "ven , nostr lax    construct   pro nostr un urb    , et  un turret   ,
       They said, "Come, let's        build       us        a  city   , and a  tower    ,
 
-      ken   kapihiu awuwifu a  la   tsevu, e   ni    luhaji a  fe   po  ni    un nom ;
+      ken   kapiju  awuwifu a  la   tsevu, e   ni    luhaji a  fe   po  ni    un nom ;
       que   capit   arrive  ad illa cel  , et  nostr lax    ad fect pro nostr un nom ;
       whose top     reaches to the  sky  , and let's           make     us    a  name;
 
-      uhejitsefu ke  divihiu ti  nu    a  uvuitewu su    la   suwuifaji de tohi la    mujin."
+      uhejitsefu ke  diviju  ti  nu    a  uvitewu  su    la   suwifaji  de tohi la    mujin."
       except     que divid   ten nostr ad ulter    super illa surface   de tot  illa  mund ."
       lest           we be scattered   abroad      on    the  surface   of the  whole earth."
 
       --------- --------- --------- --------- --------- --------- --------- ---------
       11:5
 
-      Dzehova dejitsehin a  miwu la   iuwufui e   la  tuwuiwehi, kem   le  infahin  de le  hom
+      Dzehova dejitsehin a  miwu la   uwim    e   la  tuwiwehi , kem   le  infahin  de le  hom
       Jehowa  descend    ad mir  illa urb     et  la  turret   , que   ill infant   de ill hom
       Yahweh  came down  to see  the  city    and the tower    , which the children of     men
 
-      konsijuwuin ha .
+      konsuji     ha .
       construct   hab.
       had built      .
 
       --------- --------- --------- --------- --------- --------- --------- ---------
       11:6
 
-      Dzehova dihu, "Ahitentsion, eji  lu  un  popuvui, e   hafu  lu  tohi un  lihun   ;
+      Dzehova dihu, "Ahitentsion, eji  lu  un  popuvi , e   hafu  lu  tohi un  lihun   ;
       Jehowa  dict, "attention  , est  lor un  popul  , et  hab   lor tot  un  ling    ;
       Yahweh  said, "Behold     , they are one people , and they have all  one language;
 
-      e   eji  tsi kem  owidzinahi lu  a  fe  . Tsihefum nuvui  , kem   intehin lu
+      e   eji  tsi kem  owidzinahi lu  a  fe  . Tsihefum nuvi   , kem   intehin lu
       et  est  hic que  originate  lor ad fect. hic-temp nul    , que   intend  lor
       and this is  what they begin     to do  . Now      nothing, which they intend
 
-      a  fe  , wesuijihiu ti  va   afu  li  .
+      a  fe  , wesijun    ti  va   afu  li  .
       ad fect, resist     ten vas  ab   lor .
       to do  , will be withheld    from them.
 
       --------- --------- --------- --------- --------- --------- --------- ---------
       11:7
 
-      Ven , ni    luhaji dejitsehin, e   ihiu  konfuji lo    lihun   ,
+      Ven , ni    luhaji dejitsehin, e   iju   konfuji lo    lihun   ,
       Ven , nostr lax    descend   , et  id    confus  lor   ling    ,
       Come, let's        down      , and there confuse their language,
 
@@ -887,11 +994,11 @@
       --------- --------- --------- --------- --------- --------- --------- ---------
       11:8
 
-      Ahi Dzehova li  divihiu    a  uvuitewu de   ihiu  a  la   suwuifaji de tohi la   mujin.
+      Ahi Dzehova li  diviju     a  uvitewu  de   iju   a  la   suwifaji  de tohi la   mujin.
       ad  Jehowa  lor divid      ad ulter    de   id    ad illa surface   de tot  illa mund .
       So  Yahweh  scattered them abroad      from there on the  surface   of all  the  earth.
 
-      Wijehi lu  a  konsijuwuin la   iuwufui.
+      Wijehi lu  a  konsuji     la   uwim   .
       Rest   lor ad construct   illa urb    .
       They stopped building     the  city   .
 
@@ -902,18 +1009,18 @@
       ad        se nom         appel   ten com Babel , ab      Jehowa  confus  hab illa
       Therefore the name of it was called  as  Babel , because Yahweh  confused    the
 
-      lihun    de tohi la   mujin, ihiu . De   ihiu , Dzehova li  divihiu    a  uvuitewu
+      lihun    de tohi la   mujin, iju  . De   iju  , Dzehova li  diviju     a  uvitewu
       ling     de tot  illa mund , id   . De   id   , Jehowa  lor divid      ad ulter
       language of all  the  earth, there. From there, Yahweh  scattered them abroad
 
-      su    la   suwuifaji de tohi la   mujin.
+      su    la   suwifaji  de tohi la   mujin.
       super illa surface   de tot  illa mund .
       on    the  surface   of all  the  earth.
 
       --------- --------- --------- --------- --------- --------- --------- ---------
     </pre>
     <pre>
-      Tihiule : Na    Patewu
+      Tijule  : Na    Patewu
       title   : nostr pater
       Title   : Our   Father
 
@@ -937,19 +1044,19 @@
       fect ten tu   volunt ,
       done     your will   ,
 
-      ko  i  la   tsevu  e   su  la   tewu.
+      ko  i  la   tsevu  e   su  la   tewu .
       com in illa cel    et  sur illa terr .
       as  in      heaven and on       earch.
 
       --------- --------- --------- --------- --------- --------- --------- ---------
 
-      Na    pewidijiu pan   tu  don  tsuihijiu.
+      Na    pewidiju  pan   tu  don  tsiju   .
       nostr per-dies  pan   tu  don  hic-dies.
       Our   everyday  bread you give today   .
 
       --------- --------- --------- --------- --------- --------- --------- ---------
 
-      Pawudon tu  na    le  debihiu,
+      Pawudon tu  na    le  debiju ,
       pardon  tu  nostr ill debit  ,
       Forgive you our       debts  ,
 
@@ -959,7 +1066,7 @@
 
       --------- --------- --------- --------- --------- --------- --------- ---------
 
-      E   tu  ne  ni    duhui entewu le  tefumtatsion,
+      E   tu  ne  ni    duhi  entewu le  tefumtatsion,
       et  tu  neg nostr duc   entr   ill temptation  ,
       and you not us    lead  into       temptation  ,
 
