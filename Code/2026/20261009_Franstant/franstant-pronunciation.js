@@ -11,7 +11,7 @@
 //   -ez -> [e]; -es -> [ɛ] (monosyllabic) / [ə] (polysyllabic); final -e -> [ə].
 // - x: silent if final, else [ks]; [ɡz] discarded.
 // - s: [z] between two vowels, else [s] (final s silent).
-// - c: [s] before e/i/y, else [k]; g: [ʒ] before e/i/y, else [ɡ].
+// - c: [s] before e/i/y (including accented é/è/ê/ë), else [k]; g: [ʒ] before e/i/y (including accented), else [ɡ].
 // - Vowel quality: e -> [ɛ] in a closed syllable (letter-based: followed by a
 //   consonant letter that is followed by a consonant or word-end, or by a
 //   pronounced x, or by ill), else [ə]; eu -> [œ]/[ø] by the same test;
@@ -44,6 +44,7 @@
     return (ch >= 'a' && ch <= 'z' && !isVowel(ch)) || ch === 'ç';
   }
   // Is the consonant letter at position j pronounced? (used for o-quality)
+  // e.g. porte -> [pɔʁtə]: the r is pronounced, so it closes the o -> [ɔ]; mot -> [mo]: the t is silent, so o stays [o].
   function pronouncedCons(w, j) {
     const ch = w[j];
     if (ch === 'h') return false;
@@ -54,6 +55,7 @@
   // j = index of the letter following the vowel/digraph. Closed if that
   // letter is a consonant followed by a consonant or word-end, or a
   // pronounced x, or the start of ill.
+  // e.g. espoir -> [ɛspwaʁ]: e + s + p is closed -> [ɛ]; peser -> [pəze]: e + s + e is open -> [ə].
   function closedAfter(w, j) {
     const nx = w[j];
     if (!nx) return false;
@@ -64,6 +66,7 @@
     return !after || isConsLetter(after);
   }
   // Closed-syllable test for o (pronounced-consonant-based, as mot/porte show).
+  // e.g. porte -> [pɔʁtə]: pronounced r closes o -> [ɔ]; rose -> [ʁozə]: s + vowel does not close o -> [o].
   function closedPronouncedAfter(w, j) {
     const nx = w[j];
     if (!nx) return false;
@@ -74,36 +77,48 @@
   }
 
   function pronounceWord(raw) {
+    // e.g. eût -> eut (eû reads as eu), so eût fait -> [œfɛ]; où -> ou.
     let w = raw.toLowerCase().replace(/eû/g, 'eu').replace(/où/g, 'ou');
     // Syllable count = number of vowel-letter groups (for -er/-es/-ier rules).
+    // e.g. mer has 1 vowel group (mono); manger has 2 (poly). This decides -er/-es/-ier endings.
     let groups = 0, prevVowel = false;
     for (const ch of w) {
       const v = isVowel(ch);
       if (v && !prevVowel) groups++;
       prevVowel = v;
     }
-    const mono = groups <= 1;
     // y between two vowels splits into ii, then the other rules apply
     // (ayez -> aiiez -> [ɛje]; crayon -> craiion -> [kʁɛjɔ̃]).
-    // The syllable count above stays on the original spelling (payer is 2 syllables).
-    let split = '';
+    // Each split adds a syllable: payer has 1 vowel group + 1 split = 2 syllables,
+    // so final -er -> [e] (payer -> [pɛje]).
+    let split = '', splits = 0;
     for (let k = 0; k < w.length; k++) {
       const ch = w[k];
-      if (ch === 'y' && k > 0 && k < w.length - 1 && isVowel(w[k - 1]) && isVowel(w[k + 1])) split += 'ii';
+      if (ch === 'y' && k > 0 && k < w.length - 1 && isVowel(w[k - 1]) && isVowel(w[k + 1])) { split += 'ii'; splits++; }
       else split += ch;
     }
     w = split;
+    const mono = (groups + splits) <= 1;
     let out = '', i = 0;
     const n = w.length;
     while (i < n) {
       const rest = w.slice(i);
       // --- terminal patterns (rest is exactly the word ending) ---
+      // e.g. eussent -> [œsɑ̃]: after eu [œ] + ss [s], the remaining 'ent' -> [ɑ̃].
       if (rest === 'ent') { out += 'ɑ̃'; break; }
+      // e.g. fier -> [fjɛʁ] (mono keeps r); premier -> [pʁəmje] (poly drops r).
       if (rest === 'ier') { out += mono ? 'jɛʁ' : 'je'; break; }
+      // e.g. mer -> [mɛʁ] (mono keeps r); manger -> [mɑ̃ʒe] (poly drops r).
       if (rest === 'er') { out += mono ? 'ɛʁ' : 'e'; break; }
+      // e.g. nez -> [ne]: final -ez is always [e].
       if (rest === 'ez') { out += 'e'; break; }
+      // e.g. les -> [lɛ] (mono); parles -> [paʁlə] (poly).
       if (rest === 'es') { out += mono ? 'ɛ' : 'ə'; break; }
+      // e.g. table -> [tablə]: final -e is always [ə].
       if (rest === 'e') { out += 'ə'; break; }
+      // Last letter standing alone: vowels keep their value, c/r/f/l sound, every other
+      // final consonant is silent (CaReFuL). e.g. dix -> [di] (x silent), paix -> [pɛ] (x silent),
+      // mer -> [mɛʁ] (final r sounds), mot -> [mo] (final t silent).
       if (rest.length === 1) {
         const ch = rest;
         if (ch === 'a' || ch === 'à') out += 'a';
@@ -125,46 +140,68 @@
         break;
       }
       // --- 4-letter digraph ---
+      // e.g. nation -> [nasjɔ̃]: tion is always [sjɔ̃].
       if (w.slice(i, i + 4) === 'tion') { out += 'sjɔ̃'; i += 4; continue; }
       // --- 3-letter digraphs ---
       const three = w.slice(i, i + 3);
+      // e.g. beau -> [bo]: eau is [o].
       if (three === 'eau') { out += 'o'; i += 3; continue; }
+      // e.g. fille -> [fijə] (ill after a consonant -> [ij]); feuille -> [fœjə] (ill after a vowel -> [j]).
       if (three === 'ill') {
         out += (i > 0 && isVowel(w[i - 1])) ? 'j' : 'ij';
         i += 3; continue;
       }
+      // e.g. pain -> [pɛ̃]: ain/ein is [ɛ̃].
       if (three === 'ain' || three === 'ein') { out += 'ɛ̃'; i += 3; continue; }
+      // e.g. loin -> [lwɛ̃]: oin is [wɛ̃].
       if (three === 'oin') { out += 'wɛ̃'; i += 3; continue; }
       // --- 2-letter digraphs ---
       const two = w.slice(i, i + 2);
+      // e.g. voir -> [vwaʁ]: oi is [wa].
       if (two === 'oi') { out += 'wa'; i += 2; continue; }
+      // e.g. pour -> [puʁ]: ou is [u].
       if (two === 'ou') { out += 'u'; i += 2; continue; }
+      // e.g. faire -> [fɛʁə] (ai is [ɛ]); neige -> [nɛʒə] (ei is [ɛ]).
       if (two === 'ai' || two === 'ei') { out += 'ɛ'; i += 2; continue; }
+      // e.g. auto -> [oto]: au is [o].
       if (two === 'au') { out += 'o'; i += 2; continue; }
+      // e.g. peur -> [pœʁ] (closed -> [œ]); peu -> [pø] (open -> [ø]).
       if (two === 'eu') { out += closedAfter(w, i + 2) ? 'œ' : 'ø'; i += 2; continue; }
+      // e.g. cœur -> [kœʁ]: œu is [œ].
       if (two === 'œu') { out += 'œ'; i += 2; continue; }
+      // e.g. chat -> [ʃa]: ch is [ʃ].
       if (two === 'ch') { out += 'ʃ'; i += 2; continue; }
+      // e.g. photo -> [foto]: ph is [f].
       if (two === 'ph') { out += 'f'; i += 2; continue; }
+      // e.g. signe -> [siɲə]: gn is [ɲ].
       if (two === 'gn') { out += 'ɲ'; i += 2; continue; }
+      // e.g. que -> [kə]: qu is [k].
       if (two === 'qu') { out += 'k'; i += 2; continue; }
+      // e.g. thé -> [te]: th is [t].
       if (two === 'th') { out += 't'; i += 2; continue; }
+      // e.g. guerre -> [ɡɛʁə] (gu before e -> [ɡ]); guano -> [ɡwano] (gu before a/o/u -> [ɡw]).
       if (two === 'gu') {
         const nx = w[i + 2];
         out += (nx === 'a' || nx === 'o' || nx === 'u') ? 'ɡw' : 'ɡ';
         i += 2; continue;
       }
+      // e.g. poisson -> [pwasɔ̃]: ss is always [s].
       if (two === 'ss') { out += 's'; i += 2; continue; }
+      // e.g. terre -> [tɛʁə]: a doubled consonant is one sound; accepter -> [aksɛpte] and accès -> [aksɛ] (cc before e/i/y, accented included, -> [ks]).
       const dbl = two[0] === two[1] && isConsLetter(two[0]) && two !== 'ss';
       if (dbl) { // doubled consonant = single sound (mm, nn, ll, pp, rr, tt, ...)
-        if (two[0] === 'c') out += (w[i + 2] === 'e' || w[i + 2] === 'i' || w[i + 2] === 'y') ? 'ks' : 'k';
+        if (two[0] === 'c') out += (w[i + 2] === 'e' || w[i + 2] === 'i' || w[i + 2] === 'y' || w[i + 2] === 'é' || w[i + 2] === 'è' || w[i + 2] === 'ê' || w[i + 2] === 'ë') ? 'ks' : 'k';
         else out += singleCons(two[0], w, i);
         i += 2; continue;
       }
       // --- single letters ---
       const ch = w[i];
+      // Single vowels. e.g. avoir -> [avwaʁ] (a is [a]); hier -> [jɛʁ] (i glides to [j] before a vowel,
+      // e in a closed syllable is [ɛ], final r sounds).
       if (ch === 'a' || ch === 'e' || ch === 'i' || ch === 'o' || ch === 'u') {
         // nasal: vowel + m/n before a consonant or word-end (not doubled)
         const nx = w[i + 1];
+        // e.g. dans -> [dɑ̃]: vowel + m/n before a consonant nasalizes, the m/n goes silent.
         if ((nx === 'm' || nx === 'n') && w[i + 2] !== nx) {
           const after = w[i + 2];
           if (!after || isConsLetter(after)) {
@@ -178,6 +215,7 @@
         else if (ch === 'u') out += 'y';
         i += 1; continue;
       }
+      // Accented vowels keep their plain value. e.g. été -> [ete] (é is [e]); mère -> [mɛʁə] (è is [ɛ]); â -> [ɑ].
       if (ch === 'à') { out += 'a'; i++; continue; }
       if (ch === 'â') { out += 'ɑ'; i++; continue; }
       if (ch === 'é') { out += 'e'; i++; continue; }
@@ -187,34 +225,42 @@
       if (ch === 'û' || ch === 'ù' || ch === 'ü') { out += 'y'; i++; continue; }
       if (ch === 'æ') { out += 'e'; i++; continue; }
       if (ch === 'œ') { out += 'œ'; i++; continue; }
+      // e.g. yeux -> [jœ] (y before a vowel -> [j]); type -> [tipə] (y elsewhere -> [i]).
       if (ch === 'y') {
         out += (w[i + 1] && isVowel(w[i + 1])) ? 'j' : 'i';
         i++; continue;
       }
+      // e.g. homme -> [ɔmə]: h is always silent.
       if (ch === 'h') { i++; continue; } // silent
+      // e.g. ce -> [sə] (c before e/i/y -> [s], accented é/è/ê/ë included, e.g. cédille -> [sedijə]); car -> [kaʁ] (c elsewhere -> [k]).
       if (ch === 'c' || ch === 'ç') {
         const nx = w[i + 1];
-        out += (nx === 'e' || nx === 'i' || nx === 'y') ? 's' : 'k';
+        out += (nx === 'e' || nx === 'i' || nx === 'y' || nx === 'é' || nx === 'è' || nx === 'ê' || nx === 'ë') ? 's' : 'k';
         i++; continue;
       }
+      // e.g. gel -> [ʒɛl] (g before e/i/y -> [ʒ], accented included); grand -> [ɡʁɑ̃] (g elsewhere -> [ɡ]).
       if (ch === 'g') {
         const nx = w[i + 1];
-        out += (nx === 'e' || nx === 'i' || nx === 'y') ? 'ʒ' : 'ɡ';
+        out += (nx === 'e' || nx === 'i' || nx === 'y' || nx === 'é' || nx === 'è' || nx === 'ê' || nx === 'ë') ? 'ʒ' : 'ɡ';
         i++; continue;
       }
+      // e.g. rose -> [ʁozə] (s between two vowels -> [z]); sur -> [syʁ] (s elsewhere -> [s]).
       if (ch === 's') {
         const pv = i > 0 && isVowel(w[i - 1]);
         const nx = w[i + 1];
         out += (pv && nx && isVowel(nx)) ? 'z' : 's';
         i++; continue;
       }
+      // e.g. taxi -> [taksi]: non-final x is [ks] (final x was already silenced above).
       if (ch === 'x') { out += 'ks'; i++; continue; } // non-final here (final x caught above)
+      // e.g. Qatar -> [kataʁ]: q is [k] (qu was already handled above).
       if (ch === 'q') { out += 'k'; i++; continue; }
       out += singleCons(ch, w, i);
       i++;
     }
     return out;
 
+    // Plain consonant values, used for doubled consonants and the fallback. e.g. rouge -> [ʁuʒə].
     function singleCons(ch, w, i) {
       switch (ch) {
         case 'b': return 'b';
