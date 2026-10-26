@@ -93,6 +93,10 @@ function syllabify(text) {
                     } else if ('bdg'.indexOf(units[unitIndex]) !== -1) {
                         claimed.unshift(units[unitIndex]);
                         unitIndex--;
+                    } else if (units[unitIndex] === 'f') {
+                        // fw, but not sfw: do not extend to a preceding 's'
+                        claimed.unshift(units[unitIndex]);
+                        unitIndex--;
                     }
                 }
                 stop = true;
@@ -108,6 +112,10 @@ function syllabify(text) {
                             unitIndex--;
                         }
                     } else if ('bg'.indexOf(units[unitIndex]) !== -1) {
+                        claimed.unshift(units[unitIndex]);
+                        unitIndex--;
+                    } else if (units[unitIndex] === 'f') {
+                        // fl, but not sfl: do not extend to a preceding 's'
                         claimed.unshift(units[unitIndex]);
                         unitIndex--;
                     }
