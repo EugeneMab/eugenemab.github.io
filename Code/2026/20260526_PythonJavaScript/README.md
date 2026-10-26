@@ -7,6 +7,8 @@
 This project is a browser playground for transpiling a Python subset into JavaScript and executing it in the browser. It exposes the intermediate stages of lexing, parsing, code generation, and execution, and includes sample programs that cover core Python syntax, collections, functional helpers, classes, and runtime behavior.
 
 ## How to Use
+Node.js 24 LTS or newer is recommended for the current tooling.
+
 ### Linux
 1. Go to `git_root_folder/Code/2026/20260526_PythonJavaScript`.
 2. Install dependencies with `npm ci`.

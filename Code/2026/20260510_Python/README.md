@@ -7,6 +7,8 @@
 This project is a browser playground for compiling a Python subset into WebAssembly. It shows the full pipeline from source code to tokens, AST, WAT, WASM bytes, and execution results, with sample programs for language features such as branching, slicing, comprehensions, generators, and context managers.
 
 ## How to Use
+Node.js 24 LTS or newer is recommended for the current tooling.
+
 ### Linux
 1. Go to `git_root_folder/Code/2026/20260510_Python`.
 2. Install dependencies with `npm ci`.

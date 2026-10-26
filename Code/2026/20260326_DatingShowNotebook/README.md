@@ -42,12 +42,12 @@ Tools Used: Gemini, GitHub Copilot
 
 ### Prerequisites
 
-- Node.js (v18+)
+- Node.js 24 LTS or newer is recommended for the current tooling.
 
 ### Launching
 
 1. Open a terminal in the project directory.
-2. Run `npm install` (or `install.cmd` on Windows) to install or update dependencies.
+2. Run `npm ci` to install the locked dependencies. Use `npm install` (or `install.cmd` on Windows) when intentionally updating dependencies.
 3. Run `start.cmd` (optionally provide a folder path: `start.cmd "C:\path\to\data"`).
 4. The UI will be available at [http://localhost:3762/](http://localhost:3762/).
 

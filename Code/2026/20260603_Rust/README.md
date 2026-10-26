@@ -30,7 +30,7 @@ integration.
 - vitest.config.ts, tsconfig.json, package.json (project configs)
 
 ## Developer commands (quick)
-- npm install           # install dependencies
+- npm ci                # install locked dependencies
 - npm run lint          # lint TypeScript
 - npm run build         # build TS -> JS into `pub/js/`
 - npm test              # run unit tests (Vitest)
@@ -59,7 +59,7 @@ integration.
 3. Run `npm run build` and open `pub/index.html` to validate execution.
 
 ## Troubleshooting
-- Node: use Node 18+ for stable ESM/worker support.
+- Node: use Node.js 24 LTS or newer for the current tooling.
 - If WASM instantiation fails, check console for import names `env.print` etc.
 - UI tests may require a headless browser env; run `npm run test:ui` in CI or
   locally with Playwright installed.
@@ -70,4 +70,3 @@ integration.
 - Samples: `pub/samples/` maps to tutorial/book sections
 
 Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
-
