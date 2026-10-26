@@ -152,6 +152,10 @@
                   // bw dw gw
                   claimed.unshift(units[unitIndex]);
                   unitIndex--;
+                } else if (units[unitIndex] === 'f') {
+                    // fw, but not sfw: do not extend to a preceding 's'
+                    claimed.unshift(units[unitIndex]);
+                    unitIndex--;
                 }
               }
               stop = true;
@@ -161,18 +165,22 @@
               unitIndex--;
               if (unitIndex >= 0) {
                 if ('pk'.indexOf(units[unitIndex]) !== -1) {
-                  // pw kw
+                  // pl kl
                   claimed.unshift(units[unitIndex]);
                   unitIndex--;
                   if (unitIndex >= 0 && units[unitIndex] === 's') {
-                    // spw skw
+                    // spl skl
                     claimed.unshift(units[unitIndex]);
                     unitIndex--;
                   }
                 } else if ('bg'.indexOf(units[unitIndex]) !== -1) {
-                  // bw gw
+                  // bl gl
                   claimed.unshift(units[unitIndex]);
                   unitIndex--;
+                } else if (units[unitIndex] === 'f') {
+                    // fl, but not sfl: do not extend to a preceding 's'
+                    claimed.unshift(units[unitIndex]);
+                    unitIndex--;
                 }
               }
               stop = true;
@@ -594,9 +602,9 @@
       </ul>
       <ul>
         <li class="t"
-          c="词中的元音组合向左延伸，匹配有效的起始辅音组合(如 {spl}, {st}, {br})。"
-          d="La vovevu intewumediahi ehusihehin la sivulabuve a la sinsihewu a enkontewu u kombinatsion de konsonahin po onsehi valiju (ko {spl}, {st}, {br})."
-          >The middle vowel combination extends the syllable to the left to match a valid onset consonant combination (such as {spl}, {st}, {br}).</li>
+          c="词中的元音组合向左延伸，匹配有效的起始辅音组合(如 {spl}, {st}, {br}, {fl}, {fr})。"
+          d="La vovevu intewumediahi ehusihehin la sivulabuve a la sinsihewu a enkontewu u kombinatsion de konsonahin po onsehi valiju (ko {spl}, {st}, {br}, {fl}, {fr})."
+          >The middle vowel combination extends the syllable to the left to match a valid onset consonant combination (such as {spl}, {st}, {br}, {fl}, {fr}).</li>
       </ul>
       <ul>
         <li class="t"
@@ -641,9 +649,9 @@
     </p>
     <center>
       <table>
-        <tr><td>  b  </td><td>  d  </td><td>  g  </td><td>  p  </td><td>  t  </td><td>  k  </td><td> sp  </td><td> st  </td><td> sk  </td></tr>
-        <tr><td>  bw </td><td>  dw </td><td>  gw </td><td>  pw </td><td>  tw </td><td>  kw </td><td> spw </td><td> stw </td><td> skw </td></tr>
-        <tr><td>  bl </td><td>     </td><td>  gl </td><td>  pl </td><td>     </td><td>  kl </td><td> spl </td><td>     </td><td> skl </td></tr>
+        <tr><td>  f  </td><td>  b  </td><td>  d  </td><td>  g  </td><td>  p  </td><td>  t  </td><td>  k  </td><td> sp  </td><td> st  </td><td> sk  </td></tr>
+        <tr><td>  fw </td><td>  bw </td><td>  dw </td><td>  gw </td><td>  pw </td><td>  tw </td><td>  kw </td><td> spw </td><td> stw </td><td> skw </td></tr>
+        <tr><td>  fl </td><td>  bl </td><td>     </td><td>  gl </td><td>  pl </td><td>     </td><td>  kl </td><td> spl </td><td>     </td><td> skl </td></tr>
       </table>
     </center>
     <h3><span class="t"
