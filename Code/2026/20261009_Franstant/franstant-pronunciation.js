@@ -6,8 +6,8 @@
 //
 // Rules implemented:
 // - 26 letters; h silent; final consonant pronounced only if c/r/f/l.
-// - Terminal rules (take precedence): -ent -> [ɑ̃]; -ier -> [je] (polysyllabic)
-//   / [jɛ] (monosyllabic); -er -> [e] (polysyllabic) / [ɛʁ] (monosyllabic);
+// - Terminal rules (take precedence): -ent -> [ɑ̃]; -ier -> [je] (polysyllabic), [jɛʁ] (monosyllabic)
+//   / [jɛʁ] (monosyllabic); -er -> [e] (polysyllabic) / [ɛʁ] (monosyllabic);
 //   -ez -> [e]; -es -> [ɛ] (monosyllabic) / [ə] (polysyllabic); final -e -> [ə].
 // - x: silent if final, else [ks]; [ɡz] discarded.
 // - s: [z] between two vowels, else [s] (final s silent).
@@ -99,7 +99,7 @@
       const rest = w.slice(i);
       // --- terminal patterns (rest is exactly the word ending) ---
       if (rest === 'ent') { out += 'ɑ̃'; break; }
-      if (rest === 'ier') { out += mono ? 'jɛ' : 'je'; break; }
+      if (rest === 'ier') { out += mono ? 'jɛʁ' : 'je'; break; }
       if (rest === 'er') { out += mono ? 'ɛʁ' : 'e'; break; }
       if (rest === 'ez') { out += 'e'; break; }
       if (rest === 'es') { out += mono ? 'ɛ' : 'ə'; break; }

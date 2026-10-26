@@ -26,7 +26,7 @@ const CASES = [
   ['merci', 'mɛʁsi'], ['fermer', 'fɛʁme'], ['les', 'lɛ'], ['des', 'dɛ'],
   ['parles', 'paʁlə'], ['tables', 'tablə'], ['espoir', 'ɛspwaʁ'],
   ['peser', 'pəze'], ['premier', 'pʁəmje'], ['papier', 'papje'],
-  ['fier', 'fjɛ'], ['hier', 'jɛ'], ['rose', 'ʁozə'], ['sur', 'syʁ'],
+  ['fier', 'fjɛʁ'], ['hier', 'jɛʁ'], ['rose', 'ʁozə'], ['sur', 'syʁ'],
   ['table', 'tablə'], ['parle', 'paʁlə'], ['nez', 'ne'], ['mangez', 'mɑ̃ʒe'],
   ['vent', 'vɑ̃'], ['eussent', 'œsɑ̃'], ['cinq', 'sɛ̃'],
   // Ch. 6 worked examples (Franstant targets)
