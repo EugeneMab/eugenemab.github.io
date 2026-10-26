@@ -568,7 +568,7 @@
     <p>
       <span class="t"
         c="把{y}转化为{i}."
-        d="Konvuwehi la vovwevu {y} a {i}."
+        d="Konvuwehi la vovevu {y} a {i}."
         >Convert vowel {y} to {i}.</span>
     </p>
     <h3><span class="t"
@@ -616,7 +616,7 @@
     <p>
       <span class="t"
         c="有效的元音组合:"
-        d="Kombinatsion de vovewu valiju:"
+        d="Kombinatsion de vovevu valiju:"
         >Table of valid vowel combinations:</span>
     </p>
     <center>
@@ -668,7 +668,7 @@
       <ul>
         <li class="t"
           c="元音组合分为首元音(FV),中部元音(MV)，和末元音(LV)."
-          d="La guwim de vovevu eji kompoji ti de la piwum vovevu (FV), la mediahi vovewu (MV), e la finavu vovevu (LV)."
+          d="La guwim de vovevu eji kompoji ti de la piwum vovevu (FV), la mediahi vovevu (MV), e la finavu vovevu (LV)."
           >The vowel group is composed of first vowel (FV), middle vowel (MV), and last vowel (LV).</li>
         <li class="t"
           c="元音前的第一个辅音作为主辅音(PC)."
@@ -680,7 +680,7 @@
           >The first nasal after vowels is primary nasal (PN).</li>
         <li class="t"
           c="其他辅音作为辅助辅音(SC),其包括元音前辅助辅音(BSC),和元音后辅助辅音(ASC)."
-          d="Le avutewu konsonahin eji le sufipuwohi konsonahin (SC), ke inkuvin le ante-vovwevu sufipuwohi konsonahin (BSC), e pijohi-vovevu sufipuwohi konsonahin (ASC)."
+          d="Le avutewu konsonahin eji le sufipuwohi konsonahin (SC), ke inkuvin le ante-vovevu sufipuwohi konsonahin (BSC), e pijohi-vovevu sufipuwohi konsonahin (ASC)."
           >Other consonants are supporting consonants (SC), which includes before-vowel supporting consonants (BSC), and after-vowel supporting consonants (ASC).</li>
       </ul>
     </p>
@@ -697,10 +697,16 @@
         >Organize using the rules. {#} means {number of}. {&} means {and}. {=>} means {if ... then ...}. {X() Y() Z()} are to follow the conversion table.</span>
     </p>
     <p>
-      Two outer cases, by the vowels of the syllable. V stands for the whole vowel group (FV MV LV). SC1, SC2 are the supporting consonants in order: BSCs first, then ASCs.
+      <span class="t"
+        c="按音节的元音分两种外层情况。V 代表整个元音组（FV MV LV）。SC1、SC2 是按顺序排列的支持辅音：BSC 在前，ASC 在后。"
+        d="Eji iju duji kaji ehusihewu, pe le vovevu de la sivulabuve. V indikahi tohi le guwim de vovevu (FV MV LV). SC1, SC2 eji le sufipuwohi konsonahin: BSC ante, pijohi ASC."
+        >Two outer cases, by the vowels of the syllable. V stands for the whole vowel group (FV MV LV). SC1, SC2 are the supporting consonants in order: BSCs first, then ASCs.</span>
     </p>
     <p>
-      Case 1: every vowel of the vowel group is "i" or "u".
+      <span class="t"
+        c="情况 1：元音为 {i} 或 {u} 的音节。"
+        d="Kaji un mo: sivulabuve kon u vovevu eji i o u."
+        >Case 1: syllable with vowel being {i} or {u}.</span>
       <ul>
         <li>#PN = 1 & #SC = 0 => PC V PN</li>
         <li>#PN = 1 & #SC >= 1 => PC V B(SC1) PN</li>
@@ -710,7 +716,10 @@
       </ul>
     </p>
     <p>
-      Case 1 conversion table:
+      <span class="t"
+        c="情况 1 转化表："
+        d="La tabuve de konvewusion de kaji un mo:"
+        >Case 1 conversion table:</span>
     </p>
     <center>
       <table>
@@ -727,7 +736,10 @@
       </table>
     </center>
     <p>
-      Case 2: all other syllables. Same structure as before; X() Y() Z() follow the table below.
+      <span class="t"
+        c="情况 2：其他所有音节。X()、Y()、Z() 见下表。"
+        d="Kaji duji mo: le avutewu sivulabuve. X() Y() Z() sehu le tabuve pijohi."
+        >Case 2: all other syllables. X() Y() Z() follow the table below.</span>
       <ul>
         <li>#PN = 1 & #SC = 0 => PC FV MV LV PN</li>
         <li>#PN = 1 & #SC = 1 & #BSC = 1 => PC X(BSC1) FV MV LV PN</li>
@@ -762,7 +774,7 @@
     <p>
       <span class="t"
         c=" 如果单词以元音开头，主辅音(PC) 视为空。这允许单词以“软音”或纯元音直接开头."
-        d="Si u vuwefu owidzinahi kon u vovewu, la PC eji weguwahi ti ko nuvi. Pewumiju ivu la vuwefu a owidzinahi kon u son sufohi o u vovewu."
+        d="Si u vuwefu owidzinahi kon u vovevu, la PC eji weguwahi ti ko nuvi. Pewumiju ivu la vuwefu a owidzinahi kon u son sufohi o u vovevu."
         >If a word starts with a vowel, the PC is treated as empty. It allows the word to start with a "soft" sound or a raw vowel.</span>
     </p>
     <pre style="display:none">
