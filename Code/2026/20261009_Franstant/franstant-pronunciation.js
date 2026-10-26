@@ -11,7 +11,7 @@
 //   -ez -> [e]; -es -> [ɛ] (monosyllabic) / [ə] (polysyllabic); final -e -> [ə].
 // - x: silent if final, else [ks]; [ɡz] discarded.
 // - s: [z] between two vowels, else [s] (final s silent).
-// - c: [s] before e/i/y, else [k]; g: [ʒ] before e/i/y, else [ɡ].
+// - c: [s] before e/i/y (including accented é/è/ê/ë), else [k]; g: [ʒ] before e/i/y (including accented), else [ɡ].
 // - Vowel quality: e -> [ɛ] in a closed syllable (letter-based: followed by a
 //   consonant letter that is followed by a consonant or word-end, or by a
 //   pronounced x, or by ill), else [ə]; eu -> [œ]/[ø] by the same test;
@@ -87,17 +87,18 @@
       if (v && !prevVowel) groups++;
       prevVowel = v;
     }
-    const mono = groups <= 1;
     // y between two vowels splits into ii, then the other rules apply
     // (ayez -> aiiez -> [ɛje]; crayon -> craiion -> [kʁɛjɔ̃]).
-    // The syllable count above stays on the original spelling (taken before this split).
-    let split = '';
+    // Each split adds a syllable: payer has 1 vowel group + 1 split = 2 syllables,
+    // so final -er -> [e] (payer -> [pɛje]).
+    let split = '', splits = 0;
     for (let k = 0; k < w.length; k++) {
       const ch = w[k];
-      if (ch === 'y' && k > 0 && k < w.length - 1 && isVowel(w[k - 1]) && isVowel(w[k + 1])) split += 'ii';
+      if (ch === 'y' && k > 0 && k < w.length - 1 && isVowel(w[k - 1]) && isVowel(w[k + 1])) { split += 'ii'; splits++; }
       else split += ch;
     }
     w = split;
+    const mono = (groups + splits) <= 1;
     let out = '', i = 0;
     const n = w.length;
     while (i < n) {
@@ -186,10 +187,10 @@
       }
       // e.g. poisson -> [pwasɔ̃]: ss is always [s].
       if (two === 'ss') { out += 's'; i += 2; continue; }
-      // e.g. terre -> [tɛʁə]: a doubled consonant is one sound; accepter -> [aksɛpte] (cc before e/i/y -> [ks]).
+      // e.g. terre -> [tɛʁə]: a doubled consonant is one sound; accepter -> [aksɛpte] and accès -> [aksɛ] (cc before e/i/y, accented included, -> [ks]).
       const dbl = two[0] === two[1] && isConsLetter(two[0]) && two !== 'ss';
       if (dbl) { // doubled consonant = single sound (mm, nn, ll, pp, rr, tt, ...)
-        if (two[0] === 'c') out += (w[i + 2] === 'e' || w[i + 2] === 'i' || w[i + 2] === 'y') ? 'ks' : 'k';
+        if (two[0] === 'c') out += (w[i + 2] === 'e' || w[i + 2] === 'i' || w[i + 2] === 'y' || w[i + 2] === 'é' || w[i + 2] === 'è' || w[i + 2] === 'ê' || w[i + 2] === 'ë') ? 'ks' : 'k';
         else out += singleCons(two[0], w, i);
         i += 2; continue;
       }
@@ -231,16 +232,16 @@
       }
       // e.g. homme -> [ɔmə]: h is always silent.
       if (ch === 'h') { i++; continue; } // silent
-      // e.g. ce -> [sə] (c before e/i/y -> [s]); car -> [kaʁ] (c elsewhere -> [k]).
+      // e.g. ce -> [sə] (c before e/i/y -> [s], accented é/è/ê/ë included, e.g. cédille -> [sedijə]); car -> [kaʁ] (c elsewhere -> [k]).
       if (ch === 'c' || ch === 'ç') {
         const nx = w[i + 1];
-        out += (nx === 'e' || nx === 'i' || nx === 'y') ? 's' : 'k';
+        out += (nx === 'e' || nx === 'i' || nx === 'y' || nx === 'é' || nx === 'è' || nx === 'ê' || nx === 'ë') ? 's' : 'k';
         i++; continue;
       }
-      // e.g. gel -> [ʒɛl] (g before e/i/y -> [ʒ]); grand -> [ɡʁɑ̃] (g elsewhere -> [ɡ]).
+      // e.g. gel -> [ʒɛl] (g before e/i/y -> [ʒ], accented included); grand -> [ɡʁɑ̃] (g elsewhere -> [ɡ]).
       if (ch === 'g') {
         const nx = w[i + 1];
-        out += (nx === 'e' || nx === 'i' || nx === 'y') ? 'ʒ' : 'ɡ';
+        out += (nx === 'e' || nx === 'i' || nx === 'y' || nx === 'é' || nx === 'è' || nx === 'ê' || nx === 'ë') ? 'ʒ' : 'ɡ';
         i++; continue;
       }
       // e.g. rose -> [ʁozə] (s between two vowels -> [z]); sur -> [syʁ] (s elsewhere -> [s]).
