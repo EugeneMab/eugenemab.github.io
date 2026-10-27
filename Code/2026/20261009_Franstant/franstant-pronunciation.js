@@ -8,7 +8,7 @@
 // - 26 letters; h silent; final consonant pronounced only if c/r/f/l.
 // - Terminal rules (take precedence): -ent -> [ɑ̃]; -ier -> [je] (polysyllabic), [jɛʁ] (monosyllabic)
 //   / [jɛʁ] (monosyllabic); -er -> [e] (polysyllabic) / [ɛʁ] (monosyllabic);
-//   -ez -> [e]; -es -> [ɛ] (monosyllabic) / [ə] (polysyllabic); final -e -> [ə].
+//   -ez -> [e]; -es -> [ɛ] (monosyllabic) / [ə] (polysyllabic, silent after a vowel); final -e -> [ə] (silent after a vowel).
 // - x: silent if final, else [ks]; [ɡz] discarded.
 // - s: [z] between two vowels, else [s] (final s silent).
 // - c: [s] before e/i/y (including accented é/è/ê/ë), else [k]; g: [ʒ] before e/i/y (including accented), else [ɡ].
@@ -22,7 +22,7 @@
 // - Digraphs: eau [o], au [o], ou [u], oi [wa], ai [ɛ], ei [ɛ], ch [ʃ],
 //   ph [f], gn [ɲ], qu [k], th [t], gu [ɡ] (or [ɡw] before a/o/u),
 //   tion [sjɔ̃], ill [ij] after a consonant / [j] after a vowel,
-//   ain/ein [ɛ̃], oin [wɛ̃]; eû is read as eu; où is read as ou.
+//   ain/ein [ɛ̃], oin [wɛ̃]; eû is read as eu; où is read as ou; î is read as i.
 // - y and i glide to [j] before a vowel.
 // - y between two vowels splits into ii first (ayez -> aiiez, crayon -> craiion).
 // - No elision, no liaison: words are pronounced independently.
@@ -31,7 +31,7 @@
 // - ai is always [ɛ] (faisait [fɛzɛ], faisant [fɛzɑ̃]).
 // - y between two vowels splits into ii (ayez -> aiiez -> [ɛje];
 //   crayon -> craiion -> [kʁɛjɔ̃]; ayons -> [ɛjɔ̃], ayant -> [ɛjɑ̃]).
-// - Final -e/-es -> [ə] is kept uniformly (fasse [fasə], ville [vijə], ...).
+// - Final -e/-es -> [ə] after a consonant, silent after a vowel (fasse [fasə], ville [vijə], vie [vi], année [ane]).
 // - No mute-e drop: examen is [ɛksamɑ̃] by rule.
 (function (root) {
   const VOWELS = new Set(['a', 'à', 'â', 'e', 'é', 'è', 'ê', 'i', 'î', 'o', 'ô',
@@ -77,8 +77,8 @@
   }
 
   function pronounceWord(raw) {
-    // e.g. eût -> eut (eû reads as eu), so eût fait -> [œfɛ]; où -> ou.
-    let w = raw.toLowerCase().replace(/eû/g, 'eu').replace(/où/g, 'ou');
+    // e.g. eût -> eut (eû reads as eu), so eût fait -> [œfɛ]; où -> ou; î reads as i (apparaître -> [apaʁɛtʁə]).
+    let w = raw.toLowerCase().replace(/eû/g, 'eu').replace(/où/g, 'ou').replace(/î/g, 'i');
     // Syllable count = number of vowel-letter groups (for -er/-es/-ier rules).
     // e.g. mer has 1 vowel group (mono); manger has 2 (poly). This decides -er/-es/-ier endings.
     let groups = 0, prevVowel = false;
@@ -112,10 +112,10 @@
       if (rest === 'er') { out += mono ? 'ɛʁ' : 'e'; break; }
       // e.g. nez -> [ne]: final -ez is always [e].
       if (rest === 'ez') { out += 'e'; break; }
-      // e.g. les -> [lɛ] (mono); parles -> [paʁlə] (poly).
-      if (rest === 'es') { out += mono ? 'ɛ' : 'ə'; break; }
-      // e.g. table -> [tablə]: final -e is always [ə].
-      if (rest === 'e') { out += 'ə'; break; }
+      // e.g. les -> [lɛ] (mono); parles -> [paʁlə] (poly); années -> [ane] (e silent after a vowel).
+      if (rest === 'es') { out += (i > 0 && isVowel(w[i - 1])) ? '' : (mono ? 'ɛ' : 'ə'); break; }
+      // e.g. table -> [tablə]: final -e is [ə] after a consonant, silent after a vowel (vie -> [vi]).
+      if (rest === 'e') { out += (i > 0 && isVowel(w[i - 1])) ? '' : 'ə'; break; }
       // Last letter standing alone: vowels keep their value, c/r/f/l sound, every other
       // final consonant is silent (CaReFuL). e.g. dix -> [di] (x silent), paix -> [pɛ] (x silent),
       // mer -> [mɛʁ] (final r sounds), mot -> [mo] (final t silent).
@@ -161,8 +161,10 @@
       if (two === 'oi') { out += 'wa'; i += 2; continue; }
       // e.g. pour -> [puʁ]: ou is [u].
       if (two === 'ou') { out += 'u'; i += 2; continue; }
-      // e.g. faire -> [fɛʁə] (ai is [ɛ]); neige -> [nɛʒə] (ei is [ɛ]).
-      if (two === 'ai' || two === 'ei') { out += 'ɛ'; i += 2; continue; }
+      // e.g. faire -> [fɛʁə] (ai is [ɛ]); detailler -> [dətaje] (ai before ll stays a + ill [j]).
+      if (two === 'ai' && !(w[i + 2] === 'l' && w[i + 3] === 'l')) { out += 'ɛ'; i += 2; continue; }
+      // e.g. neige -> [nɛʒə] (ei is [ɛ]).
+      if (two === 'ei') { out += 'ɛ'; i += 2; continue; }
       // e.g. auto -> [oto]: au is [o].
       if (two === 'au') { out += 'o'; i += 2; continue; }
       // e.g. peur -> [pœʁ] (closed -> [œ]); peu -> [pø] (open -> [ø]).
@@ -210,7 +212,7 @@
         }
         if (ch === 'a') out += 'a';
         else if (ch === 'e') out += closedAfter(w, i + 1) ? 'ɛ' : 'ə';
-        else if (ch === 'i') out += (w[i + 1] && isVowel(w[i + 1])) ? 'j' : 'i';
+        else if (ch === 'i') out += (w[i + 1] && isVowel(w[i + 1]) && !(w[i - 1] === 'l' && w[i - 2] === 'l') && !(w[i + 1] === 'e' && (i + 2 === n || (w[i + 2] === 's' && i + 3 === n)))) ? 'j' : 'i'; // i glides before a vowel, except after ll (million -> [mijiɔ̃]) and before a silent final e/es (vie -> [vi]).
         else if (ch === 'o') out += closedPronouncedAfter(w, i + 1) ? 'ɔ' : 'o';
         else if (ch === 'u') out += 'y';
         i += 1; continue;
@@ -232,8 +234,10 @@
       }
       // e.g. homme -> [ɔmə]: h is always silent.
       if (ch === 'h') { i++; continue; } // silent
+      // e.g. ça -> [sa] (ç is always [s]).
+      if (ch === 'ç') { out += 's'; i++; continue; }
       // e.g. ce -> [sə] (c before e/i/y -> [s], accented é/è/ê/ë included, e.g. cédille -> [sedijə]); car -> [kaʁ] (c elsewhere -> [k]).
-      if (ch === 'c' || ch === 'ç') {
+      if (ch === 'c') {
         const nx = w[i + 1];
         out += (nx === 'e' || nx === 'i' || nx === 'y' || nx === 'é' || nx === 'è' || nx === 'ê' || nx === 'ë') ? 's' : 'k';
         i++; continue;
