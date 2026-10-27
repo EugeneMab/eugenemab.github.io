@@ -208,6 +208,36 @@
           overflow-x: auto;
         }
       }
+      #ipa-input {
+        width: 100%;
+        min-height: 96px;
+        font-size: 1rem;
+        font-family: inherit;
+        color: #2c3e50;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+      #ipa-generate {
+        font-family: inherit;
+        font-size: 1rem;
+        color: white;
+        background: #2980b9;
+        border: none;
+        padding: 8px 20px;
+        margin-top: 10px;
+        cursor: pointer;
+      }
+      #ipa-output {
+        margin-top: 14px;
+        font-size: 1.15rem;
+        word-break: break-word;
+      }
+      #ipa-words {
+        margin-top: 8px;
+        font-size: 0.95rem;
+        color: #555;
+        word-break: break-word;
+      }
     </style>
     <script>
       var currentLang = 'e';
@@ -1384,6 +1414,61 @@
         </table>
       </div>
 
+      <div class="section" id="ipa-tool">
+        <h2><span class="t" c="发音工具" f="Outil de prononciation" r="Outil de Prononciation">Pronunciation Tool</span></h2>
+        <p>
+          <span class="t"
+            c="在下方输入文本，生成其 Franstant IPA 音标（严格通则，没有例外）。"
+            f="Tapez un texte ci-dessous pour générer sa transcription IPA en Franstant (règles générales strictes, sans exceptions)."
+            r="Taper un texte ci-dessous pour générer son transcription IPA en Franstant (règle général strict, sans exception)."
+            >Type text below to generate its Franstant IPA transcription (strict general rules, no exceptions).</span>
+        </p>
+        <p>
+          <span class="t" c="输入文本" f="Texte à transcrire" r="Texte à transcrire">Input text</span>
+        </p>
+        <textarea id="ipa-input" rows="4"></textarea>
+        <br/>
+        <button id="ipa-generate" type="button"><span class="t" c="生成音标" f="Générer l'IPA" r="Générer le IPA">Generate IPA</span></button>
+        <p>
+          <span class="t" c="发音" f="Prononciation" r="Prononciation">Pronunciation</span>
+        </p>
+        <div id="ipa-output"></div>
+        <div id="ipa-words"></div>
+      </div>
+
     </div>
+    <script src="franstant-pronunciation.js"></script>
+    <script>
+      (function () {
+        var input = document.getElementById('ipa-input');
+        var button = document.getElementById('ipa-generate');
+        var output = document.getElementById('ipa-output');
+        var wordsOut = document.getElementById('ipa-words');
+        function escapeHtml(s) {
+          return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        button.addEventListener('click', function () {
+          var text = input.value.trim();
+          if (!text) { output.textContent = ''; wordsOut.textContent = ''; return; }
+          if (typeof franstantPronounce === 'undefined') {
+            output.textContent = 'Pronunciation engine not loaded.';
+            wordsOut.textContent = '';
+            return;
+          }
+          var tokens = text.split(/\s+/);
+          var parts = [];
+          var lines = [];
+          for (var i = 0; i < tokens.length; i++) {
+            var clean = tokens[i].replace(/^[^A-Za-zÀ-ÿœæ]+|[^A-Za-zÀ-ÿœæ]+$/g, '');
+            if (!clean) continue;
+            var ipa = franstantPronounce.pronounceWord(clean);
+            parts.push('[' + ipa + ']');
+            lines.push(escapeHtml(tokens[i]) + ' → [' + ipa + ']');
+          }
+          output.textContent = parts.join(' ');
+          wordsOut.innerHTML = lines.join('<br/>');
+        });
+      })();
+    </script>
   </body>
 </html>
