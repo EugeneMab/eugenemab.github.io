@@ -14,9 +14,15 @@
 // - c: [s] before e/i/y (including accented é/è/ê/ë), else [k]; g: [ʒ] before e/i/y (including accented), else [ɡ].
 // - Vowel quality: e -> [ɛ] in a closed syllable (letter-based: followed by a
 //   consonant letter that is followed by a consonant or word-end, or by a
-//   pronounced x, or by ill), else [ə]; eu -> [œ]/[ø] by the same test;
-//   o -> [ɔ] only before a pronounced consonant that closes the syllable,
-//   else [o] (mot [mo], porte [pɔʁ], rose [ʁoz]).
+//   pronounced x, or by ill), else [ə]; eu -> [œ] in a non-final syllable or
+//   a closed syllable, else [ø] (seulement [sœləmɑ̃], peur [pœʁ], peu [pø]);
+//   o -> [ɔ] in a non-final syllable or before a pronounced consonant that
+//   closes the syllable, else [o] (modal [mɔdal], phonétique [fɔnetikə],
+//   porte [pɔʁtə], rose [ʁozə], mot [mo]).
+// - xc before a soft c (e/i/y, accented included) is [ks] in total
+//   (exception [ɛksɛpsjɔ̃], excellent [ɛksɛlɑ̃]); xc before a hard c keeps
+//   both sounds (exclure [ɛksklyʁə]). Any adjacent [ss] in the output
+//   merges to one [s] (degemination).
 // - Nasals: vowel + m/n before a consonant or word-end (not doubled) ->
 //   [ɑ̃]/[ɛ̃]/[ɔ̃]/[œ̃] (an/en, in/ain/ein, on, un, am/em), m/n silent.
 // - Digraphs: eau [o], au [o], ou [u], oi [wa], ai [ɛ], ei [ɛ], ch [ʃ],
@@ -33,6 +39,17 @@
 //   crayon -> craiion -> [kʁɛjɔ̃]; ayons -> [ɛjɔ̃], ayant -> [ɛjɑ̃]).
 // - Final -e/-es -> [ə] after a consonant, silent after a vowel (fasse [fasə], ville [vijə], vie [vi], année [ane]).
 // - No mute-e drop: examen is [ɛksamɑ̃] by rule.
+//
+// Resolved 2026-10-29 (engine + checker, 65 + 9 checks pass):
+// - o / eu are [ɔ] / [œ] in a non-final syllable, [o] / [ø] in a final
+//   open syllable; a closed final syllable still gives [ɔ] / [œ]
+//   (modal [mɔdal], phonétique [fɔnetikə], seulement [sœləmɑ̃];
+//   rose [ʁozə], mot [mo], peu [pø] unchanged).
+// - Final -e/-es after qu/gu is [ə], not silent: the u of qu/gu is part
+//   of a consonant digraph, not a pronounced vowel
+//   (langue [lɑ̃ɡə], que [kə], chaque [ʃakə], phonétique [fɔnetikə]).
+// - xc before a soft c is [ks] in total, and any adjacent [ss] in the
+//   output merges to one [s] (exception [ɛksɛpsjɔ̃], not [ɛkssɛpsjɔ̃]).
 (function (root) {
   const VOWELS = new Set(['a', 'à', 'â', 'e', 'é', 'è', 'ê', 'i', 'î', 'o', 'ô',
     'u', 'û', 'ù', 'y', 'ë', 'ï', 'ü', 'æ', 'œ']);
@@ -75,6 +92,26 @@
     const after = w[j + 1];
     return !after || isConsLetter(after);
   }
+  // Is the vowel ending at position j in the word-final syllable? A later
+  // vowel letter counts only if it is not the word-final mute -e/-es.
+  // e.g. modal -> [mɔdal]: after o, 'dal' has an a -> non-final -> [ɔ];
+  // rose -> [ʁozə]: after o, 'se' minus final e is 's' -> final -> [o];
+  // seulement -> [sœləmɑ̃]: after eu, 'lement' has vowels -> non-final -> [œ].
+  function finalSyllable(w, j) {
+    let tail = w.slice(j);
+    if (tail.endsWith('es')) tail = tail.slice(0, -2);
+    else if (tail.endsWith('e')) tail = tail.slice(0, -1);
+    for (const ch of tail) if (isVowel(ch)) return false;
+    return true;
+  }
+  // Is the letter before position i a real pronounced vowel? The u of qu/gu
+  // is part of a consonant digraph, so a final -e after qu/gu counts as
+  // after a consonant (langue -> [lɑ̃ɡə], que -> [kə], chaque -> [ʃakə]).
+  function prevRealVowel(w, i) {
+    if (i <= 0 || !isVowel(w[i - 1])) return false;
+    if (w[i - 1] === 'u' && (w[i - 2] === 'q' || w[i - 2] === 'g')) return false;
+    return true;
+  }
 
   function pronounceWord(raw) {
     // e.g. eût -> eut (eû reads as eu), so eût fait -> [œfɛ]; où -> ou; î reads as i (apparaître -> [apaʁɛtʁə]).
@@ -113,9 +150,10 @@
       // e.g. nez -> [ne]: final -ez is always [e].
       if (rest === 'ez') { out += 'e'; break; }
       // e.g. les -> [lɛ] (mono); parles -> [paʁlə] (poly); années -> [ane] (e silent after a vowel).
-      if (rest === 'es') { out += (i > 0 && isVowel(w[i - 1])) ? '' : (mono ? 'ɛ' : 'ə'); break; }
+      // Final -e/-es after qu/gu is [ə]: the u there is a digraph letter, not a vowel (langue -> [lɑ̃ɡə]).
+      if (rest === 'es') { out += !prevRealVowel(w, i) ? (mono ? 'ɛ' : 'ə') : ''; break; }
       // e.g. table -> [tablə]: final -e is [ə] after a consonant, silent after a vowel (vie -> [vi]).
-      if (rest === 'e') { out += (i > 0 && isVowel(w[i - 1])) ? '' : 'ə'; break; }
+      if (rest === 'e') { out += prevRealVowel(w, i) ? '' : 'ə'; break; }
       // Last letter standing alone: vowels keep their value, c/r/f/l sound, every other
       // final consonant is silent (CaReFuL). e.g. dix -> [di] (x silent), paix -> [pɛ] (x silent),
       // mer -> [mɛʁ] (final r sounds), mot -> [mo] (final t silent).
@@ -167,13 +205,14 @@
       if (two === 'ei') { out += 'ɛ'; i += 2; continue; }
       // e.g. auto -> [oto]: au is [o].
       if (two === 'au') { out += 'o'; i += 2; continue; }
-      // e.g. peur -> [pœʁ] (closed -> [œ]); peu -> [pø] (open -> [ø]).
-      if (two === 'eu') { out += closedAfter(w, i + 2) ? 'œ' : 'ø'; i += 2; continue; }
+      // e.g. peur -> [pœʁ] (closed -> [œ]); peu -> [pø] (final open -> [ø]);
+      // seulement -> [sœləmɑ̃] (non-final -> [œ]).
+      if (two === 'eu') { out += (closedAfter(w, i + 2) || !finalSyllable(w, i + 2)) ? 'œ' : 'ø'; i += 2; continue; }
       // e.g. cœur -> [kœʁ]: œu is [œ].
       if (two === 'œu') { out += 'œ'; i += 2; continue; }
       // e.g. chat -> [ʃa]: ch is [ʃ].
       if (two === 'ch') { out += 'ʃ'; i += 2; continue; }
-      // e.g. photo -> [foto]: ph is [f].
+      // e.g. photo -> [fɔto] (ph is [f]; o is non-final -> [ɔ]).
       if (two === 'ph') { out += 'f'; i += 2; continue; }
       // e.g. signe -> [siɲə]: gn is [ɲ].
       if (two === 'gn') { out += 'ɲ'; i += 2; continue; }
@@ -186,6 +225,12 @@
         const nx = w[i + 2];
         out += (nx === 'a' || nx === 'o' || nx === 'u') ? 'ɡw' : 'ɡ';
         i += 2; continue;
+      }
+      // e.g. exception -> [ɛksɛpsjɔ̃] (xc before a soft c is [ks] in total, not [ks] + [s]);
+      // exclure -> [ɛksklyʁə] (xc before a hard c keeps both sounds).
+      if (two === 'xc') {
+        const nx = w[i + 2];
+        if (nx === 'e' || nx === 'i' || nx === 'y' || nx === 'é' || nx === 'è' || nx === 'ê' || nx === 'ë') { out += 'ks'; i += 2; continue; }
       }
       // e.g. poisson -> [pwasɔ̃]: ss is always [s].
       if (two === 'ss') { out += 's'; i += 2; continue; }
@@ -213,7 +258,7 @@
         if (ch === 'a') out += 'a';
         else if (ch === 'e') out += closedAfter(w, i + 1) ? 'ɛ' : 'ə';
         else if (ch === 'i') out += (w[i + 1] && isVowel(w[i + 1]) && !(w[i - 1] === 'l' && w[i - 2] === 'l') && !(w[i + 1] === 'e' && (i + 2 === n || (w[i + 2] === 's' && i + 3 === n)))) ? 'j' : 'i'; // i glides before a vowel, except after ll (million -> [mijiɔ̃]) and before a silent final e/es (vie -> [vi]).
-        else if (ch === 'o') out += closedPronouncedAfter(w, i + 1) ? 'ɔ' : 'o';
+        else if (ch === 'o') out += (closedPronouncedAfter(w, i + 1) || !finalSyllable(w, i + 1)) ? 'ɔ' : 'o'; // o is [ɔ] in a non-final syllable or a closed syllable (modal -> [mɔdal], porte -> [pɔʁtə]), else [o] (rose -> [ʁozə], mot -> [mo]).
         else if (ch === 'u') out += 'y';
         i += 1; continue;
       }
@@ -262,7 +307,9 @@
       out += singleCons(ch, w, i);
       i++;
     }
-    return out;
+    // Degemination: any adjacent [ss] in the output merges to one [s]
+    // (e.g. an x [ks] followed by an s-sound must not surface as [ss]).
+    return out.replace(/ss+/g, 's');
 
     // Plain consonant values, used for doubled consonants and the fallback. e.g. rouge -> [ʁuʒə].
     function singleCons(ch, w, i) {

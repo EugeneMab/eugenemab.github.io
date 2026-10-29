@@ -36,6 +36,12 @@ const CASES = [
   ['ayez', 'ɛje'], ['crayon', 'kʁɛjɔ̃'],
   // Differences paragraph (Franstant)
   ['le homme', 'ləɔmə'], ['de eau', 'dəo'], ['homme', 'ɔmə'],
+  // 2026-10-29 user cases: final -e after qu/gu, o/eu final-syllable rule, xc degemination
+  ['langue', 'lɑ̃ɡə'], ['que', 'kə'], ['chaque', 'ʃakə'],
+  ['phonétique', 'fɔnetikə'], ['modal', 'mɔdal'], ['seulement', 'sœləmɑ̃'],
+  ['exception', 'ɛksɛpsjɔ̃'], ['excellent', 'ɛksɛlɑ̃'],
+  // ss merges to one [s] (regression lock; already passed before the fix)
+  ['poisson', 'pwasɔ̃'],
 ];
 let pass = 0, fail = 0;
 for (const [word, expected] of CASES) {
