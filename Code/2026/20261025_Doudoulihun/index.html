@@ -778,7 +778,20 @@
         >If a word starts with a vowel, the PC is treated as empty. It allows the word to start with a "soft" sound or a raw vowel.</span>
     </p>
     <pre style="display:none">
-      18*7*5*7*3=13,230
+            Theoretical combination counts (Case 1 + Case 2 sums):
+            Single vowel: 18*2*6*3 + 18*7*3*7*3 = 648 + 7,938 = 8,586
+            Case 1 (i/u syllable, PC V B PN or PC V B C): 18*2*6*3=648
+            PC=18 (17 consonants + empty), V=2 (i u),
+            B=6 (5 forms + empty: d/s collapse to ju/ji, m/n give empty),
+            final slot=3 (PN: m n + empty, or C: m n + empty)
+            Case 2 single vowel (a/e/o syllable, PC X V Y PN): 18*7*3*7*3=7,938
+            PC=18 (17 consonants + empty), X=7 (uf ih ij uh uw uv + empty),
+            V=3 (a e o), Y=7 (fu hi ji hu wu vu + empty), PN=3 (m n + empty)
+            Multiple vowels including single: 18*2*6*3 + 18*7*27*7*3 = 648 + 71,442 = 72,090
+            Case 2 all 27 vowel groups (3 single + 24 multiple, PC X V Y PN):
+            18*7*27*7*3=71,442 (= 7,938 single + 63,504 multiple;
+            multiple alone: 18*7*24*7*3=63,504)
+            All 24 multi-vowel groups contain a, e, or o, so all are Case 2.
       Case 1: every vowel is "i" or "u"
       SC       B            C
       .        LV=i LV=u
