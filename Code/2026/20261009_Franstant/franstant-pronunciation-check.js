@@ -42,6 +42,13 @@ const CASES = [
   ['exception', 'ɛksɛpsjɔ̃'], ['excellent', 'ɛksɛlɑ̃'],
   // ss merges to one [s] (regression lock; already passed before the fix)
   ['poisson', 'pwasɔ̃'],
+  // 2026-10-30 user cases: ai/ei before ill or a final il breaks the pair
+  ['soleil', 'sɔlɛj'], ['Marseille', 'maʁsɛjə'], ['travail', 'tʁavaj'],
+  ['sommeil', 'sɔmɛj'], ['meilleur', 'mɛjœʁ'], ['pareil', 'paʁɛj'],
+  ['soleils', 'sɔlɛj'], ['vieille', 'vjɛjə'], ['vermeil', 'vɛʁmɛj'],
+  ['ail', 'aj'],
+  // ill regression locks (must not change under the new rule)
+  ['fille', 'fijə'], ['bataille', 'batajə'], ['detailler', 'dətaje'],
 ];
 let pass = 0, fail = 0;
 for (const [word, expected] of CASES) {

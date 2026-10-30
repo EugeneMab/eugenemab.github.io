@@ -50,6 +50,12 @@
 //   (langue [lɑ̃ɡə], que [kə], chaque [ʃakə], phonétique [fɔnetikə]).
 // - xc before a soft c is [ks] in total, and any adjacent [ss] in the
 //   output merges to one [s] (exception [ɛksɛpsjɔ̃], not [ɛkssɛpsjɔ̃]).
+//
+// Resolved 2026-10-30 (engine + checker):
+// - A final il, or ill, breaks the ai/ei pair: the pair does not merge
+//   into [ɛ]; the first vowel keeps its sound and il/ill sounds [j]
+//   (soleil [sɔlɛj], Marseille [maʁsɛjə], travail [tʁavaj]).
+//   A silent final s after il counts as final (soleils [sɔlɛj]).
 (function (root) {
   const VOWELS = new Set(['a', 'à', 'â', 'e', 'é', 'è', 'ê', 'i', 'î', 'o', 'ô',
     'u', 'û', 'ù', 'y', 'ë', 'ï', 'ü', 'æ', 'œ']);
@@ -193,6 +199,9 @@
       if (three === 'ain' || three === 'ein') { out += 'ɛ̃'; i += 3; continue; }
       // e.g. loin -> [lwɛ̃]: oin is [wɛ̃].
       if (three === 'oin') { out += 'wɛ̃'; i += 3; continue; }
+      // e.g. soleil -> [sɔlɛj] (ei before a final il does not merge; il sounds [j]);
+      // travail -> [tʁavaj]; soleils -> [sɔlɛj] (a silent final s after il counts as final).
+      if ((three === 'ail' || three === 'eil') && (i + 3 === n || (w[i + 3] === 's' && i + 4 === n))) { out += (three === 'ail') ? 'aj' : 'ɛj'; i += 3; continue; }
       // --- 2-letter digraphs ---
       const two = w.slice(i, i + 2);
       // e.g. voir -> [vwaʁ]: oi is [wa].
@@ -201,8 +210,8 @@
       if (two === 'ou') { out += 'u'; i += 2; continue; }
       // e.g. faire -> [fɛʁə] (ai is [ɛ]); detailler -> [dətaje] (ai before ll stays a + ill [j]).
       if (two === 'ai' && !(w[i + 2] === 'l' && w[i + 3] === 'l')) { out += 'ɛ'; i += 2; continue; }
-      // e.g. neige -> [nɛʒə] (ei is [ɛ]).
-      if (two === 'ei') { out += 'ɛ'; i += 2; continue; }
+      // e.g. neige -> [nɛʒə] (ei is [ɛ]); Marseille -> [maʁsɛjə] (ei before ll stays e + ill [j], like ai).
+      if (two === 'ei' && !(w[i + 2] === 'l' && w[i + 3] === 'l')) { out += 'ɛ'; i += 2; continue; }
       // e.g. auto -> [oto]: au is [o].
       if (two === 'au') { out += 'o'; i += 2; continue; }
       // e.g. peur -> [pœʁ] (closed -> [œ]); peu -> [pø] (final open -> [ø]);
