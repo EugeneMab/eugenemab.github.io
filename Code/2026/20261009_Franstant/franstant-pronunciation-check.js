@@ -57,6 +57,12 @@ const CASES = [
   ['feux', 'fø'],
   // locks: final t/s still close; o before a silent final t stays [o]
   ['feu', 'fø'], ['peur', 'pœʁ'], ['mot', 'mo'], ['depot', 'dəpo'],
+  // 2026-10-31 user cases: yn/ym nasalizes like in/im
+  ['syndicat', 'sɛ̃dika'], ['synthèse', 'sɛ̃tɛzə'],
+  ['sympathique', 'sɛ̃patikə'], ['lynx', 'lɛ̃'],
+  // locks: yn/ym before a vowel or another m/n does NOT nasalize
+  ['gymnase', 'ʒimnazə'], ['synonyme', 'sinɔnimə'],
+  ['cynique', 'sinikə'], ['type', 'tipə'], ['yeux', 'jø'],
 ];
 let pass = 0, fail = 0;
 for (const [word, expected] of CASES) {

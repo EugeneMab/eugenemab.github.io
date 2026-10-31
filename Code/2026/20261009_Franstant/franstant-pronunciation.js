@@ -65,6 +65,10 @@
 //   so it does not close the syllable (deux [dø], eux [ø], peux [pø]).
 //   This is x-specific and leaves et [ɛ], eut [œ], les [lɛ] untouched:
 //   a final t or s still closes under the letter-based test.
+// - yn/ym before a consonant nasalizes like in/im, since y is a vowel [i]
+//   (syndicat [sɛ̃dika], synthèse [sɛ̃tɛzə], sympathique [sɛ̃patikə]);
+//   a following m/n blocks it (gymnase [ʒimnazə]), as does a following
+//   vowel (synonyme [sinɔnimə], cynique [sinikə]).
 (function (root) {
   const VOWELS = new Set(['a', 'à', 'â', 'e', 'é', 'è', 'ê', 'i', 'î', 'o', 'ô',
     'u', 'û', 'ù', 'y', 'ë', 'ï', 'ü', 'æ', 'œ']);
@@ -294,7 +298,14 @@
       if (ch === 'æ') { out += 'e'; i++; continue; }
       if (ch === 'œ') { out += 'œ'; i++; continue; }
       // e.g. yeux -> [jœ] (y before a vowel -> [j]); type -> [tipə] (y elsewhere -> [i]).
+      // y is a vowel [i], so yn/ym before a consonant nasalizes like in/im
+      // (syndicat -> [sɛ̃dika]); a following m/n blocks it (gymnase -> [ʒimnazə]).
       if (ch === 'y') {
+        const nx = w[i + 1];
+        if ((nx === 'm' || nx === 'n') && w[i + 2] !== 'm' && w[i + 2] !== 'n') {
+          const after = w[i + 2];
+          if (!after || isConsLetter(after)) { out += 'ɛ̃'; i += 2; continue; }
+        }
         out += (w[i + 1] && isVowel(w[i + 1])) ? 'j' : 'i';
         i++; continue;
       }
