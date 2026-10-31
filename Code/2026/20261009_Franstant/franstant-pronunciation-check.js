@@ -49,6 +49,14 @@ const CASES = [
   ['ail', 'aj'],
   // ill regression locks (must not change under the new rule)
   ['fille', 'fijə'], ['bataille', 'batajə'], ['detailler', 'dətaje'],
+  // 2026-10-31 user cases: oû reads as ou (like où and eû)
+  ['août', 'au'], ['oû', 'u'], ['voûte', 'vutə'], ['envoûter', 'ɑ̃vute'],
+  ['sûr', 'syʁ'], // û without a preceding o is unchanged
+  // 2026-10-31 user cases: eu before a word-final x is [ø]
+  ['deux', 'dø'], ['eux', 'ø'], ['peux', 'pø'], ['veux', 'vø'],
+  ['feux', 'fø'],
+  // locks: final t/s still close; o before a silent final t stays [o]
+  ['feu', 'fø'], ['peur', 'pœʁ'], ['mot', 'mo'], ['depot', 'dəpo'],
 ];
 let pass = 0, fail = 0;
 for (const [word, expected] of CASES) {

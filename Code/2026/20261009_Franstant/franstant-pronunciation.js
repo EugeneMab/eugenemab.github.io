@@ -28,7 +28,7 @@
 // - Digraphs: eau [o], au [o], ou [u], oi [wa], ai [ɛ], ei [ɛ], ch [ʃ],
 //   ph [f], gn [ɲ], qu [k], th [t], gu [ɡ] (or [ɡw] before a/o/u),
 //   tion [sjɔ̃], ill [ij] after a consonant / [j] after a vowel,
-//   ain/ein [ɛ̃], oin [wɛ̃]; eû is read as eu; où is read as ou; î is read as i.
+//   ain/ein [ɛ̃], oin [wɛ̃]; eû is read as eu; où and oû are read as ou; î is read as i.
 // - y and i glide to [j] before a vowel.
 // - y between two vowels splits into ii first (ayez -> aiiez, crayon -> craiion).
 // - No elision, no liaison: words are pronounced independently.
@@ -56,6 +56,15 @@
 //   into [ɛ]; the first vowel keeps its sound and il/ill sounds [j]
 //   (soleil [sɔlɛj], Marseille [maʁsɛjə], travail [tʁavaj]).
 //   A silent final s after il counts as final (soleils [sɔlɛj]).
+//
+// Resolved 2026-10-31 (engine + checker):
+// - oû is read as ou, like où and eû: the circumflex does not break the
+//   digraph (août [au], oû [u], voûte [vutə], envoûter [ɑ̃vute]).
+//   A û without a preceding o is unchanged (sûr [syʁ]).
+// - eu before a word-final x is [ø]: a final x is silent by its own rule,
+//   so it does not close the syllable (deux [dø], eux [ø], peux [pø]).
+//   This is x-specific and leaves et [ɛ], eut [œ], les [lɛ] untouched:
+//   a final t or s still closes under the letter-based test.
 (function (root) {
   const VOWELS = new Set(['a', 'à', 'â', 'e', 'é', 'è', 'ê', 'i', 'î', 'o', 'ô',
     'u', 'û', 'ù', 'y', 'ë', 'ï', 'ü', 'æ', 'œ']);
@@ -120,8 +129,8 @@
   }
 
   function pronounceWord(raw) {
-    // e.g. eût -> eut (eû reads as eu), so eût fait -> [œfɛ]; où -> ou; î reads as i (apparaître -> [apaʁɛtʁə]).
-    let w = raw.toLowerCase().replace(/eû/g, 'eu').replace(/où/g, 'ou').replace(/î/g, 'i');
+    // e.g. eût -> eut (eû reads as eu), so eût fait -> [œfɛ]; où -> ou; oû -> ou (août -> [au]); î reads as i (apparaître -> [apaʁɛtʁə]).
+    let w = raw.toLowerCase().replace(/eû/g, 'eu').replace(/où/g, 'ou').replace(/oû/g, 'ou').replace(/î/g, 'i');
     // Syllable count = number of vowel-letter groups (for -er/-es/-ier rules).
     // e.g. mer has 1 vowel group (mono); manger has 2 (poly). This decides -er/-es/-ier endings.
     let groups = 0, prevVowel = false;
@@ -216,7 +225,10 @@
       if (two === 'au') { out += 'o'; i += 2; continue; }
       // e.g. peur -> [pœʁ] (closed -> [œ]); peu -> [pø] (final open -> [ø]);
       // seulement -> [sœləmɑ̃] (non-final -> [œ]).
-      if (two === 'eu') { out += (closedAfter(w, i + 2) || !finalSyllable(w, i + 2)) ? 'œ' : 'ø'; i += 2; continue; }
+      // A word-final x is silent by its own rule, so it does not close a
+      // preceding eu (deux -> [dø], eux -> [ø]); a final t or s still
+      // closes under the letter-based test (eut -> [œ], et -> [ɛ]).
+      if (two === 'eu') { out += (closedAfter(w, i + 2) && !(w[i + 2] === 'x' && i + 3 === n) || !finalSyllable(w, i + 2)) ? 'œ' : 'ø'; i += 2; continue; }
       // e.g. cœur -> [kœʁ]: œu is [œ].
       if (two === 'œu') { out += 'œ'; i += 2; continue; }
       // e.g. chat -> [ʃa]: ch is [ʃ].
