@@ -233,8 +233,12 @@
       // preceding eu (deux -> [dø], eux -> [ø]); a final t or s still
       // closes under the letter-based test (eut -> [œ], et -> [ɛ]).
       if (two === 'eu') { out += (closedAfter(w, i + 2) && !(w[i + 2] === 'x' && i + 3 === n) || !finalSyllable(w, i + 2)) ? 'œ' : 'ø'; i += 2; continue; }
-      // e.g. cœur -> [kœʁ]: œu is [œ].
-      if (two === 'œu') { out += 'œ'; i += 2; continue; }
+      // e.g. cœur -> [kœʁ] (closed -> [œ]); vœu -> [vø] (final open -> [ø]);
+      // vœux -> [vø] (a silent final x does not close, like eu); nœud -> [nœ]
+      // (a final d closes under the letter-based test, like et -> [ɛ]).
+      // œu follows exactly the eu quality rule: it is the same digraph
+      // written with the ligature.
+      if (two === 'œu') { out += (closedAfter(w, i + 2) && !(w[i + 2] === 'x' && i + 3 === n) || !finalSyllable(w, i + 2)) ? 'œ' : 'ø'; i += 2; continue; }
       // e.g. chat -> [ʃa]: ch is [ʃ].
       if (two === 'ch') { out += 'ʃ'; i += 2; continue; }
       // e.g. photo -> [fɔto] (ph is [f]; o is non-final -> [ɔ]).
