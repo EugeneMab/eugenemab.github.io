@@ -2,16 +2,18 @@
 // Espanstanto pronunciation engine, v1 draft (2026-11-01).
 // Converts one Espanstanto word to IPA. Strict deterministic rules, no exceptions.
 // Stress is marked with ˈ, syllables joined with dots; monosyllables unmarked.
-// v1 defaults (pending user rulings):
+// v1 defaults (confirmed by the user 2026-11-01):
 //  - seseo: c before e/i and z -> [s] (not Spain [θ])
 //  - yeísmo: ll -> [ʝ] (not traditional [ʎ])
 //  - no intervocalic lenition: b/v -> [b], d -> [d], g -> [ɡ] (not [β]/[ð]/[ɣ])
-//  - x -> [ks], except word-initial x -> [s] (user ruling 2026-11-01) (not [s] word-initially)
+//  - x -> [ks], except word-initial x -> [s]
 //  - no nasal assimilation (literal n/m, not [m]/[ŋ] before b/p/g/k)
 //  - glides stay [j]/[w] (no word-initial strengthening to [ʝ]/[ɣw])
 //  - tl is not an onset cluster (splits, unlike Mexican Spanish)
 // Usage: const { ipa } = require('./espanstanto-pronunciation.js');
 //        ipa('hola') -> '[ˈo.la]'
+// Browser: <script src="espanstanto-pronunciation.js"></script> exposes
+//        window.espanstantoPronounce = { ipa, pronounceWord }.
 
 const ACCENT_MAP = { 'á': 'a', 'é': 'e', 'í': 'i', 'ó': 'o', 'ú': 'u' };
 const STRONG = new Set(['a', 'e', 'o']);
@@ -230,4 +232,11 @@ function ipa(word) {
   return '[' + out + ']';
 }
 
-module.exports = { ipa };
+// Export: Node (module.exports) and browser (window.espanstantoPronounce).
+var espanstantoPronounce = { ipa: ipa, pronounceWord: ipa };
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = espanstantoPronounce;
+}
+if (typeof window !== 'undefined') {
+  window.espanstantoPronounce = espanstantoPronounce;
+}
