@@ -100,6 +100,15 @@ const cases = [
   ['clase', '[ˈkla.se]'],
   ['atlas', '[ˈat.las]'],
   ['atleta', '[atˈle.ta]'],
+  // 2026-11-01 JS audit: word-final y counts as a consonant for stress
+  ['Paraguay', '[pa.ɾaˈɡwaj]'],
+  ['Uruguay', '[u.ɾuˈɡwaj]'],
+  ['mamey', '[maˈmej]'],
+  ['convoy', '[konˈboj]'], // n stays literal: no nasal assimilation in v1
+  ['carey', '[kaˈɾej]'],
+  // 2026-11-01 JS audit: word-final y after a vowel is a coda glide
+  ['muy', '[muj]'],
+  ['cuy', '[kuj]'],
 ];
 
 let pass = 0;

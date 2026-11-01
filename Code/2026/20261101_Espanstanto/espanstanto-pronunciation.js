@@ -72,6 +72,13 @@ function groupRun(units) {
       i += 1;
       continue;
     }
+    if (n.finalY) {
+      // Word-final y after a vowel is a coda glide, not a nucleus:
+      // muy -> [muj], cuy -> [kuj] (not [mwi]/[kwi]).
+      nuclei.push({ pre: null, vow: u, post: n });
+      i += 2;
+      continue;
+    }
     // Weak + weak: first glides, second is the vowel.
     nuclei.push({ pre: u, vow: n, post: null });
     i += 2;
@@ -146,7 +153,7 @@ function ipa(word) {
       const prev = w[i - 1];
       const next = w[i + 1];
       if (i === w.length - 1 && prev && isVowelLetter(prev)) {
-        run.push({ base: 'i', strong: false, accented: false });
+        run.push({ base: 'i', strong: false, accented: false, finalY: true });
         i += 1; continue;
       }
       if (next && isVowelLetter(next)) {
@@ -213,7 +220,10 @@ function ipa(word) {
   }
   if (stressed === -1) {
     const last = w[w.length - 1];
-    const endsSoft = 'aeiouáéíóú'.includes(last) || last === 'n' || last === 's' || last === 'y';
+    // Word-final y counts as a consonant for stress (Paraguay, Uruguay,
+    // mamey are final-stressed, like words ending in a consonant); only
+    // vowel/n/s endings take the penult.
+    const endsSoft = 'aeiouáéíóú'.includes(last) || last === 'n' || last === 's';
     stressed = syllables.length > 1 ? (endsSoft ? syllables.length - 2 : syllables.length - 1) : 0;
   }
 
