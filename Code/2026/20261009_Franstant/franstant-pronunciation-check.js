@@ -63,6 +63,11 @@ const CASES = [
   // locks: yn/ym before a vowel or another m/n does NOT nasalize
   ['gymnase', 'ʒimnazə'], ['synonyme', 'sinɔnimə'],
   ['cynique', 'sinikə'], ['type', 'tipə'], ['yeux', 'jø'],
+  // 2026-11-01 JS audit: œu follows the eu quality rule (was unconditionally [œ])
+  ['vœu', 'vø'], ['vœux', 'vø'], ['nœud', 'nœ'],
+  ['cœur', 'kœʁ'], ['sœur', 'sœʁ'], // locks: closed -> [œ] unchanged
+  // corrected quirk records: goût changed by the oû rule, scie by degemination
+  ['goût', 'ɡu'], ['scie', 'si'],
 ];
 let pass = 0, fail = 0;
 for (const [word, expected] of CASES) {

@@ -1,5 +1,5 @@
 // espanstanto-pronunciation-check.js
-// Checker for the Espanstanto pronunciation engine, v1 (2026-11-01).
+// Checker for the Espanstanto pronunciation engine, v2 (2026-11-01).
 // Run: node espanstanto-pronunciation-check.js
 const { ipa } = require('./espanstanto-pronunciation.js');
 
@@ -15,20 +15,20 @@ const cases = [
   ['sol', '[sol]'],
   ['pan', '[pan]'],
   ['y', '[i]'],
-  // c / z seseo, g / j, accents
-  ['cena', '[ˈse.na]'],
-  ['cocina', '[koˈsi.na]'],
-  ['zapato', '[saˈpa.to]'],
-  ['azul', '[aˈsul]'],
+  // c / z distinct sounds, g / j, accents
+  ['cena', '[ˈθe.na]'],
+  ['cocina', '[koˈθi.na]'],
+  ['zapato', '[zaˈpa.to]'],
+  ['azul', '[aˈzul]'],
   ['gente', '[ˈxen.te]'],
   ['gato', '[ˈɡa.to]'],
   ['gitano', '[xiˈta.no]'],
   ['gorra', '[ˈɡo.ra]'],
   ['jamón', '[xaˈmon]'],
-  ['lápiz', '[ˈla.pis]'],
+  ['lápiz', '[ˈla.piz]'],
   // ll / ñ / ch
-  ['llave', '[ˈʝa.be]'],
-  ['pollo', '[ˈpo.ʝo]'],
+  ['llave', '[ˈʒa.ve]'],
+  ['pollo', '[ˈpo.ʒo]'],
   ['niño', '[ˈni.ɲo]'],
   ['mañana', '[maˈɲa.na]'],
   ['mucho', '[ˈmu.tʃo]'],
@@ -36,7 +36,7 @@ const cases = [
   ['chico', '[ˈtʃi.ko]'],
   // qu / gu / gü
   ['queso', '[ˈke.so]'],
-  ['quizás', '[kiˈsas]'],
+  ['quizás', '[kiˈzas]'],
   ['guerra', '[ˈɡe.ra]'],
   ['pingüino', '[pinˈɡwi.no]'],
   ['agüero', '[aˈɡwe.ɾo]'],
@@ -50,8 +50,8 @@ const cases = [
   // x
   ['examen', '[ekˈsa.men]'],
   ['taxi', '[ˈtak.si]'],
-  ['xilófono', '[siˈlo.fo.no]'],
-  ['xenofobia', '[se.noˈfo.bja]'],
+  ['xilófono', '[ðiˈlo.fo.no]'],
+  ['xenofobia', '[ðe.noˈfo.bja]'],
   // y
   ['hoy', '[oj]'],
   ['ley', '[lej]'],
@@ -63,9 +63,9 @@ const cases = [
   // Diphthongs, triphthongs, hiatus, stress
   ['aire', '[ˈaj.ɾe]'],
   ['causa', '[ˈkaw.sa]'],
-  ['huevo', '[ˈwe.bo]'],
+  ['huevo', '[ˈwe.vo]'],
   ['hielo', '[ˈje.lo]'],
-  ['ciudad', '[sjuˈdad]'],
+  ['ciudad', '[θjuˈdad]'],
   ['cuidado', '[kwiˈda.do]'],
   ['día', '[ˈdi.a]'],
   ['país', '[paˈis]'],
@@ -73,26 +73,26 @@ const cases = [
   ['río', '[ˈri.o]'],
   ['oír', '[oˈiɾ]'],
   ['prohibir', '[pɾojˈbiɾ]'],
-  ['canción', '[kanˈsjon]'],
-  ['avión', '[aˈbjon]'],
+  ['canción', '[kanˈθjon]'],
+  ['avión', '[aˈvjon]'],
   ['papel', '[paˈpel]'],
-  ['joven', '[ˈxo.ben]'],
+  ['joven', '[ˈxo.ven]'],
   ['árbol', '[ˈaɾ.bol]'],
-  ['vaca', '[ˈba.ka]'],
+  ['vaca', '[ˈva.ka]'],
   ['bueno', '[ˈbwe.no]'],
   ['puerta', '[ˈpweɾ.ta]'],
   ['tierra', '[ˈtje.ra]'],
-  ['váis', '[bajs]'],
+  ['váis', '[vajs]'],
   ['Israel', '[is.raˈel]'],
   ['alrededor', '[al.re.deˈdoɾ]'],
   // Espanstanto words
-  ['haciendo', '[aˈsjen.do]'],
-  ['hiciera', '[iˈsje.ɾa]'],
+  ['haciendo', '[aˈθjen.do]'],
+  ['hiciera', '[iˈθje.ɾa]'],
   ['está', '[esˈta]'],
   // Onset clusters (r is the tap [ɾ] in clusters; tl splits by default)
   ['prado', '[ˈpɾa.do]'],
   ['libro', '[ˈli.bɾo]'],
-  ['actriz', '[akˈtɾis]'],
+  ['actriz', '[akˈtɾiz]'],
   ['subrayar', '[su.bɾaˈʝaɾ]'],
   ['plato', '[ˈpla.to]'],
   ['grande', '[ˈɡɾan.de]'],
@@ -100,6 +100,23 @@ const cases = [
   ['clase', '[ˈkla.se]'],
   ['atlas', '[ˈat.las]'],
   ['atleta', '[atˈle.ta]'],
+  // 2026-11-01 JS audit: word-final y counts as a consonant for stress
+  ['Paraguay', '[pa.ɾaˈɡwaj]'],
+  ['Uruguay', '[u.ɾuˈɡwaj]'],
+  ['mamey', '[maˈmej]'],
+  ['convoy', '[konˈvoj]'], // n stays literal: no nasal assimilation in v1
+  ['carey', '[kaˈɾej]'],
+  // 2026-11-01 JS audit reverted: weak+weak glides first (muy [mwi], cuy [kwi])
+  ['muy', '[mwi]'],
+  ['cuy', '[kwi]'],
+  // 2026-11-01 v2: distinct sounds for c/z/ll/v/initial-x
+  ['cero', '[ˈθe.ɾo]'],
+  ['zumo', '[ˈzu.mo]'],
+  ['calle', '[ˈka.ʒe]'],
+  ['llevar', '[ʒeˈvaɾ]'],
+  ['cerveza', '[θeɾˈve.za]'],
+  ['vida', '[ˈvi.da]'],
+  ['xenón', '[ðeˈnon]'],
 ];
 
 let pass = 0;

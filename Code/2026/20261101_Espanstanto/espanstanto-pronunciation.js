@@ -1,12 +1,12 @@
 // espanstanto-pronunciation.js
-// Espanstanto pronunciation engine, v1 draft (2026-11-01).
+// Espanstanto pronunciation engine, v2 (2026-11-01).
 // Converts one Espanstanto word to IPA. Strict deterministic rules, no exceptions.
 // Stress is marked with ˈ, syllables joined with dots; monosyllables unmarked.
-// v1 defaults (confirmed by the user 2026-11-01):
-//  - seseo: c before e/i and z -> [s] (not Spain [θ])
-//  - yeísmo: ll -> [ʝ] (not traditional [ʎ])
-//  - no intervocalic lenition: b/v -> [b], d -> [d], g -> [ɡ] (not [β]/[ð]/[ɣ])
-//  - x -> [ks], except word-initial x -> [s]
+// v2 rules (user-directed 2026-11-01; supersedes v1 seseo/yeísmo/b-v/x-initial):
+//  - c before e/i -> [θ]; z -> [z] (each letter its own sound)
+//  - ll -> [ʒ] (zh as in garage); y before a vowel stays [ʝ]
+//  - no intervocalic lenition: b -> [b], v -> [v], d -> [d], g -> [ɡ] (not [β]/[ð]/[ɣ])
+//  - x -> [ks], except word-initial x -> [ð]
 //  - no nasal assimilation (literal n/m, not [m]/[ŋ] before b/p/g/k)
 //  - glides stay [j]/[w] (no word-initial strengthening to [ʝ]/[ɣw])
 //  - tl is not an onset cluster (splits, unlike Mexican Spanish)
@@ -82,8 +82,8 @@ function groupRun(units) {
 function consonantPh(ch, w, i) {
   const next = w[i + 1] || '';
   switch (ch) {
-    case 'b': case 'v': return 'b';
-    case 'c': return 'eéií'.includes(next) ? 's' : 'k';
+    case 'b': return 'b'; case 'v': return 'v';
+    case 'c': return 'eéií'.includes(next) ? 'θ' : 'k';
     case 'd': return 'd';
     case 'f': return 'f';
     case 'g': return 'eéií'.includes(next) ? 'x' : 'ɡ';
@@ -104,7 +104,7 @@ function consonantPh(ch, w, i) {
     case 's': return 's';
     case 't': return 't';
     case 'w': return 'w';
-    case 'z': return 's';
+    case 'z': return 'z';
     default: return ch;
   }
 }
@@ -120,7 +120,7 @@ function ipa(word) {
     const ch = w[i];
     const two = w.slice(i, i + 2);
     if (two === 'ch') { flushRun(); items.push({ cons: 'tʃ' }); i += 2; continue; }
-    if (two === 'll') { flushRun(); items.push({ cons: 'ʝ' }); i += 2; continue; }
+    if (two === 'll') { flushRun(); items.push({ cons: 'ʒ' }); i += 2; continue; }
     if (two === 'rr') { flushRun(); items.push({ cons: 'r' }); i += 2; continue; }
     if (ch === 'q' && w[i + 1] === 'u' && 'eéií'.includes(w[i + 2] || '')) {
       flushRun(); items.push({ cons: 'k' }); i += 2; continue;
@@ -135,7 +135,7 @@ function ipa(word) {
     if (ch === 'x') {
       flushRun();
       if (i === 0) {
-        items.push({ cons: 's' }); // word-initial x -> [s]
+        items.push({ cons: 'ð' }); // word-initial x -> [ð]
       } else {
         items.push({ cons: 'k' });
         items.push({ cons: 's' });
@@ -213,7 +213,10 @@ function ipa(word) {
   }
   if (stressed === -1) {
     const last = w[w.length - 1];
-    const endsSoft = 'aeiouáéíóú'.includes(last) || last === 'n' || last === 's' || last === 'y';
+    // Word-final y counts as a consonant for stress (Paraguay, Uruguay,
+    // mamey are final-stressed, like words ending in a consonant); only
+    // vowel/n/s endings take the penult.
+    const endsSoft = 'aeiouáéíóú'.includes(last) || last === 'n' || last === 's';
     stressed = syllables.length > 1 ? (endsSoft ? syllables.length - 2 : syllables.length - 1) : 0;
   }
 
