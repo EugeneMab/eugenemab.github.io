@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Espanstanto — An artificial language built upon Spanish without conjugation</title>
+    <style>
+      body, td {
+        font-family: 'Bahnschrift Light', Calibri, SimHei, Arial, sans-serif;
+        font-size: 22px;
+        line-height: 1.6;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+        color: #2c3e50;
+      }
+      .banner {
+        background: linear-gradient(135deg, #1a5276 0%, #2980b9 50%, #5dade2 100%);
+        color: white;
+        padding: 40px 30px;
+        text-align: center;
+      }
+      .banner h1 {
+        font-size: 2.5em;
+        margin: 0 0 10px 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      }
+      .banner .subtitle {
+        font-size: 1.1em;
+        opacity: 0.9;
+      }
+      .lang-bar {
+        background: #1a5276;
+        text-align: center;
+        padding: 12px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .lang-btn {
+        background: transparent;
+        border: 2px solid rgba(255,255,255,0.6);
+        color: white;
+        padding: 8px 24px;
+        margin: 0 4px;
+        border-radius: 25px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: inherit;
+      }
+      .lang-btn:hover {
+        background: rgba(255,255,255,0.2);
+        border-color: white;
+      }
+      .lang-btn.active {
+        background: white;
+        color: #1a5276;
+        border-color: white;
+        font-weight: bold;
+      }
+      .nav-divider {
+        display: inline-block;
+        width: 1px;
+        height: 26px;
+        background: rgba(255,255,255,0.35);
+        margin: 0 8px;
+      }
+      .ch-btn {
+        background: rgba(255,255,255,0.1);
+        border: 2px solid rgba(255,255,255,0.5);
+        color: white;
+        padding: 6px 14px;
+        margin: 0 3px;
+        border-radius: 20px;
+        font-size: 17px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: inherit;
+      }
+      .ch-btn:hover {
+        background: rgba(255,255,255,0.25);
+        border-color: white;
+      }
+      .ch-btn.active {
+        background: #f39c12;
+        border-color: #f39c12;
+        color: white;
+      }
+      .content {
+        padding: 20px 40px;
+      }
+      .section {
+        background: white;
+        border-radius: 12px;
+        padding: 30px 35px;
+        margin: 25px 0;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border-left: 5px solid #2980b9;
+        scroll-margin-top: 80px;
+      }
+      .section h2 {
+        color: #1a5276;
+        margin-top: 0;
+        font-size: 1.5em;
+        border-bottom: 2px solid #ebf5fb;
+        padding-bottom: 12px;
+      }
+      .section h3 {
+        color: #2980b9;
+        margin-top: 25px;
+      }
+      .example {
+        background: #ebf5fb;
+        border-left: 4px solid #3498db;
+        padding: 15px 20px;
+        margin: 12px 0;
+        border-radius: 0 8px 8px 0;
+        font-size: 0.95em;
+      }
+      .example .label {
+        font-weight: bold;
+        color: #1a5276;
+        font-size: 0.85em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+      }
+      .example .line {
+        margin: 4px 0;
+      }
+      .example .lang-label {
+        font-weight: bold;
+        color: #1a5276;
+      }
+      .rule-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+      }
+      .rule-table td, .rule-table th {
+        border: 1px solid #bdc3c7;
+        padding: 10px 14px;
+      }
+      .rule-table th {
+        background: #2980b9;
+        color: white;
+        text-align: left;
+        font-weight: normal;
+      }
+      .rule-table tr:nth-child(even) {
+        background: #f8f9fa;
+      }
+      .rule-table tr:hover {
+        background: #ebf5fb;
+      }
+      @media (max-width: 600px) {
+        .content {
+          padding: 12px;
+        }
+        .section {
+          padding: 20px 16px;
+        }
+        .rule-table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+    </style>
+    <script>
+      var currentLang = 'e';
+      var currentChapter = 1;
+
+      function renderLang(language) {
+        var elements = document.getElementsByClassName("t");
+        for (var position = 0; position < elements.length; position++) {
+          var element = elements[position];
+          if (!element.hasAttribute("e")) {
+            element.setAttribute("e", element.innerHTML);
+          }
+        }
+        for (var position = 0; position < elements.length; position++) {
+          var element = elements[position];
+          var targetText = element.getAttribute(language);
+          if (targetText !== null && targetText !== undefined) {
+            element.innerHTML = targetText;
+          } else {
+            element.innerHTML = element.getAttribute("e");
+          }
+        }
+      }
+
+      function updateActiveButtons() {
+        var langBtns = document.getElementsByClassName("lang-btn");
+        for (var i = 0; i < langBtns.length; i++) {
+          langBtns[i].classList.remove("active");
+          langBtns[i].setAttribute("aria-pressed", "false");
+        }
+        var activeLangBtn = document.getElementById("btn-lang-" + currentLang);
+        if (activeLangBtn) {
+          activeLangBtn.classList.add("active");
+          activeLangBtn.setAttribute("aria-pressed", "true");
+        }
+
+        var chBtns = document.getElementsByClassName("ch-btn");
+        for (var i = 0; i < chBtns.length; i++) {
+          chBtns[i].classList.remove("active");
+          chBtns[i].removeAttribute("aria-current");
+        }
+        var activeChBtn = document.getElementById("btn-ch-" + currentChapter);
+        if (activeChBtn) {
+          activeChBtn.classList.add("active");
+          activeChBtn.setAttribute("aria-current", "location");
+        }
+      }
+
+      function updateHash() {
+        var hash = '#' + currentLang + ',' + currentChapter;
+        if (window.location.hash !== hash) {
+          window.history.pushState(null, '', hash);
+        }
+      }
+
+      function setLang(language, updateUrl) {
+        if (updateUrl === undefined) updateUrl = true;
+        currentLang = language;
+        renderLang(currentLang);
+        document.documentElement.lang = { e: 'en', c: 'zh-Hans', s: 'es', x: 'art' }[currentLang];
+        updateActiveButtons();
+        if (updateUrl) {
+          goToChapter(currentChapter, false);
+          updateHash();
+        }
+      }
+
+      function goToChapter(chapterNum, updateUrl) {
+        if (updateUrl === undefined) updateUrl = true;
+        currentChapter = chapterNum;
+        updateActiveButtons();
+        var elem = document.getElementById('ch' + chapterNum);
+        if (elem) {
+          elem.style.scrollMarginTop = (document.querySelector('.lang-bar').offsetHeight + 16) + 'px';
+          elem.scrollIntoView({
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'
+          });
+        }
+        if (updateUrl) {
+          updateHash();
+        }
+      }
+
+      function parseHash(hash) {
+        if (!hash) return null;
+        var clean = hash.replace(/^#/, '').trim();
+        if (!clean) return null;
+
+        var result = { lang: null, chapter: null };
+        var parts = clean.split(',');
+        for (var i = 0; i < parts.length; i++) {
+          var p = parts[i].trim().toLowerCase();
+          if (['e', 'c', 's', 'x'].indexOf(p) !== -1) {
+            result.lang = p;
+          } else if (/^(ch)?[1-6]$/.test(p)) {
+            result.chapter = parseInt(p.replace(/^ch/, ''), 10);
+          }
+        }
+        return result.lang || result.chapter ? result : null;
+      }
+
+      function applyFromHash(shouldScroll) {
+        var parsed = parseHash(window.location.hash);
+        if (!window.location.hash) {
+          currentLang = 'e';
+          currentChapter = 1;
+        } else if (parsed) {
+          if (parsed.lang) currentLang = parsed.lang;
+          if (parsed.chapter) currentChapter = parsed.chapter;
+        } else {
+          return;
+        }
+        setLang(currentLang, false);
+        if (shouldScroll && currentChapter) {
+          goToChapter(currentChapter, false);
+        }
+      }
+
+      function onLoad() {
+        setLang('e', false);
+        if (window.location.hash) {
+          applyFromHash(true);
+        }
+      }
+
+      window.addEventListener('hashchange', function() {
+        applyFromHash(true);
+      });
+    </script>
+  </head>
+  <body onload="onLoad()">
+
+    <div class="banner">
+      <h1>
+        <span class="t" c="Espanstanto（恒常西班牙语）" s="Espanstanto (español constanto)" x="Espanstanto (español constanto)">Espanstanto (español constanto)</span>
+      </h1>
+      <div class="subtitle">
+        <span class="t" c="一种建立在西班牙语之上、无变位的人造语言" s="Una lengua artificial construida sobre el español sin conjugación" x="Un lengua artificial construir sobre el español sin conjugación">An artificial language built upon Spanish without conjugation</span>
+      </div>
+    </div>
+
+    <div class="lang-bar">
+      <button class="lang-btn" id="btn-lang-e" onclick="setLang('e')">English</button>
+      <button class="lang-btn" id="btn-lang-c" onclick="setLang('c')">中文</button>
+      <button class="lang-btn" id="btn-lang-s" onclick="setLang('s')">Español</button>
+      <button class="lang-btn" id="btn-lang-x" onclick="setLang('x')">Espanstanto</button>
+      <span class="nav-divider"></span>
+      <button class="ch-btn" id="btn-ch-1" onclick="goToChapter(1)" title="Section 1: Introduction">1</button>
+      <button class="ch-btn" id="btn-ch-2" onclick="goToChapter(2)" title="Section 2: Design principles">2</button>
+      <button class="ch-btn" id="btn-ch-3" onclick="goToChapter(3)" title="Section 3: Marker table">3</button>
+      <button class="ch-btn" id="btn-ch-4" onclick="goToChapter(4)" title="Section 4: Grammar">4</button>
+      <button class="ch-btn" id="btn-ch-5" onclick="goToChapter(5)" title="Section 5: Examples">5</button>
+      <button class="ch-btn" id="btn-ch-6" onclick="goToChapter(6)" title="Section 6: Pronunciation">6</button>
+    </div>
+
+    <div class="content">
+
+      <!-- ===== SECTION 1: INTRODUCTION ===== -->
+      <div class="section" id="ch1">
+        <h2><span class="t" c="1. 概述" s="1. Introducción" x="1. Introducción">1. Introduction</span></h2>
+        <p>
+          <span class="t" c="Espanstanto 是一种建立在西班牙语之上、无变位的人造语言。它遵循 Franstant 的设计，并将其应用于西班牙语。" s="Espanstanto es una lengua artificial construida sobre el español sin conjugación. Sigue el diseño de Franstant, aplicado al español." x="Espanstanto ser un lengua artificial construir sobre el español sin conjugación. Esto seguir el diseño de Franstant y aplicar ello a el español.">Espanstanto is an artificial language built upon Spanish without conjugation. It follows the design of Franstant, applied to Spanish.</span>
+        </p>
+        <p>
+          <span class="t" c="所有动词都保持不定式形式。时态、语气和语态由动词前面的标记表示。" s="Todos los verbos se mantienen en infinitivo. El tiempo, el modo y la voz se indican con un marcador delante del verbo." x="Cada verbo quedar en el infinitivo. El tiempo, el modo y el voz es hecho mostrar por un marcador delante de el verbo.">Every verb stays in the infinitive. Tense, mood, and voice are shown by a marker in front of the verb.</span>
+        </p>
+        <p>
+          <span class="t" c="标记全部取自 HACER 的真实形式，绝不是生造的词。主要动词本身不变。" s="Los marcadores son formas reales de HACER, nunca palabras inventadas. El verbo principal nunca cambia." x="Los marcador ser forma real de HACER, nunca inventado. El verbo principal nunca cambiar.">Markers are real forms of HACER, never invented words. The main verb never changes.</span>
+        </p>
+      </div>
+
+      <!-- ===== SECTION 2: DESIGN PRINCIPLES ===== -->
+      <div class="section" id="ch2">
+        <h2><span class="t" c="2. 设计原则" s="2. Principios de diseño" x="2. Principio de diseño">2. Design principles</span></h2>
+        <ul>
+          <li><span class="t" c="西班牙语词汇，零变位：每个动词都是不定式加一个标记。" s="Vocabulario español, cero conjugación: cada verbo es el infinitivo más un marcador." x="Vocabulario español, cero conjugación: cada verbo ser el infinitivo más un marcador.">Spanish vocabulary, zero conjugation: every verb is the infinitive plus a marker.</span></li>
+          <li><span class="t" c="不用缩合：用 a el，不用 al；用 de el，不用 del。不用省音。" s="Sin contracciones: a el, nunca al; de el, nunca del. Sin elisiones." x="No usar contracción: a el, nunca al; de el, nunca del. No usar elisión.">No contractions: a el, never al; de el, never del. No elisions.</span></li>
+          <li><span class="t" c="严格的主谓宾语序。" s="Orden estricto SVO." x="Orden estricto SVO.">Strict SVO word order.</span></li>
+          <li><span class="t" c="不用语法性别：所有名词都用 el 和 un。" s="Sin género gramatical: el y un para todos los sustantivos." x="No usar género gramatical: el y un para cada sustantivo.">No grammatical gender: el and un for every noun.</span></li>
+          <li><span class="t" c="名词保持阳性单数形式；复数只由冠词表示：el/los，un/unos。" s="Los sustantivos mantienen la forma masculina singular; el plural lo da solo el artículo: el/los, un/unos." x="El sustantivo guardar el forma masculino singular; el plural venir solo de el artículo: el/los, un/unos.">Nouns keep the masculine-singular form; plurality comes from the article only: el/los, un/unos.</span></li>
+          <li><span class="t" c="形容词永远是阳性单数形式，并且永远放在名词之后。" s="Los adjetivos son siempre masculinos singulares y van siempre después del sustantivo." x="El adjetivo ser siempre masculino singular y estar siempre después de el sustantivo.">Adjectives are always masculine-singular and always after the noun.</span></li>
+          <li><span class="t" c="物主词只用阳性形式；复数的被拥有物用“物主词 + los + 名词”。" s="Los posesivos usan la forma masculina; lo poseído en plural es posesivo + los + sustantivo." x="El posesivo usar el forma masculino; el poseído plural ser posesivo + los + sustantivo.">Possessives use the masculine form; a plural possessed thing is possessive + los + noun.</span></li>
+          <li><span class="t" c="代词只有一套独立形式；语序决定主语还是宾语。不用 mí/ti。" s="Un solo conjunto de pronombres independientes; el orden decide sujeto u objeto. Sin mí/ti." x="Un solo conjunto de pronombre independiente; el orden decidir sujeto u objeto. No usar mí/ti.">One standalone pronoun set; word order decides subject or object. No mí/ti.</span></li>
+          <li><span class="t" c="禁用 lo，改用 el。" s="Lo está prohibido; se usa el en su lugar." x="Lo ser prohibido; usar el en su lugar.">Lo is banned; use el instead.</span></li>
+          <li><span class="t" c="指示词保持区分：este/ese/aquel；复数加 los。" s="Los demostrativos se mantienen separados: este/ese/aquel; los plurales añaden los." x="El demostrativo quedar separado: este/ese/aquel; el plural añadir los.">Demonstratives stay separate: este/ese/aquel; plurals add los.</span></li>
+          <li><span class="t" c="Esto 是代词，este 是形容词。" s="Esto es pronombre; este es adjetivo." x="Esto ser pronombre; este ser adjetivo.">Esto is a pronoun; este is an adjective.</span></li>
+          <li><span class="t" c="关系词只用 que；语序决定主语还是宾语。不用 quien。" s="Los relativos usan solo que; el orden decide sujeto u objeto. Quien se elimina." x="El relativo usar solo que; el orden decidir sujeto u objeto. No usar quien.">Relatives use que only; word order decides subject or object. Quien is dropped.</span></li>
+          <li><span class="t" c="Ser 和 estar 保持区分，永远用不定式。" s="Ser y estar se mantienen separados, siempre en infinitivo." x="Ser y estar quedar separado, siempre en el infinitivo.">Ser and estar stay separate, always in the infinitive.</span></li>
+          <li><span class="t" c="Hay 保持原样。" s="Hay se mantiene." x="Hay quedar hay.">Hay stays hay.</span></li>
+          <li><span class="t" c="保留人称直接宾语前的 a。" s="Se mantiene la a ante el objeto directo humano." x="Guardar el a delante de el objeto directo humano.">The a before a human direct object is kept.</span></li>
+        </ul>
+      </div>
+
+      <!-- ===== SECTION 3: MARKER TABLE ===== -->
+      <div class="section" id="ch3">
+        <h2><span class="t" c="3. 标记表（HACER）" s="3. Tabla de marcadores (HACER)" x="3. Tabla de marcador (HACER)">3. Marker table (HACER)</span></h2>
+        <p>
+          <span class="t" c="各语言中的形式相同。现在时只列出、不使用：现在时没有标记。" s="Las formas son iguales en todos los idiomas. El presente se lista pero no se usa: el presente no lleva marcador." x="El forma ser igual en cada lengua. El presente ser listar pero no usar: el presente no llevar marcador.">Forms are the same in every language. Present is listed but not used: the present is unmarked.</span>
+        </p>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="时态 / 语气 / 语态" s="Tiempo / modo / voz" x="Tiempo / modo / voz">Tense / mood / voice</span></th>
+            <th><span class="t" c="标记" s="Marcador" x="Marcador">Marker</span></th>
+            <th><span class="t" c="说明" s="Nota" x="Nota">Note</span></th>
+          </tr>
+          <tr><td><span class="t" c="现在时" s="Presente" x="Presente">Present</span></td><td>hace</td><td><span class="t" c="只列出、不使用" s="listado, no usado" x="listar, no usar">listed, not used</span></td></tr>
+          <tr><td><span class="t" c="未完成过去时" s="Imperfecto" x="Imperfecto">Imperfect</span></td><td>hacía</td><td></td></tr>
+          <tr><td><span class="t" c="简单过去时" s="Pretérito" x="Pretérito">Preterite</span></td><td>hizo</td><td></td></tr>
+          <tr><td><span class="t" c="现在完成时" s="Pretérito perfecto" x="Pretérito perfecto">Present perfect</span></td><td>ha hecho</td><td></td></tr>
+          <tr><td><span class="t" c="过去完成时" s="Pluscuamperfecto" x="Pluscuamperfecto">Pluperfect</span></td><td>había hecho</td><td></td></tr>
+          <tr><td><span class="t" c="先过去时" s="Pretérito anterior" x="Pretérito anterior">Preterite perfect</span></td><td>hubo hecho</td><td><span class="t" c="罕用" s="raro" x="raro">rare</span></td></tr>
+          <tr><td><span class="t" c="将来时" s="Futuro" x="Futuro">Future</span></td><td>hará</td><td></td></tr>
+          <tr><td><span class="t" c="将来完成时" s="Futuro perfecto" x="Futuro perfecto">Future perfect</span></td><td>habrá hecho</td><td></td></tr>
+          <tr><td><span class="t" c="条件式" s="Condicional" x="Condicional">Conditional</span></td><td>haría</td><td></td></tr>
+          <tr><td><span class="t" c="条件完成式" s="Condicional perfecto" x="Condicional perfecto">Conditional perfect</span></td><td>habría hecho</td><td></td></tr>
+          <tr><td><span class="t" c="现在虚拟式" s="Presente de subjuntivo" x="Presente de subjuntivo">Present subjunctive</span></td><td>haga</td><td></td></tr>
+          <tr><td><span class="t" c="现在完成虚拟式" s="Pretérito perfecto de subjuntivo" x="Pretérito perfecto de subjuntivo">Present perfect subjunctive</span></td><td>haya hecho</td><td></td></tr>
+          <tr><td><span class="t" c="未完成虚拟式" s="Imperfecto de subjuntivo" x="Imperfecto de subjuntivo">Imperfect subjunctive</span></td><td>hiciera</td><td></td></tr>
+          <tr><td><span class="t" c="过去完成虚拟式" s="Pluscuamperfecto de subjuntivo" x="Pluscuamperfecto de subjuntivo">Pluperfect subjunctive</span></td><td>hubiera hecho</td><td></td></tr>
+          <tr><td><span class="t" c="命令式" s="Imperativo" x="Imperativo">Imperative</span></td><td>haz</td><td></td></tr>
+          <tr><td><span class="t" c="不定式" s="Infinitivo" x="Infinitivo">Infinitive</span></td><td>hacer</td><td></td></tr>
+          <tr><td><span class="t" c="完成不定式" s="Infinitivo perfecto" x="Infinitivo perfecto">Perfect infinitive</span></td><td>haber hecho</td><td></td></tr>
+          <tr><td><span class="t" c="动名词" s="Gerundio" x="Gerundio">Gerund</span></td><td>haciendo</td><td></td></tr>
+          <tr><td><span class="t" c="完成动名词" s="Gerundio perfecto" x="Gerundio perfecto">Perfect gerund</span></td><td>habiendo hecho</td><td></td></tr>
+          <tr><td><span class="t" c="分词" s="Participio" x="Participio">Participle</span></td><td>hecho</td><td></td></tr>
+          <tr><td><span class="t" c="被动语态" s="Pasiva" x="Pasiva">Passive</span></td><td>es hecho</td><td><span class="t" c="所有时态通用；时态标记叠加在前" s="en todos los tiempos; el marcador de tiempo se apila delante" x="en cada tiempo; el marcador de tiempo apilar delante">in every tense; tense marker stacks in front</span></td></tr>
+          <tr><td><span class="t" c="进行体" s="Continuo" x="Continuo">Continuous</span></td><td>está haciendo</td><td><span class="t" c="固定词块 + 不定式" s="bloque fijo + infinitivo" x="bloque fijo + infinitivo">fixed chunk + infinitive</span></td></tr>
+          <tr><td><span class="t" c="最近将来时" s="Futuro próximo" x="Futuro próximo">Near future</span></td><td>ir a</td><td><span class="t" c="+ 不定式" s="+ infinitivo" x="+ infinitivo">+ infinitive</span></td></tr>
+          <tr><td><span class="t" c="自反" s="Pronominal" x="Pronominal">Pronominal</span></td><td>se</td><td><span class="t" c="+ 不定式" s="+ infinitivo" x="+ infinitivo">+ infinitive</span></td></tr>
+        </table>
+        <p>
+          <span class="t" c="不需要非第三人称单数的例外：hacía、haga、hiciera 的第一和第三人称单数形式本来就相同，也没有什么与 es hecho 冲突。" s="No se necesitan excepciones fuera de la tercera persona del singular: hacía, haga e hiciera ya son idénticos en primera y tercera persona del singular, y nada choca con es hecho." x="No necesitar excepción fuera de el persona tercera singular: hacía, haga y hiciera ya ser idéntico en persona primera y persona tercera singular, y nada chocar con es hecho.">No non-3sg exceptions are needed: hacía, haga, and hiciera are already identical for first and third person singular, and nothing collides with es hecho.</span>
+        </p>
+      </div>
+
+      <!-- ===== SECTION 4: GRAMMAR ===== -->
+      <div class="section" id="ch4">
+        <h2><span class="t" c="4. 语法" s="4. Gramática" x="4. Gramática">4. Grammar</span></h2>
+        <ul>
+          <li><span class="t" c="冠词：el/los，un/unos。写 a el，不写 al；写 de el，不写 del。" s="Artículos: el/los, un/unos. Se escribe a el, nunca al; de el, nunca del." x="Artículo: el/los, un/unos. Escribir a el, nunca al; de el, nunca del.">Articles: el/los, un/unos. Write a el, never al; de el, never del.</span></li>
+          <li><span class="t" c="代词：yo、tú、él、nosotros、vosotros、ellos；无生命用 ello/ellos。位置决定主语还是宾语。" s="Pronombres: yo, tú, él, nosotros, vosotros, ellos; inanimado ello/ellos. La posición decide sujeto u objeto." x="Pronombre: yo, tú, él, nosotros, vosotros, ellos; inanimado ello/ellos. El orden decidir sujeto u objeto.">Pronouns: yo, tú, él, nosotros, vosotros, ellos; inanimate ello/ellos. Position decides subject or object.</span></li>
+          <li><span class="t" c="指示词：este/ese/aquel 是形容词；esto/eso/aquello 是代词；复数加 los。" s="Demostrativos: este/ese/aquel son adjetivos; esto/eso/aquello son pronombres; los plurales añaden los." x="Demostrativo: este/ese/aquel ser adjetivo; esto/eso/aquello ser pronombre; el plural añadir los.">Demonstratives: este/ese/aquel are adjectives; esto/eso/aquello are pronouns; plurals add los.</span></li>
+          <li><span class="t" c="关系词：只用 que；where 用 donde；whose 用 de que。" s="Relativos: solo que; donde para donde; de que para cuyo." x="Relativo: solo que; donde para donde; de que para cuyo.">Relatives: que only; donde for where; de que for whose.</span></li>
+          <li><span class="t" c="比较：más/menos/tan + 形容词 + que；el más/el menos；不变。" s="Comparativos: más/menos/tan + adjetivo + que; el más/el menos; invariables." x="Comparativo: más/menos/tan + adjetivo + que; el más/el menos; invariable.">Comparatives: más/menos/tan + adjective + que; el más/el menos; invariable.</span></li>
+          <li><span class="t" c="否定：no 不拆分地放在动词或标记之前。说 no ver nada、no ver nunca。" s="Negación: no va sin dividir delante del verbo o marcador. Se dice no ver nada, no ver nunca." x="Negación: no quedar sin dividir delante de el verbo o marcador. Decir no ver nada, no ver nunca.">Negation: no stands unsplit before the verb or marker. Say no ver nada, no ver nunca.</span></li>
+          <li><span class="t" c="疑问：是非问用 ser que；特殊问用 qué + 主谓宾。" s="Preguntas: ser que para sí/no; qué + SVO para qué." x="Pregunta: ser que para sí/no; qué + SVO para qué.">Questions: ser que for yes/no; qué + SVO for what.</span></li>
+          <li><span class="t" c="数字：diez；diez uno…diez nueve；复合数去掉 y（veinte uno）；setenta/ochenta/noventa；cien/mil 不变。" s="Números: diez; diez uno…diez nueve; los compuestos pierden la y (veinte uno); setenta/ochenta/noventa; cien/mil invariables." x="Número: diez; diez uno…diez nueve; el compuesto perder el y (veinte uno); setenta/ochenta/noventa; cien/mil invariable.">Numbers: diez; diez uno…diez nueve; compounds drop y (veinte uno); setenta/ochenta/noventa; cien/mil invariable.</span></li>
+          <li><span class="t" c="Ser 和 estar 保持区分，永远用不定式。被动语态用 ser（es hecho），不用 estar。" s="Ser y estar se mantienen separados, siempre en infinitivo. La pasiva usa ser (es hecho), nunca estar." x="Ser y estar quedar separado, siempre en el infinitivo. El pasivo usar ser (es hecho), nunca estar.">Ser and estar stay separate, always in the infinitive. The passive uses ser (es hecho), never estar.</span></li>
+          <li><span class="t" c="被动：所有时态都用 es hecho；时态标记叠加在前。" s="Pasiva: es hecho en todos los tiempos; el marcador de tiempo se apila delante." x="Pasivo: es hecho en cada tiempo; el marcador de tiempo apilar delante.">Passive: es hecho in every tense; the tense marker stacks in front.</span></li>
+          <li><span class="t" c="自反：se + 不定式。最近将来：ir a + 不定式。进行体：está haciendo + 不定式。" s="Pronominal: se + infinitivo. Futuro próximo: ir a + infinitivo. Continuo: está haciendo + infinitivo." x="Pronominal: se + infinitivo. Futuro próximo: ir a + infinitivo. Continuo: está haciendo + infinitivo.">Pronominal: se + infinitive. Near future: ir a + infinitive. Continuous: está haciendo + infinitive.</span></li>
+          <li><span class="t" c="Hay 保持原样。保留人称直接宾语前的 a。引号 « » 予以保留。" s="Hay se mantiene. Se mantiene la a ante el objeto directo humano. Las comillas « » se conservan." x="Hay quedar hay. Guardar el a delante de el objeto directo humano. El marca de cita « » quedar.">Hay stays hay. Keep the a before a human direct object. Quotation marks « » are kept.</span></li>
+        </ul>
+      </div>
+
+      <!-- ===== SECTION 5: EXAMPLES ===== -->
+      <div class="section" id="ch5">
+        <h2><span class="t" c="5. 例句" s="5. Ejemplos" x="5. Ejemplo">5. Examples</span></h2>
+        <p>
+          <span class="t" c="每个例句都展示四种语言。" s="Cada ejemplo muestra los cuatro idiomas." x="Cada ejemplo mostrar el cuatro lengua.">Each example shows all four languages.</span>
+        </p>
+        <div class="example">
+          <div class="label"><span class="t" c="例1" s="Ejemplo 1" x="Ejemplo 1">Example 1</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Yo querer comer.</div>
+          <div class="line"><span class="lang-label">English:</span> I want to eat.</div>
+          <div class="line"><span class="lang-label">中文:</span> 我想吃东西。</div>
+          <div class="line"><span class="lang-label">Español:</span> Quiero comer.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例2" s="Ejemplo 2" x="Ejemplo 2">Example 2</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Ser que tú ir a el mercado?</div>
+          <div class="line"><span class="lang-label">English:</span> Are you going to the market?</div>
+          <div class="line"><span class="lang-label">中文:</span> 你要去市场吗？</div>
+          <div class="line"><span class="lang-label">Español:</span> ¿Es que vas al mercado?</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例3" s="Ejemplo 3" x="Ejemplo 3">Example 3</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Qué tú querer?</div>
+          <div class="line"><span class="lang-label">English:</span> What do you want?</div>
+          <div class="line"><span class="lang-label">中文:</span> 你想要什么？</div>
+          <div class="line"><span class="lang-label">Español:</span> ¿Qué quieres?</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例4" s="Ejemplo 4" x="Ejemplo 4">Example 4</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Yo ver tú.</div>
+          <div class="line"><span class="lang-label">English:</span> I see you.</div>
+          <div class="line"><span class="lang-label">中文:</span> 我看见你。</div>
+          <div class="line"><span class="lang-label">Español:</span> Te veo.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例5" s="Ejemplo 5" x="Ejemplo 5">Example 5</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Tú ver yo.</div>
+          <div class="line"><span class="lang-label">English:</span> You see me.</div>
+          <div class="line"><span class="lang-label">中文:</span> 你看见我。</div>
+          <div class="line"><span class="lang-label">Español:</span> Me ves.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例6" s="Ejemplo 6" x="Ejemplo 6">Example 6</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Esto ser bueno.</div>
+          <div class="line"><span class="lang-label">English:</span> This is good.</div>
+          <div class="line"><span class="lang-label">中文:</span> 这很好。</div>
+          <div class="line"><span class="lang-label">Español:</span> Esto es bueno.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例7" s="Ejemplo 7" x="Ejemplo 7">Example 7</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Este libro ser interesante.</div>
+          <div class="line"><span class="lang-label">English:</span> This book is interesting.</div>
+          <div class="line"><span class="lang-label">中文:</span> 这本书很有意思。</div>
+          <div class="line"><span class="lang-label">Español:</span> Este libro es interesante.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例8" s="Ejemplo 8" x="Ejemplo 8">Example 8</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> El hombre que venir ser mi amigo.</div>
+          <div class="line"><span class="lang-label">English:</span> The man who comes is my friend.</div>
+          <div class="line"><span class="lang-label">中文:</span> 来的那个男人是我的朋友。</div>
+          <div class="line"><span class="lang-label">Español:</span> El hombre que viene es mi amigo.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例9" s="Ejemplo 9" x="Ejemplo 9">Example 9</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> El hombre que yo ver ser mi amigo.</div>
+          <div class="line"><span class="lang-label">English:</span> The man whom I see is my friend.</div>
+          <div class="line"><span class="lang-label">中文:</span> 我看见的那个男人是我的朋友。</div>
+          <div class="line"><span class="lang-label">Español:</span> El hombre que veo es mi amigo.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例10" s="Ejemplo 10" x="Ejemplo 10">Example 10</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> El libro es hecho escribir por el autor.</div>
+          <div class="line"><span class="lang-label">English:</span> The book is written by the author.</div>
+          <div class="line"><span class="lang-label">中文:</span> 这本书是作者写的。</div>
+          <div class="line"><span class="lang-label">Español:</span> El libro es escrito por el autor.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例11" s="Ejemplo 11" x="Ejemplo 11">Example 11</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Yo está haciendo leer.</div>
+          <div class="line"><span class="lang-label">English:</span> I am reading.</div>
+          <div class="line"><span class="lang-label">中文:</span> 我正在读书。</div>
+          <div class="line"><span class="lang-label">Español:</span> Estoy leyendo.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例12" s="Ejemplo 12" x="Ejemplo 12">Example 12</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Yo ver a María.</div>
+          <div class="line"><span class="lang-label">English:</span> I see María.</div>
+          <div class="line"><span class="lang-label">中文:</span> 我看见 María。</div>
+          <div class="line"><span class="lang-label">Español:</span> Veo a María.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例13" s="Ejemplo 13" x="Ejemplo 13">Example 13</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Este los libro ser interesante.</div>
+          <div class="line"><span class="lang-label">English:</span> These books are interesting.</div>
+          <div class="line"><span class="lang-label">中文:</span> 这些书很有意思。</div>
+          <div class="line"><span class="lang-label">Español:</span> Estos libros son interesantes.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例14" s="Ejemplo 14" x="Ejemplo 14">Example 14</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Hay un problema.</div>
+          <div class="line"><span class="lang-label">English:</span> There is a problem.</div>
+          <div class="line"><span class="lang-label">中文:</span> 有一个问题。</div>
+          <div class="line"><span class="lang-label">Español:</span> Hay un problema.</div>
+        </div>
+      </div>
+
+      <!-- ===== SECTION 6: PRONUNCIATION ===== -->
+      <div class="section" id="ch6">
+        <h2><span class="t" c="6. 发音" s="6. Pronunciación" x="6. Pronunciación">6. Pronunciation</span></h2>
+        <p>
+          <span class="t" c="发音遵循严格的、确定性的规则，没有例外。发音引擎和检查器将在后续阶段推出。" s="La pronunciación sigue reglas estrictas y deterministas, sin excepciones. Un motor de pronunciación y un verificador llegarán en una fase posterior." x="El pronunciación seguir regla estricto y determinista, sin excepción. Un motor de pronunciación y un verificador llegar en un fase posterior.">Pronunciation follows strict, deterministic rules, with no exceptions. A pronunciation engine and a checker will come in a later phase.</span>
+        </p>
+        <p>
+          <span class="t" c="这里尚未列出任何发音规则。" s="Aquí aún no se enuncia ninguna regla de pronunciación." x="Aquí todavía no enunciar ningún regla de pronunciación.">No pronunciation rules are stated here yet.</span>
+        </p>
+      </div>
+
+    </div>
+  </body>
+</html>
