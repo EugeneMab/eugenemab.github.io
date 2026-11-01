@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Espanstanto — An artificial language built upon Spanish without conjugation</title>
+    <style>
+      body, td {
+        font-family: 'Bahnschrift Light', Calibri, SimHei, Arial, sans-serif;
+        font-size: 22px;
+        line-height: 1.6;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+        color: #2c3e50;
+      }
+      .banner {
+        background: linear-gradient(135deg, #1a5276 0%, #2980b9 50%, #5dade2 100%);
+        color: white;
+        padding: 40px 30px;
+        text-align: center;
+      }
+      .banner h1 {
+        font-size: 2.5em;
+        margin: 0 0 10px 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      }
+      .banner .subtitle {
+        font-size: 1.1em;
+        opacity: 0.9;
+      }
+      .lang-bar {
+        background: #1a5276;
+        text-align: center;
+        padding: 12px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .lang-btn {
+        background: transparent;
+        border: 2px solid rgba(255,255,255,0.6);
+        color: white;
+        padding: 8px 24px;
+        margin: 0 4px;
+        border-radius: 25px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: inherit;
+      }
+      .lang-btn:hover {
+        background: rgba(255,255,255,0.2);
+        border-color: white;
+      }
+      .lang-btn.active {
+        background: white;
+        color: #1a5276;
+        border-color: white;
+        font-weight: bold;
+      }
+      .nav-divider {
+        display: inline-block;
+        width: 1px;
+        height: 26px;
+        background: rgba(255,255,255,0.35);
+        margin: 0 8px;
+      }
+      .ch-btn {
+        background: rgba(255,255,255,0.1);
+        border: 2px solid rgba(255,255,255,0.5);
+        color: white;
+        padding: 6px 14px;
+        margin: 0 3px;
+        border-radius: 20px;
+        font-size: 17px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-family: inherit;
+      }
+      .ch-btn:hover {
+        background: rgba(255,255,255,0.25);
+        border-color: white;
+      }
+      .ch-btn.active {
+        background: #f39c12;
+        border-color: #f39c12;
+        color: white;
+      }
+      .content {
+        padding: 20px 40px;
+      }
+      .section {
+        background: white;
+        border-radius: 12px;
+        padding: 30px 35px;
+        margin: 25px 0;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        border-left: 5px solid #2980b9;
+        scroll-margin-top: 80px;
+      }
+      .section h2 {
+        color: #1a5276;
+        margin-top: 0;
+        font-size: 1.5em;
+        border-bottom: 2px solid #ebf5fb;
+        padding-bottom: 12px;
+      }
+      .section h3 {
+        color: #2980b9;
+        margin-top: 25px;
+      }
+      .example {
+        background: #ebf5fb;
+        border-left: 4px solid #3498db;
+        padding: 15px 20px;
+        margin: 12px 0;
+        border-radius: 0 8px 8px 0;
+        font-size: 0.95em;
+      }
+      .example .label {
+        font-weight: bold;
+        color: #1a5276;
+        font-size: 0.85em;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 4px;
+      }
+      .example .line {
+        margin: 4px 0;
+      }
+      .example .lang-label {
+        font-weight: bold;
+        color: #1a5276;
+      }
+      .rule-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+      }
+      .rule-table td, .rule-table th {
+        border: 1px solid #bdc3c7;
+        padding: 10px 14px;
+      }
+      .rule-table th {
+        background: #2980b9;
+        color: white;
+        text-align: left;
+        font-weight: normal;
+      }
+      .rule-table tr:nth-child(even) {
+        background: #f8f9fa;
+      }
+      .rule-table tr:hover {
+        background: #ebf5fb;
+      }
+      #ipa-input {
+        width: 100%;
+        box-sizing: border-box;
+        font-family: inherit;
+        font-size: 20px;
+        padding: 10px 14px;
+        border: 1px solid #bdc3c7;
+        border-radius: 8px;
+      }
+      #ipa-generate {
+        background: #2980b9;
+        color: white;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 20px;
+        font-size: 18px;
+        cursor: pointer;
+        font-family: inherit;
+      }
+      #ipa-generate:hover {
+        background: #1a5276;
+      }
+      #ipa-output {
+        margin: 12px 0;
+        font-size: 1.05em;
+      }
+      #ipa-words {
+        font-size: 0.95em;
+      }
+      @media (max-width: 600px) {
+        .content {
+          padding: 12px;
+        }
+        .section {
+          padding: 20px 16px;
+        }
+        .rule-table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
+    </style>
+    <script>
+      var currentLang = 'e';
+      var currentChapter = 1;
+
+      function renderLang(language) {
+        var elements = document.getElementsByClassName("t");
+        for (var position = 0; position < elements.length; position++) {
+          var element = elements[position];
+          if (!element.hasAttribute("e")) {
+            element.setAttribute("e", element.innerHTML);
+          }
+        }
+        for (var position = 0; position < elements.length; position++) {
+          var element = elements[position];
+          var targetText = element.getAttribute(language);
+          if (targetText !== null && targetText !== undefined) {
+            element.innerHTML = targetText;
+          } else {
+            element.innerHTML = element.getAttribute("e");
+          }
+        }
+      }
+
+      function updateActiveButtons() {
+        var langBtns = document.getElementsByClassName("lang-btn");
+        for (var i = 0; i < langBtns.length; i++) {
+          langBtns[i].classList.remove("active");
+          langBtns[i].setAttribute("aria-pressed", "false");
+        }
+        var activeLangBtn = document.getElementById("btn-lang-" + currentLang);
+        if (activeLangBtn) {
+          activeLangBtn.classList.add("active");
+          activeLangBtn.setAttribute("aria-pressed", "true");
+        }
+
+        var chBtns = document.getElementsByClassName("ch-btn");
+        for (var i = 0; i < chBtns.length; i++) {
+          chBtns[i].classList.remove("active");
+          chBtns[i].removeAttribute("aria-current");
+        }
+        var activeChBtn = document.getElementById("btn-ch-" + currentChapter);
+        if (activeChBtn) {
+          activeChBtn.classList.add("active");
+          activeChBtn.setAttribute("aria-current", "location");
+        }
+      }
+
+      function updateHash() {
+        var hash = '#' + currentLang + ',' + currentChapter;
+        if (window.location.hash !== hash) {
+          window.history.pushState(null, '', hash);
+        }
+      }
+
+      function setLang(language, updateUrl) {
+        if (updateUrl === undefined) updateUrl = true;
+        currentLang = language;
+        renderLang(currentLang);
+        document.documentElement.lang = { e: 'en', c: 'zh-Hans', s: 'es', x: 'art' }[currentLang];
+        updateActiveButtons();
+        if (updateUrl) {
+          goToChapter(currentChapter, false);
+          updateHash();
+        }
+      }
+
+      function goToChapter(chapterNum, updateUrl) {
+        if (updateUrl === undefined) updateUrl = true;
+        currentChapter = chapterNum;
+        updateActiveButtons();
+        var elem = document.getElementById('ch' + chapterNum);
+        if (elem) {
+          elem.style.scrollMarginTop = (document.querySelector('.lang-bar').offsetHeight + 16) + 'px';
+          elem.scrollIntoView({
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'
+          });
+        }
+        if (updateUrl) {
+          updateHash();
+        }
+      }
+
+      function parseHash(hash) {
+        if (!hash) return null;
+        var clean = hash.replace(/^#/, '').trim();
+        if (!clean) return null;
+
+        var result = { lang: null, chapter: null };
+        var parts = clean.split(',');
+        for (var i = 0; i < parts.length; i++) {
+          var p = parts[i].trim().toLowerCase();
+          if (['e', 'c', 's', 'x'].indexOf(p) !== -1) {
+            result.lang = p;
+          } else if (/^(ch)?[1-8]$/.test(p)) {
+            result.chapter = parseInt(p.replace(/^ch/, ''), 10);
+          }
+        }
+        return result.lang || result.chapter ? result : null;
+      }
+
+      function applyFromHash(shouldScroll) {
+        var parsed = parseHash(window.location.hash);
+        if (!window.location.hash) {
+          currentLang = 'e';
+          currentChapter = 1;
+        } else if (parsed) {
+          if (parsed.lang) currentLang = parsed.lang;
+          if (parsed.chapter) currentChapter = parsed.chapter;
+        } else {
+          return;
+        }
+        setLang(currentLang, false);
+        if (shouldScroll && currentChapter) {
+          goToChapter(currentChapter, false);
+        }
+      }
+
+      function onLoad() {
+        setLang('e', false);
+        if (window.location.hash) {
+          applyFromHash(true);
+        }
+      }
+
+      window.addEventListener('hashchange', function() {
+        applyFromHash(true);
+      });
+    </script>
+  </head>
+  <body onload="onLoad()">
+
+    <div class="banner">
+      <h1>
+        <span class="t" c="Espanstanto（恒常西班牙语）" s="Espanstanto (español constanto)" x="Espanstanto (español constanto)">Espanstanto (español constanto)</span>
+      </h1>
+      <div class="subtitle">
+        <span class="t" c="一种建立在西班牙语之上、无变位的人造语言" s="Una lengua artificial construida sobre el español sin conjugación" x="Un lengua artificial construir sobre el español sin conjugación">An artificial language built upon Spanish without conjugation</span>
+      </div>
+    </div>
+
+    <div class="lang-bar">
+      <button class="lang-btn" id="btn-lang-e" onclick="setLang('e')">English</button>
+      <button class="lang-btn" id="btn-lang-c" onclick="setLang('c')">中文</button>
+      <button class="lang-btn" id="btn-lang-s" onclick="setLang('s')">Español</button>
+      <button class="lang-btn" id="btn-lang-x" onclick="setLang('x')">Espanstanto</button>
+      <span class="nav-divider"></span>
+      <button class="ch-btn" id="btn-ch-1" onclick="goToChapter(1)" title="Chapter 1: Introduction">1</button>
+      <button class="ch-btn" id="btn-ch-2" onclick="goToChapter(2)" title="Chapter 2: Detailed Rules and Examples">2</button>
+      <button class="ch-btn" id="btn-ch-3" onclick="goToChapter(3)" title="Chapter 3: Sample Passages">3</button>
+      <button class="ch-btn" id="btn-ch-4" onclick="goToChapter(4)" title="Chapter 4: Numbers">4</button>
+      <button class="ch-btn" id="btn-ch-5" onclick="goToChapter(5)" title="Chapter 5: Verb Tense and Voice">5</button>
+      <button class="ch-btn" id="btn-ch-6" onclick="goToChapter(6)" title="Chapter 6: Letters and Pronunciation">6</button>
+      <button class="ch-btn" id="btn-ch-7" onclick="goToChapter(7)" title="Chapter 7: Rules Summary">7</button>
+      <button class="ch-btn" id="btn-ch-8" onclick="goToChapter(8)" title="Chapter 8: Pronunciation Tool">8</button>
+    </div>
+
+    <div class="content">
+
+      <!-- ===== CHAPTER 1: INTRODUCTION ===== -->
+      <div class="section" id="ch1">
+        <h2><span class="t" c="1. 概述" s="1. Introducción" x="1. Introducción">1. Introduction</span></h2>
+        <p>
+          <span class="t" c="Espanstanto 是一种建立在西班牙语之上、无变位的人造语言。它遵循 Franstant 的设计，并将其应用于西班牙语。" s="Espanstanto es una lengua artificial construida sobre el español sin conjugación. Sigue el diseño de Franstant, aplicado al español." x="Espanstanto ser un lengua artificial construir sobre el español sin conjugación. Esto seguir el diseño de Franstant y aplicar ello a el español.">Espanstanto is an artificial language built upon Spanish without conjugation. It follows the design of Franstant, applied to Spanish.</span>
+        </p>
+        <p>
+          <span class="t" c="所有动词都保持不定式形式。时态、语气和语态由动词前面的标记表示。" s="Todos los verbos se mantienen en infinitivo. El tiempo, el modo y la voz se indican con un marcador delante del verbo." x="Cada verbo quedar en el infinitivo. El tiempo, el modo y el voz es hecho mostrar por un marcador delante de el verbo.">Every verb stays in the infinitive. Tense, mood, and voice are shown by a marker in front of the verb.</span>
+        </p>
+        <p>
+          <span class="t" c="标记全部取自 HACER 的真实形式，绝不是生造的词。主要动词本身不变。" s="Los marcadores son formas reales de HACER, nunca palabras inventadas. El verbo principal nunca cambia." x="Los marcador ser forma real de HACER, nunca inventado. El verbo principal nunca cambiar.">Markers are real forms of HACER, never invented words. The main verb never changes.</span>
+        </p>
+        <p>
+          <span class="t" c="简言之：西班牙语词汇、零变位、严格的主谓宾语序、无语法性别、无缩合、一套代词（主语还是宾语由位置决定），以及来自 HACER 的标记（主要动词不变）。以下各章陈述规则、展示例句和选段，并提供发音工具。" s="En resumen: vocabulario español, cero conjugación, orden SVO estricto, sin género, sin contracciones, un solo conjunto de pronombres cuyo papel decide el orden, y marcadores de HACER que no cambian el verbo principal. Los capítulos siguientes enuncian las reglas, muestran ejemplos y pasajes, y ofrecen una herramienta de pronunciación." x="En resumen: vocabulario español, cero conjugación, orden estricto SVO, sin género, sin contracción, un solo conjunto de pronombre, el orden decidir sujeto u objeto, y marcador de HACER que no cambiar el verbo principal. Los capítulo siguiente enunciar los regla, mostrar ejemplo y pasaje, y ofrecer un herramienta de pronunciación.">In short: Spanish words, no conjugation, strict SVO order, no gender, no contractions, one pronoun set whose role comes from position, and markers from HACER that never change the main verb. The chapters below state the rules, show examples and passages, and provide a pronunciation tool.</span>
+        </p>
+      </div>
+
+      <!-- ===== CHAPTER 2: DETAILED RULES AND EXAMPLES ===== -->
+      <div class="section" id="ch2">
+        <h2><span class="t" c="2. 详细规则与示例" s="2. Reglas detalladas y ejemplos" x="2. Regla detallado y ejemplo">2. Detailed Rules and Examples</span></h2>
+        <ul>
+          <li><span class="t" c="西班牙语词汇，零变位：每个动词都是不定式加一个标记。" s="Vocabulario español, cero conjugación: cada verbo es el infinitivo más un marcador." x="Vocabulario español, cero conjugación: cada verbo ser el infinitivo más un marcador.">Spanish vocabulary, zero conjugation: every verb is the infinitive plus a marker.</span></li>
+          <li><span class="t" c="不用缩合：用“a el”，不用“al”；用“de el”，不用“del”。不用省音。" s="Sin contracciones: «a el», nunca «al»; «de el», nunca «del». Sin elisiones." x="No usar contracción: «a el», nunca «al»; «de el», nunca «del». No usar elisión.">No contractions: “a el”, never “al”; “de el”, never “del”. No elisions.</span></li>
+          <li><span class="t" c="严格的主谓宾语序。" s="Orden estricto SVO." x="Orden estricto SVO.">Strict SVO word order.</span></li>
+          <li><span class="t" c="不用语法性别：所有名词都用“el”和“un”。" s="Sin género gramatical: «el» y «un» para todos los sustantivos." x="No usar género gramatical: «el» y «un» para cada sustantivo.">No grammatical gender: “el” and “un” for every noun.</span></li>
+          <li><span class="t" c="名词保持阳性单数形式；复数只由冠词表示：“el”/“los”，“un”/“unos”。" s="Los sustantivos mantienen la forma masculina singular; el plural lo da solo el artículo: «el»/«los», «un»/«unos»." x="El sustantivo guardar el forma masculino singular; el plural venir solo de el artículo: «el»/«los», «un»/«unos».">Nouns keep the masculine-singular form; plurality comes from the article only: “el”/“los”, “un”/“unos”.</span></li>
+          <li><span class="t" c="形容词永远是阳性单数形式，并且永远放在名词之后。" s="Los adjetivos son siempre masculinos singulares y van siempre después del sustantivo." x="El adjetivo ser siempre masculino singular y estar siempre después de el sustantivo.">Adjectives are always masculine-singular and always after the noun.</span></li>
+          <li><span class="t" c="物主词只用阳性形式；复数的被拥有物用“物主词 + los + 名词”。" s="Los posesivos usan la forma masculina; lo poseído en plural es «posesivo + los + sustantivo»." x="El posesivo usar el forma masculino; el poseído plural ser «posesivo + los + sustantivo».">Possessives use the masculine form; a plural possessed thing is “possessive + los + noun”.</span></li>
+          <li><span class="t" c="代词只有一套独立形式；语序决定主语还是宾语。不用“mí”/“ti”。" s="Un solo conjunto de pronombres independientes; el orden decide sujeto u objeto. Sin «mí»/«ti»." x="Un solo conjunto de pronombre independiente; el orden decidir sujeto u objeto. No usar «mí»/«ti».">One standalone pronoun set; word order decides subject or object. No “mí”/“ti”.</span></li>
+          <li><span class="t" c="禁用“lo”，改用“el”。" s="«Lo» está prohibido; se usa «el» en su lugar." x="«Lo» ser prohibido; usar «el» en su lugar.">“Lo” is banned; use “el” instead.</span></li>
+          <li><span class="t" c="指示词保持区分：“este”/“ese”/“aquel”；复数加“los”。" s="Los demostrativos se mantienen separados: «este»/«ese»/«aquel»; los plurales añaden «los»." x="El demostrativo quedar separado: «este»/«ese»/«aquel»; el plural añadir «los».">Demonstratives stay separate: “este”/“ese”/“aquel”; plurals add “los”.</span></li>
+          <li><span class="t" c="“Esto”是代词，“este”是形容词。" s="«Esto» es pronombre; «este» es adjetivo." x="«Esto» ser pronombre; «este» ser adjetivo.">“Esto” is a pronoun; “este” is an adjective.</span></li>
+          <li><span class="t" c="关系词只用“que”；语序决定主语还是宾语。不用“quien”。" s="Los relativos usan solo «que»; el orden decide sujeto u objeto. «Quien» se elimina." x="El relativo usar solo «que»; el orden decidir sujeto u objeto. No usar «quien».">Relatives use “que” only; word order decides subject or object. “Quien” is dropped.</span></li>
+          <li><span class="t" c="“Ser”和“estar”保持区分，永远用不定式。" s="«Ser» y «estar» se mantienen separados, siempre en infinitivo." x="«Ser» y «estar» quedar separado, siempre en el infinitivo.">“Ser” and “estar” stay separate, always in the infinitive.</span></li>
+          <li><span class="t" c="“Hay”保持原样。" s="«Hay» se mantiene." x="«Hay» quedar «hay».">“Hay” stays “hay”.</span></li>
+          <li><span class="t" c="保留人称直接宾语前的“a”。" s="Se mantiene la «a» ante el objeto directo humano." x="Guardar el «a» delante de el objeto directo humano.">The “a” before a human direct object is kept.</span></li>
+        </ul>
+        <ul>
+          <li><span class="t" c="冠词：“el”/“los”，“un”/“unos”。写“a el”，不写“al”；写“de el”，不写“del”。" s="Artículos: «el»/«los», «un»/«unos». Se escribe «a el», nunca «al»; «de el», nunca «del»." x="Artículo: «el»/«los», «un»/«unos». Escribir «a el», nunca «al»; «de el», nunca «del».">Articles: “el”/“los”, “un”/“unos”. Write “a el”, never “al”; “de el”, never “del”.</span></li>
+          <li><span class="t" c="代词：“yo”、“tú”、“él”、“nosotros”、“vosotros”、“ellos”；无生命用“ello”/“ellos”。位置决定主语还是宾语。" s="Pronombres: «yo», «tú», «él», «nosotros», «vosotros», «ellos»; inanimado «ello»/«ellos». La posición decide sujeto u objeto." x="Pronombre: «yo», «tú», «él», «nosotros», «vosotros», «ellos»; inanimado «ello»/«ellos». El orden decidir sujeto u objeto.">Pronouns: “yo”, “tú”, “él”, “nosotros”, “vosotros”, “ellos”; inanimate “ello”/“ellos”. Position decides subject or object.</span></li>
+          <li><span class="t" c="指示词：“este”/“ese”/“aquel”是形容词；“esto”/“eso”/“aquello”是代词；复数加“los”。" s="Demostrativos: «este»/«ese»/«aquel» son adjetivos; «esto»/«eso»/«aquello» son pronombres; los plurales añaden «los»." x="Demostrativo: «este»/«ese»/«aquel» ser adjetivo; «esto»/«eso»/«aquello» ser pronombre; el plural añadir «los».">Demonstratives: “este”/“ese”/“aquel” are adjectives; “esto”/“eso”/“aquello” are pronouns; plurals add “los”.</span></li>
+          <li><span class="t" c="关系词：只用“que”；where 用“donde”；whose 用“de que”。" s="Relativos: solo «que»; «donde» para donde; «de que» para cuyo." x="Relativo: solo «que»; «donde» para donde; «de que» para cuyo.">Relatives: “que” only; “donde” for where; “de que” for whose.</span></li>
+          <li><span class="t" c="比较：“más”/“menos”/“tan” + 形容词 + “que”；“el más”/“el menos”；不变。" s="Comparativos: «más»/«menos»/«tan» + adjetivo + «que»; «el más»/«el menos»; invariables." x="Comparativo: «más»/«menos»/«tan» + adjetivo + «que»; «el más»/«el menos»; invariable.">Comparatives: “más”/“menos”/“tan” + adjective + “que”; “el más”/“el menos”; invariable.</span></li>
+          <li><span class="t" c="否定：“no”不拆分地放在动词或标记之前。说“no ver nada”、“no ver nunca”。" s="Negación: «no» va sin dividir delante del verbo o marcador. Se dice «no ver nada», «no ver nunca»." x="Negación: «no» quedar sin dividir delante de el verbo o marcador. Decir «no ver nada», «no ver nunca».">Negation: “no” stands unsplit before the verb or marker. Say “no ver nada”, “no ver nunca”.</span></li>
+          <li><span class="t" c="疑问：是非问用“ser que”；特殊问用“qué” + 主谓宾。" s="Preguntas: «ser que» para sí/no; «qué» + SVO para qué." x="Pregunta: «ser que» para sí/no; «qué» + SVO para qué.">Questions: “ser que” for yes/no; “qué” + SVO for what.</span></li>
+          <li><span class="t" c="数字：“diez”；“diez uno” … “diez nueve”；复合数去掉“y”（“veinte uno”）；“setenta”/“ochenta”/“noventa”；“cien”/“mil”不变。" s="Números: «diez»; «diez uno» … «diez nueve»; los compuestos pierden la «y» («veinte uno»); «setenta»/«ochenta»/«noventa»; «cien»/«mil» invariables." x="Número: «diez»; «diez uno» … «diez nueve»; el compuesto perder el «y» («veinte uno»); «setenta»/«ochenta»/«noventa»; «cien»/«mil» invariable.">Numbers: “diez”; “diez uno” … “diez nueve”; compounds drop “y” (“veinte uno”); “setenta”/“ochenta”/“noventa”; “cien”/“mil” invariable.</span></li>
+          <li><span class="t" c="“Ser”和“estar”保持区分，永远用不定式。被动语态用“ser”（“es hecho”），不用“estar”。" s="«Ser» y «estar» se mantienen separados, siempre en infinitivo. La pasiva usa «ser» («es hecho»), nunca «estar»." x="«Ser» y «estar» quedar separado, siempre en el infinitivo. El pasivo usar «ser» («es hecho»), nunca «estar».">“Ser” and “estar” stay separate, always in the infinitive. The passive uses “ser” (“es hecho”), never “estar”.</span></li>
+          <li><span class="t" c="被动：所有时态都用“es hecho”；时态标记叠加在前。" s="Pasiva: «es hecho» en todos los tiempos; el marcador de tiempo se apila delante." x="Pasivo: «es hecho» en cada tiempo; el marcador de tiempo apilar delante.">Passive: “es hecho” in every tense; the tense marker stacks in front.</span></li>
+          <li><span class="t" c="自反：“se” + 不定式。最近将来：“ir a” + 不定式。进行体：“está haciendo” + 不定式。" s="Pronominal: «se» + infinitivo. Futuro próximo: «ir a» + infinitivo. Continuo: «está haciendo» + infinitivo." x="Pronominal: «se» + infinitivo. Futuro próximo: «ir a» + infinitivo. Continuo: «está haciendo» + infinitivo.">Pronominal: “se” + infinitive. Near future: “ir a” + infinitive. Continuous: “está haciendo” + infinitive.</span></li>
+          <li><span class="t" c="“Hay”保持原样。保留人称直接宾语前的“a”。引号 « » 予以保留。" s="«Hay» se mantiene. Se mantiene la «a» ante el objeto directo humano. Las comillas « » se conservan." x="«Hay» quedar «hay». Guardar el «a» delante de el objeto directo humano. El marca de cita « » quedar.">“Hay” stays “hay”. Keep the “a” before a human direct object. Quotation marks « » are kept.</span></li>
+        </ul>
+        <p>
+          <span class="t" c="每个例句都展示四种语言。" s="Cada ejemplo muestra los cuatro idiomas." x="Cada ejemplo mostrar el cuatro lengua.">Each example shows all four languages.</span>
+        </p>
+        <div class="example">
+          <div class="label"><span class="t" c="例1" s="Ejemplo 1" x="Ejemplo 1">Example 1</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Yo querer comer.</div>
+          <div class="line"><span class="lang-label">English:</span> I want to eat.</div>
+          <div class="line"><span class="lang-label">中文:</span> 我想吃东西。</div>
+          <div class="line"><span class="lang-label">Español:</span> Quiero comer.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例2" s="Ejemplo 2" x="Ejemplo 2">Example 2</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Ser que tú ir a el mercado?</div>
+          <div class="line"><span class="lang-label">English:</span> Are you going to the market?</div>
+          <div class="line"><span class="lang-label">中文:</span> 你要去市场吗？</div>
+          <div class="line"><span class="lang-label">Español:</span> ¿Es que vas al mercado?</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例3" s="Ejemplo 3" x="Ejemplo 3">Example 3</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Qué tú querer?</div>
+          <div class="line"><span class="lang-label">English:</span> What do you want?</div>
+          <div class="line"><span class="lang-label">中文:</span> 你想要什么？</div>
+          <div class="line"><span class="lang-label">Español:</span> ¿Qué quieres?</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例4" s="Ejemplo 4" x="Ejemplo 4">Example 4</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Yo ver tú.</div>
+          <div class="line"><span class="lang-label">English:</span> I see you.</div>
+          <div class="line"><span class="lang-label">中文:</span> 我看见你。</div>
+          <div class="line"><span class="lang-label">Español:</span> Te veo.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例5" s="Ejemplo 5" x="Ejemplo 5">Example 5</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Tú ver yo.</div>
+          <div class="line"><span class="lang-label">English:</span> You see me.</div>
+          <div class="line"><span class="lang-label">中文:</span> 你看见我。</div>
+          <div class="line"><span class="lang-label">Español:</span> Me ves.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例6" s="Ejemplo 6" x="Ejemplo 6">Example 6</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Esto ser bueno.</div>
+          <div class="line"><span class="lang-label">English:</span> This is good.</div>
+          <div class="line"><span class="lang-label">中文:</span> 这很好。</div>
+          <div class="line"><span class="lang-label">Español:</span> Esto es bueno.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例7" s="Ejemplo 7" x="Ejemplo 7">Example 7</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Este libro ser interesante.</div>
+          <div class="line"><span class="lang-label">English:</span> This book is interesting.</div>
+          <div class="line"><span class="lang-label">中文:</span> 这本书很有意思。</div>
+          <div class="line"><span class="lang-label">Español:</span> Este libro es interesante.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例8" s="Ejemplo 8" x="Ejemplo 8">Example 8</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> El hombre que venir ser mi amigo.</div>
+          <div class="line"><span class="lang-label">English:</span> The man who comes is my friend.</div>
+          <div class="line"><span class="lang-label">中文:</span> 来的那个男人是我的朋友。</div>
+          <div class="line"><span class="lang-label">Español:</span> El hombre que viene es mi amigo.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例9" s="Ejemplo 9" x="Ejemplo 9">Example 9</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> El hombre que yo ver ser mi amigo.</div>
+          <div class="line"><span class="lang-label">English:</span> The man whom I see is my friend.</div>
+          <div class="line"><span class="lang-label">中文:</span> 我看见的那个男人是我的朋友。</div>
+          <div class="line"><span class="lang-label">Español:</span> El hombre que veo es mi amigo.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例10" s="Ejemplo 10" x="Ejemplo 10">Example 10</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> El libro es hecho escribir por el autor.</div>
+          <div class="line"><span class="lang-label">English:</span> The book is written by the author.</div>
+          <div class="line"><span class="lang-label">中文:</span> 这本书是作者写的。</div>
+          <div class="line"><span class="lang-label">Español:</span> El libro es escrito por el autor.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例11" s="Ejemplo 11" x="Ejemplo 11">Example 11</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Yo está haciendo leer.</div>
+          <div class="line"><span class="lang-label">English:</span> I am reading.</div>
+          <div class="line"><span class="lang-label">中文:</span> 我正在读书。</div>
+          <div class="line"><span class="lang-label">Español:</span> Estoy leyendo.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例12" s="Ejemplo 12" x="Ejemplo 12">Example 12</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Yo ver a María.</div>
+          <div class="line"><span class="lang-label">English:</span> I see María.</div>
+          <div class="line"><span class="lang-label">中文:</span> 我看见 María。</div>
+          <div class="line"><span class="lang-label">Español:</span> Veo a María.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例13" s="Ejemplo 13" x="Ejemplo 13">Example 13</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Este los libro ser interesante.</div>
+          <div class="line"><span class="lang-label">English:</span> These books are interesting.</div>
+          <div class="line"><span class="lang-label">中文:</span> 这些书很有意思。</div>
+          <div class="line"><span class="lang-label">Español:</span> Estos libros son interesantes.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="例14" s="Ejemplo 14" x="Ejemplo 14">Example 14</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Hay un problema.</div>
+          <div class="line"><span class="lang-label">English:</span> There is a problem.</div>
+          <div class="line"><span class="lang-label">中文:</span> 有一个问题。</div>
+          <div class="line"><span class="lang-label">Español:</span> Hay un problema.</div>
+        </div>
+      </div>
+
+      <!-- ===== CHAPTER 3: SAMPLE PASSAGES ===== -->
+      <div class="section" id="ch3">
+        <h2><span class="t" c="3. 选段" s="3. Pasajes" x="3. Pasaje">3. Sample Passages</span></h2>
+        <p>
+          <span class="t" c="每篇选段都按节逐节展示四种语言。" s="Cada pasaje muestra los cuatro idiomas, versículo por versículo." x="Cada pasaje mostrar el cuatro lengua, versículo por versículo.">Each passage shows all four languages, verse by verse.</span>
+        </p>
+        <h3><span class="t" c="巴别塔（创世记 11:1-9）" s="La Torre de Babel (Génesis 11:1-9)" x="El Torre de Babel (Génesis 11:1-9)">The Tower of Babel (Genesis 11:1-9)</span></h3>
+        <div class="example">
+          <div class="label"><span class="t" c="创世记 11:1" s="Génesis 11:1" x="Génesis 11:1">Genesis 11:1</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Y el tierra todo hacía ser de un lengua, y de un habla.</div>
+          <div class="line"><span class="lang-label">English:</span> And the whole earth was of one language, and of one speech.</div>
+          <div class="line"><span class="lang-label">中文:</span> 那时，全地只有一种语言，同一种话。</div>
+          <div class="line"><span class="lang-label">Español:</span> Y toda la tierra era de una lengua y de un mismo hablar.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="创世记 11:2" s="Génesis 11:2" x="Génesis 11:2">Genesis 11:2</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Y esto hizo pasar, cuando ellos hizo viajar de el este, que ellos hizo encontrar un llanura en el tierra de Shinar; y ellos hizo vivir allí.</div>
+          <div class="line"><span class="lang-label">English:</span> And it came to pass, as they journeyed from the east, that they found a plain in the land of Shinar; and they dwelt there.</div>
+          <div class="line"><span class="lang-label">中文:</span> 他们从东边迁徙的时候，在示拿地找到一片平原，就住在那里。</div>
+          <div class="line"><span class="lang-label">Español:</span> Y aconteció que, cuando viajaban desde el oriente, hallaron una llanura en la tierra de Sinar; y habitaron allí.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="创世记 11:3" s="Génesis 11:3" x="Génesis 11:3">Genesis 11:3</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Y ellos hizo decir un a otro: venir, nosotros querer hacer ladrillo, y quemar ellos completamente. Y ellos hizo tener ladrillo para piedra, y ellos hizo tener betún para mortero.</div>
+          <div class="line"><span class="lang-label">English:</span> And they said one to another, Go to, let us make brick, and burn them thoroughly. And they had brick for stone, and slime had they for mortar.</div>
+          <div class="line"><span class="lang-label">中文:</span> 他们彼此说：来吧，我们来做砖，把砖烧透。他们以砖当石头，以石漆当灰泥。</div>
+          <div class="line"><span class="lang-label">Español:</span> Y se dijeron unos a otros: Venid, hagamos ladrillo y cozámoslo bien. Y el ladrillo les sirvió de piedra, y el betún de argamasa.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="创世记 11:4" s="Génesis 11:4" x="Génesis 11:4">Genesis 11:4</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Y ellos hizo decir: venir, nosotros querer construir para nosotros un ciudad y un torre de que el cima poder llegar a el cielo; y nosotros querer hacer para nosotros un nombre, para que nosotros no es hecho dispersar sobre el cara de el tierra todo.</div>
+          <div class="line"><span class="lang-label">English:</span> And they said, Go to, let us build us a city and a tower, whose top may reach unto heaven; and let us make us a name, lest we be scattered abroad upon the face of the whole earth.</div>
+          <div class="line"><span class="lang-label">中文:</span> 他们说：来吧，我们来建造一座城和一座塔，塔顶通天；我们来扬名，免得我们分散在全地上。</div>
+          <div class="line"><span class="lang-label">Español:</span> Y dijeron: Venid, edifiquémonos una ciudad y una torre cuya cúspide llegue al cielo; y hagámonos un nombre, no sea que nos dispersemos sobre la faz de toda la tierra.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="创世记 11:5" s="Génesis 11:5" x="Génesis 11:5">Genesis 11:5</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Y el Señor hizo descender para ver el ciudad y el torre que los hijo de los hombre hizo construir.</div>
+          <div class="line"><span class="lang-label">English:</span> And the LORD came down to see the city and the tower, which the children of men built.</div>
+          <div class="line"><span class="lang-label">中文:</span> 耶和华降临，要看世人建造的城和塔。</div>
+          <div class="line"><span class="lang-label">Español:</span> Y descendió el Señor para ver la ciudad y la torre que edificaban los hijos de los hombres.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="创世记 11:6" s="Génesis 11:6" x="Génesis 11:6">Genesis 11:6</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Y el Señor hizo decir: mirar, el pueblo ser un, y ellos tener un lengua mismo; y ellos comenzar a hacer esto: y ahora nada fera es hecho retener de ellos, que ellos hizo imaginar hacer.</div>
+          <div class="line"><span class="lang-label">English:</span> And the LORD said, Behold, the people is one, and they have all one language; and this they begin to do: and now nothing will be restrained from them, which they have imagined to do.</div>
+          <div class="line"><span class="lang-label">中文:</span> 耶和华说：看哪，他们是一样的人民，语言也都一样；他们才开始做这事，现在他们所想做的，没有什么能拦阻他们。</div>
+          <div class="line"><span class="lang-label">Español:</span> Y dijo el Señor: He aquí, el pueblo es uno y todos tienen un mismo lenguaje; y esto empiezan a hacer, y ahora nada les será vedado de lo que han imaginado hacer.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="创世记 11:7" s="Génesis 11:7" x="Génesis 11:7">Genesis 11:7</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Venir, nosotros querer descender, y allí confundir su lengua, para que ellos no poder entender el habla de un a otro.</div>
+          <div class="line"><span class="lang-label">English:</span> Go to, let us go down, and there confound their language, that they may not understand one another's speech.</div>
+          <div class="line"><span class="lang-label">中文:</span> 来吧，我们下去，在那里变乱他们的语言，使他们彼此言语不通。</div>
+          <div class="line"><span class="lang-label">Español:</span> Venid, descendamos y confundamos allí su lengua, para que no entiendan el habla unos de otros.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="创世记 11:8" s="Génesis 11:8" x="Génesis 11:8">Genesis 11:8</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Así el Señor hizo dispersar ellos de allí sobre el cara de el tierra todo: y ellos hizo dejar de construir el ciudad.</div>
+          <div class="line"><span class="lang-label">English:</span> So the LORD scattered them abroad from thence upon the face of all the earth: and they left off to build the city.</div>
+          <div class="line"><span class="lang-label">中文:</span> 于是耶和华把他们从那里分散到全地上；他们就停工，不再建造那城。</div>
+          <div class="line"><span class="lang-label">Español:</span> Así los dispersó el Señor desde allí sobre la faz de toda la tierra; y dejaron de edificar la ciudad.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="创世记 11:9" s="Génesis 11:9" x="Génesis 11:9">Genesis 11:9</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Por esto el nombre de ello es hecho llamar Babel; porque el Señor allí hizo confundir el lengua de el tierra todo: y de allí el Señor hizo dispersar ellos sobre el cara de el tierra todo.</div>
+          <div class="line"><span class="lang-label">English:</span> Therefore is the name of it called Babel; because the LORD did there confound the language of all the earth: and from thence did the LORD scatter them abroad upon the face of all the earth.</div>
+          <div class="line"><span class="lang-label">中文:</span> 所以那城名叫巴别，因为耶和华在那里变乱了全地的语言，又从那里把他们分散到全地上。</div>
+          <div class="line"><span class="lang-label">Español:</span> Por eso se llama Babel su nombre; porque allí confundió el Señor la lengua de toda la tierra, y desde allí los dispersó el Señor sobre la faz de toda la tierra.</div>
+        </div>
+        <h3><span class="t" c="主祷文（马太福音 6:9-13）" s="El Padrenuestro (Mateo 6:9-13)" x="El Padrenuestro (Mateo 6:9-13)">The Lord's Prayer (Matthew 6:9-13)</span></h3>
+        <div class="example">
+          <div class="label"><span class="t" c="马太福音 6:9" s="Mateo 6:9" x="Mateo 6:9">Matthew 6:9</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Así, por esto, vosotros haz orar: nuestro Padre que estar en el cielo, tu nombre es hecho santificar.</div>
+          <div class="line"><span class="lang-label">English:</span> After this manner therefore pray ye: Our Father which art in heaven, Hallowed be thy name.</div>
+          <div class="line"><span class="lang-label">中文:</span> 所以，你们要这样祷告：我们在天上的父，愿你的名被尊为圣。</div>
+          <div class="line"><span class="lang-label">Español:</span> Vosotros, pues, orad así: Padre nuestro que estás en los cielos, santificado sea tu nombre.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="马太福音 6:10" s="Mateo 6:10" x="Mateo 6:10">Matthew 6:10</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Tu reino venir. Tu voluntad es hecho hacer en el tierra, como ello estar en el cielo.</div>
+          <div class="line"><span class="lang-label">English:</span> Thy kingdom come. Thy will be done in earth, as it is in heaven.</div>
+          <div class="line"><span class="lang-label">中文:</span> 愿你的国降临。愿你的旨意行在地上，如同行在天上。</div>
+          <div class="line"><span class="lang-label">Español:</span> Venga tu reino. Hágase tu voluntad en la tierra como en el cielo.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="马太福音 6:11" s="Mateo 6:11" x="Mateo 6:11">Matthew 6:11</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Vosotros haz dar a nosotros este día nuestro pan cotidiano.</div>
+          <div class="line"><span class="lang-label">English:</span> Give us this day our daily bread.</div>
+          <div class="line"><span class="lang-label">中文:</span> 我们日用的饮食，今天赐给我们。</div>
+          <div class="line"><span class="lang-label">Español:</span> El pan nuestro de cada día, dánoslo hoy.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="马太福音 6:12" s="Mateo 6:12" x="Mateo 6:12">Matthew 6:12</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Y vosotros haz perdonar a nosotros nuestro los deuda, como nosotros perdonar a nuestro los deudor.</div>
+          <div class="line"><span class="lang-label">English:</span> And forgive us our debts, as we forgive our debtors.</div>
+          <div class="line"><span class="lang-label">中文:</span> 免我们的债，如同我们免了人的债。</div>
+          <div class="line"><span class="lang-label">Español:</span> Y perdónanos nuestras deudas, como también nosotros perdonamos a nuestros deudores.</div>
+        </div>
+        <div class="example">
+          <div class="label"><span class="t" c="马太福音 6:13" s="Mateo 6:13" x="Mateo 6:13">Matthew 6:13</span></div>
+          <div class="line"><span class="lang-label">Espanstanto:</span> Y vosotros no haz llevar a nosotros a el tentación, pero vosotros haz librar a nosotros de el mal: porque tu ser el reino, y el poder, y el gloria, para siempre. Amén.</div>
+          <div class="line"><span class="lang-label">English:</span> And lead us not into temptation, but deliver us from evil: For thine is the kingdom, and the power, and the glory, for ever. Amen.</div>
+          <div class="line"><span class="lang-label">中文:</span> 不叫我们遇见试探，救我们脱离凶恶：因为国度、权柄、荣耀，全是你的，直到永远。阿们。</div>
+          <div class="line"><span class="lang-label">Español:</span> Y no nos metas en tentación, mas líbranos del mal; porque tuyo es el reino, y el poder, y la gloria, por todos los siglos. Amén.</div>
+        </div>
+      </div>
+
+      <!-- ===== CHAPTER 4: NUMBERS ===== -->
+      <div class="section" id="ch4">
+        <h2><span class="t" c="4. 数字" s="4. Números" x="4. Número">4. Numbers</span></h2>
+        <p>
+          <span class="t" c="数字是规则的：11–19 用“diez uno”到“diez nueve”；复合数去掉“y”；“setenta”、“ochenta”、“noventa”保持原形；“cien”和“mil”不变。" s="Los números son regulares: «diez uno» a «diez nueve» para 11–19, los compuestos pierden la «y», «setenta», «ochenta» y «noventa» se mantienen, y «cien» y «mil» nunca cambian." x="Número ser regular: «diez uno» hasta «diez nueve» para 11–19, el compuesto perder el «y», «setenta», «ochenta» y «noventa» quedar, y «cien» y «mil» nunca cambiar.">Numbers are regular: “diez uno” through “diez nueve” for 11–19, compounds drop “y”, “setenta”, “ochenta”, and “noventa” stand, and “cien” and “mil” never change.</span>
+        </p>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="数" s="Número" x="Número">Number</span></th>
+            <th><span class="t" c="Espanstanto 形式" s="Forma en Espanstanto" x="Forma en Espanstanto">Espanstanto form</span></th>
+            <th><span class="t" c="说明" s="Nota" x="Nota">Note</span></th>
+          </tr>
+          <tr><td>0</td><td>cero</td><td></td></tr>
+          <tr><td>1</td><td>uno</td><td></td></tr>
+          <tr><td>2</td><td>dos</td><td></td></tr>
+          <tr><td>3</td><td>tres</td><td></td></tr>
+          <tr><td>4</td><td>cuatro</td><td></td></tr>
+          <tr><td>5</td><td>cinco</td><td></td></tr>
+          <tr><td>6</td><td>seis</td><td></td></tr>
+          <tr><td>7</td><td>siete</td><td></td></tr>
+          <tr><td>8</td><td>ocho</td><td></td></tr>
+          <tr><td>9</td><td>nueve</td><td></td></tr>
+          <tr><td>10</td><td>diez</td><td></td></tr>
+          <tr><td>11</td><td>diez uno</td><td><span class="t" c="diez + 个位" s="diez + unidad" x="diez + unidad">diez + unit</span></td></tr>
+          <tr><td>12</td><td>diez dos</td><td><span class="t" c="diez + 个位" s="diez + unidad" x="diez + unidad">diez + unit</span></td></tr>
+          <tr><td>13</td><td>diez tres</td><td><span class="t" c="diez + 个位" s="diez + unidad" x="diez + unidad">diez + unit</span></td></tr>
+          <tr><td>14</td><td>diez cuatro</td><td><span class="t" c="diez + 个位" s="diez + unidad" x="diez + unidad">diez + unit</span></td></tr>
+          <tr><td>15</td><td>diez cinco</td><td><span class="t" c="diez + 个位" s="diez + unidad" x="diez + unidad">diez + unit</span></td></tr>
+          <tr><td>16</td><td>diez seis</td><td><span class="t" c="diez + 个位" s="diez + unidad" x="diez + unidad">diez + unit</span></td></tr>
+          <tr><td>17</td><td>diez siete</td><td><span class="t" c="diez + 个位" s="diez + unidad" x="diez + unidad">diez + unit</span></td></tr>
+          <tr><td>18</td><td>diez ocho</td><td><span class="t" c="diez + 个位" s="diez + unidad" x="diez + unidad">diez + unit</span></td></tr>
+          <tr><td>19</td><td>diez nueve</td><td><span class="t" c="diez + 个位" s="diez + unidad" x="diez + unidad">diez + unit</span></td></tr>
+          <tr><td>20</td><td>veinte</td><td></td></tr>
+          <tr><td>21</td><td>veinte uno</td><td><span class="t" c="去掉 y" s="sin y" x="sin y">drop y</span></td></tr>
+          <tr><td>30</td><td>treinta</td><td></td></tr>
+          <tr><td>40</td><td>cuarenta</td><td></td></tr>
+          <tr><td>50</td><td>cincuenta</td><td></td></tr>
+          <tr><td>60</td><td>sesenta</td><td></td></tr>
+          <tr><td>70</td><td>setenta</td><td></td></tr>
+          <tr><td>71</td><td>setenta uno</td><td><span class="t" c="去掉 y" s="sin y" x="sin y">drop y</span></td></tr>
+          <tr><td>80</td><td>ochenta</td><td></td></tr>
+          <tr><td>90</td><td>noventa</td><td></td></tr>
+          <tr><td>100</td><td>cien</td><td><span class="t" c="不变" s="invariable" x="invariable">invariable</span></td></tr>
+          <tr><td>101</td><td>cien uno</td><td><span class="t" c="cien + 个位" s="cien + unidad" x="cien + unidad">cien + unit</span></td></tr>
+          <tr><td>1000</td><td>mil</td><td><span class="t" c="不变" s="invariable" x="invariable">invariable</span></td></tr>
+        </table>
+      </div>
+
+      <!-- ===== CHAPTER 5: VERB TENSE AND VOICE ===== -->
+      <div class="section" id="ch5">
+        <h2><span class="t" c="5. 动词时态与语态" s="5. Tiempo y voz verbal" x="5. Tiempo y voz de verbo">5. Verb Tense and Voice</span></h2>
+        <p>
+          <span class="t" c="各语言中的形式相同。现在时只列出、不使用：现在时没有标记。" s="Las formas son iguales en todos los idiomas. El presente se lista pero no se usa: el presente no lleva marcador." x="El forma ser igual en cada lengua. El presente ser listar pero no usar: el presente no llevar marcador.">Forms are the same in every language. Present is listed but not used: the present is unmarked.</span>
+        </p>
+        <table class="rule-table">
+          <tr>
+            <th><span class="t" c="时态 / 语气 / 语态" s="Tiempo / modo / voz" x="Tiempo / modo / voz">Tense / mood / voice</span></th>
+            <th><span class="t" c="标记" s="Marcador" x="Marcador">Marker</span></th>
+            <th><span class="t" c="说明" s="Nota" x="Nota">Note</span></th>
+          </tr>
+          <tr><td><span class="t" c="现在时" s="Presente" x="Presente">Present</span></td><td>hace</td><td><span class="t" c="只列出、不使用" s="listado, no usado" x="listar, no usar">listed, not used</span></td></tr>
+          <tr><td><span class="t" c="未完成过去时" s="Imperfecto" x="Imperfecto">Imperfect</span></td><td>hacía</td><td></td></tr>
+          <tr><td><span class="t" c="简单过去时" s="Pretérito" x="Pretérito">Preterite</span></td><td>hizo</td><td></td></tr>
+          <tr><td><span class="t" c="现在完成时" s="Pretérito perfecto" x="Pretérito perfecto">Present perfect</span></td><td>ha hecho</td><td></td></tr>
+          <tr><td><span class="t" c="过去完成时" s="Pluscuamperfecto" x="Pluscuamperfecto">Pluperfect</span></td><td>había hecho</td><td></td></tr>
+          <tr><td><span class="t" c="先过去时" s="Pretérito anterior" x="Pretérito anterior">Preterite perfect</span></td><td>hubo hecho</td><td><span class="t" c="罕用" s="raro" x="raro">rare</span></td></tr>
+          <tr><td><span class="t" c="将来时" s="Futuro" x="Futuro">Future</span></td><td>hará</td><td></td></tr>
+          <tr><td><span class="t" c="将来完成时" s="Futuro perfecto" x="Futuro perfecto">Future perfect</span></td><td>habrá hecho</td><td></td></tr>
+          <tr><td><span class="t" c="条件式" s="Condicional" x="Condicional">Conditional</span></td><td>haría</td><td></td></tr>
+          <tr><td><span class="t" c="条件完成式" s="Condicional perfecto" x="Condicional perfecto">Conditional perfect</span></td><td>habría hecho</td><td></td></tr>
+          <tr><td><span class="t" c="现在虚拟式" s="Presente de subjuntivo" x="Presente de subjuntivo">Present subjunctive</span></td><td>haga</td><td></td></tr>
+          <tr><td><span class="t" c="现在完成虚拟式" s="Pretérito perfecto de subjuntivo" x="Pretérito perfecto de subjuntivo">Present perfect subjunctive</span></td><td>haya hecho</td><td></td></tr>
+          <tr><td><span class="t" c="未完成虚拟式" s="Imperfecto de subjuntivo" x="Imperfecto de subjuntivo">Imperfect subjunctive</span></td><td>hiciera</td><td></td></tr>
+          <tr><td><span class="t" c="过去完成虚拟式" s="Pluscuamperfecto de subjuntivo" x="Pluscuamperfecto de subjuntivo">Pluperfect subjunctive</span></td><td>hubiera hecho</td><td></td></tr>
+          <tr><td><span class="t" c="命令式" s="Imperativo" x="Imperativo">Imperative</span></td><td>haz</td><td></td></tr>
+          <tr><td><span class="t" c="不定式" s="Infinitivo" x="Infinitivo">Infinitive</span></td><td>hacer</td><td></td></tr>
+          <tr><td><span class="t" c="完成不定式" s="Infinitivo perfecto" x="Infinitivo perfecto">Perfect infinitive</span></td><td>haber hecho</td><td></td></tr>
+          <tr><td><span class="t" c="动名词" s="Gerundio" x="Gerundio">Gerund</span></td><td>haciendo</td><td></td></tr>
+          <tr><td><span class="t" c="完成动名词" s="Gerundio perfecto" x="Gerundio perfecto">Perfect gerund</span></td><td>habiendo hecho</td><td></td></tr>
+          <tr><td><span class="t" c="分词" s="Participio" x="Participio">Participle</span></td><td>hecho</td><td></td></tr>
+          <tr><td><span class="t" c="被动语态" s="Pasiva" x="Pasiva">Passive</span></td><td>es hecho</td><td><span class="t" c="所有时态通用；时态标记叠加在前" s="en todos los tiempos; el marcador de tiempo se apila delante" x="en cada tiempo; el marcador de tiempo apilar delante">in every tense; tense marker stacks in front</span></td></tr>
+          <tr><td><span class="t" c="进行体" s="Continuo" x="Continuo">Continuous</span></td><td>está haciendo</td><td><span class="t" c="固定词块 + 不定式" s="bloque fijo + infinitivo" x="bloque fijo + infinitivo">fixed chunk + infinitive</span></td></tr>
+          <tr><td><span class="t" c="最近将来时" s="Futuro próximo" x="Futuro próximo">Near future</span></td><td>ir a</td><td><span class="t" c="+ 不定式" s="+ infinitivo" x="+ infinitivo">+ infinitive</span></td></tr>
+          <tr><td><span class="t" c="自反" s="Pronominal" x="Pronominal">Pronominal</span></td><td>se</td><td><span class="t" c="+ 不定式" s="+ infinitivo" x="+ infinitivo">+ infinitive</span></td></tr>
+        </table>
+        <p>
+          <span class="t" c="不需要非第三人称单数的例外：hacía、haga、hiciera 的第一和第三人称单数形式本来就相同，也没有什么与 es hecho 冲突。" s="No se necesitan excepciones fuera de la tercera persona del singular: hacía, haga e hiciera ya son idénticos en primera y tercera persona del singular, y nada choca con es hecho." x="No necesitar excepción fuera de el persona tercera singular: hacía, haga y hiciera ya ser idéntico en persona primera y persona tercera singular, y nada chocar con es hecho.">No non-3sg exceptions are needed: hacía, haga, and hiciera are already identical for first and third person singular, and nothing collides with es hecho.</span>
+        </p>
+        <p>
+          <span class="t" c="被动：所有时态都用“es hecho”；时态标记叠加在前（“ha hecho es hecho”、“hará es hecho”）。进行体：“está haciendo” + 不定式，是固定词块。最近将来：“ir a” + 不定式。自反：“se” + 不定式，没有额外标记。" s="Pasiva: «es hecho» en todos los tiempos; el marcador de tiempo se apila delante («ha hecho es hecho», «hará es hecho»). Continuo: «está haciendo» + infinitivo, un bloque fijo. Futuro próximo: «ir a» + infinitivo. Pronominal: «se» + infinitivo, sin marcador extra." x="Pasivo: «es hecho» en cada tiempo; el marcador de tiempo apilar delante («ha hecho es hecho», «hará es hecho»). Continuo: «está haciendo» + infinitivo, un bloque fijo. Futuro próximo: «ir a» + infinitivo. Pronominal: «se» + infinitivo, sin marcador extra.">Passive: “es hecho” in every tense; the tense marker stacks in front (“ha hecho es hecho”, “hará es hecho”). Continuous: “está haciendo” + infinitive, a fixed chunk. Near future: “ir a” + infinitive. Pronominal: “se” + infinitive, with no extra marker.</span>
+        </p>
+      </div>
+
+      <!-- ===== CHAPTER 6: LETTERS AND PRONUNCIATION ===== -->
+      <div class="section" id="ch6">
+        <h2><span class="t" c="6. 字母与发音" s="6. Letras y pronunciación" x="6. Letra y pronunciación">6. Letters and Pronunciation</span></h2>
+        <p>
+          <span class="t" c="发音遵循严格的、确定性的规则，没有例外。发音引擎和检查器包含在本文件夹中：espanstanto-pronunciation.js 和 espanstanto-pronunciation-check.js。" s="La pronunciación sigue reglas estrictas y deterministas, sin excepciones. Un motor de pronunciación y un verificador están incluidos en esta carpeta: espanstanto-pronunciation.js y espanstanto-pronunciation-check.js." x="El pronunciación seguir regla estricto y determinista, sin excepción. Un motor de pronunciación y un verificador es hecho incluir en este carpeta: espanstanto-pronunciation.js y espanstanto-pronunciation-check.js.">Pronunciation follows strict, deterministic rules, with no exceptions. A pronunciation engine and a checker are included in this folder: espanstanto-pronunciation.js and espanstanto-pronunciation-check.js.</span>
+        </p>
+        <p>
+          <span class="t" c="引擎及其检查器列出了这些规则和测试用例。" s="El motor y su verificador enuncian las reglas y sus casos de prueba." x="El motor y el verificador enunciar los regla y su los caso de prueba.">The engine and its checker state the rules and their test cases.</span>
+        </p>
+        <ul>
+          <li><span class="t" c="五个元音：a、e、i、o、u，发音永远不变。" s="Cinco vocales: a, e, i, o, u, siempre con el mismo sonido." x="Cinco vocal: a, e, i, o, u, siempre mismo sonido.">Five vowels: a, e, i, o, u, always the same sound.</span></li>
+          <li><span class="t" c="c 在 e、i 之前和 z 发 [s]（seseo）；其他位置的 c 发 [k]。" s="La c ante e o i, y la z, suenan [s] (seseo); la c en otro caso suena [k]." x="c ante e, i y z sonar [s]; en otro caso c sonar [k].">c before e or i, and z, sound [s] (seseo); c elsewhere sounds [k].</span></li>
+          <li><span class="t" c="g 在 e、i 之前发 [x]；其他位置的 g 发 [ɡ]。j 发 [x]。" s="La g ante e o i suena [x]; en otro caso suena [ɡ]. La j suena [x]." x="g ante e, i sonar [x]; en otro caso g sonar [ɡ]. j sonar [x].">g before e or i sounds [x]; g elsewhere sounds [ɡ]. j sounds [x].</span></li>
+          <li><span class="t" c="ll 发 [ʝ]（yeísmo）。ñ 发 [ɲ]。ch 发 [tʃ]。" s="La ll suena [ʝ] (yeísmo). La ñ suena [ɲ]. La ch suena [tʃ]." x="ll sonar [ʝ]. ñ sonar [ɲ]. ch sonar [tʃ].">ll sounds [ʝ] (yeísmo). ñ sounds [ɲ]. ch sounds [tʃ].</span></li>
+          <li><span class="t" c="qu 发 [k]，u 不发音。gu 在 e、i 之前发 [ɡ]，u 不发音。gü 发 [ɡw]。" s="La qu suena [k], con la u muda. La gu ante e o i suena [ɡ], con la u muda. La gü suena [ɡw]." x="qu sonar [k], u ser silencioso. gu ante e, i sonar [ɡ], u ser silencioso. gü sonar [ɡw].">qu sounds [k], the u silent. gu before e or i sounds [ɡ], the u silent. gü sounds [ɡw].</span></li>
+          <li><span class="t" c="h 不发音，也不打断元音组合（“prohibir” → [pɾojˈbiɾ]）。" s="La h es muda y no rompe un grupo vocálico («prohibir» → [pɾojˈbiɾ])." x="h ser silencioso y no romper grupo de vocal («prohibir» → [pɾojˈbiɾ]).">h is silent and does not break a vowel group (“prohibir” → [pɾojˈbiɾ]).</span></li>
+          <li><span class="t" c="r 发 [ɾ]。rr 发 [r]。词首的 r 以及 n、l、s 之后的 r 发 [r]。" s="La r suena [ɾ]. La rr suena [r]. La r inicial y la r tras n, l o s suenan [r]." x="r sonar [ɾ]. rr sonar [r]. r a el inicio de palabra y después de n, l, s sonar [r].">r sounds [ɾ]. rr sounds [r]. Word-initial r, and r after n, l, or s, sound [r].</span></li>
+          <li><span class="t" c="x 发 [ks]，词首的 x 除外，发 [s]（“xilófono” → [siˈlo.fo.no]）。" s="La x suena [ks], excepto la x inicial, que suena [s] («xilófono» → [siˈlo.fo.no])." x="x sonar [ks], excepto x a el inicio de palabra sonar [s] («xilófono» → [siˈlo.fo.no]).">x sounds [ks], except word-initial x, which sounds [s] (“xilófono” → [siˈlo.fo.no]).</span></li>
+          <li><span class="t" c="元音前的 y 发 [ʝ]；其他位置的 y 发 [i]。" s="La y ante vocal suena [ʝ]; en otro caso suena [i]." x="y ante vocal sonar [ʝ]; en otro caso y sonar [i].">y before a vowel sounds [ʝ]; elsewhere y sounds [i].</span></li>
+          <li><span class="t" c="b 和 v 发 [b]。d 发 [d]。元音之间没有弱化。" s="La b y la v suenan [b]. La d suena [d]. No hay lenición entre vocales." x="b y v sonar [b]. d sonar [d], sin lenición entre vocal.">b and v sound [b]. d sounds [d]. There is no intervocalic lenition.</span></li>
+          <li><span class="t" c="双元音与元音分立由重音符号和元音强弱决定：带重音的 í、ú 永远打断双元音。" s="Los diptongos y hiatos siguen las tildes y la fuerza vocálica: una í o ú acentuada siempre rompe el diptongo." x="Diptongo y hiato seguir acento y fuerza de vocal: í, ú con acento siempre romper diptongo.">Diphthongs and hiatus follow the accent marks and vowel strength: an accented í or ú always breaks a diphthong.</span></li>
+          <li><span class="t" c="重音落在有书面重音符号的音节上；没有符号时，以元音、n 或 s 结尾的词重读倒数第二音节，其他词重读最后音节。" s="El acento cae en la tilde escrita; sin tilde, la palabra terminada en vocal, n o s acentúa la penúltima sílaba, y en otro caso la última." x="Acento ir a el sílaba con acento escrito; sin acento escrito, palabra terminar en vocal, n, s tener acento en el sílaba penúltimo; en otro caso tener acento en el sílaba último.">Stress falls on the written accent; without one, a word ending in a vowel, n, or s stresses the penultimate syllable, otherwise the final syllable.</span></li>
+          <li><span class="t" c="重音用 ˈ 标出，音节之间用圆点连接；单音节词不标。" s="El acento se escribe con ˈ y las sílabas se unen con puntos; los monosílabos no llevan marca." x="Acento escribir con ˈ y sílaba unir con punto; palabra de un sílaba no llevar marca.">Stress is written with ˈ and syllables are joined with dots; monosyllables carry no mark.</span></li>
+          <li><span class="t" c="没有鼻音同化：n 和 m 在 b、p、g、k 之前保持不变。" s="No hay asimilación nasal: la n y la m se mantienen ante b, p, g y k." x="No haber asimilación nasal: n y m quedar mismo ante b, p, g, k.">No nasal assimilation: n and m stay the same before b, p, g, and k.</span></li>
+          <li><span class="t" c="滑音保持 [j] 和 [w]，词首不强化。" s="Los glides se mantienen [j] y [w], sin fortalecimiento inicial." x="Deslizamiento quedar [j] y [w], sin fortalecimiento a el inicio.">Glides stay [j] and [w], with no strengthening at the start of a word.</span></li>
+          <li><span class="t" c="tl 不是音节首：它在音节之间分开（“atlas” → [ˈat.las]）。" s="La tl no es ataque silábico: se divide entre sílabas («atlas» → [ˈat.las])." x="tl no ser inicio de sílaba: tl separar («atlas» → [ˈat.las]).">tl is not an onset: it splits across syllables (“atlas” → [ˈat.las]).</span></li>
+        </ul>
+      </div>
+
+      <!-- ===== CHAPTER 7: RULES SUMMARY ===== -->
+      <div class="section" id="ch7">
+        <h2><span class="t" c="7. 规则概要" s="7. Resumen de reglas" x="7. Resumen de regla">7. Rules Summary</span></h2>
+        <ul>
+          <li><span class="t" c="冠词：“el”/“los”，“un”/“unos”。写“a el”，不写“al”；写“de el”，不写“del”。" s="Artículos: «el»/«los», «un»/«unos». Se escribe «a el», nunca «al»; «de el», nunca «del»." x="Artículo: «el»/«los», «un»/«unos». Escribir «a el», nunca «al»; «de el», nunca «del».">Articles: “el”/“los”, “un”/“unos”. Write “a el”, never “al”; “de el”, never “del”.</span></li>
+          <li><span class="t" c="名词保持阳性单数形式；复数只由冠词表示。" s="Los sustantivos mantienen la forma masculina singular; el plural lo da solo el artículo." x="El sustantivo guardar el forma masculino singular; el plural venir solo de el artículo.">Nouns keep the masculine-singular form; plurality comes from the article only.</span></li>
+          <li><span class="t" c="形容词永远是阳性单数形式，并且永远放在名词之后。" s="Los adjetivos son siempre masculinos singulares y van siempre después del sustantivo." x="El adjetivo ser siempre masculino singular y estar siempre después de el sustantivo.">Adjectives are always masculine-singular and always after the noun.</span></li>
+          <li><span class="t" c="物主词只用阳性形式；复数的被拥有物是“物主词 + los + 名词”。" s="Los posesivos usan la forma masculina; lo poseído en plural es «posesivo + los + sustantivo»." x="El posesivo usar el forma masculino; el poseído plural ser «posesivo + los + sustantivo».">Possessives use the masculine form; a plural possessed thing is “possessive + los + noun”.</span></li>
+          <li><span class="t" c="代词只有一套独立形式；语序决定主语还是宾语。不用“mí”/“ti”。无生命用“ello”/“ellos”。" s="Un solo conjunto de pronombres independientes; el orden decide sujeto u objeto. Sin «mí»/«ti». Inanimado «ello»/«ellos»." x="Un solo conjunto de pronombre independiente; el orden decidir sujeto u objeto. No usar «mí»/«ti». Inanimado «ello»/«ellos».">One standalone pronoun set; word order decides subject or object. No “mí”/“ti”. Inanimate “ello”/“ellos”.</span></li>
+          <li><span class="t" c="禁用“lo”，改用“el”。" s="«Lo» está prohibido; se usa «el» en su lugar." x="«Lo» ser prohibido; usar «el» en su lugar.">“Lo” is banned; use “el” instead.</span></li>
+          <li><span class="t" c="指示词：“este”/“ese”/“aquel”是形容词；“esto”/“eso”/“aquello”是代词；复数加“los”。" s="Demostrativos: «este»/«ese»/«aquel» son adjetivos; «esto»/«eso»/«aquello» son pronombres; los plurales añaden «los»." x="Demostrativo: «este»/«ese»/«aquel» ser adjetivo; «esto»/«eso»/«aquello» ser pronombre; el plural añadir «los».">Demonstratives: “este”/“ese”/“aquel” are adjectives; “esto”/“eso”/“aquello” are pronouns; plurals add “los”.</span></li>
+          <li><span class="t" c="关系词：只用“que”；where 用“donde”；whose 用“de que”。不用“quien”。" s="Relativos: solo «que»; «donde» para donde; «de que» para cuyo. «Quien» se elimina." x="Relativo: solo «que»; «donde» para donde; «de que» para cuyo. No usar «quien».">Relatives: “que” only; “donde” for where; “de que” for whose. “Quien” is dropped.</span></li>
+          <li><span class="t" c="比较：“más”/“menos”/“tan” + 形容词 + “que”；“el más”/“el menos”；不变。" s="Comparativos: «más»/«menos»/«tan» + adjetivo + «que»; «el más»/«el menos»; invariables." x="Comparativo: «más»/«menos»/«tan» + adjetivo + «que»; «el más»/«el menos»; invariable.">Comparatives: “más”/“menos”/“tan” + adjective + “que”; “el más”/“el menos”; invariable.</span></li>
+          <li><span class="t" c="否定：“no”不拆分地放在动词或标记之前。说“no ver nada”、“no ver nunca”。" s="Negación: «no» va sin dividir delante del verbo o marcador. Se dice «no ver nada», «no ver nunca»." x="Negación: «no» quedar sin dividir delante de el verbo o marcador. Decir «no ver nada», «no ver nunca».">Negation: “no” stands unsplit before the verb or marker. Say “no ver nada”, “no ver nunca”.</span></li>
+          <li><span class="t" c="疑问：是非问用“ser que”；特殊问用“qué” + 主谓宾。" s="Preguntas: «ser que» para sí/no; «qué» + SVO para qué." x="Pregunta: «ser que» para sí/no; «qué» + SVO para qué.">Questions: “ser que” for yes/no; “qué” + SVO for what.</span></li>
+          <li><span class="t" c="数字：“diez uno” … “diez nueve”；复合数去掉“y”；“setenta”/“ochenta”/“noventa”；“cien”/“mil”不变。" s="Números: «diez uno» … «diez nueve»; los compuestos pierden la «y»; «setenta»/«ochenta»/«noventa»; «cien»/«mil» invariables." x="Número: «diez uno» … «diez nueve»; el compuesto perder el «y»; «setenta»/«ochenta»/«noventa»; «cien»/«mil» invariable.">Numbers: “diez uno” … “diez nueve”; compounds drop “y”; “setenta”/“ochenta”/“noventa”; “cien”/“mil” invariable.</span></li>
+          <li><span class="t" c="“Ser”和“estar”保持区分，永远用不定式。被动语态用“ser”（“es hecho”），不用“estar”；所有时态都用“es hecho”，时态标记叠加在前。" s="«Ser» y «estar» se mantienen separados, siempre en infinitivo. La pasiva usa «ser» («es hecho»), nunca «estar»; «es hecho» en todos los tiempos, el marcador de tiempo se apila delante." x="«Ser» y «estar» quedar separado, siempre en el infinitivo. El pasivo usar «ser» («es hecho»), nunca «estar»; «es hecho» en cada tiempo, el marcador de tiempo apilar delante.">“Ser” and “estar” stay separate, always in the infinitive. The passive uses “ser” (“es hecho”), never “estar”; “es hecho” in every tense, the tense marker stacks in front.</span></li>
+          <li><span class="t" c="自反：“se” + 不定式。最近将来：“ir a” + 不定式。进行体：“está haciendo” + 不定式。" s="Pronominal: «se» + infinitivo. Futuro próximo: «ir a» + infinitivo. Continuo: «está haciendo» + infinitivo." x="Pronominal: «se» + infinitivo. Futuro próximo: «ir a» + infinitivo. Continuo: «está haciendo» + infinitivo.">Pronominal: “se” + infinitive. Near future: “ir a” + infinitive. Continuous: “está haciendo” + infinitive.</span></li>
+          <li><span class="t" c="“Hay”保持原样。保留人称直接宾语前的“a”。引号 « » 予以保留。" s="«Hay» se mantiene. Se mantiene la «a» ante el objeto directo humano. Las comillas « » se conservan." x="«Hay» quedar «hay». Guardar el «a» delante de el objeto directo humano. El marca de cita « » quedar.">“Hay” stays “hay”. Keep the “a” before a human direct object. Quotation marks « » are kept.</span></li>
+        </ul>
+      </div>
+
+      <!-- ===== CHAPTER 8: PRONUNCIATION TOOL ===== -->
+      <div class="section" id="ch8">
+        <h2><span class="t" c="8. 发音工具" s="8. Herramienta de pronunciación" x="8. Herramienta de pronunciación">8. Pronunciation Tool</span></h2>
+        <p>
+          <span class="t" c="在下方输入文本，生成其 Espanstanto IPA 音标（严格通则，没有例外）。" s="Escribe un texto abajo para generar su transcripción IPA en Espanstanto (reglas generales estrictas, sin excepciones)." x="Escribir un texto abajo para generar su transcripción IPA en Espanstanto (regla general estricto, sin excepción).">Type text below to generate its Espanstanto IPA transcription (strict general rules, no exceptions).</span>
+        </p>
+        <p>
+          <span class="t" c="输入文本" s="Texto a transcribir" x="Texto a transcribir">Input text</span>
+        </p>
+        <textarea id="ipa-input" rows="4"></textarea>
+        <br/>
+        <button id="ipa-generate" type="button"><span class="t" c="生成音标" s="Generar el IPA" x="Generar el IPA">Generate IPA</span></button>
+        <p>
+          <span class="t" c="发音" s="Pronunciación" x="Pronunciación">Pronunciation</span>
+        </p>
+        <div id="ipa-output"></div>
+        <div id="ipa-words"></div>
+      </div>
+
+    </div>
+    <script src="espanstanto-pronunciation.js"></script>
+    <script>
+      (function () {
+        var input = document.getElementById('ipa-input');
+        var button = document.getElementById('ipa-generate');
+        var output = document.getElementById('ipa-output');
+        var wordsOut = document.getElementById('ipa-words');
+        function escapeHtml(s) {
+          return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+        button.addEventListener('click', function () {
+          var text = input.value.trim();
+          if (!text) { output.textContent = ''; wordsOut.textContent = ''; return; }
+          if (typeof espanstantoPronounce === 'undefined') {
+            output.textContent = 'Pronunciation engine not loaded.';
+            wordsOut.textContent = '';
+            return;
+          }
+          var tokens = text.split(/\s+/);
+          var parts = [];
+          var lines = [];
+          for (var i = 0; i < tokens.length; i++) {
+            var clean = tokens[i].replace(/^[^A-Za-záéíóúüñÁÉÍÓÚÜÑ]+|[^A-Za-záéíóúüñÁÉÍÓÚÜÑ]+$/g, '');
+            if (!clean) continue;
+            var ipa = espanstantoPronounce.pronounceWord(clean);
+            parts.push(ipa);
+            lines.push(escapeHtml(tokens[i]) + ' → ' + ipa);
+          }
+          output.textContent = parts.join(' ');
+          wordsOut.innerHTML = lines.join('<br/>');
+        });
+      })();
+    </script>
+  </body>
+</html>
