@@ -106,9 +106,9 @@ const cases = [
   ['mamey', '[maˈmej]'],
   ['convoy', '[konˈboj]'], // n stays literal: no nasal assimilation in v1
   ['carey', '[kaˈɾej]'],
-  // 2026-11-01 JS audit: word-final y after a vowel is a coda glide
-  ['muy', '[muj]'],
-  ['cuy', '[kuj]'],
+  // 2026-11-01 JS audit reverted: weak+weak glides first (muy [mwi], cuy [kwi])
+  ['muy', '[mwi]'],
+  ['cuy', '[kwi]'],
 ];
 
 let pass = 0;

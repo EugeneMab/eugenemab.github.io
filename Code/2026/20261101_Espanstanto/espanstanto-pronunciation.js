@@ -72,13 +72,6 @@ function groupRun(units) {
       i += 1;
       continue;
     }
-    if (n.finalY) {
-      // Word-final y after a vowel is a coda glide, not a nucleus:
-      // muy -> [muj], cuy -> [kuj] (not [mwi]/[kwi]).
-      nuclei.push({ pre: null, vow: u, post: n });
-      i += 2;
-      continue;
-    }
     // Weak + weak: first glides, second is the vowel.
     nuclei.push({ pre: u, vow: n, post: null });
     i += 2;
@@ -153,7 +146,7 @@ function ipa(word) {
       const prev = w[i - 1];
       const next = w[i + 1];
       if (i === w.length - 1 && prev && isVowelLetter(prev)) {
-        run.push({ base: 'i', strong: false, accented: false, finalY: true });
+        run.push({ base: 'i', strong: false, accented: false });
         i += 1; continue;
       }
       if (next && isVowelLetter(next)) {
