@@ -33,6 +33,7 @@ import {
 
 const EXPORT_SCALE = 1;
 const TITLE_Y_DIVIDER = 2;
+const DEFAULT_FONT_FAMILY = 'Aptos, Calibri, sans-serif';
 const IMG_RX = 4;
 const DASH_ARRAY_6 = 6;
 const DASH_ARRAY_4 = 4;
@@ -107,7 +108,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
         y="${(TITLE_HEIGHT * scale) / TITLE_Y_DIVIDER}" 
         text-anchor="middle" 
         dominant-baseline="middle" 
-        style="font-family: sans-serif; font-weight: bold; font-size: ${TITLE_FONT_SIZE * scale}rem;"
+        style="font-family: ${DEFAULT_FONT_FAMILY}; font-weight: bold; font-size: ${TITLE_FONT_SIZE * scale}rem;"
       >${event.title}</text>
 
       <!-- Male Participants -->
@@ -125,7 +126,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
               width="${MALE_TEXT_WIDTH * scale}"
               height="${IMG_HEIGHT * scale}"
             >
-              <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; text-align: right; padding-right: ${TEXT_PADDING_8}px; height: 100%; justify-content: flex-start; padding-top: ${TEXT_PADDING_8}px; width: 100%; font-family: sans-serif;">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; text-align: right; padding-right: ${TEXT_PADDING_8}px; height: 100%; justify-content: flex-start; padding-top: ${TEXT_PADDING_8}px; width: 100%; font-family: ${DEFAULT_FONT_FAMILY};">
                 <div style="font-weight: bold; font-size: ${NAME_FONT_SIZE * scale}rem; color: ${COLOR_MALE_NAME}; margin-bottom: ${MARGIN_BOTTOM_4}px;">${p.name}</div>
                 <div style="font-size: ${descFontSize}rem; color: ${COLOR_MALE_DESC}; white-space: pre-wrap; word-wrap: break-word;">${p.description}</div>
               </div>
@@ -157,7 +158,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
                 y="${y + (IMG_HEIGHT / TITLE_Y_DIVIDER) * scale}" 
                 text-anchor="middle" 
                 dominant-baseline="middle" 
-                style="font-family: sans-serif; font-size: ${SMALL_FONT_SIZE * scale}rem; fill: ${COLOR_NO_IMG_TEXT};"
+                style="font-family: ${DEFAULT_FONT_FAMILY}; font-size: ${SMALL_FONT_SIZE * scale}rem; fill: ${COLOR_NO_IMG_TEXT};"
               >No Image</text>
             `
             }
@@ -210,7 +211,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
                 y="${y + (IMG_HEIGHT / TITLE_Y_DIVIDER) * scale}" 
                 text-anchor="middle" 
                 dominant-baseline="middle" 
-                style="font-family: sans-serif; font-size: ${SMALL_FONT_SIZE * scale}rem; fill: ${COLOR_NO_IMG_TEXT};"
+                style="font-family: ${DEFAULT_FONT_FAMILY}; font-size: ${SMALL_FONT_SIZE * scale}rem; fill: ${COLOR_NO_IMG_TEXT};"
               >No Image</text>
             `
             }
@@ -232,7 +233,7 @@ export function renderEventToSvgString(event: Event, data: AppData, episodeIndex
               width="${FEMALE_TEXT_WIDTH * scale}"
               height="${IMG_HEIGHT * scale}"
             >
-              <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; text-align: left; padding-left: ${TEXT_PADDING_8}px; height: 100%; justify-content: flex-start; padding-top: ${TEXT_PADDING_8}px; width: 100%; font-family: sans-serif;">
+              <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; flex-direction: column; text-align: left; padding-left: ${TEXT_PADDING_8}px; height: 100%; justify-content: flex-start; padding-top: ${TEXT_PADDING_8}px; width: 100%; font-family: ${DEFAULT_FONT_FAMILY};">
                 <div style="font-weight: bold; font-size: ${NAME_FONT_SIZE * scale}rem; color: ${COLOR_FEMALE_NAME}; margin-bottom: ${MARGIN_BOTTOM_4}px;">${p.name}</div>
                 <div style="font-size: ${descFontSize}rem; color: ${COLOR_FEMALE_DESC}; white-space: pre-wrap; word-wrap: break-word;">${p.description}</div>
               </div>
